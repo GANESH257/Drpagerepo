@@ -1,0 +1,72 @@
+'use client';
+
+export interface AdminSession {
+  email: string;
+  role: 'admin';
+  loginAt: string;
+}
+
+const SESSION_KEY = 'aip_admin_session';
+
+/**
+ * Get admin session from localStorage
+ */
+export function getAdminSession(): AdminSession | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) return null;
+    
+    const session = JSON.parse(sessionData) as AdminSession;
+    return session;
+  } catch (error) {
+    console.error('Error reading admin session:', error);
+    return null;
+  }
+}
+
+/**
+ * Set admin session in localStorage
+ */
+export function setAdminSession(email: string): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const session: AdminSession = {
+      email,
+      role: 'admin',
+      loginAt: new Date().toISOString(),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch (error) {
+    console.error('Error setting admin session:', error);
+  }
+}
+
+/**
+ * Clear admin session from localStorage
+ */
+export function clearAdminSession(): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    console.error('Error clearing admin session:', error);
+  }
+}
+
+/**
+ * Check if admin is authenticated
+ */
+export function isAdminAuthenticated(): boolean {
+  return getAdminSession() !== null;
+}
+
+/**
+ * Validate admin credentials
+ */
+export function validateAdminCredentials(email: string, password: string): boolean {
+  return email === 'admin@aip.com' && password === 'Admin@12345';
+}
