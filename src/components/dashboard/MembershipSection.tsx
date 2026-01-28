@@ -224,9 +224,9 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
               <CardTitle className="text-2xl">
                 {currentPlan?.name || 'No Plan'}
               </CardTitle>
-              <CardDescription className="mt-1">
+              <div className="mt-1 text-sm text-muted-foreground">
                 {getStatusBadge(membership.status)}
-              </CardDescription>
+              </div>
             </div>
             {membership.status === 'pending_payment' && (
               <Button

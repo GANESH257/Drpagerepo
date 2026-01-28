@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen skin-benefits-enhanced">
-      <div className="container mx-auto px-4 pt-24 md:pt-28 pb-12 lg:pb-16">
+      <div className="container mx-auto px-4 pt-32 md:pt-36 pb-12 lg:pb-16">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 max-w-7xl mx-auto">
           {/* Left: Description */}
           <div className="lg:w-1/2 flex flex-col justify-center">

@@ -73,7 +73,7 @@ export function ContactInfoCards() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-24 skin-paper">
+    <section ref={sectionRef} className="py-16 md:py-24 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/90 to-brand-teal/20">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {contactItems.map((item, index) => {
@@ -81,12 +81,11 @@ export function ContactInfoCards() {
             const delay = prefersReducedMotion ? 0 : index * 100;
             
             const cardContent = (
-              <Card className="card-vibrant h-full transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-2 border-transparent hover:border-brand-teal/30 group overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/5 via-transparent to-brand-dark-blue/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Card className="bg-white h-full transition-all duration-300 hover:shadow-[0_16px_48px_0_rgba(46,196,182,0.25)] hover:-translate-y-2 border-2 border-white/20 hover:border-brand-teal/40 group overflow-hidden relative">
                 <CardContent className="p-8 flex flex-col relative z-10">
                   <div className="flex items-start gap-4 mb-4">
                     <div
-                      className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-teal to-brand-dark-blue flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300"
+                      className="w-16 h-16 rounded-2xl bg-brand-teal/10 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-brand-teal/20 group-hover:scale-110 transition-all duration-300"
                       style={{
                         opacity: isVisible ? 1 : 0,
                         transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0.8)',
@@ -95,7 +94,7 @@ export function ContactInfoCards() {
                           : `opacity 1.5s ease-out ${400 + delay}ms, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${400 + delay}ms`,
                       }}
                     >
-                      <Icon className="h-8 w-8 text-white" aria-hidden="true" />
+                      <Icon className="h-8 w-8 text-brand-teal" aria-hidden="true" />
                     </div>
                     <div className="flex-1 pt-1">
                       <h3
@@ -111,7 +110,7 @@ export function ContactInfoCards() {
                         {item.label}
                       </h3>
                       <div
-                        className="text-sm text-gray-500 font-medium"
+                        className="text-sm text-gray-600 font-medium"
                         style={{
                           opacity: isVisible ? 1 : 0,
                           transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',

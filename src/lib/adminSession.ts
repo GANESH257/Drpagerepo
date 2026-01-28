@@ -52,6 +52,15 @@ export function clearAdminSession(): void {
   
   try {
     localStorage.removeItem(SESSION_KEY);
+    // Also clear dummy join requests on logout
+    localStorage.removeItem('aip_join_requests');
+    // Clear events overrides
+    localStorage.removeItem('aip_global_medical_events_override');
+    localStorage.removeItem('aip_board_meetings_override');
+    // Clear member management overrides
+    localStorage.removeItem('aip_doctor_overrides');
+    localStorage.removeItem('aip_doctor_passwords');
+    localStorage.removeItem('aip_deleted_doctors');
   } catch (error) {
     console.error('Error clearing admin session:', error);
   }

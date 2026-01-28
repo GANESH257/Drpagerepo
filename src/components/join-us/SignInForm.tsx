@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { findDoctorByEmail } from '@/lib/doctorStorage';
+import { checkPassword } from '@/lib/passwordUtils';
 import {
   Dialog,
   DialogContent,
@@ -77,9 +78,17 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
     // Check if email matches a doctor record (for demo purposes)
     const doctor = findDoctorByEmail(email);
-    const isValidPassword = password === DUMMY_PASSWORD;
     
-    if (isValidPassword && doctor) {
+    if (!doctor) {
+      setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check password (first check hashed passwords, then fallback to default)
+    const isValidPassword = await checkPassword(email, password);
+    
+    if (isValidPassword) {
       // Only allow sign-in for existing approved doctors (demo mode)
       const emailToUse = doctor.email || email;
       setSession(emailToUse);
@@ -87,7 +96,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       router.push('/doctor/dashboard');
     } else {
       // Show message about approval requirement
-      setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
+      setGeneralError('Invalid email or password. Please check your credentials and try again.');
       setIsSubmitting(false);
     }
   };

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { homeStats } from '@/data/homeStats';
 import { ArrowRight } from 'lucide-react';
+import { TopSearchBar } from '../DoctorFilters';
 
 export function NewHomeHero() {
   const [isVisible, setIsVisible] = useState(false);
@@ -71,7 +72,7 @@ export function NewHomeHero() {
   }, [isVisible, prefersReducedMotion]);
 
   return (
-    <section 
+    <section
       id="main-content"
       className="relative w-full min-h-[600px] md:min-h-[700px] overflow-hidden mt-24 md:mt-28 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-teal/30"
       aria-label="Hero section"
@@ -81,7 +82,7 @@ export function NewHomeHero() {
         <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12 xl:gap-16 min-h-[600px] md:min-h-[700px] py-12 md:py-16 lg:py-20">
           {/* Content Area */}
           <div className="flex-1 w-full lg:w-auto">
-            <div 
+            <div
               className="max-w-2xl"
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -89,18 +90,18 @@ export function NewHomeHero() {
                 transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
               }}
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 md:mb-8 leading-tight text-white">
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-8 leading-[1.15] text-white tracking-tight">
                 <span className="whitespace-nowrap">Connect. <span className="text-brand-teal">Collaborate.</span></span>
                 <br />
-                <span className="whitespace-nowrap">Refer. <span className="text-brand-teal">Find Elite Care</span></span>
+                <span className="whitespace-normal sm:whitespace-nowrap">Refer. <span className="text-brand-teal">Find Elite Care</span></span>
               </h1>
-              <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 text-white/95 leading-relaxed">
-                A trusted physician network and patient directory that supports referrals, collaboration, and easier access to quality care across specialties.
+              <p className="text-base md:text-xl lg:text-2xl mb-6 md:mb-8 text-white/90 leading-relaxed max-w-xl">
+                A trusted physician network and patient directory that supports referrals, collaboration, and easier access to quality care.
               </p>
 
-              {/* Stats Strip - Compact Horizontal - No Wrap */}
-              <div 
-                className="inline-flex flex-row items-center justify-start gap-2 md:gap-2.5 lg:gap-3 mb-6 md:mb-8 bg-white/95 backdrop-blur-md px-2.5 md:px-3 py-2 md:py-2.5 rounded-lg border border-white/60 shadow-md overflow-x-auto"
+              {/* Stats Strip - Tightly wrapped and centered on mobile */}
+              <div
+                className="inline-flex flex-wrap items-center justify-start gap-0 md:gap-0 mb-8 md:mb-10 bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl border border-white/20 shadow-xl overflow-hidden w-fit"
                 style={{
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
@@ -111,13 +112,13 @@ export function NewHomeHero() {
                   const numericValue = animatedStats[index] ?? 0;
                   const suffix = stat.value.replace(/\d/g, '');
                   const isNumeric = numericValue > 0;
-                  
+
                   return (
-                    <div key={index} className="flex flex-col items-center flex-shrink-0 px-1">
-                      <div className="text-xs md:text-sm lg:text-base font-bold text-brand-dark-blue leading-tight text-center whitespace-nowrap">
+                    <div key={index} className="flex flex-col items-start px-4 py-2.5 md:px-6 md:py-3.5 border-r border-white/10 last:border-r-0 hover:bg-white/5 transition-colors cursor-default">
+                      <div className="text-sm md:text-lg lg:text-xl font-black text-white leading-tight">
                         {isNumeric ? `${numericValue}${suffix}` : stat.value}
                       </div>
-                      <div className="text-[9px] md:text-[10px] lg:text-xs text-gray-600 font-medium mt-0.5 text-center whitespace-nowrap">
+                      <div className="text-[10px] md:text-xs text-brand-teal font-bold uppercase tracking-wider mt-0.5">
                         {stat.label}
                       </div>
                     </div>
@@ -126,61 +127,57 @@ export function NewHomeHero() {
               </div>
 
               {/* Primary CTAs */}
-              <div 
-                className="inline-flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4"
+              <div
+                className="flex flex-col gap-8"
                 style={{
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
                   transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.8s ease-out 0.6s, transform 0.8s ease-out 0.6s',
                 }}
               >
-                <Button
-                  asChild
-                  size="lg"
-                  variant="gradient-multi"
-                  className="w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
-                >
-                  <Link href="/doctors">
-                    Find a Doctor
-                    <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="colorful-glow"
-                  className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:border-white/40 w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
-                >
-                  <Link href="/join-us">Join the Network</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="colorful-glow"
-                  className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:border-white/40 w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
-                >
-                  <Link href="#departments">Explore Medical Specialties</Link>
-                </Button>
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="colorful-glow"
+                    className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:border-white/40 w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
+                  >
+                    <Link href="/join-us">Join the Network</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="colorful-glow"
+                    className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 hover:border-white/40 w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
+                  >
+                    <Link href="#departments">Explore Medical Specialties</Link>
+                  </Button>
+                </div>
+
+                {/* Integrated Search Bar */}
+                <div className="w-full max-w-4xl lg:ml-0">
+                  <TopSearchBar />
+                </div>
               </div>
             </div>
           </div>
 
           {/* Circular Video Element */}
           <div className="flex-shrink-0 w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[500px] xl:h-[500px] rounded-full overflow-hidden relative">
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover object-[center_30%] rounded-full"
-              aria-hidden="true"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1s ease-out 0.3s',
-              }}
-            >
-              <source src="/Backgroundui2.mp4" type="video/mp4" />
-            </video>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover object-[center_30%] rounded-full"
+                aria-hidden="true"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1s ease-out 0.3s',
+                }}
+              >
+                <source src="/network_video.webm" type="video/webm" />
+              </video>
           </div>
         </div>
       </div>

@@ -24,7 +24,7 @@ export function ArticlesSection() {
     : studentArticles.filter(article => article.category === selectedCategory);
 
   return (
-    <section id="articles" className="py-16 md:py-24 relative bg-teal-50 overflow-visible" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(46, 196, 182, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(26, 75, 127, 0.03) 0%, transparent 50%)' }}>
+    <section id="articles" className="py-16 md:py-24 relative bg-white overflow-visible">
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-brand-dark-blue">

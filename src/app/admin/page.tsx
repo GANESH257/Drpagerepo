@@ -9,6 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { StatsCards } from '@/components/admin/StatsCards';
 import { getJoinRequests, AdminJoinRequest } from '@/lib/adminStorage';
 import { seedMockJoinRequests } from '@/data/mockJoinRequests';
+import { DoctorsJoinedPerMonthChart } from '@/components/admin/DoctorsJoinedPerMonthChart';
+import { DoctorsPerDepartmentChart } from '@/components/admin/DoctorsPerDepartmentChart';
+import { DoctorsPerPlanChart } from '@/components/admin/DoctorsPerPlanChart';
+import { RequestStatusChart } from '@/components/admin/RequestStatusChart';
+import { GrowthTrendChart } from '@/components/admin/GrowthTrendChart';
 
 export default function AdminDashboardPage() {
   useEffect(() => {
@@ -16,6 +21,7 @@ export default function AdminDashboardPage() {
     seedMockJoinRequests();
   }, []);
 
+  // Get requests - this will be reactive since getJoinRequests reads from localStorage
   const requests = getJoinRequests();
   const recentRequests = requests
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
@@ -55,6 +61,25 @@ export default function AdminDashboardPage() {
 
       {/* Stats Cards */}
       <StatsCards />
+
+      {/* Analytics Charts */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-semibold text-brand-dark-blue mb-2">Analytics & Insights</h3>
+          <p className="text-sm text-muted-foreground">
+            Visual overview of network growth, distribution, and membership trends
+          </p>
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <DoctorsJoinedPerMonthChart requests={requests} />
+          <GrowthTrendChart requests={requests} />
+          <DoctorsPerDepartmentChart />
+          <DoctorsPerPlanChart requests={requests} />
+          <RequestStatusChart requests={requests} />
+        </div>
+      </div>
 
       {/* Recent Requests */}
       <Card className="card-vibrant">

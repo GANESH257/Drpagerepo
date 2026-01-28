@@ -1,6 +1,7 @@
 'use client';
 
 import { TrusteeBoardHero } from '@/components/trustee-board/TrusteeBoardHero';
+import { TrusteeBoardHelperNav } from '@/components/trustee-board/TrusteeBoardHelperNav';
 import { BoardMemberGrid } from '@/components/trustee-board/BoardMemberGrid';
 import { NextMeetingCard } from '@/components/trustee-board/NextMeetingCard';
 import { AnnouncementsSection } from '@/components/trustee-board/AnnouncementsSection';
@@ -13,6 +14,7 @@ export default function TrusteeBoardPage() {
     <div className="min-h-screen">
       <div className="pt-24">
         <TrusteeBoardHero />
+        <TrusteeBoardHelperNav />
         <GovernanceMetrics />
         <BoardMemberGrid />
         <GenericCTASection />

@@ -1,6 +1,8 @@
-import { JoinRequest, MembershipPlan } from '@/types';
+import { JoinRequest, MembershipPlan, BoardMeeting } from '@/types';
 import { membershipPlans } from '@/data/membershipPlans';
 import { orgPolicies } from '@/data/orgPolicies';
+import { globalMedicalEvents, GlobalMedicalEvent } from '@/data/globalMedicalEvents';
+import { nextMeeting, upcomingMeetings } from '@/data/boardMeetings';
 
 /**
  * Extended JoinRequest with admin metadata
@@ -37,7 +39,7 @@ export function getJoinRequests(): AdminJoinRequest[] {
 /**
  * Save join requests to localStorage
  */
-function saveJoinRequests(requests: AdminJoinRequest[]): void {
+export function saveJoinRequests(requests: AdminJoinRequest[]): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -219,5 +221,117 @@ export function resetOrgPolicies(): void {
     localStorage.removeItem('aip_policies_override');
   } catch (error) {
     console.error('Error resetting org policies:', error);
+  }
+}
+
+/**
+ * Events Storage
+ */
+
+/**
+ * Get global medical events (check override first, then fallback to seed data)
+ */
+export function getGlobalMedicalEvents(): GlobalMedicalEvent[] {
+  if (typeof window === 'undefined') return globalMedicalEvents;
+
+  try {
+    const override = localStorage.getItem('aip_global_medical_events_override');
+    if (override) {
+      return JSON.parse(override) as GlobalMedicalEvent[];
+    }
+    return globalMedicalEvents;
+  } catch (error) {
+    console.error('Error loading global medical events:', error);
+    return globalMedicalEvents;
+  }
+}
+
+/**
+ * Save global medical events override to localStorage
+ */
+export function saveGlobalMedicalEvents(events: GlobalMedicalEvent[]): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem('aip_global_medical_events_override', JSON.stringify(events));
+  } catch (error) {
+    console.error('Error saving global medical events:', error);
+  }
+}
+
+/**
+ * Reset global medical events to defaults
+ */
+export function resetGlobalMedicalEvents(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.removeItem('aip_global_medical_events_override');
+  } catch (error) {
+    console.error('Error resetting global medical events:', error);
+  }
+}
+
+/**
+ * Board Meetings Storage
+ */
+
+export interface BoardMeetingsData {
+  nextMeeting: BoardMeeting;
+  upcomingMeetings: BoardMeeting[];
+}
+
+/**
+ * Get board meetings (check override first, then fallback to seed data)
+ */
+export function getBoardMeetings(): BoardMeetingsData {
+  if (typeof window === 'undefined') {
+    return {
+      nextMeeting,
+      upcomingMeetings,
+    };
+  }
+
+  try {
+    const override = localStorage.getItem('aip_board_meetings_override');
+    if (override) {
+      return JSON.parse(override) as BoardMeetingsData;
+    }
+    return {
+      nextMeeting,
+      upcomingMeetings,
+    };
+  } catch (error) {
+    console.error('Error loading board meetings:', error);
+    return {
+      nextMeeting,
+      upcomingMeetings,
+    };
+  }
+}
+
+/**
+ * Save board meetings override to localStorage
+ */
+export function saveBoardMeetings(meetings: BoardMeetingsData): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem('aip_board_meetings_override', JSON.stringify(meetings));
+  } catch (error) {
+    console.error('Error saving board meetings:', error);
+  }
+}
+
+/**
+ * Reset board meetings to defaults
+ */
+export function resetBoardMeetings(): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.removeItem('aip_board_meetings_override');
+  } catch (error) {
+    console.error('Error resetting board meetings:', error);
   }
 }

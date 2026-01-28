@@ -32,7 +32,7 @@ export function AdminShell({ children }: AdminShellProps) {
           transition-all duration-300 flex-1
           lg:ml-64
           ${sidebarCollapsed ? 'lg:ml-16' : ''}
-          pt-32 md:pt-36
+          pt-40 md:pt-44
         `}
       >
         <div className="container mx-auto px-4 py-8 max-w-7xl">

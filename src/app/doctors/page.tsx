@@ -2,15 +2,29 @@
 
 import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { doctors } from '@/data/doctors';
+import { getAllDoctors } from '@/lib/memberStorage';
 import { DoctorCard } from '@/components/DoctorCard';
-import { DoctorFilters } from '@/components/DoctorFilters';
+import { SidebarFilters, TopSearchBar } from '@/components/DoctorFilters';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { Doctor } from '@/types';
+import { Search } from 'lucide-react';
 
 function DoctorsPageContent() {
   const searchParams = useSearchParams();
-  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(doctors);
+  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
+
+  useEffect(() => {
+    // Load doctors (with deleted filter applied)
+    const doctors = getAllDoctors();
+    // Add original index to preserve order for featured doctors
+    const doctorsWithIndex = doctors.map((doctor, index) => ({
+      ...doctor,
+      originalIndex: index,
+    }));
+    setAllDoctors(doctorsWithIndex as Doctor[]);
+    setFilteredDoctors(doctorsWithIndex as Doctor[]);
+  }, []);
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -37,7 +51,7 @@ function DoctorsPageContent() {
   );
 
   useEffect(() => {
-    let result = [...doctors];
+    let result = [...allDoctors];
 
     // Filter by specialty
     if (filters.specialty && filters.specialty !== 'all') {
@@ -47,7 +61,7 @@ function DoctorsPageContent() {
         const doctorSpecialty = d.specialty.toLowerCase();
         // Check if specialty matches directly or if it includes the normalized filter
         const matchesMainSpecialty = doctorSpecialty === normalizedFilter || doctorSpecialty.includes(normalizedFilter);
-        
+
         // Also check specialties array if it exists
         if (matchesMainSpecialty) return true;
         if (d.specialties && Array.isArray(d.specialties)) {
@@ -80,15 +94,24 @@ function DoctorsPageContent() {
       );
     }
 
-    // Filter by name
+    // Filter by name, specialty, or insurance (Main search box)
     if (filters.name) {
-      const nameLower = filters.name.toLowerCase();
-      result = result.filter(
-        (d) =>
-          d.firstName.toLowerCase().includes(nameLower) ||
-          d.lastName.toLowerCase().includes(nameLower) ||
-          d.fullName.toLowerCase().includes(nameLower)
-      );
+      const searchLower = filters.name.toLowerCase();
+      result = result.filter((d) => {
+        const matchesName =
+          d.firstName.toLowerCase().includes(searchLower) ||
+          d.lastName.toLowerCase().includes(searchLower) ||
+          d.fullName.toLowerCase().includes(searchLower);
+
+        const matchesSpecialty =
+          d.specialty.toLowerCase().includes(searchLower) ||
+          (d.specialties && d.specialties.some(s => s.toLowerCase().includes(searchLower)));
+
+        const matchesInsurance =
+          d.insurance && d.insurance.some(i => i.name.toLowerCase().includes(searchLower));
+
+        return matchesName || matchesSpecialty || matchesInsurance;
+      });
     }
 
     // Filter by last name prefix
@@ -111,8 +134,18 @@ function DoctorsPageContent() {
       if (aFeatured !== bFeatured) {
         return bFeatured ? 1 : -1; // Featured first
       }
-      
-      // Then apply selected sort
+
+      // For featured doctors, preserve original array order
+      if (aFeatured && bFeatured) {
+        const aIndex = (a as any).originalIndex ?? Infinity;
+        const bIndex = (b as any).originalIndex ?? Infinity;
+        // If both are featured, maintain original order (Robert first, Amit second)
+        if (aIndex !== Infinity && bIndex !== Infinity) {
+          return aIndex - bIndex;
+        }
+      }
+
+      // Then apply selected sort for non-featured doctors
       switch (filters.sort) {
         case 'rating-desc':
           return b.rating - a.rating;
@@ -130,7 +163,7 @@ function DoctorsPageContent() {
     });
 
     setFilteredDoctors(result);
-  }, [filters]);
+  }, [filters, allDoctors]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -149,7 +182,7 @@ function DoctorsPageContent() {
   useEffect(() => {
     // Set visible immediately for better UX
     setIsVisible(true);
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -169,88 +202,105 @@ function DoctorsPageContent() {
 
   return (
     <div ref={sectionRef} className="min-h-screen skin-slate">
-      <div className="container mx-auto px-4 pt-24 pb-16">
-        <div 
-          className="mb-8"
+      <div className="container mx-auto px-4 pt-32 pb-16">
+        {/* Top Search Bar */}
+        <div
+          className="relative z-10"
           style={{
             opacity: isVisible ? 1 : 0,
-            transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-            transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.2s, transform 0.6s ease-out 0.2s',
+            transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(-20px)',
+            transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.1s, transform 0.6s ease-out 0.1s',
           }}
         >
-          <h1 className="text-3xl md:text-4xl lg:text-3xl font-bold mb-2 text-brand-dark-blue">
-            Find a Doctor
-          </h1>
-          <p className="text-muted-foreground text-base md:text-lg">
-            Browse our directory of {doctors.length} independent physicians
-          </p>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue tracking-tight">
+              Find the Right Doctor
+            </h1>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Book appointments with top-rated independent physicians in your area.
+            </p>
+          </div>
+          <TopSearchBar />
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filters Sidebar */}
-          <aside 
-            className="md:w-64 flex-shrink-0"
+          <aside
+            className="md:w-72 flex-shrink-0"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(-30px)',
               transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.3s, transform 0.6s ease-out 0.3s',
             }}
           >
-            <DoctorFilters />
+            <SidebarFilters />
           </aside>
 
           {/* Results */}
           <main className="flex-1">
-            {filteredDoctors.length === 0 ? (
-              <div 
-                className="text-center py-12"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.4s',
-                }}
-              >
-                <p className="text-lg text-muted-foreground mb-4">
-                  No doctors found matching your criteria.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Try adjusting your filters to see more results.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div 
-                  className="mb-4 text-sm text-muted-foreground"
+            <div className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 mb-6">
+              {filteredDoctors.length === 0 ? (
+                <div
+                  className="text-center py-12"
                   style={{
                     opacity: isVisible ? 1 : 0,
                     transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.4s',
                   }}
                 >
-                  Showing {filteredDoctors.length} doctor
-                  {filteredDoctors.length !== 1 ? 's' : ''}
+                  <div className="bg-gray-50 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-10 w-10 text-gray-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">No doctors found</h3>
+                  <p className="text-gray-500 mb-6">
+                    We couldn't find any doctors matching your current filters.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = '/doctors'}
+                    className="text-brand-teal font-bold hover:underline"
+                  >
+                    Clear all filters
+                  </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredDoctors.map((doctor, index) => {
-                    const cardDelay = prefersReducedMotion ? 0 : index * 50;
-                    return (
-                      <div
-                        key={doctor.id}
-                        style={{
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible && !prefersReducedMotion
-                            ? 'translateY(0) scale(1)' 
-                            : 'translateY(30px) scale(0.95)',
-                          transition: prefersReducedMotion
-                            ? `opacity 0.3s ease ${cardDelay}ms`
-                            : `opacity 0.7s ease-out ${cardDelay}ms, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay}ms`,
-                        }}
-                      >
-                        <DoctorCard doctor={doctor} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+              ) : (
+                <>
+                  <div
+                    className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100"
+                    style={{
+                      opacity: isVisible ? 1 : 0,
+                      transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.4s',
+                    }}
+                  >
+                    <div>
+                      <h2 className="text-xl font-bold text-brand-dark-blue">
+                        {filteredDoctors.length} {filteredDoctors.length === 1 ? 'Doctor' : 'Doctors'} available
+                      </h2>
+                      <p className="text-sm text-gray-500">Based on your search criteria</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredDoctors.map((doctor, index) => {
+                      const cardDelay = prefersReducedMotion ? 0 : index * 50;
+                      return (
+                        <div
+                          key={doctor.id}
+                          style={{
+                            opacity: isVisible ? 1 : 0,
+                            transform: isVisible && !prefersReducedMotion
+                              ? 'translateY(0) scale(1)'
+                              : 'translateY(30px) scale(0.95)',
+                            transition: prefersReducedMotion
+                              ? `opacity 0.3s ease ${cardDelay}ms`
+                              : `opacity 0.7s ease-out ${cardDelay}ms, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay}ms`,
+                          }}
+                        >
+                          <DoctorCard doctor={doctor} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
             <GenericCTASection />
           </main>
         </div>

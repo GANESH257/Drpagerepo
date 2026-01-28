@@ -156,7 +156,7 @@ function ApplicationContent() {
 
   return (
     <div ref={sectionRef} className="min-h-screen skin-benefits-enhanced">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
+      <div className="container mx-auto px-4 pt-24 md:pt-28 lg:pt-32 pb-8 lg:pb-12">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 max-w-7xl mx-auto">
           {/* Left Sidebar - Desktop Only */}
           <div 

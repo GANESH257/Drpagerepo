@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { Filter, X, Search } from 'lucide-react';
+import { Filter, X, Search, MapPin, UserSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Get unique values from doctors data
@@ -35,16 +35,9 @@ const allInsurance = Array.from(
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-export function DoctorFilters({
-  onFilterChange,
-  className,
-}: {
-  onFilterChange?: (filters: any) => void;
-  className?: string;
-}) {
+function useFilters() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const getSearchParam = (key: string, defaultValue: string = '') => {
     try {
@@ -67,66 +60,42 @@ export function DoctorFilters({
   // Separate state for text inputs (for manual search to prevent focus loss)
   const [nameInput, setNameInput] = useState(() => getSearchParam('name', ''));
   const [locationInput, setLocationInput] = useState(() => getSearchParam('location', ''));
+  const [insuranceInput, setInsuranceInput] = useState(() => getSearchParam('insurance', ''));
 
-  const updateFilter = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNameInput(e.target.value);
-  };
-
-  const handleNameSearch = () => {
-    updateFilter('name', nameInput.trim());
-  };
-
-  const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleNameSearch();
-    }
-  };
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocationInput(e.target.value);
-  };
-
-  const handleLocationSearch = () => {
-    updateFilter('location', locationInput.trim());
-  };
-
-  const handleLocationKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleLocationSearch();
-    }
-  };
-
-  // Sync inputs when filters change from external sources (like clearFilters)
+  // Sync state with URL when SearchParams change (e.g. browser back/forward)
   useEffect(() => {
-    if (filters.name === '' && nameInput !== '') {
-      setNameInput('');
-    }
-    if (filters.location === '' && locationInput !== '') {
-      setLocationInput('');
-    }
-  }, [filters.name, filters.location]);
+    setFilters({
+      specialty: getSearchParam('specialty', 'all'),
+      location: getSearchParam('location', ''),
+      insurance: getSearchParam('insurance', 'all'),
+      name: getSearchParam('name', ''),
+      lastNamePrefix: getSearchParam('lastNamePrefix', ''),
+      availability: getSearchParam('availability', 'all'),
+      sort: getSearchParam('sort', 'rating-desc'),
+    });
+    setNameInput(getSearchParam('name', ''));
+    setLocationInput(getSearchParam('location', ''));
+    setInsuranceInput(getSearchParam('insurance', 'all') === 'all' ? '' : getSearchParam('insurance', ''));
+  }, [searchParams]);
 
-  // Use ref to prevent unnecessary re-renders from onFilterChange
-  const onFilterChangeRef = useRef(onFilterChange);
-  useEffect(() => {
-    onFilterChangeRef.current = onFilterChange;
-  }, [onFilterChange]);
-
-  useEffect(() => {
-    // Update URL when filters change
+  const updateURL = (newFilters: typeof filters) => {
     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
+    Object.entries(newFilters).forEach(([key, value]) => {
       if (value && value !== 'all') params.set(key, value);
     });
     router.replace(`/doctors?${params.toString()}`, { scroll: false });
-    onFilterChangeRef.current?.(filters);
-  }, [filters, router]);
+  };
+
+  const updateFilter = (key: string, value: string) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    updateURL(newFilters);
+  };
+
+  const setAllFilters = (newFilters: typeof filters) => {
+    setFilters(newFilters);
+    updateURL(newFilters);
+  };
 
   const clearFilters = useCallback(() => {
     const clearedFilters = {
@@ -141,26 +110,152 @@ export function DoctorFilters({
     setFilters(clearedFilters);
     setNameInput('');
     setLocationInput('');
-  }, []);
+    setInsuranceInput('');
+    updateURL(clearedFilters);
+  }, [router]);
+
+  return {
+    filters,
+    nameInput,
+    setNameInput,
+    locationInput,
+    setLocationInput,
+    insuranceInput,
+    setInsuranceInput,
+    updateFilter,
+    setAllFilters,
+    clearFilters,
+    router,
+  };
+}
+
+export function TopSearchBar() {
+  const { filters, nameInput, setNameInput, locationInput, setLocationInput, insuranceInput, setInsuranceInput, setAllFilters, router } = useFilters();
+  const [isFocused, setIsFocused] = useState<string | null>(null);
+
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (nameInput.trim()) params.set('name', nameInput.trim());
+    if (locationInput.trim()) params.set('location', locationInput.trim());
+    if (insuranceInput.trim() && insuranceInput.trim() !== 'all') params.set('insurance', insuranceInput.trim());
+
+    // Always navigate to /doctors with the params
+    router.push(`/doctors?${params.toString()}`);
+  };
+
+  return (
+    <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0">
+      <div className="bg-white/95 backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.08)] border border-white/40 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.12)] group/bar">
+        {/* Specialty / Name Search */}
+        <div className={cn(
+          "flex-[1.5] flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500 rounded-t-lg lg:rounded-l-[1.5rem] lg:rounded-tr-none",
+          isFocused === 'search' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
+        )}>
+          <UserSearch className={cn(
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
+            isFocused === 'search' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+          )} />
+          <div className="flex-1 min-w-0">
+            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Explore</label>
+            <input
+              type="text"
+              placeholder="Conditions, doctors..."
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onFocus={() => setIsFocused('search')}
+              onBlur={() => setIsFocused(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+        </div>
+
+        {/* Insurance Search */}
+        <div className={cn(
+          "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500",
+          isFocused === 'insurance' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
+        )}>
+          <Filter className={cn(
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
+            isFocused === 'insurance' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+          )} />
+          <div className="flex-1 min-w-0">
+            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Insurance</label>
+            <input
+              type="text"
+              placeholder="Add your plan"
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
+              value={insuranceInput}
+              onChange={(e) => setInsuranceInput(e.target.value)}
+              onFocus={() => setIsFocused('insurance')}
+              onBlur={() => setIsFocused(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+        </div>
+
+        {/* Location Search */}
+        <div className={cn(
+          "flex-1 flex items-center px-4 py-2 lg:py-0 transition-all duration-500 rounded-b-lg lg:rounded-none",
+          isFocused === 'location' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
+        )}>
+          <MapPin className={cn(
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
+            isFocused === 'location' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+          )} />
+          <div className="flex-1 min-w-0">
+            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Location</label>
+            <input
+              type="text"
+              placeholder="City or zip..."
+              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
+              value={locationInput}
+              onChange={(e) => setLocationInput(e.target.value)}
+              onFocus={() => setIsFocused('location')}
+              onBlur={() => setIsFocused(null)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+          </div>
+        </div>
+
+        {/* Search Button - Compact Circle */}
+        <div className="lg:pl-2 flex items-center p-1">
+          <button
+            onClick={handleSearch}
+            className="relative overflow-hidden bg-brand-teal hover:bg-brand-dark-blue text-white font-black h-10 w-full lg:w-12 lg:h-12 rounded-lg lg:rounded-full transition-all duration-500 flex items-center justify-center group/btn shadow-[0_8px_15px_rgba(45,212,191,0.2)] hover:shadow-[0_12px_25px_rgba(45,212,191,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] transition-transform" />
+            <Search className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-300" />
+            <span className="lg:hidden ml-2 font-bold uppercase text-xs tracking-widest">Search Doctors</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function SidebarFilters({ className }: { className?: string }) {
+  const { filters, updateFilter, clearFilters } = useFilters();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const hasActiveFilters =
-    (filters.specialty && filters.specialty !== 'all') ||
-    filters.location ||
     (filters.insurance && filters.insurance !== 'all') ||
-    filters.name ||
+    (filters.availability && filters.availability !== 'all') ||
     filters.lastNamePrefix ||
-    (filters.availability && filters.availability !== 'all');
+    (filters.specialty && filters.specialty !== 'all');
 
-  const FilterContent = useMemo(() => (
-    <div className="space-y-4">
-      {/* Specialty */}
+  const FilterContent = (
+    <div className="space-y-6">
+      {/* Specialty - Move to side if needed, or keep for specificity */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Specialty</label>
+        <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Specialty</label>
         <Select
           value={filters.specialty || 'all'}
           onValueChange={(value) => updateFilter('specialty', value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/50 border-gray-200">
             <SelectValue placeholder="All Specialties" />
           </SelectTrigger>
           <SelectContent>
@@ -174,56 +269,14 @@ export function DoctorFilters({
         </Select>
       </div>
 
-      {/* Location */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Location</label>
-        <div className="flex gap-2">
-          <Input
-            placeholder="ZIP code, city, or state"
-            value={locationInput}
-            onChange={handleLocationChange}
-            onKeyDown={handleLocationKeyDown}
-            onBlur={handleLocationSearch}
-            className="flex-1"
-            autoComplete="off"
-          />
-          <Button
-            type="button"
-            onClick={handleLocationSearch}
-            className="bg-brand-teal hover:bg-brand-teal/90"
-            aria-label="Search by location"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-        {allStates.length > 0 && (
-          <Select
-            value={filters.location}
-            onValueChange={(value) => updateFilter('location', value)}
-          >
-            <SelectTrigger className="mt-2">
-              <SelectValue placeholder="Or select state" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All States</SelectItem>
-              {allStates.map((state) => (
-                <SelectItem key={state} value={state}>
-                  {state}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
       {/* Insurance */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Insurance</label>
+        <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Insurance</label>
         <Select
           value={filters.insurance || 'all'}
           onValueChange={(value) => updateFilter('insurance', value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/50 border-gray-200">
             <SelectValue placeholder="All Insurance" />
           </SelectTrigger>
           <SelectContent>
@@ -237,67 +290,14 @@ export function DoctorFilters({
         </Select>
       </div>
 
-      {/* Provider Name */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Provider Name
-        </label>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search by name"
-            value={nameInput}
-            onChange={handleNameChange}
-            onKeyDown={handleNameKeyDown}
-            onBlur={handleNameSearch}
-            className="flex-1"
-            autoComplete="off"
-          />
-          <Button
-            type="button"
-            onClick={handleNameSearch}
-            className="bg-brand-teal hover:bg-brand-teal/90"
-            aria-label="Search by name"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Last Name Prefix */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Last Name Starts With
-        </label>
-        <div className="flex flex-wrap gap-1">
-          {alphabet.map((letter) => (
-            <Button
-              key={letter}
-              variant={
-                filters.lastNamePrefix === letter ? 'default' : 'outline'
-              }
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() =>
-                updateFilter(
-                  'lastNamePrefix',
-                  filters.lastNamePrefix === letter ? '' : letter
-                )
-              }
-            >
-              {letter}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       {/* Availability */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Availability</label>
+        <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Availability</label>
         <Select
           value={filters.availability || 'all'}
           onValueChange={(value) => updateFilter('availability', value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/50 border-gray-200">
             <SelectValue placeholder="Any time" />
           </SelectTrigger>
           <SelectContent>
@@ -309,14 +309,14 @@ export function DoctorFilters({
         </Select>
       </div>
 
-      {/* Sort */}
+      {/* Sorting */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Sort By</label>
+        <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Sort Results</label>
         <Select
           value={filters.sort}
           onValueChange={(value) => updateFilter('sort', value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="bg-white/50 border-gray-200 focus:ring-brand-teal">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -329,54 +329,95 @@ export function DoctorFilters({
         </Select>
       </div>
 
+      {/* Last Name Prefix */}
+      <div>
+        <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">
+          Last Name Starts With
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {alphabet.map((letter) => (
+            <button
+              key={letter}
+              className={cn(
+                "h-8 w-8 text-xs font-bold rounded-lg transition-all transform active:scale-90",
+                filters.lastNamePrefix === letter
+                  ? "bg-brand-teal text-white shadow-md shadow-brand-teal/20"
+                  : "bg-white border border-gray-200 text-gray-500 hover:border-brand-teal hover:text-brand-teal"
+              )}
+              onClick={() =>
+                updateFilter(
+                  'lastNamePrefix',
+                  filters.lastNamePrefix === letter ? '' : letter
+                )
+              }
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {hasActiveFilters && (
         <Button
           variant="outline"
           onClick={clearFilters}
-          className="w-full"
+          className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-4"
         >
           <X className="h-4 w-4 mr-2" />
-          Clear Filters
+          Reset All Filters
         </Button>
       )}
     </div>
-  ), [filters, nameInput, locationInput, hasActiveFilters]);
+  );
 
   return (
     <>
-      {/* Desktop Filters */}
+      {/* Desktop Sidebar */}
       <div className={cn('hidden md:block', className)}>
-        <div className="sticky top-20">
-          <h3 className="text-lg font-semibold mb-4">Filters</h3>
+        <div className="sticky top-24 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-brand-dark-blue flex items-center gap-2">
+              <Filter className="h-5 w-5 text-brand-teal" />
+              Refine Search
+            </h3>
+          </div>
           {FilterContent}
         </div>
       </div>
 
       {/* Mobile Filters */}
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" className="md:hidden w-full">
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-            {hasActiveFilters && (
-              <span className="ml-2 bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
-                {Object.values(filters).filter(Boolean).length}
-              </span>
-            )}
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-          <SheetHeader>
-            <SheetTitle>Filters</SheetTitle>
-            <SheetDescription>
-              Filter doctors by specialty, location, insurance, and more.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
+      <div className="md:hidden mb-6">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="w-full bg-white border-gray-200 h-12 rounded-xl text-gray-700 shadow-sm">
+              <Filter className="h-4 w-4 mr-2 text-brand-teal" />
+              Filters & Sorting
+              {hasActiveFilters && (
+                <span className="ml-2 bg-brand-teal text-white rounded-full px-2 py-0.5 text-[10px] font-bold">
+                  Active
+                </span>
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+            <SheetHeader className="mb-6">
+              <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                <Filter className="h-6 w-6 text-brand-teal" />
+                Refine Search
+              </SheetTitle>
+              <SheetDescription>
+                Narrow down results to find the perfect doctor.
+              </SheetDescription>
+            </SheetHeader>
             {FilterContent}
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      </div>
     </>
   );
+}
+
+// Legacy export for compatibility if needed, though we should update page.tsx
+export function DoctorFilters({ className }: { className?: string }) {
+  return <SidebarFilters className={className} />;
 }

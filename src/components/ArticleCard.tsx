@@ -22,13 +22,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
             {article.title}
           </Link>
         </CardTitle>
-        <CardDescription className="mt-2">
-          <div className="flex items-center gap-2 text-sm">
+        <div className="mt-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
             <span className="font-medium">{article.authorName}</span>
             <span className="text-muted-foreground">•</span>
             <span className="text-muted-foreground">{article.authorSpecialty}</span>
           </div>
-        </CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4 mb-3 text-sm text-muted-foreground">

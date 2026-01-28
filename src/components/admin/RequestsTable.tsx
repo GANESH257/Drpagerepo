@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdminJoinRequest, getJoinRequests } from '@/lib/adminStorage';
+import { AdminJoinRequest, getJoinRequests, saveJoinRequests } from '@/lib/adminStorage';
 import { RequestDetailDrawer } from './RequestDetailDrawer';
-import { seedMockJoinRequests } from '@/data/mockJoinRequests';
+import { seedMockJoinRequests, mockJoinRequests } from '@/data/mockJoinRequests';
+import { Sparkles } from 'lucide-react';
 
 type FilterStatus = 'All' | 'Pending' | 'Accepted' | 'Rejected';
 
@@ -25,8 +27,6 @@ export function RequestsTable() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    // Seed mock data if empty
-    seedMockJoinRequests();
     loadRequests();
   }, []);
 
@@ -68,9 +68,27 @@ export function RequestsTable() {
     setDrawerOpen(true);
   };
 
+  const handleGenerateSampleRequests = () => {
+    // Save mock requests to localStorage
+    saveJoinRequests(mockJoinRequests);
+    loadRequests();
+  };
+
   return (
     <>
       <div className="space-y-6">
+        {/* Generate Sample Requests Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleGenerateSampleRequests}
+            variant="gradient"
+            className="gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate Sample Requests
+          </Button>
+        </div>
+
         {/* Filters */}
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
           <TabsList>

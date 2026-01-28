@@ -7,6 +7,8 @@ import {
   FileText,
   Crown,
   FileCheck,
+  Calendar,
+  Users,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -45,6 +47,18 @@ const navItems: NavItem[] = [
     icon: FileCheck,
     description: 'Manage organization policies',
   },
+  {
+    label: 'Events',
+    href: '/admin/events',
+    icon: Calendar,
+    description: 'Edit meetings and events',
+  },
+  {
+    label: 'Member Management',
+    href: '/admin/members',
+    icon: Users,
+    description: 'Manage doctor members',
+  },
 ];
 
 interface AdminSidebarProps {
@@ -58,7 +72,7 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
   return (
     <aside
       className={cn(
-        'fixed left-0 top-36 z-30 h-[calc(100vh-9rem)] border-r-2 border-brand-teal/20 bg-white transition-all duration-300 overflow-y-auto',
+        'fixed left-0 top-40 md:top-44 z-30 h-[calc(100vh-10rem)] md:h-[calc(100vh-11rem)] border-r-2 border-brand-teal/20 bg-white transition-all duration-300 overflow-y-auto',
         'bg-gradient-to-b from-white to-var(--skin-vibrant-teal)/30',
         isCollapsed ? 'w-16' : 'w-64',
         'hidden lg:block'

@@ -14,17 +14,17 @@ import Link from 'next/link';
 
 export function PoliciesSection() {
   return (
-    <section id="policies" className="py-16 md:py-24 bg-gradient-to-br from-teal-50 via-white to-blue-50">
+    <section id="policies" className="py-16 md:py-24 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/90 to-brand-teal/20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-teal/10 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-teal/20 mb-4">
             <FileText className="h-8 w-8 text-brand-teal" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-brand-dark-blue">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-teal tracking-tight">
             Membership Policies
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium">
             Our membership policies ensure clarity, fairness, and professional standards for all Alliance members.
           </p>
         </div>

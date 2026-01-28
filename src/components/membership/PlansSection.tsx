@@ -49,7 +49,7 @@ export function PlansSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="plans" className="py-16 md:py-24 skin-slate">
+    <section ref={sectionRef} id="plans" className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center mb-12">
           <h2 

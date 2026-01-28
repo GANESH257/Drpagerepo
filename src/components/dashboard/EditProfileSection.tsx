@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Save, RotateCcw, Info } from 'lucide-react';
+import Image from 'next/image';
+import { Save, RotateCcw, Info, Upload } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -163,6 +164,44 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 pt-4">
+                  {/* Profile Image */}
+                  <div className="space-y-2">
+                    <Label htmlFor="image">Profile Image</Label>
+                    <div className="flex flex-col gap-4">
+                      {doctor.image && (
+                        <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                          <Image
+                            src={doctor.image}
+                            alt={doctor.fullName}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                            onError={(e) => {
+                              // Hide image on error
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input
+                          id="image"
+                          type="url"
+                          value={doctor.image || ''}
+                          onChange={(e) => updateField('image', e.target.value)}
+                          placeholder="https://example.com/image.jpg or /path/to/image.jpg"
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Enter a URL or path to your profile image. This will be displayed on your profile page and directory listings.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
@@ -267,6 +306,42 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       placeholder="Add specialties..."
                       suggestions={departments.map((d) => d.name)}
                     />
+                  </div>
+
+                  <Separator />
+
+                  {/* Primary Location Office Hours */}
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryLocationHours">Primary Location Office Hours</Label>
+                    <Input
+                      id="primaryLocationHours"
+                      value={doctor.locations[0]?.hours || ''}
+                      onChange={(e) => {
+                        const updatedLocations = [...doctor.locations];
+                        if (updatedLocations.length === 0) {
+                          // Create a default primary location if none exists
+                          updatedLocations.push({
+                            name: 'Main Office',
+                            address: '',
+                            city: '',
+                            state: '',
+                            zip: '',
+                            phone: '',
+                            hours: e.target.value,
+                          });
+                        } else {
+                          updatedLocations[0] = {
+                            ...updatedLocations[0],
+                            hours: e.target.value,
+                          };
+                        }
+                        setDoctor((prevDoctor) => ({ ...prevDoctor, locations: updatedLocations }));
+                      }}
+                      placeholder="e.g., Mon-Fri: 9:00 AM - 5:00 PM, Sat-Sun: Closed"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Office hours for your primary practice location. This will be displayed on your profile page.
+                    </p>
                   </div>
                 </div>
               </AccordionContent>

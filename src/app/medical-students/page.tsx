@@ -1,4 +1,5 @@
 import { StudentsHero } from '@/components/StudentsHero';
+import { MedicalStudentsHelperNav } from '@/components/medical-students/MedicalStudentsHelperNav';
 import { HowToUseStudentsPage } from '@/components/HowToUseStudentsPage';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { PillarGrid } from '@/components/PillarGrid';
@@ -11,6 +12,7 @@ export default function MedicalStudentsPage() {
     <div className="min-h-screen">
       <div className="pt-24">
         <StudentsHero />
+        <MedicalStudentsHelperNav />
         <HowToUseStudentsPage />
         <GenericCTASection />
         <PillarGrid />

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PublicHealthHero } from '@/components/PublicHealthHero';
+import { PublicHealthHelperNav } from '@/components/public-health/PublicHealthHelperNav';
 import { LatestNewsSection } from '@/components/LatestNewsSection';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { DiseaseTopicsFilter } from '@/components/DiseaseTopicsFilter';
@@ -48,6 +49,7 @@ function PublicHealthPageContent() {
   return (
     <>
       <PublicHealthHero />
+      <PublicHealthHelperNav />
       <LatestNewsSection />
       <GenericCTASection />
       

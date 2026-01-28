@@ -26,8 +26,8 @@ const subjectOptions = [
   'Other',
 ];
 
-const PRIVACY_CONSENT_TEXT = 'I agree to the privacy policy and authorize Chesterfield Spine Center to contact me regarding my inquiry';
-const SMS_CONSENT_TEXT = 'I consent to receive SMS messages from Chesterfield Spine Center for appointment confirmations, reminders, and other healthcare-related information.';
+const PRIVACY_CONSENT_TEXT = 'I agree to the privacy policy and authorize Alliance of Independent Physicians to contact me regarding my inquiry';
+const SMS_CONSENT_TEXT = 'I consent to receive SMS messages from Alliance of Independent Physicians for appointment confirmations, reminders, and other healthcare-related information.';
 
 export function ContactForm() {
   const [name, setName] = useState('');
@@ -36,8 +36,8 @@ export function ContactForm() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [preferredContact, setPreferredContact] = useState<'email' | 'phone' | 'sms' | ''>('');
-  const [consentPrivacy, setConsentPrivacy] = useState(false);
-  const [consentSms, setConsentSms] = useState(false);
+  const [consentPrivacy, setConsentPrivacy] = useState(true);
+  const [consentSms, setConsentSms] = useState(true);
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);

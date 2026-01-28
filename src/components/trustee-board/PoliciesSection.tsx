@@ -19,24 +19,24 @@ export function PoliciesSection() {
   };
 
   return (
-    <section id="policies" className="py-16 md:py-24 relative bg-gradient-to-b from-white to-teal-50">
+    <section id="policies" className="py-16 md:py-24 relative bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/90 to-brand-teal/20">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-teal/10 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand-teal/20 mb-4">
             <Shield className="h-8 w-8 text-brand-teal" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-brand-dark-blue">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-teal tracking-tight">
             Policies & Governance
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium">
             Our governance policies ensure transparency, accountability, and the highest standards of professional conduct.
           </p>
         </div>
 
         {/* Intro Paragraph */}
         <div className="max-w-3xl mx-auto mb-12">
-          <p className="text-base text-gray-700 leading-relaxed text-center">
+          <p className="text-base md:text-lg text-white/90 leading-relaxed text-center">
             The Board of Trustees maintains comprehensive policies and procedures to guide the organization's operations, ensure compliance with regulations, and uphold our commitment to excellence in healthcare delivery.
           </p>
         </div>
@@ -67,8 +67,8 @@ export function PoliciesSection() {
 
         {/* Note */}
         <div className="max-w-3xl mx-auto mt-12">
-          <p className="text-sm text-gray-600 text-center">
-            <strong>Note:</strong> All policies are reviewed and updated regularly. For questions about specific policies, please contact the board secretary.
+          <p className="text-sm text-white/80 text-center">
+            <strong className="text-white/90">Note:</strong> All policies are reviewed and updated regularly. For questions about specific policies, please contact the board secretary.
           </p>
         </div>
       </div>

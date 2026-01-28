@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import {
   Network,
   Search,
@@ -95,25 +94,6 @@ export function DoctorBenefitsPanel() {
 
   return (
     <div ref={panelRef} className="w-full flex flex-col justify-center px-4 md:px-6 lg:px-8 py-12 lg:py-16">
-      {/* Logo */}
-      <div 
-        className="mb-8"
-        style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0.8)',
-          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s ease-out 0.4s, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s',
-        }}
-      >
-        <Image
-          src="/logodrp.png"
-          alt="Alliance of Independent Physicians"
-          width={200}
-          height={60}
-          className="h-12 w-auto transition-transform duration-300 hover:scale-105"
-          priority
-        />
-      </div>
-
       {/* Headline */}
       <h1 
         className="text-4xl lg:text-5xl font-bold text-brand-dark-blue mb-4 leading-tight"

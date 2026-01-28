@@ -3,13 +3,13 @@ import { PillarCard } from './PillarCard';
 
 export function PillarGrid() {
   return (
-    <section id="main-tracks" className="py-16 md:py-24 relative bg-teal-50 overflow-visible" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(46, 196, 182, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(26, 75, 127, 0.03) 0%, transparent 50%)' }}>
+    <section id="main-tracks" className="py-16 md:py-24 relative bg-gradient-to-br from-brand-dark-blue/90 via-brand-dark-blue-alt/80 to-brand-dark-blue/95 overflow-visible">
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-brand-dark-blue">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
             Main Tracks
           </h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          <p className="text-lg text-white/90 max-w-2xl mx-auto">
             Explore our comprehensive resources organized by your stage in medical training
           </p>
         </div>

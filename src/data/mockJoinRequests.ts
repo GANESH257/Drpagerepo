@@ -33,7 +33,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
   },
   {
     id: 'req-mock-002',
-    submittedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
+    submittedAt: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 2 months ago
     status: 'approved',
     applicant: {
       email: 'dr.johnson@example.com',
@@ -50,13 +50,13 @@ export const mockJoinRequests: AdminJoinRequest[] = [
       billingCycle: 'monthly',
     },
     paymentMethod: 'paypal',
-    decidedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedAt: new Date(Date.now() - 1.8 * 30 * 24 * 60 * 60 * 1000).toISOString(), // Approved 1.8 months ago
     decidedBy: 'admin@aip.com',
     notes: 'Approved - credentials verified',
   },
   {
     id: 'req-mock-003',
-    submittedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    submittedAt: new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 3 months ago
     status: 'rejected',
     applicant: {
       email: 'dr.williams@example.com',
@@ -78,7 +78,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
       cardName: 'Robert Williams',
       billingZip: '60601',
     },
-    decidedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedAt: new Date(Date.now() - 2.8 * 30 * 24 * 60 * 60 * 1000).toISOString(), // Rejected 2.8 months ago
     decidedBy: 'admin@aip.com',
     rejectionReason: 'Incomplete application - missing required documentation',
   },
@@ -105,7 +105,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
   },
   {
     id: 'req-mock-005',
-    submittedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+    submittedAt: new Date(Date.now() - 4 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 4 months ago
     status: 'approved',
     applicant: {
       email: 'dr.davis@example.com',
@@ -127,7 +127,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
       cardName: 'James Davis',
       billingZip: '85001',
     },
-    decidedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedAt: new Date(Date.now() - 3.8 * 30 * 24 * 60 * 60 * 1000).toISOString(), // Approved 3.8 months ago
     decidedBy: 'admin@aip.com',
     notes: 'Approved - Premier plan access granted',
   },
@@ -156,7 +156,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
   },
   {
     id: 'req-mock-007',
-    submittedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), // 12 days ago
+    submittedAt: new Date(Date.now() - 5 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 5 months ago
     status: 'rejected',
     applicant: {
       email: 'dr.wilson@example.com',
@@ -173,7 +173,7 @@ export const mockJoinRequests: AdminJoinRequest[] = [
       billingCycle: 'annual',
     },
     paymentMethod: 'paypal',
-    decidedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedAt: new Date(Date.now() - 4.8 * 30 * 24 * 60 * 60 * 1000).toISOString(), // Rejected 4.8 months ago
     decidedBy: 'admin@aip.com',
     rejectionReason: 'Application does not meet current membership criteria',
   },
@@ -202,6 +202,180 @@ export const mockJoinRequests: AdminJoinRequest[] = [
       cardName: 'Jennifer Moore',
       billingZip: '92101',
     },
+  },
+  {
+    id: 'req-mock-009',
+    submittedAt: new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 6 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.taylor@example.com',
+      fullName: 'Dr. Christopher Taylor, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Cardiology',
+      phone: '(555) 901-2345',
+      city: 'Miami',
+      state: 'FL',
+      practiceName: 'Taylor Heart Institute',
+    },
+    plan: {
+      planId: 'professional',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'card',
+    decidedAt: new Date(Date.now() - 5.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-010',
+    submittedAt: new Date(Date.now() - 7 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 7 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.anderson@example.com',
+      fullName: 'Dr. Lisa Anderson, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Internal Medicine',
+      phone: '(555) 012-3456',
+      city: 'Seattle',
+      state: 'WA',
+      practiceName: 'Anderson Internal Medicine',
+    },
+    plan: {
+      planId: 'basic',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'paypal',
+    decidedAt: new Date(Date.now() - 6.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-011',
+    submittedAt: new Date(Date.now() - 8 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 8 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.thomas@example.com',
+      fullName: 'Dr. Mark Thomas, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Orthopedic Spine',
+      phone: '(555) 123-4567',
+      city: 'Denver',
+      state: 'CO',
+      practiceName: 'Thomas Spine Center',
+    },
+    plan: {
+      planId: 'premier',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'card',
+    decidedAt: new Date(Date.now() - 7.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-012',
+    submittedAt: new Date(Date.now() - 9 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 9 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.jackson@example.com',
+      fullName: 'Dr. Susan Jackson, D.O.',
+      credentials: 'D.O.',
+      specialty: 'Family Practice',
+      phone: '(555) 234-5678',
+      city: 'Atlanta',
+      state: 'GA',
+      practiceName: 'Jackson Family Care',
+    },
+    plan: {
+      planId: 'professional',
+      billingCycle: 'monthly',
+    },
+    paymentMethod: 'card',
+    decidedAt: new Date(Date.now() - 8.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-013',
+    submittedAt: new Date(Date.now() - 10 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 10 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.white@example.com',
+      fullName: 'Dr. Daniel White, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Dermatology',
+      phone: '(555) 345-6789',
+      city: 'Boston',
+      state: 'MA',
+      practiceName: 'White Dermatology',
+    },
+    plan: {
+      planId: 'professional',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'paypal',
+    decidedAt: new Date(Date.now() - 9.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-014',
+    submittedAt: new Date(Date.now() - 11 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 11 months ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.harris@example.com',
+      fullName: 'Dr. Michelle Harris, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Endocrinology',
+      phone: '(555) 456-7890',
+      city: 'Portland',
+      state: 'OR',
+      practiceName: 'Harris Endocrine Clinic',
+    },
+    plan: {
+      planId: 'basic',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'card',
+    decidedAt: new Date(Date.now() - 10.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-015',
+    submittedAt: new Date(Date.now() - 1 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 1 month ago
+    status: 'approved',
+    applicant: {
+      email: 'dr.martin@example.com',
+      fullName: 'Dr. Kevin Martin, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Gastroenterology',
+      phone: '(555) 567-8901',
+      city: 'Dallas',
+      state: 'TX',
+      practiceName: 'Martin GI Associates',
+    },
+    plan: {
+      planId: 'professional',
+      billingCycle: 'annual',
+    },
+    paymentMethod: 'card',
+    decidedAt: new Date(Date.now() - 0.8 * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    decidedBy: 'admin@aip.com',
+  },
+  {
+    id: 'req-mock-016',
+    submittedAt: new Date(Date.now() - 1.5 * 30 * 24 * 60 * 60 * 1000).toISOString(), // 1.5 months ago
+    status: 'under_review',
+    applicant: {
+      email: 'dr.garcia@example.com',
+      fullName: 'Dr. Maria Garcia, M.D.',
+      credentials: 'M.D.',
+      specialty: 'Psychiatry',
+      phone: '(555) 678-9012',
+      city: 'San Francisco',
+      state: 'CA',
+      practiceName: 'Garcia Mental Health',
+    },
+    plan: {
+      planId: 'professional',
+      billingCycle: 'monthly',
+    },
+    paymentMethod: 'card',
   },
 ];
 

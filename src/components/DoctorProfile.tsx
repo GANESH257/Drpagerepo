@@ -23,6 +23,7 @@ import {
   Building2,
   Award,
   Briefcase,
+  Clock,
 } from 'lucide-react';
 
 interface DoctorProfileProps {
@@ -103,14 +104,20 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
     )
     .slice(0, 3);
 
+  // Get nearest 2 upcoming available slots, sorted by date and time
   const availableSlots = doctor.availability
     .filter((slot) => slot.available)
-    .slice(0, 10);
+    .sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.time.localeCompare(b.time);
+    })
+    .slice(0, 2);
 
   return (
     <div ref={sectionRef} className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 skin-tint overflow-hidden">
+      <section className="relative pt-24 md:pt-28 pb-16 md:pb-24 skin-tint overflow-hidden">
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <Link
             href="/doctors"
@@ -604,25 +611,26 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
 
             {/* Booking Slots */}
             <Card>
-              <CardHeader>
-                <CardTitle>Available Appointments</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Available Appointments</CardTitle>
+                <CardDescription className="text-sm">
                   Select a time slot to request an appointment
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {availableSlots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     No available slots at this time. Please contact the office
                     directly.
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {availableSlots.map((slot, index) => (
                       <Button
                         key={index}
                         variant="outline"
-                        className="w-full justify-start border-brand-teal/30 text-brand-dark-blue hover:bg-brand-teal hover:text-white transition-all duration-200 hover:scale-105"
+                        size="sm"
+                        className="w-full justify-start border-brand-teal/30 text-brand-dark-blue hover:bg-brand-teal hover:text-white transition-all duration-200 text-sm py-2 h-auto"
                         onClick={() => setBookingOpen(true)}
                         style={{
                           opacity: isVisible ? 1 : 0,
@@ -632,7 +640,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                             : `opacity 0.5s ease-out ${0.7 + index * 0.05}s, transform 0.5s ease-out ${0.7 + index * 0.05}s`,
                         }}
                       >
-                        <Calendar className="h-4 w-4 mr-2" />
+                        <Calendar className="h-3.5 w-3.5 mr-2" />
                         {new Date(slot.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -643,13 +651,32 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   </div>
                 )}
                 <Button
-                  className="w-full mt-4 bg-brand-teal hover:bg-brand-teal/90 text-white transition-all duration-200 hover:scale-105 shadow-md"
+                  size="sm"
+                  variant="ghost"
+                  className="w-full mt-3 text-xs text-brand-teal hover:text-brand-dark-blue hover:bg-brand-teal/10"
                   onClick={() => setBookingOpen(true)}
                 >
-                  View All Times
+                  View All Times →
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Office Hours */}
+            {doctor.locations[0]?.hours && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-brand-teal" />
+                    Practice Hours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground">
+                    {doctor.locations[0].hours}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Info */}
             <Card 

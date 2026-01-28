@@ -9,6 +9,8 @@ import { Doctor } from '@/types';
 import { loadAppointmentRequests, loadReferrals } from '@/lib/doctorStorage';
 import { useEffect, useState } from 'react';
 import { AppointmentRequest, Referral } from '@/types';
+import { MonthlyAppointmentsChart } from './MonthlyAppointmentsChart';
+import { MonthlyReferralsChart } from './MonthlyReferralsChart';
 
 interface OverviewSectionProps {
   doctor: Doctor;
@@ -160,6 +162,12 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Monthly Charts */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <MonthlyAppointmentsChart appointments={appointmentRequests} />
+        <MonthlyReferralsChart referrals={referrals} />
       </div>
 
       {/* Quick Actions */}

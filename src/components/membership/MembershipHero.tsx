@@ -58,7 +58,7 @@ export function MembershipHero() {
   ];
 
   return (
-    <section ref={sectionRef} className="relative w-full pt-24 md:pt-28 min-h-[600px] md:h-[600px] overflow-hidden">
+    <section ref={sectionRef} className="relative w-full pt-32 md:pt-36 min-h-[600px] md:h-[600px] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image

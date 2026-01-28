@@ -2,15 +2,8 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
-import { Playfair_Display } from 'next/font/google';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-playfair',
-});
 
 interface CarouselFeature {
   number: string;
@@ -221,14 +214,14 @@ export function WhatWeDoSection() {
   return (
     <section 
       ref={sectionRef} 
-      className={`py-16 md:py-24 relative skin-slate overflow-hidden ${playfairDisplay.variable}`}
+      className="py-16 md:py-24 relative skin-slate overflow-hidden"
       id="what-we-do"
     >
       <div className="container mx-auto px-4 md:px-6 max-w-7xl relative z-10">
         {/* Header Section - Centered */}
         <div className="text-center mb-12 md:mb-16">
           <h2 
-            className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-brand-dark-blue leading-tight ${playfairDisplay.className}`}
+            className="text-4xl md:text-5xl font-bold mb-4 text-brand-teal tracking-tight"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',

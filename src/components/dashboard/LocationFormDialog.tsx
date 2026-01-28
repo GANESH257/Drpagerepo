@@ -35,6 +35,7 @@ export function LocationFormDialog({
     zip: '',
     phone: '',
     directionsUrl: '',
+    hours: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof Location, string>>>({});
 
@@ -50,6 +51,7 @@ export function LocationFormDialog({
         zip: '',
         phone: '',
         directionsUrl: '',
+        hours: '',
       });
     }
     setErrors({});
@@ -234,6 +236,19 @@ export function LocationFormDialog({
                 onChange={(e) => setFormData({ ...formData, directionsUrl: e.target.value })}
                 placeholder="https://maps.google.com/..."
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hours">Practice Hours (Optional)</Label>
+              <Input
+                id="hours"
+                value={formData.hours || ''}
+                onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                placeholder="e.g., Mon-Fri: 9:00 AM - 5:00 PM, Sat-Sun: Closed"
+              />
+              <p className="text-xs text-muted-foreground">
+                Office hours for this location. This will be displayed on your profile page.
+              </p>
             </div>
           </div>
           <DialogFooter>

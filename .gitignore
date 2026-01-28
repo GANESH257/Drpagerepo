@@ -50,3 +50,6 @@ deployment-*.zip
 # OS
 .DS_Store
 Thumbs.db
+
+/Healdi v1.2/*
+/meciy-package-files/*
