@@ -1,0 +1,133 @@
+===========================================
+DRP WEBSITE - GODADDY DEPLOYMENT INSTRUCTIONS
+===========================================
+
+DEPLOYMENT ZIP FILE:
+- File: DRP-Deployment-[timestamp].zip
+- Contains: All files from the /out folder (static export)
+
+===========================================
+STEP-BY-STEP DEPLOYMENT GUIDE
+===========================================
+
+1. EXTRACT THE ZIP FILE
+   - Extract DRP-Deployment-[timestamp].zip
+   - You'll get an "out" folder with all files
+
+2. LOG INTO GODADDY CPANEL
+   - Go to your GoDaddy account
+   - Access cPanel File Manager
+   - Navigate to public_html/ (or www/ depending on your setup)
+
+3. UPLOAD FILES
+   Option A: Via cPanel File Manager
+   - Select all files INSIDE the "out" folder
+   - Upload them to public_html/
+   - Ensure index.html is in the root of public_html/
+   
+   Option B: Via FTP/SFTP
+   - Connect using FileZilla, Cyberduck, or similar
+   - Navigate to public_html/
+   - Upload all contents from the "out" folder
+   - Maintain folder structure
+
+4. VERIFY FILE STRUCTURE
+   After upload, public_html/ should contain:
+   - index.html (root)
+   - _next/ folder (static assets)
+   - doctors/ folder
+   - join-us/ folder
+   - public-health/ folder
+   - Backgroundnew.mp4
+   - All other folders and files
+
+5. SET FILE PERMISSIONS (if needed)
+   - Files: 644
+   - Folders: 755
+   - Can be done via cPanel File Manager
+
+6. TEST THE WEBSITE
+   - Visit your domain: https://yourdomain.com
+   - Test navigation links
+   - Verify all pages load correctly
+   - Check that images and videos display
+
+===========================================
+IMPORTANT NOTES
+===========================================
+
+- This is a STATIC website (no server-side code)
+- All pages are pre-generated HTML files
+- Authentication is client-side (localStorage)
+- No database or API required
+
+- The site uses trailing slashes (/)
+- URLs end with / (e.g., /doctors/, /join-us/)
+
+- If you encounter 404 errors:
+  - Ensure all files from /out are uploaded
+  - Check that .htaccess is configured (see below)
+
+===========================================
+.htaccess CONFIGURATION (if needed)
+===========================================
+
+If you encounter routing issues, create a .htaccess file in public_html/:
+
+RewriteEngine On
+RewriteBase /
+
+# Handle trailing slashes
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !(.*)/$
+RewriteRule ^(.*)$ $1/ [L,R=301]
+
+# Handle Next.js routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /index.html [L]
+
+===========================================
+TROUBLESHOOTING
+===========================================
+
+Problem: 404 errors on routes
+Solution: 
+- Verify all files uploaded
+- Check .htaccess configuration
+- Ensure trailing slashes are handled
+
+Problem: CSS/JS not loading
+Solution:
+- Verify _next/ folder uploaded completely
+- Check file permissions (644 for files)
+- Clear browser cache
+
+Problem: Images not showing
+Solution:
+- Verify Dr_images/ folder uploaded
+- Check Backgroundnew.mp4 is in root
+- Verify file paths match code
+
+Problem: Dashboard pages redirect
+Solution:
+- This is normal - dashboard requires login
+- Login with: doctor@aip.com / AIP@12345
+- Or any doctor email from the system
+
+===========================================
+BUILD INFORMATION
+===========================================
+
+- Build Date: [Check zip file timestamp]
+- Next.js Version: 14.2.35
+- Export Type: Static (output: 'export')
+- Total Pages: 181 static pages generated
+
+===========================================
+SUPPORT
+===========================================
+
+For deployment issues, refer to:
+- docs/DEPLOY_GODADDY.md
+- DEPLOYMENT_CHECKLIST.md

@@ -1,0 +1,22 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Alliance of Independent Physicians//Board Meeting//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:next-board-meeting-2026-02-15@aip.org
+DTSTAMP:20260125T000000Z
+DTSTART:20260215T220000Z
+DTEND:20260215T230000Z
+SUMMARY:Board of Trustees Meeting
+DESCRIPTION:Monthly Board of Trustees Meeting\n\nAgenda:\n- Review of Q4 2025 financials and budget approval\n- Discussion of new member applications\n- Policy updates\n- Strategic planning for 2026-2027\n- Update on physician recruitment programs\n- Open forum for member questions
+LOCATION:Virtual Meeting
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Board Meeting Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR

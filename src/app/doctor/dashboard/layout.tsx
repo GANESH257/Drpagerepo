@@ -1,0 +1,123 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useDoctorSession } from '@/lib/useDoctorSession';
+import { findDoctorByEmail, loadDoctorProfile } from '@/lib/doctorStorage';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Doctor } from '@/types';
+
+export default function DoctorDashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
+  const { getSession, isAuthenticated, updateSessionDoctorId } = useDoctorSession();
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkAuthAndLoadDoctor = () => {
+      if (!isAuthenticated()) {
+        router.push('/join-us');
+        return;
+      }
+
+      const session = getSession();
+      if (!session || !session.email) {
+        router.push('/join-us');
+        return;
+      }
+
+      // Find doctor by email
+      const foundDoctor = findDoctorByEmail(session.email);
+      
+      // If doctor not found in seed data
+      if (!foundDoctor) {
+        setError('Dashboard access is available after approval.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update session with doctorId if not present
+      if (!session.doctorId) {
+        updateSessionDoctorId(foundDoctor.id);
+      }
+
+      // Load doctor profile (from localStorage or seed data)
+      const loadedDoctor = loadDoctorProfile(foundDoctor.id);
+      
+      // Check if profile exists and has email
+      if (!loadedDoctor || !loadedDoctor.email) {
+        setError('Dashboard access is available after approval.');
+        setIsLoading(false);
+        return;
+      }
+      
+      setDoctor(loadedDoctor);
+      setIsLoading(false);
+    };
+
+    checkAuthAndLoadDoctor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen skin-benefits-enhanced flex items-center justify-center">
+        <div className="text-center max-w-md px-4">
+          <h2 className="text-2xl font-bold text-brand-dark-blue mb-4">
+            Dashboard Access
+          </h2>
+          <p className="text-gray-600 mb-2">{error}</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Submit a join request to get started. Once approved, you'll have full access to your dashboard.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => router.push('/join-us/application')}
+              variant="gradient"
+            >
+              Submit Join Request
+            </Button>
+            <Button
+              onClick={() => router.push('/join-us')}
+              variant="outline"
+            >
+              Return to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!doctor) {
+    return null;
+  }
+
+  const handleProfileUpdate = (updatedDoctor: Doctor) => {
+    // Profile updates are handled by individual sections via localStorage
+    // This is just for layout-level updates if needed
+  };
+
+  return (
+    <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
+      {children}
+    </DashboardLayout>
+  );
+}
