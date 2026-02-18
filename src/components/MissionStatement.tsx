@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { AudienceToggle } from '@/components/AudienceToggle';
 
-export function MissionStatement() {
+interface MissionStatementProps {
+  audience: 'patients' | 'doctors';
+  onAudienceChange: (audience: 'patients' | 'doctors') => void;
+}
+
+export function MissionStatement({ audience, onAudienceChange }: MissionStatementProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -62,6 +68,11 @@ export function MissionStatement() {
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
+          {/* Audience Toggle - Above Title */}
+          <div className="text-center mb-8" style={animationStyle(0)}>
+            <AudienceToggle audience={audience} onAudienceChange={onAudienceChange} />
+          </div>
+
           {/* Title - Full Width */}
           <div className="text-center mb-12 md:mb-16" style={animationStyle(0)}>
             <span className="inline-block px-4 py-1.5 bg-brand-teal/10 text-brand-teal font-black text-xs uppercase tracking-[0.2em] rounded-full mb-4">

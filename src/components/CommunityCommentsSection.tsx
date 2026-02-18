@@ -4,12 +4,14 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { doctors } from '@/data/doctors';
 import { communityComments } from '@/data/communityComments';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star, CheckCircle2, User } from 'lucide-react';
+import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function CommunityCommentsSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
   const sectionRef = useRef<HTMLElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Memoize and ensure deterministic ordering
   // CRITICAL: This must produce identical results on server and client
@@ -112,7 +114,7 @@ export function CommunityCommentsSection() {
         return aPrefix.localeCompare(bPrefix);
       }
       return a.id.localeCompare(b.id);
-    }).slice(0, 8);
+    }).slice(0, 8); // Show more comments for scrolling
   }, []); // Empty deps - data is static
 
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -149,136 +151,170 @@ export function CommunityCommentsSection() {
     return () => observer.disconnect();
   }, []);
 
+  const checkScrollButtons = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScrollButtons();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', checkScrollButtons);
+      window.addEventListener('resize', checkScrollButtons);
+      return () => {
+        container.removeEventListener('scroll', checkScrollButtons);
+        window.removeEventListener('resize', checkScrollButtons);
+      };
+    }
+  }, [isVisible]);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = scrollContainerRef.current.querySelector('.comment-card')?.clientWidth || 400;
+      scrollContainerRef.current.scrollBy({ left: -cardWidth - 24, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      const cardWidth = scrollContainerRef.current.querySelector('.comment-card')?.clientWidth || 400;
+      scrollContainerRef.current.scrollBy({ left: cardWidth + 24, behavior: 'smooth' });
+    }
+  };
+
   return (
     <section 
       ref={sectionRef} 
       id="community-comments" 
-      className="py-16 md:py-24 relative overflow-hidden skin-slate"
+      className="py-10 md:py-14 relative overflow-hidden bg-white"
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div 
-          className="text-center mb-12 md:mb-16"
-          style={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-            transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s ease-out 0.4s, transform 1.5s ease-out 0.4s',
-          }}
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-brand-dark-blue">
-            What Our Community Is Saying
-          </h2>
-          <p className="text-base md:text-lg lg:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            Patient feedback and physician member insights from our network.
-          </p>
-        </div>
+        <div className="max-w-6xl mx-auto">
+          <div
+            className="text-center mb-8 md:mb-10"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+            }}
+          >
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 text-brand-dark-blue">
+              What Our Community Is Saying
+            </h2>
+            <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
+              Patient feedback and physician member insights from our network.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {allComments.map((comment, index) => {
-            const cardDelay = prefersReducedMotion ? 0 : index * 300;
-            const isPatient = comment.role === 'patient';
-            const verified = isPatient && 'verified' in comment ? (comment as any).verified : false;
+          {/* Horizontal Scrolling Container */}
+          <div className="relative">
+            {/* Left Arrow Button (Desktop Only) */}
+            <button
+              onClick={scrollLeft}
+              disabled={!canScrollLeft}
+              className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center rounded-full bg-white border-2 border-gray-200 shadow-lg hover:bg-brand-teal hover:text-white hover:border-brand-teal transition-all duration-200 focus-ring disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
 
-            return (
-              <Card 
-                key={comment.id} 
-                className="h-full card-vibrant focus-ring group relative"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible && !prefersReducedMotion
-                    ? 'translateY(0) rotate(0deg)' 
-                    : index % 2 === 0 
-                      ? 'translateY(30px) rotate(-2deg)' 
-                      : 'translateY(30px) rotate(2deg)',
-                  transition: prefersReducedMotion
-                    ? `opacity 0.3s ease ${cardDelay}ms`
-                    : `opacity 0.7s ease-out ${cardDelay}ms, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay}ms, box-shadow 0.3s ease, border-color 0.3s ease`,
-                }}
-              >
-                <CardContent className="p-6 relative">
-                  {/* Quote Mark Decoration */}
-                  <div 
-                    className="absolute top-4 left-4 text-6xl font-serif text-brand-teal/10 -z-0"
-                    style={{
-                      opacity: isVisible ? 1 : 0,
-                      transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0)',
-                      transition: prefersReducedMotion
-                        ? 'opacity 0.3s ease'
-                        : `opacity 1.2s ease-out ${cardDelay + 300}ms, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 300}ms`,
-                    }}
-                  >
-                    "
-                  </div>
-                  <div className="flex items-start justify-between mb-4 gap-3 relative z-10">
-                    <div className="flex items-center gap-2 flex-wrap flex-1">
-                      {isPatient && comment.rating && (
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < Math.floor(comment.rating!)
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
-                              }`}
-                              aria-hidden="true"
-                            />
-                          ))}
-                          <span className="ml-1 font-semibold text-sm md:text-base text-brand-dark-blue">
-                            {comment.rating!.toFixed(1)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2 flex-shrink-0">
-                      <Badge 
-                        variant={isPatient ? 'secondary' : 'outline'}
-                        className={`text-xs ${
-                          isPatient 
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                            : 'bg-brand-teal/10 text-brand-teal border border-brand-teal/20'
-                        }`}
-                      >
-                        {isPatient ? (
-                          <>
-                            <User className="h-3 w-3 mr-1" aria-hidden="true" />
-                            Patient
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="h-3 w-3 mr-1" aria-hidden="true" />
-                            Physician Member
-                          </>
+            {/* Scrollable Container */}
+            <div
+              ref={scrollContainerRef}
+              className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory -mx-4 px-4"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              <div className="flex gap-4 md:gap-6">
+                {allComments.map((comment, index) => {
+                  const cardDelay = prefersReducedMotion ? 0 : index * 100;
+                  const isPatient = comment.role === 'patient';
+
+                  return (
+                    <Card
+                      key={comment.id}
+                      className="comment-card flex-shrink-0 w-[calc(100%-2rem)] md:w-[400px] lg:w-[450px] bg-white border-2 border-gray-100 hover:border-brand-teal/50 hover:shadow-xl transition-all duration-300 relative overflow-hidden group snap-start"
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion
+                          ? 'translateY(0) scale(1)'
+                          : 'translateY(30px) scale(0.95)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay}ms`
+                          : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
+                      }}
+                    >
+                      {/* Decorative quote mark */}
+                      <div className="absolute top-4 right-4 text-6xl font-serif text-brand-teal/5 group-hover:text-brand-teal/10 transition-colors duration-300 -z-0">
+                        "
+                      </div>
+                      
+                      <CardContent className="p-5 md:p-6 relative z-10">
+                        <Quote className="h-5 w-5 text-brand-teal mb-3" aria-hidden="true" />
+                        
+                        {/* Rating for patients */}
+                        {isPatient && comment.rating && (
+                          <div className="flex items-center gap-1 mb-3">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < Math.floor(comment.rating!)
+                                    ? 'fill-yellow-400 text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
+                                aria-hidden="true"
+                              />
+                            ))}
+                            <span className="ml-1 font-semibold text-sm text-brand-dark-blue">
+                              {comment.rating.toFixed(1)}
+                            </span>
+                          </div>
                         )}
-                      </Badge>
-                      {verified && (
-                        <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border border-green-200">
-                          <CheckCircle2 className="h-3 w-3 mr-1" aria-hidden="true" />
-                          Verified Visit
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-base md:text-lg text-gray-700 mb-4 leading-relaxed">{comment.comment}</p>
-                  <div className="flex items-center justify-between text-sm pt-4 border-t border-gray-100">
-                    <span className="font-semibold text-brand-dark-blue">{comment.author}</span>
-                    <span className="text-gray-600">
-                      {comment.date ? new Date(comment.date).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                  {isPatient && 'doctorName' in comment && comment.doctorName && (
-                    <div className="mt-2 text-xs md:text-sm text-gray-600">
-                      {comment.doctorName} - {comment.doctorSpecialty}
-                    </div>
-                  )}
-                  {!isPatient && 'specialty' in comment && comment.specialty && (
-                    <div className="mt-2 text-xs md:text-sm text-gray-600">
-                      {comment.specialty}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                        
+                        <p className="text-sm md:text-base text-gray-700 mb-4 leading-relaxed">
+                          {comment.comment}
+                        </p>
+                        
+                        <div className="pt-3 border-t border-gray-100">
+                          <div className="font-semibold text-brand-dark-blue text-sm md:text-base">
+                            {comment.author}
+                          </div>
+                          <div className="text-xs md:text-sm text-gray-600 mt-0.5">
+                            {isPatient && 'doctorName' in comment && comment.doctorName
+                              ? `${comment.doctorName} - ${comment.doctorSpecialty}`
+                              : !isPatient && 'specialty' in comment && comment.specialty
+                              ? comment.specialty
+                              : isPatient ? 'Patient' : 'Physician Member'}
+                          </div>
+                          {comment.date && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {new Date(comment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Arrow Button (Desktop Only) */}
+            <button
+              onClick={scrollRight}
+              disabled={!canScrollRight}
+              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center rounded-full bg-white border-2 border-gray-200 shadow-lg hover:bg-brand-teal hover:text-white hover:border-brand-teal transition-all duration-200 focus-ring disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
     </section>

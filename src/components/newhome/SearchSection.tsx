@@ -56,9 +56,9 @@ export function SearchSection() {
   };
 
   return (
-    <section 
+            <section 
       ref={sectionRef}
-      className="relative w-full py-8 md:py-12 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue/90"
+      className="relative w-full mt-12 md:mt-0 py-8 md:py-12 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue/90"
     >
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">

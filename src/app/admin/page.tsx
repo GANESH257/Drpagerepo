@@ -31,9 +31,9 @@ export default function AdminDashboardPage() {
     switch (status) {
       case 'submitted':
       case 'under_review':
-        return <Badge variant="vibrant">Pending</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700 border-gray-300">Pending</Badge>;
       case 'approved':
-        return <Badge variant="gradient">Accepted</Badge>;
+        return <Badge className="bg-[#0F5FA8] text-white border-[#0F5FA8]">Accepted</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -53,8 +53,8 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-3xl font-bold text-brand-dark-blue">Dashboard</h2>
-        <p className="text-muted-foreground mt-2">
+        <h2 className="text-2xl font-bold text-[#0F5FA8]">Dashboard</h2>
+        <p className="text-gray-600 mt-2">
           Overview of membership requests, plans, and statistics
         </p>
       </div>
@@ -65,8 +65,8 @@ export default function AdminDashboardPage() {
       {/* Analytics Charts */}
       <div className="space-y-6">
         <div>
-          <h3 className="text-xl font-semibold text-brand-dark-blue mb-2">Analytics & Insights</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-xl font-semibold text-[#0F5FA8] mb-2">Analytics & Insights</h3>
+          <p className="text-sm text-gray-600">
             Visual overview of network growth, distribution, and membership trends
           </p>
         </div>
@@ -82,16 +82,16 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Recent Requests */}
-      <Card className="card-vibrant">
+      <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Requests</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-[#0F5FA8]">Recent Requests</CardTitle>
+              <CardDescription className="text-gray-600">
                 Latest membership requests requiring attention
               </CardDescription>
             </div>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
               <Link href="/admin/requests">
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -102,8 +102,8 @@ export default function AdminDashboardPage() {
         <CardContent>
           {recentRequests.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No membership requests yet.</p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-gray-600">No membership requests yet.</p>
+              <p className="text-sm text-gray-500 mt-2">
                 Requests will appear here once physicians submit applications.
               </p>
             </div>
@@ -113,17 +113,17 @@ export default function AdminDashboardPage() {
                 <Link
                   key={request.id}
                   href={`/admin/requests#${request.id}`}
-                  className="block p-4 rounded-lg border border-transparent hover:border-brand-teal/30 hover:bg-brand-teal/5 transition-all"
+                  className="block p-4 rounded-lg border border-gray-200 hover:border-[#0F5FA8]/30 hover:bg-[#0F5FA8]/5 transition-all"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold text-brand-dark-blue">
+                        <span className="font-semibold text-[#0F5FA8]">
                           {request.applicant.fullName}
                         </span>
                         {getStatusBadge(request.status)}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-gray-600">
                         <span>{request.applicant.specialty}</span>
                         <span className="mx-2">•</span>
                         <span>{request.plan.planId}</span>
@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
                         <span>{formatDate(request.submittedAt)}</span>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <ArrowRight className="h-4 w-4 text-gray-400" />
                   </div>
                 </Link>
               ))}

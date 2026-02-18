@@ -38,7 +38,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
   const isInternalLink = announcement.url && !announcement.url.startsWith('http');
 
   return (
-    <Card className="h-full card-vibrant">
+    <Card className="h-full card-vibrant group">
       <CardContent className="p-6 flex flex-col h-full">
         {/* Category Badge & Date */}
         <div className="flex items-center justify-between mb-3">
@@ -52,7 +52,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-semibold mb-3 text-brand-dark-blue hover:text-brand-teal transition-colors line-clamp-2 flex-1">
+        <h3 className="text-lg font-semibold mb-3 text-brand-dark-blue group-hover:text-brand-teal transition-colors line-clamp-2 flex-1">
           {isInternalLink ? (
             <Link href={announcement.url!} className="hover:underline">
               {announcement.title}

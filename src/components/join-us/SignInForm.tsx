@@ -214,7 +214,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         {/* Submit Button */}
         <Button
           type="submit"
-          className="w-full bg-brand-teal hover:bg-brand-teal/90"
+          className="w-full bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Signing in...' : 'Sign In'}

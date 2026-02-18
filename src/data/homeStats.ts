@@ -17,7 +17,7 @@ export const homeStats: HomeStat[] = [
     label: 'Medical Specialties',
   },
   {
-    value: 'Board-Certified',
+    value: 'Board Certified',
     label: 'Specialists',
   },
 ];

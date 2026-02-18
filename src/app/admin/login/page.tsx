@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Shield, Users, FileCheck, Settings } from 'lucide-react';
@@ -9,14 +9,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { validateAdminCredentials, setAdminSession } from '@/lib/adminSession';
+import { useDarkMode } from '@/lib/useDarkMode';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { getHomeLink } = useDarkMode();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [homeLink, setHomeLink] = useState<string>('/');
+
+  useEffect(() => {
+    setHomeLink(getHomeLink());
+  }, [getHomeLink]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,13 +52,13 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen skin-benefits-enhanced">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 pt-32 md:pt-36 pb-12 lg:pb-16">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 max-w-7xl mx-auto">
           {/* Left: Description */}
           <div className="lg:w-1/2 flex flex-col justify-center">
             <div className="mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-brand-dark-blue mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-[#0F5FA8] mb-4">
                 Admin Portal
               </h1>
               <p className="text-lg text-gray-700 mb-6">
@@ -85,11 +92,11 @@ export default function AdminLoginPage() {
                 const Icon = item.icon;
                 return (
                   <div key={index} className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-brand-teal/10 flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-brand-teal" />
+                    <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#0F5FA8]/10 flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-[#0F5FA8]" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-brand-dark-blue mb-1">
+                      <h3 className="font-semibold text-[#0F5FA8] mb-1">
                         {item.title}
                       </h3>
                       <p className="text-sm text-gray-600">{item.description}</p>
@@ -102,25 +109,25 @@ export default function AdminLoginPage() {
 
           {/* Right: Login Card */}
           <div className="lg:w-1/2 flex items-center">
-            <Card className="w-full card-vibrant">
+            <Card className="w-full bg-white border border-gray-200 rounded-xl shadow-sm">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-brand-dark-blue">
+                <CardTitle className="text-2xl font-bold text-[#0F5FA8]">
                   Sign In
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-600">
                   Enter your admin credentials to access the portal
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {error && (
-                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
                       {error}
                     </div>
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-gray-700">Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -129,12 +136,12 @@ export default function AdminLoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isSubmitting}
-                      className="w-full"
+                      className="w-full border-gray-300 focus:ring-[#0F5FA8] focus:border-[#0F5FA8]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-gray-700">Password</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -144,13 +151,13 @@ export default function AdminLoginPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={isSubmitting}
-                        className="w-full pr-10"
+                        className="w-full pr-10 border-gray-300 focus:ring-[#0F5FA8] focus:border-[#0F5FA8]"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-0 top-0 h-full w-10"
+                        className="absolute right-0 top-0 h-full w-10 text-gray-500 hover:text-gray-700"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                       >
@@ -165,18 +172,17 @@ export default function AdminLoginPage() {
 
                   <Button
                     type="submit"
-                    variant="gradient"
-                    className="w-full"
+                    className="w-full bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </form>
 
-                <div className="mt-6 pt-6 border-t">
+                <div className="mt-6 pt-6 border-t border-gray-200">
                   <Link
-                    href="/"
-                    className="text-sm text-brand-teal hover:text-brand-dark-blue hover:underline inline-flex items-center gap-1"
+                    href={homeLink}
+                    className="text-sm text-[#0F5FA8] hover:text-[#1a6bb8] hover:underline inline-flex items-center gap-1"
                   >
                     ← Back to site
                   </Link>

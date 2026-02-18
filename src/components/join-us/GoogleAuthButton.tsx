@@ -23,7 +23,7 @@ export function GoogleAuthButton() {
       <Button
         type="button"
         variant="outline"
-        className="w-full border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium"
+        className="w-full border-gray-300 bg-white hover:bg-gray-100 hover:text-gray-900 text-gray-700 font-medium"
         onClick={handleClick}
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">

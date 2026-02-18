@@ -50,46 +50,47 @@ export function FAQSection() {
     <section 
       ref={sectionRef}
       id="faq" 
-      className="py-16 md:py-24 relative overflow-hidden skin-paper"
+      className="py-6 md:py-8 relative overflow-hidden skin-paper"
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
           <div 
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-4 md:mb-6"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s ease-out 0.4s, transform 1.5s ease-out 0.4s',
             }}
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-brand-dark-blue">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-brand-dark-blue">
               Frequently Asked Questions
             </h2>
-            <p className="text-base md:text-lg lg:text-xl text-gray-700 leading-relaxed">
+            <p className="text-xs md:text-sm text-gray-700 leading-relaxed">
               Find answers to common questions about using our network and directory.
             </p>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
             {homeFAQ.map((faq, index) => {
-              const itemDelay = prefersReducedMotion ? 0 : index * 100;
+              const itemDelay = prefersReducedMotion ? 0 : index * 50;
               return (
                 <AccordionItem 
                   key={index} 
                   value={`item-${index}`}
-                  className="card-vibrant mb-3 rounded-lg px-5 md:px-6 py-2 focus-ring"
+                  className="card-vibrant mb-1.5 rounded-lg px-2 md:px-3 py-1 focus-ring"
                   style={{
                     opacity: isVisible ? 1 : 0,
                     transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
                     transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${300 + itemDelay}ms`
-                      : `opacity 1.8s ease-out ${600 + itemDelay}ms, transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${600 + itemDelay}ms`,
+                      ? `opacity 0.3s ease ${200 + itemDelay}ms`
+                      : `opacity 1.2s ease-out ${400 + itemDelay}ms, transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) ${400 + itemDelay}ms`,
+                    boxShadow: '0 2px 10px rgba(29, 212, 196, 0.08), 0 1px 4px rgba(15, 95, 168, 0.05)',
                   }}
                 >
-                  <AccordionTrigger className="text-left text-base md:text-lg hover:no-underline text-brand-dark-blue font-semibold py-4 [&>svg]:transition-transform [&>svg]:duration-300 [&[data-state=open]>svg]:rotate-90">
+                  <AccordionTrigger className="text-left text-xs md:text-sm hover:no-underline text-brand-dark-blue font-semibold py-1.5 [&>svg]:transition-transform [&>svg]:duration-300 [&[data-state=open]>svg]:rotate-90">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-gray-600 text-sm md:text-base pb-4 leading-relaxed data-[state=open]:animate-fade-in-scale">
+                  <AccordionContent className="text-gray-600 text-xs pb-1.5 leading-relaxed data-[state=open]:animate-fade-in-scale">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>

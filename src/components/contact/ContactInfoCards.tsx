@@ -73,7 +73,7 @@ export function ContactInfoCards() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-24 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/90 to-brand-teal/20">
+    <section ref={sectionRef} className="py-16 md:py-24 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {contactItems.map((item, index) => {
@@ -81,52 +81,48 @@ export function ContactInfoCards() {
             const delay = prefersReducedMotion ? 0 : index * 100;
             
             const cardContent = (
-              <Card className="bg-white h-full transition-all duration-300 hover:shadow-[0_16px_48px_0_rgba(46,196,182,0.25)] hover:-translate-y-2 border-2 border-white/20 hover:border-brand-teal/40 group overflow-hidden relative">
-                <CardContent className="p-8 flex flex-col relative z-10">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div
-                      className="w-16 h-16 rounded-2xl bg-brand-teal/10 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:bg-brand-teal/20 group-hover:scale-110 transition-all duration-300"
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0.8)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${delay}ms`
-                          : `opacity 1.5s ease-out ${400 + delay}ms, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${400 + delay}ms`,
-                      }}
-                    >
-                      <Icon className="h-8 w-8 text-brand-teal" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <h3
-                        className="text-xl font-bold text-brand-dark-blue mb-1 group-hover:text-brand-teal transition-colors"
-                        style={{
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
-                          transition: prefersReducedMotion
-                            ? `opacity 0.3s ease ${delay}ms`
-                            : `opacity 1.5s ease-out ${600 + delay}ms, transform 1.5s ease-out ${600 + delay}ms`,
-                        }}
-                      >
-                        {item.label}
-                      </h3>
-                      <div
-                        className="text-sm text-gray-600 font-medium"
-                        style={{
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
-                          transition: prefersReducedMotion
-                            ? `opacity 0.3s ease ${delay}ms`
-                            : `opacity 1.5s ease-out ${800 + delay}ms, transform 1.5s ease-out ${800 + delay}ms`,
-                        }}
-                      >
-                        {item.description}
-                      </div>
-                    </div>
+              <Card className="bg-white h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-2 border-gray-200 hover:border-brand-dark-blue group overflow-hidden relative">
+                <CardContent className="p-8 md:p-10 flex flex-col items-center text-center relative z-10">
+                  <div
+                    className="w-20 h-20 rounded-2xl bg-brand-dark-blue/10 flex items-center justify-center mb-6 shadow-md group-hover:bg-brand-dark-blue group-hover:scale-110 transition-all duration-300"
+                    style={{
+                      opacity: isVisible ? 1 : 0,
+                      transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0.8)',
+                      transition: prefersReducedMotion
+                        ? `opacity 0.3s ease ${delay}ms`
+                        : `opacity 1.5s ease-out ${400 + delay}ms, transform 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${400 + delay}ms`,
+                    }}
+                  >
+                    <Icon className="h-10 w-10 text-brand-dark-blue group-hover:text-white transition-colors" aria-hidden="true" />
                   </div>
+                  <h3
+                    className="text-xl font-bold text-brand-dark-blue mb-2"
+                    style={{
+                      opacity: isVisible ? 1 : 0,
+                      transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
+                      transition: prefersReducedMotion
+                        ? `opacity 0.3s ease ${delay}ms`
+                        : `opacity 1.5s ease-out ${600 + delay}ms, transform 1.5s ease-out ${600 + delay}ms`,
+                    }}
+                  >
+                    {item.label}
+                  </h3>
+                  <p
+                    className="text-sm text-gray-600 mb-4"
+                    style={{
+                      opacity: isVisible ? 1 : 0,
+                      transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
+                      transition: prefersReducedMotion
+                        ? `opacity 0.3s ease ${delay}ms`
+                        : `opacity 1.5s ease-out ${800 + delay}ms, transform 1.5s ease-out ${800 + delay}ms`,
+                    }}
+                  >
+                    {item.description}
+                  </p>
                   {item.href ? (
                     <Link
                       href={item.href}
-                      className="text-lg font-semibold text-brand-teal hover:text-brand-dark-blue transition-colors group-hover:underline inline-flex items-center gap-2 mt-2"
+                      className="text-lg font-semibold text-brand-dark-blue hover:text-brand-dark-blue/80 transition-colors inline-flex items-center gap-2 group/link"
                       style={{
                         opacity: isVisible ? 1 : 0,
                         transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
@@ -136,11 +132,11 @@ export function ContactInfoCards() {
                       }}
                     >
                       {item.value}
-                      <span className="text-brand-teal group-hover:translate-x-1 transition-transform inline-block">→</span>
+                      <span className="text-brand-dark-blue group-hover/link:translate-x-1 transition-transform inline-block">→</span>
                     </Link>
                   ) : (
                     <div
-                      className="text-lg font-semibold text-brand-dark-blue mt-2"
+                      className="text-lg font-semibold text-brand-dark-blue"
                       style={{
                         opacity: isVisible ? 1 : 0,
                         transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',

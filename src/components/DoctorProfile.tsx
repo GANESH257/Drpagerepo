@@ -9,11 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BookingModal } from '@/components/BookingModal';
-import { ReviewModal } from '@/components/ReviewModal';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { DoctorCard } from '@/components/DoctorCard';
+import { getInstitutionById } from '@/lib/institutionStorage';
 import {
-  Star,
   CheckCircle2,
   MapPin,
   Phone,
@@ -24,6 +23,7 @@ import {
   Award,
   Briefcase,
   Clock,
+  Building,
 } from 'lucide-react';
 
 interface DoctorProfileProps {
@@ -32,7 +32,6 @@ interface DoctorProfileProps {
 
 export function DoctorProfile({ doctor }: DoctorProfileProps) {
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -160,49 +159,45 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               <p className="text-lg md:text-xl text-muted-foreground mb-4">
                 {doctor.specialty}
               </p>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(doctor.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : i < doctor.rating
-                          ? 'fill-yellow-400/50 text-yellow-400/50'
-                          : 'text-gray-300'
-                      }`}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0)',
-                        transition: prefersReducedMotion
-                          ? 'opacity 0.3s ease'
-                          : `opacity 0.4s ease-out ${0.6 + i * 0.1}s, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.6 + i * 0.1}s`,
-                      }}
-                    />
-                  ))}
-                  <span className="ml-1 font-semibold text-lg text-brand-dark-blue">
-                    {doctor.rating.toFixed(1)}
-                  </span>
-                </div>
-                <span className="text-muted-foreground">
-                  ({doctor.reviewCount} reviews)
-                </span>
-              </div>
             </div>
-            <Button 
-              size="lg" 
-              onClick={() => setBookingOpen(true)} 
-              className="w-full md:w-auto bg-brand-teal hover:bg-brand-teal/90 text-white transition-all duration-200 hover:scale-105 shadow-lg animate-pulse-subtle"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
-                transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.4s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s',
-              }}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Request Appointment
-            </Button>
+            <div className="flex flex-col gap-3 w-full md:w-auto">
+              <Button 
+                size="lg" 
+                onClick={() => setBookingOpen(true)} 
+                className="w-full md:w-auto bg-brand-teal hover:bg-brand-teal/90 text-white transition-all duration-200 hover:scale-105 shadow-lg animate-pulse-subtle"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
+                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.4s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s',
+                }}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Request Appointment
+              </Button>
+              {doctor.bookingUrl && (
+                <Button
+                  size="lg"
+                  asChild
+                  variant="outline"
+                  className="w-full md:w-auto border-2 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all duration-200 hover:scale-105 shadow-md"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.5s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s',
+                  }}
+                >
+                  <a
+                    href={doctor.bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Book Directly
+                  </a>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -215,7 +210,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
           <div className="lg:col-span-2 space-y-6">
             {/* About */}
             <Card 
-              className="card-vibrant"
+              className="card-vibrant mt-8"
               style={{
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
@@ -233,6 +228,79 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Institution Section */}
+            {doctor.institutionId && (() => {
+              const institution = getInstitutionById(doctor.institutionId);
+              if (!institution) return null;
+              
+              return (
+                <Card 
+                  className="card-vibrant border-2 border-brand-teal/20"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.55s, transform 0.7s ease-out 0.55s',
+                  }}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-brand-dark-blue flex items-center gap-2">
+                      <Building className="h-5 w-5 text-brand-teal" />
+                      Practice / Clinic
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-brand-dark-blue mb-2">
+                          {institution.name}
+                        </h3>
+                        <div className="space-y-2 text-muted-foreground">
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p>{institution.address.line1}</p>
+                              {institution.address.line2 && <p>{institution.address.line2}</p>}
+                              <p>
+                                {institution.address.city}, {institution.address.state} {institution.address.zip}
+                              </p>
+                            </div>
+                          </div>
+                          {institution.phone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 flex-shrink-0" />
+                              <a 
+                                href={`tel:${institution.phone}`}
+                                className="hover:text-brand-teal transition-colors"
+                              >
+                                {institution.phone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {institution.description && (
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {institution.description.substring(0, 200)}
+                          {institution.description.length > 200 ? '...' : ''}
+                        </p>
+                      )}
+                      
+                      <Button
+                        asChild
+                        variant="gradient"
+                        className="w-full sm:w-auto"
+                      >
+                        <Link href={`/institutions/${institution.slug}`}>
+                          View Practice
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Professional Credentials */}
             {(doctor.medicalSchool ||
@@ -514,83 +582,6 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               </CardContent>
             </Card>
 
-            {/* Reviews */}
-            <Card 
-              className="card-vibrant"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-                transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 1.1s, transform 0.7s ease-out 1.1s',
-              }}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-brand-dark-blue">Patient Reviews</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReviewOpen(true)}
-                    className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white transition-all duration-200 hover:scale-105"
-                  >
-                    Leave a Review
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  {doctor.reviews.slice(0, 5).map((review, reviewIndex) => (
-                    <div 
-                      key={review.id} 
-                      className="border-b last:border-0 pb-4 last:pb-0 transition-all duration-300 hover:bg-gray-50/50 rounded-lg p-3 -m-3"
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-                        transition: prefersReducedMotion
-                          ? 'opacity 0.3s ease'
-                          : `opacity 0.6s ease-out ${1.2 + reviewIndex * 0.1}s, transform 0.6s ease-out ${1.2 + reviewIndex * 0.1}s`,
-                      }}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < Math.floor(review.rating)
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                            <span className="font-semibold">
-                              {review.rating.toFixed(1)}
-                            </span>
-                          </div>
-                          <p className="font-medium">{review.patientName}</p>
-                        </div>
-                        {review.verified && (
-                          <Badge variant="secondary" className="text-xs">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Verified Visit
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-muted-foreground mb-2">
-                        {review.comment}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(review.date).toLocaleDateString('en-US', {
-                          month: 'long',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar */}
@@ -607,6 +598,20 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   onError={() => setImageError(true)}
                 />
               </div>
+              {/* Visit Personal Website - Prominent placement under image */}
+              {doctor.website && (
+                <div className="p-4 border-t border-gray-200 bg-white">
+                  <a
+                    href={doctor.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-brand-teal/10 hover:bg-brand-teal/20 text-brand-dark-blue hover:text-brand-teal border border-brand-teal/30 hover:border-brand-teal/50 rounded-lg transition-all duration-200 font-semibold text-sm"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Personal Website
+                  </a>
+                </div>
+              )}
             </Card>
 
             {/* Booking Slots */}
@@ -752,11 +757,6 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
         onOpenChange={setBookingOpen}
         doctorName={doctor.fullName}
         slots={doctor.availability}
-      />
-      <ReviewModal
-        open={reviewOpen}
-        onOpenChange={setReviewOpen}
-        doctorName={doctor.fullName}
       />
     </div>
   );

@@ -45,9 +45,9 @@ export function RequestsTable() {
     switch (status) {
       case 'submitted':
       case 'under_review':
-        return <Badge variant="vibrant">Pending</Badge>;
+        return <Badge className="bg-gray-100 text-gray-700 border-gray-300">Pending</Badge>;
       case 'approved':
-        return <Badge variant="gradient">Accepted</Badge>;
+        return <Badge className="bg-[#0F5FA8] text-white border-[#0F5FA8]">Accepted</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -81,8 +81,7 @@ export function RequestsTable() {
         <div className="flex justify-end">
           <Button
             onClick={handleGenerateSampleRequests}
-            variant="gradient"
-            className="gap-2"
+            className="gap-2 bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
           >
             <Sparkles className="h-4 w-4" />
             Generate Sample Requests
@@ -91,17 +90,17 @@ export function RequestsTable() {
 
         {/* Filters */}
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
-          <TabsList>
-            <TabsTrigger value="All">
+          <TabsList className="bg-gray-100">
+            <TabsTrigger value="All" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">
               All ({requests.length})
             </TabsTrigger>
-            <TabsTrigger value="Pending">
+            <TabsTrigger value="Pending" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">
               Pending ({requests.filter((r) => r.status === 'submitted').length})
             </TabsTrigger>
-            <TabsTrigger value="Accepted">
+            <TabsTrigger value="Accepted" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">
               Accepted ({requests.filter((r) => r.status === 'approved').length})
             </TabsTrigger>
-            <TabsTrigger value="Rejected">
+            <TabsTrigger value="Rejected" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">
               Rejected ({requests.filter((r) => r.status === 'rejected').length})
             </TabsTrigger>
           </TabsList>
@@ -109,9 +108,9 @@ export function RequestsTable() {
 
         {/* Table */}
         {filteredRequests.length === 0 ? (
-          <Card className="card-vibrant">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-600 mb-4">
                 {requests.length === 0
                   ? 'No membership requests yet.'
                   : `No ${filter === 'All' ? '' : filter.toLowerCase()} requests.`}
@@ -119,32 +118,32 @@ export function RequestsTable() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="card-vibrant">
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Specialty</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Submitted</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Plan</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Payment</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold">Status</th>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Name</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Specialty</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Submitted</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Plan</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Payment</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#0F5FA8]">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRequests.map((request) => (
+                    {filteredRequests.map((request, index) => (
                       <tr
                         key={request.id}
                         onClick={() => handleRowClick(request)}
-                        className="border-b cursor-pointer hover:bg-brand-teal/5 transition-colors"
+                        className={`border-b border-gray-200 cursor-pointer hover:bg-[#0F5FA8]/5 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
                       >
-                        <td className="py-3 px-4 font-medium">{request.applicant.fullName}</td>
-                        <td className="py-3 px-4">{request.applicant.specialty}</td>
-                        <td className="py-3 px-4">{formatDate(request.submittedAt)}</td>
-                        <td className="py-3 px-4 capitalize">{request.plan.planId}</td>
-                        <td className="py-3 px-4 capitalize">{request.paymentMethod}</td>
+                        <td className="py-3 px-4 font-medium text-gray-900">{request.applicant.fullName}</td>
+                        <td className="py-3 px-4 text-gray-700">{request.applicant.specialty}</td>
+                        <td className="py-3 px-4 text-gray-600">{formatDate(request.submittedAt)}</td>
+                        <td className="py-3 px-4 capitalize text-gray-700">{request.plan.planId}</td>
+                        <td className="py-3 px-4 capitalize text-gray-700">{request.paymentMethod}</td>
                         <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
                       </tr>
                     ))}

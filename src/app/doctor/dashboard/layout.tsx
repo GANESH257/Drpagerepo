@@ -67,9 +67,9 @@ export default function DoctorDashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -78,25 +78,26 @@ export default function DoctorDashboardLayout({
 
   if (error) {
     return (
-      <div className="min-h-screen skin-benefits-enhanced flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center max-w-md px-4">
-          <h2 className="text-2xl font-bold text-brand-dark-blue mb-4">
+          <h2 className="text-2xl font-bold text-[#0F5FA8] mb-4">
             Dashboard Access
           </h2>
           <p className="text-gray-600 mb-2">{error}</p>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-gray-600 mb-6">
             Submit a join request to get started. Once approved, you'll have full access to your dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
               onClick={() => router.push('/join-us/application')}
-              variant="gradient"
+              className="bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
             >
               Submit Join Request
             </Button>
             <Button
               onClick={() => router.push('/join-us')}
               variant="outline"
+              className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white"
             >
               Return to Login
             </Button>

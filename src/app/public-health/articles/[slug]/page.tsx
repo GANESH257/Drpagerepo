@@ -307,9 +307,9 @@ export default function ArticleDetailPage({ params }: PageProps) {
                 <h2 className="text-2xl font-bold mb-6 text-brand-dark-blue">Related Articles</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {relatedArticles.map((relatedArticle) => (
-                    <Card key={relatedArticle.id} className="h-full card-vibrant">
+                    <Card key={relatedArticle.id} className="h-full card-vibrant group">
                       <CardContent className="pt-6">
-                        <h3 className="text-lg font-semibold mb-2 hover:text-brand-teal transition-colors">
+                        <h3 className="text-lg font-semibold mb-2 group-hover:text-brand-teal transition-colors">
                           <Link href={`/public-health/articles/${relatedArticle.slug}`}>
                             {relatedArticle.title}
                           </Link>

@@ -5,13 +5,15 @@ import { Doctor } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, CheckCircle2, MapPin, Calendar } from 'lucide-react';
+import { CheckCircle2, MapPin, Calendar, Building } from 'lucide-react';
+import { getInstitutionById } from '@/lib/institutionStorage';
 
 interface DoctorCardProps {
   doctor: Doctor;
+  showInstitution?: boolean; // Show institution info when true
 }
 
-export function DoctorCard({ doctor }: DoctorCardProps) {
+export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps) {
   const [imageError, setImageError] = useState(false);
   
   const earliestSlot = doctor.availability
@@ -88,23 +90,29 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-0 flex-shrink-0 flex flex-col">
-        <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-          <div className="flex items-center">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="ml-1 font-semibold">
-              {doctor.rating.toFixed(1)}
-            </span>
-          </div>
-          <span className="text-muted-foreground text-sm">
-            ({doctor.reviewCount} reviews)
-          </span>
-        </div>
-
         <div className="space-y-2 mb-4 flex-shrink-0">
           <div className="flex items-center text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 mr-2" />
             {doctor.locations[0]?.city}, {doctor.locations[0]?.state} {doctor.locations[0]?.zip}
           </div>
+          {showInstitution && doctor.institutionId && (() => {
+            const institution = getInstitutionById(doctor.institutionId);
+            if (institution) {
+              return (
+                <div className="flex items-center text-sm text-brand-teal">
+                  <Building className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <Link 
+                    href={`/institutions/${institution.slug}`}
+                    className="hover:underline font-medium"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {institution.name}
+                  </Link>
+                </div>
+              );
+            }
+            return null;
+          })()}
           {earliestSlot && (
             <div className="flex items-center text-sm text-muted-foreground">
               <Calendar className="h-4 w-4 mr-2" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { homeStats } from '@/data/homeStats';
@@ -156,7 +156,11 @@ export function NewHomeHero() {
 
                 {/* Integrated Search Bar */}
                 <div className="w-full max-w-4xl lg:ml-0">
-                  <TopSearchBar />
+                  <Suspense fallback={
+                    <div className="w-full h-16 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 animate-pulse" />
+                  }>
+                    <TopSearchBar />
+                  </Suspense>
                 </div>
               </div>
             </div>

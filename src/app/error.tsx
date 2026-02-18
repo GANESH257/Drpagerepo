@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useDarkMode } from '@/lib/useDarkMode';
 
 export default function Error({
   error,
@@ -10,6 +12,13 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { getHomeLink } = useDarkMode();
+  const [homeLink, setHomeLink] = useState<string>('/');
+
+  useEffect(() => {
+    setHomeLink(getHomeLink());
+  }, [getHomeLink]);
+
   return (
     <div className="min-h-screen flex items-center justify-center skin-slate">
       <div className="text-center">
@@ -20,7 +29,7 @@ export default function Error({
             Try again
           </Button>
           <Button asChild variant="outline">
-            <Link href="/">Go Home</Link>
+            <Link href={homeLink}>Go Home</Link>
           </Button>
         </div>
       </div>

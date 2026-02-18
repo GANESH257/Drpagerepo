@@ -46,12 +46,12 @@ export default function ContactUsPage() {
       {/* Hero Section */}
       <section
         ref={heroRef}
-        className="relative w-full pt-24 md:pt-28 pb-16 md:pb-24 overflow-hidden skin-tint"
+        className="relative w-full pt-24 md:pt-28 pb-16 md:pb-24 overflow-hidden bg-white"
       >
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1
-              className="text-4xl md:text-5xl lg:text-3xl font-bold mb-6 leading-tight text-brand-dark-blue"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-brand-dark-blue"
               style={{
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
@@ -63,7 +63,7 @@ export default function ContactUsPage() {
               Contact Us
             </h1>
             <p
-              className="text-lg md:text-xl text-gray-700 leading-relaxed"
+              className="text-lg md:text-xl text-gray-600 leading-relaxed"
               style={{
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',

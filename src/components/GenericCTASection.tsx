@@ -33,10 +33,24 @@ export function GenericCTASection() {
     }
   }, []);
 
+  const animationStyle = (delay: number) => {
+    if (prefersReducedMotion) {
+      return {
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.3s ease',
+      };
+    }
+    return {
+      opacity: isVisible ? 1 : 0,
+      transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+      transition: `opacity 1s ease-out ${delay}ms, transform 1s ease-out ${delay}ms`,
+    };
+  };
+
   return (
     <section 
       ref={sectionRef}
-      className="py-16 md:py-24 relative overflow-hidden"
+      className="relative overflow-hidden py-8 md:py-10"
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
@@ -45,39 +59,52 @@ export function GenericCTASection() {
           : 'opacity 1.5s ease-out 0.4s, transform 1.5s ease-out 0.4s',
       }}
     >
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-teal via-brand-teal/90 to-brand-dark-blue" />
-      <div className="absolute inset-0 bg-gradient-to-t from-brand-dark-blue/20 via-transparent to-brand-teal/20" />
-      
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-            Ready to join the Alliance?
-          </h2>
-          <p className="text-lg text-white/90 mb-8">
-            Start your membership journey today and connect with a community of independent physicians dedicated to excellence in healthcare.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2">
+        {/* Left Section - For Physicians */}
+        <div 
+          className="bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-dark-blue/90 py-8 md:py-10 px-4 md:px-6 lg:px-8 text-white flex items-center justify-center min-h-[280px] md:min-h-[300px]"
+          style={animationStyle(0)}
+        >
+          <div className="max-w-xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Ready to join the Alliance?
+            </h2>
+            <p className="text-base md:text-lg text-white/90 mb-4">
+              Start your membership journey today and connect with a community of independent physicians dedicated to excellence in healthcare.
+            </p>
             <Button
-              size="lg"
-              variant="gradient-multi"
-              className="bg-white text-brand-teal hover:bg-gray-100 w-full sm:w-auto shadow-lg hover:shadow-xl transition-all"
               asChild
+              size="lg"
+              className="bg-white text-brand-dark-blue hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <Link href="/join-us">
                 Join our Network
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+          </div>
+        </div>
+
+        {/* Right Section - For Patients */}
+        <div 
+          className="bg-gradient-to-br from-brand-teal via-brand-teal/95 to-brand-teal/90 py-8 md:py-10 px-4 md:px-6 lg:px-8 text-white flex items-center justify-center min-h-[280px] md:min-h-[300px]"
+          style={animationStyle(200)}
+        >
+          <div className="max-w-xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Find Your Healthcare Provider
+            </h2>
+            <p className="text-base md:text-lg text-white/90 mb-4">
+              Connect with trusted independent physicians in your area. Search by specialty, location, or insurance to find the right care for you.
+            </p>
             <Button
-              size="lg"
-              variant="outline"
-              className="bg-transparent border-white text-white hover:border-white hover:text-white w-full sm:w-auto transition-all"
               asChild
+              size="lg"
+              className="bg-white text-brand-teal hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <Link href="/doctors">
                 Find a Doctor
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>

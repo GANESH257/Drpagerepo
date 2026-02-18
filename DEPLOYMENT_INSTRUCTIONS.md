@@ -1,191 +1,133 @@
-# 🚀 GoDaddy Deployment Instructions
+# GoDaddy cPanel Deployment Instructions
 
-## ✅ Build Complete!
+## Build Status
+✅ Build completed successfully
+- All pages generated as static HTML
+- Total size: ~128MB
+- Deployment packages created:
+  - `deployment.tar.gz` (in project root) - 112MB compressed
+  - Alternative: Extract from `/out` folder directly
 
-Your deployment zip file has been created: **`deployment.zip`** (~43 MB)
+## Deployment Steps for GoDaddy cPanel
 
-## 📦 What's Inside
+### Step 1: Upload the Deployment Package
+1. Log in to your GoDaddy cPanel account
+2. Navigate to **File Manager**
+3. Go to your domain's root directory (usually `public_html` or `www`)
+4. **IMPORTANT**: If you have an existing site, backup current files first
+5. Upload `deployment.zip` to the root directory
 
-The zip file contains everything from the `/out` folder:
-- ✅ All HTML pages (169 static pages)
-- ✅ JavaScript bundles (`_next/static/chunks/`)
-- ✅ CSS files (`_next/static/css/`)
-- ✅ All images and assets from `/public`
-- ✅ All doctor profile pages (102 doctors)
-- ✅ All article pages (public health, medical students, trustee announcements)
-- ✅ Dashboard pages
-- ✅ Membership page
-- ✅ `.htaccess` file for routing (included)
-- ✅ All other routes
+### Step 2: Extract Files
+1. In File Manager, locate `deployment.zip`
+2. Right-click and select **Extract** (or use Extract option in toolbar)
+3. Extract to the current directory (root/public_html)
+4. **VERIFY**: After extraction, you should see:
+   - `index.html` in the root
+   - `_next/` folder (contains CSS, JS, and assets)
+   - Various page folders (`/patients/`, `/physicians/`, `/doctors/`, etc.)
+   - Public assets (`Icons/`, `Dr_images/`, video files, etc.)
 
-## 🎯 Quick Deployment Steps
-
-### Option 1: cPanel File Manager (Recommended)
-
-1. **Log into GoDaddy cPanel**
-   - Go to your GoDaddy account
-   - Open cPanel
-
-2. **Open File Manager**
-   - Navigate to **File Manager** in cPanel
-   - Go to `public_html/` (or your domain's root directory)
-
-3. **Upload the Zip File**
-   - Click **Upload** button
-   - Select `deployment.zip` from your computer
-   - Wait for upload to complete
-
-4. **Extract the Zip File**
-   - Right-click `deployment.zip` in File Manager
-   - Select **Extract**
-   - Extract to `public_html/`
-   - This will create an `out/` folder
-
-5. **Move Contents to Root**
-   - Open the `out/` folder
-   - Select **ALL** files and folders inside
-   - Click **Move** button
-   - Move to `public_html/` (parent directory)
-   - Confirm the move
-
-6. **Delete Empty Folders**
-   - Delete the empty `out/` folder
-   - Delete `deployment.zip` (optional, to save space)
-
-7. **Set File Permissions** (if needed)
-   - Files: **644**
-   - Folders: **755**
-   - `.htaccess` should be **644**
-
-### Option 2: FTP/SFTP Upload
-
-1. **Extract Locally**
-   - Extract `deployment.zip` on your computer
-   - You'll get an `out/` folder
-
-2. **Connect via FTP**
-   - Use FileZilla, Cyberduck, or any FTP client
-   - Connect to your GoDaddy FTP server
-   - Navigate to `public_html/` directory
-
-3. **Upload Contents**
-   - Upload **ALL contents** from the `out/` folder
-   - Upload directly to `public_html/` (not inside a subfolder)
-   - Ensure `.htaccess` is uploaded
-   - Maintain directory structure
-
-4. **Verify Upload**
-   - Check that `index.html` is in `public_html/`
-   - Check that `_next/` folder exists
-   - Check that `.htaccess` exists
-
-## ✅ Post-Deployment Checklist
-
-After uploading, test these URLs:
-
-- [ ] **Homepage**: `https://yourdomain.com/`
-- [ ] **Doctors Directory**: `https://yourdomain.com/doctors/`
-- [ ] **Doctor Profile**: `https://yourdomain.com/doctors/phillip-brick/`
-- [ ] **Join Us Page**: `https://yourdomain.com/join-us/`
-- [ ] **Login Test**: 
-  - Go to `/join-us`
-  - Email: `doctor@aip.com`
-  - Password: `AIP@12345`
-  - Should redirect to dashboard
-- [ ] **Dashboard**: `https://yourdomain.com/doctor/dashboard/`
-- [ ] **Public Health**: `https://yourdomain.com/public-health/`
-- [ ] **Membership**: `https://yourdomain.com/membership/`
-- [ ] **Trustee Board**: `https://yourdomain.com/trustee-board/`
-- [ ] **Medical Students**: `https://yourdomain.com/medical-students/`
-
-## 🔧 Troubleshooting
-
-### 404 Errors on Routes
-
-**Problem**: Direct navigation to routes returns 404
-
-**Solution**:
-- Verify `.htaccess` file is uploaded to `public_html/`
-- Check file permissions (644 for `.htaccess`)
-- Clear browser cache
-- Try accessing with trailing slash: `/doctors/` instead of `/doctors`
-
-### Assets Not Loading (CSS/JS/Images)
-
-**Problem**: Page loads but styling is broken
-
-**Solution**:
-- Verify `_next/` folder is uploaded completely
-- Check file permissions (644 for files, 755 for folders)
-- Check browser console for 404 errors
-- Verify paths in browser Network tab
-
-### Login Not Working
-
-**Problem**: Can't log in to dashboard
-
-**Solution**:
-- Use correct credentials: `doctor@aip.com` / `AIP@12345`
-- Check browser console for errors
-- Verify localStorage is enabled
-- Try in incognito/private window
-
-### .htaccess Not Working
-
-**Problem**: Routing still broken after uploading `.htaccess`
-
-**Solution**:
-- Verify `.htaccess` is in `public_html/` root (not in subfolder)
-- Check file permissions (644)
-- Contact GoDaddy support to ensure mod_rewrite is enabled
-- Try renaming to `.htaccess.txt` then back to `.htaccess`
-
-## 📋 File Structure After Deployment
-
-Your `public_html/` should look like this:
-
+### Step 3: Verify File Structure
+The root directory should contain:
 ```
 public_html/
-├── .htaccess
-├── index.html
-├── 404.html
-├── logodrp.png
-├── Background.mp4
-├── _next/
-│   └── static/
-│       ├── chunks/
-│       └── css/
+├── index.html                    (Homepage)
+├── 404.html                      (Error page)
+├── _next/                        (Next.js assets - CSS, JS)
+├── patients/
+│   └── index.html
+├── physicians/
+│   └── index.html
 ├── doctors/
-│   ├── index.html
-│   └── [slug]/
-├── join-us/
-├── doctor/
-│   └── dashboard/
-├── public-health/
-├── membership/
-├── trustee-board/
-└── medical-students/
+│   └── index.html
+├── Icons/                        (Medical specialty icons)
+├── Dr_images/                    (Doctor profile images)
+├── Insurance_Images/             (Insurance provider logos)
+├── Background*.mp4               (Video backgrounds)
+└── [other static assets]
 ```
 
-## 🔄 Updating the Site
+### Step 4: Set Permissions (if needed)
+- Files: `644` (rw-r--r--)
+- Folders: `755` (rwxr-xr-x)
+- Most cPanel uploads set these automatically
 
-To update the site in the future:
+### Step 5: Test Your Site
+1. Visit your domain: `https://yourdomain.com`
+2. Test key pages:
+   - Homepage: `/`
+   - Patients: `/patients/`
+   - Physicians: `/physicians/`
+   - Doctors: `/doctors/`
+3. Check that:
+   - Images load correctly
+   - CSS styles are applied
+   - JavaScript interactions work
+   - Navigation links work
 
-1. Make changes to source files
-2. Run `npm run build` locally
-3. Create new zip: `zip -r deployment.zip out -x "*.DS_Store"`
-4. Upload new zip to cPanel
-5. Extract and move contents (same as initial deployment)
-6. Clear browser cache if needed
+### Step 6: Clean Up (Optional)
+- Delete `deployment.zip` after successful extraction
+- Remove any old/backup files if needed
 
-## 📞 Support
+## Important Notes
 
-- **GoDaddy Hosting Issues**: Contact GoDaddy support
-- **Application Issues**: Check documentation in `/docs` folder
-- **Build Issues**: Run `npm run lint` to check for errors
+### Static Export Configuration
+- ✅ `output: 'export'` - Generates static HTML files
+- ✅ `trailingSlash: true` - URLs end with `/` (e.g., `/patients/`)
+- ✅ `images: { unoptimized: true }` - Required for static hosting
 
-## 🎉 Success!
+### File Size
+- Total deployment size: ~128MB
+- Includes all images, videos, and assets
+- Ensure your hosting plan supports this size
 
-Once deployed, your site should be live at `https://yourdomain.com/`
+### URL Structure
+- All routes are static HTML files
+- Dynamic routes (like `/doctors/[slug]`) are pre-generated
+- 404 page is included for invalid routes
 
-All pages are pre-rendered for fast loading, and the site works entirely client-side with no backend required.
+### Troubleshooting
+
+**Issue: Pages show 404**
+- Ensure files are extracted to the correct directory
+- Check that `index.html` exists in root
+- Verify folder structure matches above
+
+**Issue: CSS/JS not loading**
+- Check that `_next/` folder was uploaded
+- Verify file permissions (644 for files, 755 for folders)
+- Check browser console for 404 errors
+
+**Issue: Images not displaying**
+- Verify `Icons/`, `Dr_images/`, and other asset folders exist
+- Check image file permissions
+- Ensure paths are correct (case-sensitive on Linux servers)
+
+**Issue: Videos not playing**
+- Verify video files (`.mp4`) are in root directory
+- Check file sizes aren't too large for hosting limits
+- Ensure video codec compatibility
+
+## Alternative: FTP Upload
+If File Manager doesn't work, use FTP:
+1. Use FTP client (FileZilla, Cyberduck, etc.)
+2. Connect to your GoDaddy FTP server
+3. Upload all contents of `/out` folder to `public_html`
+4. Maintain folder structure exactly as in `/out`
+
+## Post-Deployment Checklist
+- [ ] Homepage loads correctly
+- [ ] All navigation links work
+- [ ] Images display properly
+- [ ] CSS styles are applied
+- [ ] JavaScript interactions work
+- [ ] Forms submit correctly (if any)
+- [ ] Mobile responsiveness works
+- [ ] All pages accessible (no 404s)
+
+## Support
+If you encounter issues:
+1. Check browser console for errors
+2. Verify file permissions
+3. Check GoDaddy error logs in cPanel
+4. Ensure all files were uploaded completely

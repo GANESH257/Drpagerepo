@@ -92,70 +92,70 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-3xl font-bold text-brand-dark-blue">Dashboard Overview</h2>
-        <p className="text-muted-foreground mt-2">
+        <h2 className="text-2xl font-bold text-[#0F5FA8]">Dashboard Overview</h2>
+        <p className="text-gray-600 mt-2">
           Welcome back, {doctor.firstName}. Here's a summary of your dashboard.
         </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="card-vibrant">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Profile Completion</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Profile Completion</CardTitle>
+            <User className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{profileCompletion}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold text-[#0F5FA8]">{profileCompletion}%</div>
+            <p className="text-xs text-gray-500 mt-1">
               {profileCompletion < 100 ? 'Complete your profile to improve visibility' : 'Profile complete'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="card-vibrant">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">New Appointments</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{newAppointments}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold text-[#0F5FA8]">{newAppointments}</div>
+            <p className="text-xs text-gray-500 mt-1">
               Pending appointment requests
             </p>
           </CardContent>
         </Card>
 
-        <Card className="card-vibrant">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Referrals This Month</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Referrals This Month</CardTitle>
+            <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{thisMonthReferrals}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold text-[#0F5FA8]">{thisMonthReferrals}</div>
+            <p className="text-xs text-gray-500 mt-1">
               Referrals from network physicians
             </p>
           </CardContent>
         </Card>
 
-        <Card className="card-vibrant">
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verification Status</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-700">Verification Status</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             {doctor.verified ? (
               <>
-                <Badge variant="gradient">Verified</Badge>
-                <p className="text-xs text-muted-foreground mt-2">
+                <Badge className="bg-[#0F5FA8] text-white border-[#0F5FA8]">Verified</Badge>
+                <p className="text-xs text-gray-500 mt-2">
                   Your profile is verified
                 </p>
               </>
             ) : (
               <>
-                <Badge variant="colorful">Pending</Badge>
-                <p className="text-xs text-muted-foreground mt-2">
+                <Badge className="bg-gray-100 text-gray-700 border-gray-300">Pending</Badge>
+                <p className="text-xs text-gray-500 mt-2">
                   Verification in progress
                 </p>
               </>
@@ -171,10 +171,10 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
       </div>
 
       {/* Quick Actions */}
-      <Card className="card-vibrant">
+      <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Jump to common tasks and sections</CardDescription>
+          <CardTitle className="text-[#0F5FA8]">Quick Actions</CardTitle>
+          <CardDescription className="text-gray-600">Jump to common tasks and sections</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -184,17 +184,17 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
                 <Button
                   key={action.href}
                   variant="outline"
-                  className="h-auto flex-col items-start justify-start p-4 hover:bg-accent"
+                  className="h-auto flex-col items-start justify-start p-4 hover:bg-[#0F5FA8]/5 border-gray-200 hover:border-[#0F5FA8]/30"
                   onClick={() => router.push(action.href)}
                 >
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Icon className="h-5 w-5 text-brand-teal" />
-                      <span className="font-semibold">{action.label}</span>
+                      <Icon className="h-5 w-5 text-[#0F5FA8]" />
+                      <span className="font-semibold text-gray-900">{action.label}</span>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <ArrowRight className="h-4 w-4 text-gray-400" />
                   </div>
-                  <p className="mt-2 text-left text-sm text-muted-foreground">
+                  <p className="mt-2 text-left text-sm text-gray-600">
                     {action.description}
                   </p>
                 </Button>

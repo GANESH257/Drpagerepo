@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { NewHomeHero } from '@/components/newhome/NewHomeHero';
 import { MissionStatement } from '@/components/MissionStatement';
 import { WhatWeDoSection } from '@/components/WhatWeDoSection';
@@ -15,12 +17,14 @@ import { CommunityCommentsSection } from '@/components/CommunityCommentsSection'
 import { GlobalMedicalEventsSection } from '@/components/GlobalMedicalEventsSection';
 import { FAQSection } from '@/components/FAQSection';
 
-function HomePageContent() {
+export default function HomePage() {
+  const [audience, setAudience] = useState<'patients' | 'doctors'>('doctors');
+
   return (
     <>
       <NewHomeHero />
       <CertificateMarquee />
-      <MissionStatement />
+      <MissionStatement audience={audience} onAudienceChange={setAudience} />
       <WhatWeDoSection />
       <MemberBenefitsSection />
       <HowItWorksSection />
@@ -34,20 +38,5 @@ function HomePageContent() {
       <GlobalMedicalEventsSection />
       <FAQSection />
     </>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal mx-auto mb-4"></div>
-          <p className="text-brand-dark-blue text-lg">Loading...</p>
-        </div>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
   );
 }

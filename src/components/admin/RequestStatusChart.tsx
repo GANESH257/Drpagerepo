@@ -22,10 +22,10 @@ export function RequestStatusChart({ requests }: RequestStatusChartProps) {
   const chartData = useMemo(() => getRequestStatusDistribution(requests), [requests]);
 
   return (
-    <Card className="card-vibrant">
+    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Request Status Distribution</CardTitle>
-        <FileText className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-medium text-gray-700">Request Status Distribution</CardTitle>
+        <FileText className="h-4 w-4 text-gray-500" />
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (

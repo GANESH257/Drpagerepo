@@ -12,13 +12,14 @@ export function generateStaticParams() {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
-export default function DoctorProfilePage({ params }: PageProps) {
-  const doctor = doctors.find((d) => d.slug === params.slug);
+export default async function DoctorProfilePage({ params }: PageProps) {
+  const { slug } = await params;
+  const doctor = doctors.find((d) => d.slug === slug);
 
   if (!doctor) {
     notFound();

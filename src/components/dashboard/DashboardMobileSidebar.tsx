@@ -93,9 +93,9 @@ export function DashboardMobileSidebar({ open, onOpenChange }: DashboardMobileSi
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-80 p-0 flex flex-col">
-        <SheetHeader className="border-b p-4">
-          <SheetTitle>Navigation</SheetTitle>
+      <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white">
+        <SheetHeader className="border-b border-gray-200 p-4">
+          <SheetTitle className="text-[#0F5FA8]">Navigation</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 p-4 flex-1">
           {navItems.map((item) => {
@@ -110,16 +110,16 @@ export function DashboardMobileSidebar({ open, onOpenChange }: DashboardMobileSi
                 onClick={() => onOpenChange(false)}
                 className={cn(
                   'flex items-start gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
-                  'hover:bg-accent hover:text-accent-foreground',
+                  'hover:bg-gray-100',
                   isActive
-                    ? 'bg-brand-teal/10 text-brand-teal border-l-2 border-brand-teal'
-                    : 'text-muted-foreground'
+                    ? 'bg-[#0F5FA8]/10 text-[#0F5FA8] border-l-[3px] border-[#0F5FA8]'
+                    : 'text-gray-600'
                 )}
               >
-                <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', isActive && 'text-brand-teal')} />
+                <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', isActive && 'text-[#0F5FA8]')} />
                 <div className="flex-1">
                   <div className="font-medium">{item.label}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-gray-500 mt-1">
                     {item.description}
                   </div>
                 </div>
@@ -127,12 +127,12 @@ export function DashboardMobileSidebar({ open, onOpenChange }: DashboardMobileSi
             );
           })}
         </nav>
-        <div className="border-t p-4">
+        <div className="border-t border-gray-200 p-4">
           <Button
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className="w-full border-destructive text-destructive hover:bg-destructive hover:text-white"
+            className="w-full border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
             aria-label="Log out"
           >
             <LogOut className="mr-2 h-4 w-4" />

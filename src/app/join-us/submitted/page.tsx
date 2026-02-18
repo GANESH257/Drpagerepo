@@ -5,10 +5,13 @@ import Link from 'next/link';
 import { CheckCircle2, Mail, Clock, Shield, FileCheck, MailCheck, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useDarkMode } from '@/lib/useDarkMode';
 
 export default function SubmittedPage() {
+  const { getHomeLink } = useDarkMode();
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [homeLink, setHomeLink] = useState<string>('/');
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,6 +28,10 @@ export default function SubmittedPage() {
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
   }, []);
+
+  useEffect(() => {
+    setHomeLink(getHomeLink());
+  }, [getHomeLink]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -182,13 +189,13 @@ export default function SubmittedPage() {
                   asChild
                   variant="gradient"
                 >
-                  <Link href="/">Return to Home</Link>
+                  <Link href={homeLink}>Return to Home</Link>
                 </Button>
                 <Button
                   asChild
                   variant="outline"
                 >
-                  <Link href="/">Contact Support</Link>
+                  <Link href="/contact-us">Contact Support</Link>
                 </Button>
               </div>
 

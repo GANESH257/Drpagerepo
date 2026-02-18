@@ -203,10 +203,10 @@ export function ContactForm() {
   };
 
   return (
-    <section className="py-16 md:py-24 skin-slate">
+    <section className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          <Card className="card-vibrant shadow-lg">
+          <Card className="bg-white border border-gray-200 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-2xl md:text-3xl font-bold text-brand-dark-blue text-center">
                 Send us a Message
@@ -459,7 +459,7 @@ export function ContactForm() {
                           value={method}
                           checked={preferredContact === method}
                           onChange={(e) => setPreferredContact(e.target.value as 'email' | 'phone' | 'sms')}
-                          className="h-4 w-4 text-brand-teal focus:ring-brand-teal border-gray-300"
+                          className="h-4 w-4 text-brand-dark-blue focus:ring-brand-dark-blue border-gray-300"
                         />
                         <Label
                           htmlFor={`contact-method-${method}`}
@@ -499,7 +499,7 @@ export function ContactForm() {
                       {PRIVACY_CONSENT_TEXT}{' '}
                       <a
                         href="/privacy-policy"
-                        className="text-brand-teal hover:underline"
+                        className="text-brand-dark-blue hover:underline"
                         onClick={(e) => {
                           // Check if route exists, otherwise prevent default and show TODO
                           e.preventDefault();
@@ -566,10 +566,9 @@ export function ContactForm() {
                 <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button
                     type="submit"
-                    variant="gradient"
                     size="lg"
                     disabled={isSubmitting}
-                    className="flex-1"
+                    className="flex-1 bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
                   </Button>
@@ -579,7 +578,7 @@ export function ContactForm() {
                     size="lg"
                     onClick={handleClear}
                     disabled={isSubmitting}
-                    className="flex-1"
+                    className="flex-1 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue/5"
                   >
                     Clear
                   </Button>

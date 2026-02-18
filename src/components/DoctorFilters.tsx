@@ -130,66 +130,84 @@ function useFilters() {
 }
 
 export function TopSearchBar() {
-  const { filters, nameInput, setNameInput, locationInput, setLocationInput, insuranceInput, setInsuranceInput, setAllFilters, router } = useFilters();
+  const { filters, nameInput, setNameInput, locationInput, setLocationInput, insuranceInput, setInsuranceInput, updateFilter, router } = useFilters();
   const [isFocused, setIsFocused] = useState<string | null>(null);
+  const [specialtyInput, setSpecialtyInput] = useState(filters.specialty || 'all');
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  // Sync specialtyInput with filters.specialty when URL params change
+  useEffect(() => {
+    setSpecialtyInput(filters.specialty || 'all');
+  }, [filters.specialty]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (nameInput.trim()) params.set('name', nameInput.trim());
+    if (specialtyInput && specialtyInput !== 'all') params.set('specialty', specialtyInput);
     if (locationInput.trim()) params.set('location', locationInput.trim());
-    if (insuranceInput.trim() && insuranceInput.trim() !== 'all') params.set('insurance', insuranceInput.trim());
 
     // Always navigate to /doctors with the params
     router.push(`/doctors?${params.toString()}`);
   };
 
+  const handleSpecialtyChange = (value: string) => {
+    setSpecialtyInput(value);
+    updateFilter('specialty', value);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0">
-      <div className="bg-white/95 backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.08)] border border-white/40 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(0,0,0,0.12)] group/bar">
-        {/* Specialty / Name Search */}
+      <div className="bg-white backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] border-2 border-brand-dark-blue/20 ring-2 ring-brand-teal/10 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(15,95,168,0.2)] hover:border-brand-dark-blue/30 hover:ring-brand-teal/20 group/bar">
+        {/* Specialty Dropdown */}
         <div className={cn(
-          "flex-[1.5] flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500 rounded-t-lg lg:rounded-l-[1.5rem] lg:rounded-tr-none",
-          isFocused === 'search' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
-        )}>
-          <UserSearch className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'search' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
-          )} />
-          <div className="flex-1 min-w-0">
-            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Explore</label>
-            <input
-              type="text"
-              placeholder="Conditions, doctors..."
-              className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onFocus={() => setIsFocused('search')}
-              onBlur={() => setIsFocused(null)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-        </div>
-
-        {/* Insurance Search */}
-        <div className={cn(
-          "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500",
-          isFocused === 'insurance' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
+          "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500 rounded-t-lg lg:rounded-l-[1.5rem] lg:rounded-tr-none",
+          isFocused === 'specialty' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <Filter className={cn(
             "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'insurance' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            isFocused === 'specialty' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
-            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Insurance</label>
+            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Specialty</label>
+            <Select
+              value={specialtyInput}
+              onValueChange={handleSpecialtyChange}
+              onOpenChange={(open) => setIsFocused(open ? 'specialty' : null)}
+            >
+              <SelectTrigger className="w-full bg-transparent border-none focus:ring-0 focus:ring-offset-0 p-0 h-auto font-bold text-sm lg:text-base text-gray-800 [&>span]:text-gray-800 [&>span]:placeholder:text-gray-400">
+                <SelectValue placeholder="Select specialty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Specialties</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.slug} value={dept.slug}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Provider Name Search */}
+        <div className={cn(
+          "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500",
+          isFocused === 'name' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
+        )}>
+          <UserSearch className={cn(
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
+            isFocused === 'name' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+          )} />
+          <div className="flex-1 min-w-0">
+            <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Provider Name</label>
             <input
               type="text"
-              placeholder="Add your plan"
+              placeholder="Provider Name"
               className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
-              value={insuranceInput}
-              onChange={(e) => setInsuranceInput(e.target.value)}
-              onFocus={() => setIsFocused('insurance')}
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onFocus={() => setIsFocused('name')}
               onBlur={() => setIsFocused(null)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
@@ -198,7 +216,7 @@ export function TopSearchBar() {
 
         {/* Location Search */}
         <div className={cn(
-          "flex-1 flex items-center px-4 py-2 lg:py-0 transition-all duration-500 rounded-b-lg lg:rounded-none",
+          "flex-1 flex items-center px-4 py-2 lg:py-0 transition-all duration-500 rounded-b-lg lg:rounded-r-[1.5rem] lg:rounded-bl-none",
           isFocused === 'location' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <MapPin className={cn(
@@ -209,7 +227,7 @@ export function TopSearchBar() {
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Location</label>
             <input
               type="text"
-              placeholder="City or zip..."
+              placeholder="Zip or city"
               className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-gray-800 placeholder:text-gray-400 font-bold text-sm lg:text-base p-0"
               value={locationInput}
               onChange={(e) => setLocationInput(e.target.value)}

@@ -91,6 +91,17 @@
     --ring: 174 72% 56%;
     /* brand teal */
     --radius: 0.5rem;
+
+    /* Portal Theme Variables */
+    --portal-bg: #FFFFFF;
+    --portal-surface: #FFFFFF;
+    --portal-border: #e5e7eb;
+    --portal-text: #1a1a1a;
+    --portal-muted: #6b7280;
+    --portal-primary: #0F5FA8;
+    --portal-primary-hover: #1a6bb8;
+    --portal-ring: #0F5FA8;
+    --portal-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 }
 
@@ -1231,10 +1242,6 @@
     color: inherit;
   }
 
-  .card-vibrant h3.text-brand-teal {
-    color: var(--brand-teal) !important;
-  }
-
   .card-vibrant:hover {
     transform: translateY(-6px);
     box-shadow: var(--shadow-colorful) !important;
@@ -1300,6 +1307,20 @@
     transform: translateY(-2px) scale(1.05);
   }
 
+  .btn-gradient-dark-blue {
+    background: linear-gradient(135deg, #0F5FA8 0%, #1DD4C4 100%) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(15, 95, 168, 0.4) !important;
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient-dark-blue:hover {
+    background: linear-gradient(135deg, #0F5FA8 0%, #4EDFD0 100%) !important;
+    box-shadow: 0 8px 25px rgba(15, 95, 168, 0.5) !important;
+    transform: translateY(-2px) scale(1.05);
+  }
+
   .btn-colorful-glow {
     background: var(--brand-teal);
     color: white;
@@ -1349,5 +1370,56 @@
     border: 2px solid;
     border-image: linear-gradient(135deg, var(--brand-teal), var(--brand-blue-light)) 1;
     box-shadow: 0 2px 8px rgba(29, 212, 196, 0.2);
+  }
+
+  /* Portal Theme Utility Classes */
+  .portal-page {
+    background-color: var(--portal-bg);
+    color: var(--portal-text);
+  }
+
+  .portal-card {
+    background-color: var(--portal-surface);
+    border: 1px solid var(--portal-border);
+    border-radius: 1rem; /* 16px */
+    box-shadow: var(--portal-shadow);
+    padding: 1.25rem; /* p-5 */
+  }
+
+  .portal-nav-active {
+    background-color: rgba(15, 95, 168, 0.1);
+    color: var(--portal-primary);
+    border-left: 3px solid var(--portal-primary);
+  }
+
+  .portal-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background-color: rgba(15, 95, 168, 0.1);
+    color: var(--portal-primary);
+    border: 1px solid rgba(15, 95, 168, 0.2);
+  }
+
+  .portal-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .portal-badge-active {
+    background-color: var(--portal-primary);
+    color: white;
+  }
+
+  .portal-badge-pending {
+    background-color: #f3f4f6;
+    color: var(--portal-muted);
   }
 }

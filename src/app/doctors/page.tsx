@@ -201,7 +201,7 @@ function DoctorsPageContent() {
   }, []);
 
   return (
-    <div ref={sectionRef} className="min-h-screen skin-slate">
+    <div ref={sectionRef} className="min-h-screen bg-white">
       <div className="container mx-auto px-4 pt-32 pb-16">
         {/* Top Search Bar */}
         <div
@@ -238,7 +238,7 @@ function DoctorsPageContent() {
 
           {/* Results */}
           <main className="flex-1">
-            <div className="bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 mb-6">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
               {filteredDoctors.length === 0 ? (
                 <div
                   className="text-center py-12"
@@ -312,7 +312,7 @@ function DoctorsPageContent() {
 export default function DoctorsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen skin-slate flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal mx-auto mb-4"></div>
           <p className="text-brand-dark-blue text-lg">Loading doctors directory...</p>

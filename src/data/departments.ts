@@ -7,6 +7,11 @@ export const departments: Department[] = [
     description: 'Surgical weight loss procedures and general surgical interventions for various conditions.',
   },
   {
+    name: 'Cardiology',
+    slug: 'cardiology',
+    description: 'Heart and cardiovascular system care including diagnosis, treatment, and prevention of heart disease.',
+  },
+  {
     name: 'Dermatology',
     slug: 'dermatology',
     description: 'Skin, hair, and nail care including treatment of conditions, skin cancer screening, and cosmetic procedures.',
@@ -37,9 +42,19 @@ export const departments: Department[] = [
     description: 'Kidney health and disease management, including dialysis and transplant coordination.',
   },
   {
+    name: 'Neurology',
+    slug: 'neurology',
+    description: 'Diagnosis and treatment of disorders affecting the brain, spinal cord, and nervous system.',
+  },
+  {
     name: 'Nurse Practitioners',
     slug: 'nurse-practitioners',
     description: 'Advanced practice nursing providing primary and specialty care with a focus on patient education and wellness.',
+  },
+  {
+    name: 'Ophthalmology',
+    slug: 'ophthalmology',
+    description: 'Eye care including diagnosis, treatment, and surgery for eye diseases and vision problems.',
   },
   {
     name: 'Otolaryngology (ENT)',
@@ -50,6 +65,11 @@ export const departments: Department[] = [
     name: 'Orthopedic Spine',
     slug: 'orthopedic-spine',
     description: 'Specialized spine care including minimally invasive spine surgery, endoscopic procedures, and treatment of spinal disorders.',
+  },
+  {
+    name: 'Pediatrics',
+    slug: 'pediatrics',
+    description: 'Comprehensive healthcare for infants, children, and adolescents, focusing on growth, development, and wellness.',
   },
   {
     name: 'Plastic / Reconstructive Surgery',
@@ -65,6 +85,11 @@ export const departments: Department[] = [
     name: 'Psychiatry',
     slug: 'psychiatry',
     description: 'Mental health care including diagnosis, treatment, and management of psychiatric disorders and emotional conditions.',
+  },
+  {
+    name: 'Pulmonology',
+    slug: 'pulmonology',
+    description: 'Respiratory system care including diagnosis and treatment of lung diseases and breathing disorders.',
   },
   {
     name: 'Rheumatology',

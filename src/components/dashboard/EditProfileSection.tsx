@@ -385,6 +385,36 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       rows={8}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Personal/Practice Website (Optional)</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      value={doctor.website || ''}
+                      onChange={(e) => updateField('website', e.target.value)}
+                      placeholder="https://example.com"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your personal or practice website URL. This will be displayed prominently on your public profile.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bookingUrl">Direct Booking/Contact Page URL (Optional)</Label>
+                    <Input
+                      id="bookingUrl"
+                      type="url"
+                      value={doctor.bookingUrl || ''}
+                      onChange={(e) => updateField('bookingUrl', e.target.value)}
+                      placeholder="https://example.com/contact"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Direct link to your booking or contact page. A "Book Directly" button will appear below "Request Appointment" on your profile.
+                    </p>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>

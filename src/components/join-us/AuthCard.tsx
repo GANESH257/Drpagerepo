@@ -12,12 +12,12 @@ export function AuthCard() {
   const [activeTab, setActiveTab] = useState('signin');
 
   return (
-    <Card className="w-full card-vibrant">
+    <Card className="w-full bg-white border border-gray-200 rounded-xl shadow-sm">
       <CardHeader className="space-y-1 pb-4 p-6">
-        <CardTitle className="text-2xl md:text-3xl font-bold text-center text-brand-dark-blue">
+        <CardTitle className="text-2xl md:text-3xl font-bold text-center text-[#0F5FA8]">
           {activeTab === 'signin' ? 'Welcome Back' : 'Create Account'}
         </CardTitle>
-        <CardDescription className="text-center text-base">
+        <CardDescription className="text-center text-base text-gray-600">
           {activeTab === 'signin'
             ? 'Sign in to your doctor account'
             : 'Join our network of independent physicians'}
@@ -25,9 +25,9 @@ export function AuthCard() {
       </CardHeader>
       <CardContent className="space-y-4 p-6">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Create Account</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100">
+            <TabsTrigger value="signin" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">Sign In</TabsTrigger>
+            <TabsTrigger value="signup" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">Create Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin" className="space-y-4 mt-6">
@@ -59,6 +59,9 @@ export function AuthCard() {
             />
           </TabsContent>
         </Tabs>
+        <p className="text-xs text-gray-500 text-center mt-4">
+          Your information is secure and protected. We respect your privacy.
+        </p>
       </CardContent>
     </Card>
   );

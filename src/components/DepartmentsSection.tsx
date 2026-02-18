@@ -2,11 +2,80 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { departments } from '@/data/departments';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { getDepartmentIcon } from '@/lib/departmentIcons';
+
+interface Specialty {
+  name: string;
+  slug: string;
+  iconPath: string;
+  departmentSlug?: string;
+}
+
+const specialties: Specialty[] = [
+  {
+    name: 'Primary Care',
+    slug: 'primary-care',
+    iconPath: '/Icons/icon_primary_care.png',
+    departmentSlug: 'family-practice',
+  },
+  {
+    name: 'Cardiology',
+    slug: 'cardiology',
+    iconPath: '/Icons/icon_cardiology.png',
+    departmentSlug: 'cardiology',
+  },
+  {
+    name: 'Dermatology',
+    slug: 'dermatology',
+    iconPath: '/Icons/icon_dermatology.png',
+    departmentSlug: 'dermatology',
+  },
+  {
+    name: 'Gastroenterology',
+    slug: 'gastroenterology',
+    iconPath: '/Icons/icon_gastroenterology.png',
+    departmentSlug: 'gastroenterology',
+  },
+  {
+    name: 'Neurology',
+    slug: 'neurology',
+    iconPath: '/Icons/icon_neurology.png',
+    departmentSlug: 'neurology',
+  },
+  {
+    name: 'Ophthalmology',
+    slug: 'ophthalmology',
+    iconPath: '/Icons/icon_ophthalmology.png',
+    departmentSlug: 'ophthalmology',
+  },
+  {
+    name: 'Orthopedics',
+    slug: 'orthopedics',
+    iconPath: '/Icons/icon_orthopedics.png',
+    departmentSlug: 'orthopedic-spine',
+  },
+  {
+    name: 'Pediatrics',
+    slug: 'pediatrics',
+    iconPath: '/Icons/icon_pediatrics.png',
+    departmentSlug: 'pediatrics',
+  },
+  {
+    name: 'Psychiatry',
+    slug: 'psychiatry',
+    iconPath: '/Icons/icon_psychiatry.png',
+    departmentSlug: 'psychiatry',
+  },
+  {
+    name: 'Pulmonology',
+    slug: 'pulmonology',
+    iconPath: '/Icons/icon_pulmonology.png',
+    departmentSlug: 'pulmonology',
+  },
+];
 
 export function DepartmentsSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -86,10 +155,10 @@ export function DepartmentsSection() {
         >
           <div>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue">
-              Our Medical Specialties
+              Medical Specialties
             </h2>
             <p className="text-base md:text-lg lg:text-xl text-gray-700 max-w-2xl leading-relaxed">
-              Browse our medical specialties or use the search to find doctors in your needed specialty.
+              Find specialists across a wide range of medical fields.
             </p>
           </div>
           <div className="flex-shrink-0">
@@ -106,79 +175,48 @@ export function DepartmentsSection() {
           </div>
         </div>
 
-        {/* Departments Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {departments.map((dept, index) => {
-            const IconComponent = getDepartmentIcon(dept.slug);
-            const cardDelay = prefersReducedMotion ? 0 : index * 300;
-            // Alternate slide direction: even indices from left, odd from right
-            const slideFromLeft = index % 2 === 0;
-            const slideDistance = slideFromLeft ? '-80px' : '80px';
-
-            const isHovered = hoveredCard === dept.slug;
-            const magneticX = isHovered ? (mousePosition.x - 0) * 0.05 : 0;
-            const magneticY = isHovered ? (mousePosition.y - 0) * 0.05 : 0;
+        {/* Specialties Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          {specialties.map((specialty, index) => {
+            const cardDelay = prefersReducedMotion ? 0 : index * 100;
 
             return (
               <Card
-                key={dept.slug}
-                className="h-full card-vibrant group focus-ring"
+                key={specialty.slug}
+                className="bg-white border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-pointer group focus-ring"
                 style={{
                   opacity: isVisible ? 1 : 0,
                   transform: isVisible && !prefersReducedMotion
-                    ? `translateX(0) translateY(0) scale(1) rotate(0deg) translate(${magneticX}px, ${magneticY}px)` 
-                    : `translateX(${slideDistance}) translateY(40px) scale(0.85) rotate(${slideFromLeft ? '-8deg' : '8deg'})`,
+                    ? 'translateY(0) scale(1)'
+                    : 'translateY(30px) scale(0.95)',
                   transition: prefersReducedMotion
                     ? `opacity 0.3s ease ${cardDelay}ms`
-                    : `opacity 1.8s ease-out ${cardDelay}ms, transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay}ms, box-shadow 0.3s ease, border-color 0.3s ease`,
+                    : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
                 }}
-                onMouseEnter={(e) => {
-                  setHoveredCard(dept.slug);
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setMousePosition({
-                    x: e.clientX - rect.left - rect.width / 2,
-                    y: e.clientY - rect.top - rect.height / 2,
-                  });
+                onClick={() => {
+                  window.location.href = `/doctors?specialty=${specialty.departmentSlug || specialty.slug}`;
                 }}
-                onMouseMove={(e) => {
-                  if (isHovered) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setMousePosition({
-                      x: e.clientX - rect.left - rect.width / 2,
-                      y: e.clientY - rect.top - rect.height / 2,
-                    });
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    window.location.href = `/doctors?specialty=${specialty.departmentSlug || specialty.slug}`;
                   }
                 }}
-                onMouseLeave={() => setHoveredCard(null)}
+                aria-label={`Browse ${specialty.name} specialists`}
               >
-                <CardContent className="p-6">
-                  <div className="flex flex-col gap-4 h-full">
-                    {/* Icon */}
-                    <div className="flex items-start justify-between">
-                      <div className="w-14 h-14 rounded-full bg-brand-teal/10 text-brand-teal flex items-center justify-center group-hover:bg-brand-teal/20 transition-all duration-300 hover-scale animate-float">
-                        <IconComponent className="h-7 w-7" aria-hidden="true" />
-                      </div>
-                    </div>
-
-                    {/* Department Name */}
-                    <h3 className="text-xl font-semibold text-brand-dark-blue group-hover:text-brand-teal transition-colors">
-                      {dept.name}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-sm md:text-base text-gray-600 leading-relaxed flex-grow">
-                      {dept.description}
-                    </p>
-
-                    {/* CTA Button */}
-                    <Link
-                      href={`/doctors?specialty=${dept.slug}`}
-                      className="inline-flex items-center gap-2 text-sm font-medium text-brand-teal hover:text-brand-dark-blue transition-colors mt-auto group/link focus-ring rounded-md px-1 -ml-1"
-                    >
-                      View Doctors
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover/link:translate-x-1" aria-hidden="true" />
-                    </Link>
-                  </div>
+                <CardContent className="p-6 flex flex-col items-center text-center">
+                  <Image
+                    src={specialty.iconPath}
+                    alt={`${specialty.name} icon`}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 md:h-20 md:w-20 mb-4 drop-shadow-lg transition-all duration-300 group-hover:drop-shadow-xl group-hover:scale-110"
+                  />
+                  <h3 className="text-base md:text-lg font-semibold text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300">
+                    {specialty.name}
+                  </h3>
                 </CardContent>
               </Card>
             );

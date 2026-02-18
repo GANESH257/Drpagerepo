@@ -1,0 +1,258 @@
+ALLIANCE OF INDEPENDENT PHYSICIANS - PAGE SECTIONS OVERVIEW
+===========================================================
+
+HOME PAGE (/)
+-------------
+1. Hero Section - Main banner with headline and video background
+2. Audience Switch Button - Floating toggle to switch between Patients/Physicians view
+3. Search Section - Doctor search bar
+4. Mission Statement - Our mission with logo and background image
+5. Certificate Marquee - Scrolling certifications/credentials
+6. What We Do Section - Overview of services and benefits
+7. Call-to-Action Section - Join our network CTA
+8. Top Searched Specialties - Popular medical specialties
+9. Community Comments - Platform reviews and testimonials
+10. Resources Section - Links to resources
+11. FAQ Section - Frequently asked questions
+
+
+DARK MODE HOME PAGE (/homedark)
+--------------------------------
+Same sections as Home Page, but with:
+- Dark theme styling
+- Different video background
+- Mission Statement Dark variant (no community comments)
+
+
+DOCTORS DIRECTORY (/doctors)
+-----------------------------
+1. Page Header - "Find the Right Doctor" title
+2. Top Search Bar - Main search functionality
+3. Sidebar Filters - Filter by specialty, location, insurance, availability
+4. Doctor Results Grid - Cards showing all matching doctors
+5. Call-to-Action Section - Join our network CTA
+
+
+DOCTOR PROFILE PAGE (/doctors/[doctor-name])
+---------------------------------------------
+1. Doctor Header - Name, photo, credentials
+2. Contact Information - Phone, email, locations
+3. Specialty & Services - Medical specialties offered
+4. Insurance Accepted - List of insurance plans
+5. Availability - Appointment availability calendar
+6. About Section - Doctor bio and background
+7. Education & Credentials - Medical education and certifications
+8. Languages Spoken
+9. Call-to-Action - Book appointment button
+
+
+FOR PATIENTS PAGE (/patients)
+-----------------------------
+1. Hero Section - Welcome message for patients
+2. Benefits Grid - Why choose independent physicians
+3. Find Specialist Bar - Quick search for specialists
+4. Patient Steps - How to find and book with a doctor
+5. Departments Section - Medical specialties available
+6. FAQ Section - Patient-specific questions
+
+
+FOR PHYSICIANS PAGE (/physicians)
+----------------------------------
+1. Hero Section - Welcome message for physicians
+2. Benefits Grid - Why join the alliance
+3. Thrive Features - Key features and advantages
+4. Join Steps - How to become a member
+5. Member Benefits Section - Detailed benefits list
+6. Certificate Marquee - Credentials and certifications
+7. Quick Access CTA - Join now button
+8. Membership Plans - Available plan options
+9. Specialties Grid - Medical specialties in network
+10. Impact Stats - Network statistics and growth
+11. Member Stories - Testimonials from current members
+12. Practice Resources - Tools and resources for members
+
+
+MEMBERSHIP PAGE (/membership)
+------------------------------
+1. Hero Section - Membership overview
+2. Benefits Grid - Membership benefits
+3. Plans Section - Membership plan options and pricing
+4. Call-to-Action Section
+5. Policies Section - Terms and policies
+6. FAQ Section - Membership questions
+7. Final CTA Section - Join now
+
+
+JOIN US PAGE (/join-us)
+------------------------
+1. Sign In / Sign Up Options - Authentication choices
+2. Google Sign In Button
+3. Email Sign Up Form
+4. Benefits Panel - Why join
+
+
+JOIN US APPLICATION (/join-us/application)
+-------------------------------------------
+Multi-step form with:
+1. Step 1: Basic Information - Name, email, specialty, location
+2. Step 2: Select Membership Plan - Choose plan and billing cycle
+3. Step 3: Payment Method - Payment options
+4. Step 4: Review & Submit - Review all information before submitting
+
+
+CONTACT US PAGE (/contact-us)
+------------------------------
+1. Hero Section - "Contact Us" title
+2. Contact Info Cards - Phone, email, address information
+3. Contact Form - Message submission form
+
+
+PUBLIC HEALTH PAGE (/public-health)
+------------------------------------
+1. Hero Section - Public health information
+2. Helper Navigation - Quick links to sections
+3. Latest News Section - Recent health news
+4. Call-to-Action Section
+5. Disease Topics Filter - Filter articles by health topic
+6. Article Grid - Browse health articles
+7. Prevention & Wellness Section - Wellness information
+8. Insurance Info Section - Insurance guidance
+9. Publications Section - Health publications
+
+
+PUBLIC HEALTH ARTICLE (/public-health/articles/[article-name])
+---------------------------------------------------------------
+1. Article Header - Title, author, date, reading time
+2. Topic Badges - Health topics covered
+3. Table of Contents - Article navigation
+4. Article Content - Full article text
+5. Key Takeaways - Important points summary
+6. When to Seek Care - Medical guidance notice
+7. Call-to-Action Section
+8. Related Articles - Similar articles
+
+
+MEDICAL STUDENTS PAGE (/medical-students)
+------------------------------------------
+1. Hero Section - Welcome for medical students
+2. Helper Navigation - Quick access links
+3. How to Use This Page - Instructions
+4. Call-to-Action Section
+5. Pillar Grid - Main content pillars (articles, tools, guides)
+6. Quick Tools Grid - Quick access to resources
+7. Articles Section - Student-focused articles
+8. News Section - Medical education news
+
+
+TRUSTEE BOARD PAGE (/trustee-board)
+------------------------------------
+1. Hero Section - Trustee board information
+2. Helper Navigation - Quick links
+3. Governance Metrics - Board statistics
+4. Board Member Grid - Board members and their roles
+5. Call-to-Action Section
+6. Next Meeting Card - Upcoming meeting information
+7. Announcements Section - Board announcements
+8. Policies Section - Governance policies
+
+
+DOCTOR DASHBOARD (/doctor/dashboard)
+-------------------------------------
+1. Overview Section - Dashboard summary with:
+   - Appointments overview
+   - Referrals overview
+   - Profile completion status
+   - Monthly charts (appointments, referrals)
+
+
+DOCTOR DASHBOARD - PROFILE (/doctor/dashboard/profile)
+--------------------------------------------------------
+1. Edit Profile Form - Update doctor information:
+   - Basic details (name, credentials, specialty)
+   - Bio and description
+   - Education and certifications
+   - Languages spoken
+   - Social media links
+
+
+DOCTOR DASHBOARD - APPOINTMENTS (/doctor/dashboard/appointments)
+----------------------------------------------------------------
+1. Appointments List - View and manage appointments
+2. Monthly Appointments Chart - Visual statistics
+
+
+DOCTOR DASHBOARD - REFERRALS (/doctor/dashboard/referrals)
+-----------------------------------------------------------
+1. Referrals List - View and manage referrals
+2. Monthly Referrals Chart - Visual statistics
+
+
+DOCTOR DASHBOARD - LOCATIONS (/doctor/dashboard/locations)
+-----------------------------------------------------------
+1. Locations List - Manage practice locations
+2. Add/Edit Location Form - Add or update location details
+
+
+DOCTOR DASHBOARD - INSURANCE (/doctor/dashboard/insurance)
+-----------------------------------------------------------
+1. Insurance Plans List - Manage accepted insurance plans
+2. Add Insurance Form - Add new insurance plans
+
+
+DOCTOR DASHBOARD - MEMBERSHIP (/doctor/dashboard/membership)
+-------------------------------------------------------------
+1. Current Membership Plan - Active plan details
+2. Membership Benefits - Available benefits
+3. Billing Information - Payment and billing details
+
+
+ADMIN DASHBOARD (/admin)
+------------------------
+1. Dashboard Header - Overview title
+2. Stats Cards - Key metrics (requests, members, plans)
+3. Analytics Charts:
+   - Doctors Joined Per Month
+   - Growth Trend
+   - Doctors Per Department
+   - Doctors Per Plan
+   - Request Status Distribution
+4. Recent Requests - Latest membership applications
+
+
+ADMIN - REQUESTS (/admin/requests)
+-----------------------------------
+1. Requests Table - All membership requests with:
+   - Applicant information
+   - Status (pending, approved, rejected)
+   - Submission date
+   - Plan selected
+   - Actions (view, approve, reject)
+
+
+ADMIN - MEMBERS (/admin/members)
+---------------------------------
+1. Members Table - All registered members
+2. Member Edit Dialog - Edit member information
+
+
+ADMIN - MEMBERSHIPS (/admin/memberships)
+-----------------------------------------
+1. Plans Editor - Manage membership plans and pricing
+
+
+ADMIN - POLICIES (/admin/policies)
+-----------------------------------
+1. Policies Editor - Manage organization policies
+
+
+ADMIN - EVENTS (/admin/events)
+-------------------------------
+1. Events Editor - Manage events and announcements
+
+
+GLOBAL ELEMENTS (On All Pages)
+-------------------------------
+- Top Bar: Phone number, email, dark mode toggle
+- Header: Logo, navigation menu, action buttons (Find a Doctor, Join Us)
+- Footer: Links, contact info, social media (on most pages)
+- Floating CTAs: "Find a Doctor" and "Join Our Network" buttons (bottom right)

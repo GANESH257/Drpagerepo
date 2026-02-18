@@ -54,10 +54,10 @@ export function MonthlyReferralsChart({ referrals }: MonthlyReferralsChartProps)
   const chartData = useMemo(() => generateMonthlyReferralsData(referrals), [referrals]);
 
   return (
-    <Card className="card-vibrant">
+    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Referrals Trend</CardTitle>
-        <Users className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-medium text-gray-700">Referrals Trend</CardTitle>
+        <Users className="h-4 w-4 text-gray-500" />
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

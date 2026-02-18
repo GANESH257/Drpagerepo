@@ -59,6 +59,9 @@ export interface Doctor {
   internship?: string;
   boardCertifications?: string[];
   statesLicensedIn?: string[];
+  website?: string; // Personal/practice website URL
+  bookingUrl?: string; // Direct booking/contact page URL
+  institutionId?: string; // FK to Institution
 }
 
 export interface AppointmentRequest {
@@ -395,4 +398,32 @@ export interface JoinRequest {
     cardName?: string;
     billingZip?: string;
   };
+}
+
+export interface Institution {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  phone: string;
+  email?: string;
+  website?: string;
+  address: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  location: {
+    lat: number;
+    lng: number;
+  };
+  specialties: string[]; // Derived from doctors
+  doctorIds: string[]; // References to doctor IDs
+  logo?: string;
+  images?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
