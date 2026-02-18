@@ -87,6 +87,15 @@ export interface Referral {
   createdAt: string;
 }
 
+export interface DoctorMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  sentAt: string; // ISO date string
+  readAt?: string; // ISO date string
+}
+
 export interface Department {
   name: string;
   slug: string;

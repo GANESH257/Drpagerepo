@@ -51,7 +51,7 @@ export default function ContactUsPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-brand-dark-blue"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mt-8 md:mt-10 mb-6 leading-tight text-brand-dark-blue"
               style={{
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',

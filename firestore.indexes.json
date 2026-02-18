@@ -1,0 +1,69 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "senderId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiverId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "sentAt",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "senderId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "receiverId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "sentAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "receiverId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "senderId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isRead",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "messages",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "sentAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

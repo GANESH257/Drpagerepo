@@ -16,6 +16,7 @@ import {
   CreditCard,
   Calendar,
   Users,
+  MessageCircle,
   Crown,
 } from 'lucide-react';
 
@@ -61,6 +62,12 @@ const doctorNavItems = [
     href: '/doctor/dashboard/referrals',
     icon: Users,
     description: 'Track referrals from other physicians in the network',
+  },
+  {
+    label: 'Messages',
+    href: '/doctor/dashboard/messages',
+    icon: MessageCircle,
+    description: 'Message other physicians in the network',
   },
   {
     label: 'Membership',

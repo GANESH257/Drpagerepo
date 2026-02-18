@@ -52,7 +52,7 @@ export function PhysiciansHero() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-16 md:py-24 lg:py-32 overflow-hidden"
+      className="relative mt-24 md:mt-28 py-16 md:py-24 lg:py-32 overflow-hidden"
     >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
