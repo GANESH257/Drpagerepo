@@ -54,4 +54,29 @@ export const memberBenefits: MemberBenefit[] = [
     description: 'Participate in events and continuing education opportunities. Stay current with medical advances and best practices. (Future)',
     icon: 'GraduationCap',
   },
+  // Comprehensive Support features from ThriveFeatures
+  {
+    id: '9',
+    title: 'Group Purchasing',
+    description: 'Access negotiated rates on supplies, vaccines, and malpractice insurance.',
+    icon: 'ShoppingCart',
+  },
+  {
+    id: '10',
+    title: 'Payer Contracting',
+    description: 'Leverage collective strategic advantage for better reimbursement rates.',
+    icon: 'FileText',
+  },
+  {
+    id: '11',
+    title: 'Clinical Autonomy',
+    description: 'Maintain full control over your practice operations and patient care decisions.',
+    icon: 'ShieldCheck',
+  },
+  {
+    id: '12',
+    title: 'Advocacy',
+    description: 'Representation at state and federal levels to protect independent practice.',
+    icon: 'Megaphone',
+  },
 ];

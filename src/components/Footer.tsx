@@ -3,12 +3,27 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { useDarkMode } from '@/lib/useDarkMode';
 
 export function Footer() {
+  const pathname = usePathname();
+  const { getHomeLink } = useDarkMode();
   const currentYear = new Date().getFullYear();
   const [isVisible, setIsVisible] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
+  
+  // Use pathname for initial render to avoid hydration mismatch
+  const [homeLink, setHomeLink] = useState<string>(() => {
+    if (pathname === '/homedark') return '/homedark';
+    return '/';
+  });
+
+  // Update home link after mount based on localStorage preference
+  useEffect(() => {
+    setHomeLink(getHomeLink());
+  }, [getHomeLink, pathname]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -35,20 +50,20 @@ export function Footer() {
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
             <Link 
-              href="/" 
+              href={homeLink} 
               className="inline-block mb-6 focus-ring rounded-md p-1 -ml-1 transition-all duration-300 hover:scale-110"
               style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible ? 'scale(1)' : 'scale(0.8)',
+                opacity: isVisible ? 1 : 1,
+                transform: isVisible ? 'scale(1)' : 'scale(1)',
                 transition: 'opacity 0.6s ease-out 0.2s, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s',
               }}
             >
               <Image
-                src="/logodrp.png"
+                src="/logodrpnew.png"
                 alt="Alliance of Independent Physicians"
                 width={200}
-                height={60}
-                className="h-10 md:h-12 w-auto"
+                height={200}
+                className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-lg brightness-0 invert object-contain"
               />
             </Link>
             <p className="text-sm md:text-base text-white/80 max-w-md leading-relaxed mb-6">
@@ -113,15 +128,23 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/doctors"
+                  href="/practices"
                   className="text-sm md:text-base text-white/80 hover:text-brand-teal transition-colors duration-200 focus-ring rounded-md px-1 -ml-1 inline-block"
                 >
-                  Find a Doctor
+                  Find a Practice
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/#departments"
+                  href="/about"
+                  className="text-sm md:text-base text-white/80 hover:text-brand-teal transition-colors duration-200 focus-ring rounded-md px-1 -ml-1 inline-block"
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about#departments"
                   className="text-sm md:text-base text-white/80 hover:text-brand-teal transition-colors duration-200 focus-ring rounded-md px-1 -ml-1 inline-block"
                 >
                   Medical Specialties
@@ -129,7 +152,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#how-it-works"
+                  href="/about#how-it-works"
                   className="text-sm md:text-base text-white/80 hover:text-brand-teal transition-colors duration-200 focus-ring rounded-md px-1 -ml-1 inline-block"
                 >
                   How It Works
@@ -137,7 +160,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/#faq"
+                  href="/about#faq"
                   className="text-sm md:text-base text-white/80 hover:text-brand-teal transition-colors duration-200 focus-ring rounded-md px-1 -ml-1 inline-block"
                 >
                   FAQ

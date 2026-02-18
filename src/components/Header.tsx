@@ -4,17 +4,32 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useDarkMode } from '@/lib/useDarkMode';
 
 export function Header() {
   const pathname = usePathname();
+  const { getHomeLink } = useDarkMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
+  // Use pathname for initial render to avoid hydration mismatch
+  // Then update based on localStorage preference after mount
+  const [homeLink, setHomeLink] = useState<string>(() => {
+    // Initial value based on current pathname (available on both server and client)
+    if (pathname === '/homedark') return '/homedark';
+    return '/';
+  });
+  
   // Only check scroll on home page
-  const isHomePage = pathname === '/';
+  const isHomePage = pathname === '/' || pathname === '/homedark';
+
+  // Update home link after mount based on localStorage preference
+  useEffect(() => {
+    setHomeLink(getHomeLink());
+  }, [getHomeLink, pathname]);
 
   useEffect(() => {
     if (!isHomePage) {
@@ -45,20 +60,19 @@ export function Header() {
   }, [isHomePage]);
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/#departments', label: 'Medical Specialties' },
-    { href: '/public-health', label: 'Public Health' },
-    { href: '/medical-students', label: 'Students' },
-    { href: '/trustee-board', label: 'Trustee Board' },
-    { href: '/membership', label: 'Membership' },
+    { href: homeLink, label: 'Home', iconOnly: true },
+    { href: '/patients', label: 'Patients' },
+    { href: '/physicians', label: 'Physicians' },
+    { href: '/about', label: 'About' },
     { href: '/contact-us', label: 'Contact' },
+    { href: '/join-us', label: 'Sign In' },
   ];
 
   // Conditional classes based on scroll position and page
   // Always show solid navbar (removed transparent/invisible state)
   // Add shrink effect when scrolled
   const getHeaderClasses = () => {
-    const base = 'fixed top-10 md:top-12 z-50 w-full transition-all duration-300';
+    const base = 'fixed top-4 md:top-6 z-50 w-full transition-all duration-300';
     const shadow = isScrolled ? 'shadow-md' : 'shadow-sm';
     
     // Always show solid navbar with background
@@ -79,31 +93,87 @@ export function Header() {
   return (
     <header className={headerClasses}>
       <div className="container mx-auto px-4">
-        <div className={`flex items-center justify-between transition-all duration-300 flex-nowrap ${isScrolled ? 'h-14' : 'h-16'}`}>
+        <div className={`flex items-center justify-between transition-all duration-300 flex-nowrap ${isScrolled ? 'h-20 md:h-24' : 'h-24 md:h-28'}`}>
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 flex-shrink-0 mr-4 lg:mr-6">
-            <Image
-              src="/logodrp.png"
-              alt="Alliance of Independent Physicians"
-              width={200}
-              height={60}
-              className="h-10 md:h-12 w-auto"
-              priority
-            />
+          <Link href={homeLink} className="flex items-center space-x-2 flex-shrink-0 mr-4 lg:mr-6">
+              <Image
+                src="/logodrpnew.png"
+                alt="Alliance of Independent Physicians"
+                width={200}
+                height={200}
+                className="h-12 md:h-16 lg:h-20 w-auto object-contain"
+                priority
+              />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-3 xl:space-x-5 flex-shrink-0">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-xs xl:text-sm font-medium transition-colors whitespace-nowrap ${textColorClasses} ${hoverTextColorClasses}`}
-              >
-                {link.label}
-              </Link>
-            ))}
+          {/* Desktop Navigation - Right Side */}
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0 ml-auto mr-4">
+            {navLinks.map((link, index) => {
+              let isActive = false;
+              
+              // Check if this is the home link (could be / or /homedark)
+              if (link.iconOnly || link.href === homeLink || link.href === '/' || link.href === '/homedark') {
+                isActive = pathname === '/' || pathname === '/homedark';
+              } 
+              // Check exact match first
+              else if (pathname === link.href) {
+                isActive = true;
+              }
+              // Check for sub-routes (like /join-us/application)
+              else if (link.href === '/join-us' && pathname.startsWith('/join-us')) {
+                isActive = true;
+              }
+              // Check if pathname starts with the link href (for nested routes)
+              else if (pathname.startsWith(link.href) && link.href !== '/') {
+                isActive = true;
+              }
+              
+              return (
+                <div key={link.href} className="flex items-center">
+                  {index > 1 && !link.iconOnly && (
+                    <span className="text-gray-300 mx-1 xl:mx-2">|</span>
+                  )}
+                  <Link
+                    href={link.href}
+                    className={`relative px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold transition-all duration-200 whitespace-nowrap rounded-md flex items-center justify-center ${
+                      isActive
+                        ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30'
+                        : 'text-gray-700 hover:text-brand-dark-blue hover:bg-gray-50'
+                    }`}
+                    aria-label={link.iconOnly ? 'Home' : link.label}
+                  >
+                    {link.iconOnly ? (
+                      <Home className={`h-4 w-4 xl:h-5 xl:w-5 ${isActive ? 'text-brand-dark-blue' : 'text-gray-700'}`} />
+                    ) : (
+                      <span className={isActive ? 'text-brand-dark-blue font-bold' : ''}>{link.label}</span>
+                    )}
+                    {isActive && (
+                      <span className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 ${link.iconOnly ? 'w-full' : 'w-1/2'} h-1 bg-brand-teal rounded-full`} />
+                    )}
+                  </Link>
+                </div>
+              );
+            })}
           </nav>
+
+          {/* Action Buttons */}
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 flex-shrink-0 mr-2 xl:mr-4">
+            <Button
+              asChild
+              size="sm"
+              className="text-xs xl:text-sm bg-brand-teal hover:bg-brand-teal/90 text-white transition-all whitespace-nowrap"
+            >
+              <Link href="/practices">Find a Practice</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="text-xs xl:text-sm border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all whitespace-nowrap"
+            >
+              <Link href="/join-us">Join Us</Link>
+            </Button>
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -123,16 +193,58 @@ export function Header() {
         {mobileMenuOpen && (
           <div className={`md:hidden ${mobileMenuBorderClasses} py-4`}>
             <nav className="flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`text-sm font-medium transition-colors ${mobileTextColorClasses} ${mobileHoverTextColorClasses}`}
-                  onClick={() => setMobileMenuOpen(false)}
+              {navLinks.map((link) => {
+                let isActive = false;
+                
+                // Check if this is the home link (could be / or /homedark)
+                if (link.iconOnly || link.href === homeLink || link.href === '/' || link.href === '/homedark') {
+                  isActive = pathname === '/' || pathname === '/homedark';
+                } 
+                // Check exact match first
+                else if (pathname === link.href) {
+                  isActive = true;
+                }
+                // Check for sub-routes (like /join-us/application)
+                else if (link.href === '/join-us' && pathname.startsWith('/join-us')) {
+                  isActive = true;
+                }
+                // Check if pathname starts with the link href (for nested routes)
+                else if (pathname.startsWith(link.href) && link.href !== '/') {
+                  isActive = true;
+                }
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`text-sm font-medium transition-colors flex items-center gap-2 rounded-md px-3 py-2 ${
+                      isActive 
+                        ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30' 
+                        : `${mobileTextColorClasses} ${mobileHoverTextColorClasses}`
+                    }`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.iconOnly && <Home className="h-4 w-4" />}
+                    {link.iconOnly ? 'Home' : link.label}
+                  </Link>
+                );
+              })}
+              <div className="flex flex-col gap-2 pt-2 border-t border-gray-200">
+                <Button
+                  asChild
+                  size="sm"
+                  className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white"
                 >
-                  {link.label}
-                </Link>
-              ))}
+                  <Link href="/practices" onClick={() => setMobileMenuOpen(false)}>Find a Practice</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="w-full border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white"
+                >
+                  <Link href="/join-us" onClick={() => setMobileMenuOpen(false)}>Join Us</Link>
+                </Button>
+              </div>
             </nav>
           </div>
         )}

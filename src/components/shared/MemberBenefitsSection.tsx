@@ -136,7 +136,7 @@ Join the Alliance network to access resources, referrals, visibility, and commun
             className="focus-ring"
           >
             <Link href="/join-us">
-              Join Our Network
+              Join Us
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
