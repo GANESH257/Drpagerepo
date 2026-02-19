@@ -5,6 +5,7 @@ import { TopBar } from '@/components/TopBar';
 import { Header } from '@/components/Header';
 import { ConditionalFooter } from '@/components/ConditionalFooter';
 import { FloatingCTA } from '@/components/FloatingCTA';
+import { FloatingMessageIcon } from '@/components/FloatingMessageIcon';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
         <main>{children}</main>
         <ConditionalFooter />
         <FloatingCTA />
+        <FloatingMessageIcon />
       </body>
     </html>
   );

@@ -37,23 +37,6 @@ export default function PhysiciansPage() {
       <PhysiciansHero />
       <BenefitsJumbledGrid />
       <MissionStatementNewHome />
-      <div className="py-8 md:py-12 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center">
-            <Link
-              href="/policies/governance-bylaws.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-brand-dark-blue hover:text-brand-teal font-semibold text-lg transition-colors duration-200 underline underline-offset-4"
-            >
-              View Governance Bylaws
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </div>
       <JoinSteps />
       <MemberBenefitsSection />
       <DepartmentsMarquee />

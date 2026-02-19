@@ -21,6 +21,7 @@ export interface JoinStep {
   title: string;
   description: string;
   icon: string; // Lucide icon name
+  image: string;
 }
 
 export interface MembershipPlan {
@@ -136,24 +137,28 @@ export const joinSteps: JoinStep[] = [
     title: 'Explore',
     description: 'Review membership benefits & tiers',
     icon: 'Search',
+    image: '/for_dr.png',
   },
   {
     number: '02',
     title: 'Apply',
     description: 'Submit your practice application',
     icon: 'FileText',
+    image: '/for_dr2.png',
   },
   {
     number: '03',
     title: 'Connect',
     description: 'Meet with our onboarding team',
     icon: 'Users',
+    image: '/for_dr.png',
   },
   {
     number: '04',
     title: 'Grow',
     description: 'Access resources and start saving',
     icon: 'TrendingUp',
+    image: '/grow.webp',
   },
 ];
 
