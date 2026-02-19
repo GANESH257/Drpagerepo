@@ -13,6 +13,7 @@ import {
   FileCheck,
   Calendar,
   Users,
+  Megaphone,
 } from 'lucide-react';
 
 interface AdminShellProps {
@@ -55,6 +56,12 @@ const adminNavItems = [
     href: '/admin/members',
     icon: Users,
     description: 'Manage doctor members',
+  },
+  {
+    label: 'Announcements',
+    href: '/admin/announcements',
+    icon: Megaphone,
+    description: 'Broadcast and manage announcements',
   },
 ];
 

@@ -51,8 +51,14 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
   }, [doctor.id]);
 
   const doctorsById = useMemo(() => {
-    const map = new Map<string, Doctor>();
+    const map = new Map<string, Partial<Doctor>>();
     for (const d of allDoctors) map.set(d.id, d);
+    // Add virtual Admin doctor
+    map.set('admin', {
+      id: 'admin',
+      fullName: 'Alliance Admin',
+      specialty: 'System Administrator',
+    });
     return map;
   }, [allDoctors]);
 
@@ -136,8 +142,8 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
       if (!q) return conversations;
       return conversations.filter((c) => {
         const d = doctorsById.get(c.otherDoctorId);
-        const name = d?.fullName?.toLowerCase() || '';
-        const spec = d?.specialty?.toLowerCase() || '';
+        const name = d?.fullName?.toLowerCase() || (c.otherDoctorId === 'admin' ? 'alliance admin' : '');
+        const spec = d?.specialty?.toLowerCase() || (c.otherDoctorId === 'admin' ? 'system administrator' : '');
         const preview = c.lastMessage?.content?.toLowerCase() || '';
         return name.includes(q) || spec.includes(q) || preview.includes(q);
       });

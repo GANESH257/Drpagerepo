@@ -22,7 +22,7 @@ const typeLabels: Record<ApprovalType, string> = {
 export function ApprovalTypeBadge({ type, className }: ApprovalTypeBadgeProps) {
   return (
     <Badge variant="outline" className={className}>
-      {typeLabels[type]}
+      {typeLabels[type] || type}
     </Badge>
   );
 }

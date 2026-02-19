@@ -78,7 +78,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
     // Check if email matches a doctor record (for demo purposes)
     const doctor = findDoctorByEmail(email);
-    
+
     if (!doctor) {
       setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
       setIsSubmitting(false);
@@ -87,11 +87,11 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
     // Check password (first check hashed passwords, then fallback to default)
     const isValidPassword = await checkPassword(email, password);
-    
+
     if (isValidPassword) {
       // Only allow sign-in for existing approved doctors (demo mode)
       const emailToUse = doctor.email || email;
-      setSession(emailToUse);
+      setSession(emailToUse, doctor.id);
       onSuccess?.();
       router.push('/doctor/dashboard');
     } else {

@@ -7,16 +7,24 @@ interface ApprovalStatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<ApprovalStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  pending: {
+    label: 'Pending',
+    variant: 'secondary',
+  },
   submitted: {
     label: 'Submitted',
     variant: 'outline',
   },
   under_review: {
     label: 'Under Review',
-    variant: 'secondary',
+    variant: 'outline',
   },
   approved: {
+    label: 'Approved',
+    variant: 'default',
+  },
+  final_approved: {
     label: 'Approved',
     variant: 'default',
   },
@@ -24,11 +32,18 @@ const statusConfig: Record<ApprovalStatus, { label: string; variant: 'default' |
     label: 'Rejected',
     variant: 'destructive',
   },
+  final_rejected: {
+    label: 'Rejected',
+    variant: 'destructive',
+  },
 };
 
 export function ApprovalStatusBadge({ status, className }: ApprovalStatusBadgeProps) {
-  const config = statusConfig[status];
-  
+  const config = statusConfig[status] || {
+    label: status,
+    variant: 'outline',
+  };
+
   return (
     <Badge variant={config.variant} className={cn(className)}>
       {config.label}

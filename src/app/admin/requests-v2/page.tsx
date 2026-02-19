@@ -23,6 +23,7 @@ import { doctors } from '@/data/doctors';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { PracticeLocationAddPayload, PracticeLocationEditPayload, PracticeLocationRemovePayload, PracticeEditPayload } from '@/types/approvals';
 import { diffPracticeChangedOnly } from '@/lib/utils/practiceDiff';
+import { getAllDoctors } from '@/lib/memberStorage';
 
 export default function AdminRequestsV2Page() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function AdminRequestsV2Page() {
     try {
       const actor = getActorFromSession();
       assertAdmin(actor);
-      
+
       // Load all requests (for filtering)
       const allRequests = getApprovalRequests();
       setRequests(allRequests);
@@ -53,40 +54,55 @@ export default function AdminRequestsV2Page() {
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
-    
+
     let filtered = [...requests];
-    
+
     if (newFilters.status) {
       filtered = filtered.filter(r => r.status === newFilters.status);
     }
-    
+
     if (newFilters.type) {
       filtered = filtered.filter(r => r.type === newFilters.type);
     }
-    
+
     if (newFilters.searchQuery) {
       const query = newFilters.searchQuery.toLowerCase();
       filtered = filtered.filter(r => {
         // Search in practice name
-        if (r.target?.practiceId) {
-          const allPractices = [...practices, ...getCreatedPractices()];
-          const practice = allPractices.find(p => p.id === r.target.practiceId);
-          if (practice?.name.toLowerCase().includes(query)) return true;
-        }
-        
+        try {
+          if (r.target?.practiceId) {
+            const allPractices = [...practices, ...getCreatedPractices()];
+            const practice = allPractices.find(p => p.id === r.target.practiceId);
+            if (practice?.name.toLowerCase().includes(query)) return true;
+          }
+        } catch (e) { /* ignore */ }
+
         // Search in doctor name
-        if (r.target?.doctorId) {
-          const doctor = doctors.find(d => d.id === r.target.doctorId);
-          if (doctor?.fullName.toLowerCase().includes(query)) return true;
-        }
-        
+        try {
+          const allDocs = getAllDoctors();
+          if (r.target?.doctorId) {
+            const doctor = allDocs.find(d => d.id === r.target.doctorId);
+            if (doctor?.fullName.toLowerCase().includes(query)) return true;
+          }
+        } catch (e) { /* ignore */ }
+
         // Search in submitted by email
         if (r.submittedBy.email?.toLowerCase().includes(query)) return true;
-        
+
+        // Search in location info
+        try {
+          const locationInfo = getLocationDisplay(r);
+          if (locationInfo) {
+            if (locationInfo.name.toLowerCase().includes(query)) return true;
+            if (locationInfo.address.toLowerCase().includes(query)) return true;
+            if (locationInfo.locationId?.toLowerCase().includes(query)) return true;
+          }
+        } catch (e) { /* ignore */ }
+
         return false;
       });
     }
-    
+
     setFilteredRequests(filtered);
   };
 
@@ -137,36 +153,52 @@ export default function AdminRequestsV2Page() {
   };
 
   const getTargetDisplay = (request: ApprovalRequest): string => {
-    if (request.target?.practiceId) {
-      const allPractices = [...practices, ...getCreatedPractices()];
-      const practice = allPractices.find(p => p.id === request.target.practiceId);
-      return practice?.name || request.target.practiceId;
-    }
-    if (request.target?.doctorId) {
-      const doctor = doctors.find(d => d.id === request.target.doctorId);
-      return doctor?.fullName || request.target.doctorId;
+    try {
+      if (request.target?.practiceId) {
+        const allPractices = [...practices, ...getCreatedPractices()];
+        const practice = allPractices.find(p => p.id === request.target.practiceId);
+        return practice?.name || request.target.practiceId;
+      }
+      if (request.target?.doctorId) {
+        const allDocs = getAllDoctors();
+        const doctor = allDocs.find(d => d.id === request.target.doctorId);
+        return doctor?.fullName || request.target.doctorId;
+      }
+    } catch {
+      return 'Unknown';
     }
     return 'N/A';
   };
 
   const getQuickGlanceText = (request: ApprovalRequest): string | null => {
-    switch (request.type) {
-      case 'practice_location_add_request':
-        return '+1 location';
-      case 'practice_location_edit_request':
-        return 'Update location';
-      case 'practice_location_remove_request':
-        return '-1 location';
-      case 'practice_edit_request': {
-        const payload = request.payload as PracticeEditPayload;
-        if (payload.before && payload.after) {
-          const changed = diffPracticeChangedOnly(payload.before, payload.after);
-          return `${changed.length} field${changed.length !== 1 ? 's' : ''} changed`;
+    try {
+      switch (request.type) {
+        case 'practice_location_add_request':
+          return '+1 location';
+        case 'practice_location_edit_request':
+          return 'Update location';
+        case 'practice_location_remove_request':
+          return '-1 location';
+        case 'practice_edit_request': {
+          const payload = request.payload as PracticeEditPayload;
+          if (payload.before && payload.after) {
+            const changed = diffPracticeChangedOnly(payload.before, payload.after);
+            return `${changed.length} field${changed.length !== 1 ? 's' : ''} changed`;
+          }
+          return 'Practice update';
         }
-        return 'Practice update';
+        case 'doctor_join_practice':
+        case 'practice_doctor_add_request':
+          return 'Add doctor';
+        case 'practice_doctor_remove_request':
+          return 'Remove doctor';
+        case 'new_practice_with_admin_doctor':
+          return 'New Account Application';
+        default:
+          return 'View details';
       }
-      default:
-        return null;
+    } catch {
+      return 'View details';
     }
   };
 
@@ -175,7 +207,7 @@ export default function AdminRequestsV2Page() {
     const underReview = requests.filter(r => r.status === 'under_review').length;
     const approved = requests.filter(r => r.status === 'approved').length;
     const rejected = requests.filter(r => r.status === 'rejected').length;
-    
+
     return { pending, underReview, approved, rejected, total: requests.length };
   };
 
@@ -264,7 +296,7 @@ export default function AdminRequestsV2Page() {
                 {filteredRequests.map((request) => {
                   const locationInfo = getLocationDisplay(request);
                   const quickGlance = getQuickGlanceText(request);
-                  
+
                   return (
                     <TableRow key={request.id}>
                       <TableCell>
@@ -306,6 +338,11 @@ export default function AdminRequestsV2Page() {
                               Practice update
                             </div>
                           )}
+                          {request.type === 'new_practice_with_admin_doctor' && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              Sign-up application
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -320,7 +357,7 @@ export default function AdminRequestsV2Page() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/admin/requests-v2/${request.id}`)}
+                          onClick={() => router.push(`/admin/requests-v2/detail?id=${request.id}`)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Open

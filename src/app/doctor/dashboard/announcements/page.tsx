@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Announcement } from '@/types/announcements';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
-import { getAnnouncementsForDoctor } from '@/lib/services/announcementService';
+import { subscribeToAnnouncements } from '@/lib/services/announcementService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,17 +19,21 @@ export default function AnnouncementsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     try {
       const actor = getActorFromSession();
       assertDoctor(actor);
-      
+
       if (actor.kind !== 'doctor' || !actor.doctorId) {
         throw new PermissionDeniedError('Must be a doctor');
       }
-      
-      const allAnnouncements = getAnnouncementsForDoctor(actor, actor.doctorId);
-      setAnnouncements(allAnnouncements);
-      setIsLoading(false);
+
+      // Subscribe to real-time announcements
+      unsubscribe = subscribeToAnnouncements(actor.doctorId, actor.practiceId, (all) => {
+        setAnnouncements(all);
+        setIsLoading(false);
+      });
     } catch (error) {
       if (error instanceof AuthRequiredError) {
         router.push('/join-us');
@@ -38,6 +42,8 @@ export default function AnnouncementsPage() {
       }
       setIsLoading(false);
     }
+
+    return () => unsubscribe?.();
   }, [router]);
 
   if (isLoading) {

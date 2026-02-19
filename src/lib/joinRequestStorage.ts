@@ -1,4 +1,6 @@
 import { ApplicationDraft, JoinRequest } from '@/types';
+import { submitApprovalRequest } from '@/lib/services/approvalEngine';
+import { Actor } from '@/lib/services/permissionService';
 
 /**
  * Save signup email to localStorage
@@ -113,6 +115,38 @@ export function submitJoinRequest(request: Omit<JoinRequest, 'id' | 'submittedAt
 
     // Save back to localStorage
     localStorage.setItem('aip_join_requests', JSON.stringify(updated));
+
+    // Also submit as an approval request to the V2 system
+    const actor: Actor = {
+      kind: 'public',
+      email: request.applicant.email,
+    };
+
+    submitApprovalRequest(actor, {
+      type: 'new_practice_with_admin_doctor',
+      payload: {
+        practice: {
+          name: request.applicant.practiceName || 'New Practice',
+          website: request.applicant.website,
+          address: {
+            city: request.applicant.city,
+            state: request.applicant.state,
+            country: 'USA',
+          },
+        },
+        doctor: {
+          email: request.applicant.email,
+          fullName: request.applicant.fullName,
+          credentials: request.applicant.credentials,
+          specialty: request.applicant.specialty,
+        },
+        plan: request.plan,
+        paymentMethod: request.paymentMethod,
+      },
+      target: {
+        practiceId: `new-${Date.now()}`, // Temporary indicator
+      },
+    });
 
     return fullRequest;
   } catch (error) {

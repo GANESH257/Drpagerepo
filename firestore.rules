@@ -6,5 +6,8 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read, write: if true;
     }
+    match /announcements/{announcementId} {
+      allow read, write: if true;
+    }
   }
 }

@@ -4,9 +4,9 @@
  * Handles approval request submission, decisions, side effects, and notifications
  */
 
-import { 
-  ApprovalRequest, 
-  ApprovalType, 
+import {
+  ApprovalRequest,
+  ApprovalType,
   ApprovalHistoryRecord,
   PracticeLocationAddPayload,
   PracticeLocationEditPayload,
@@ -94,11 +94,11 @@ function findPracticeAdminDoctor(practiceId: string): Doctor | null {
       d.practiceId === practiceId &&
       d.roleInPractice === 'practice_admin'
   );
-  
+
   if (practiceAdmins.length === 0) {
     return null;
   }
-  
+
   // Deterministic: Sort by ID and return first (lowest lexical ID)
   // This matches Step 3's practice admin assignment logic
   practiceAdmins.sort((a, b) => a.id.localeCompare(b.id));
@@ -171,62 +171,43 @@ function notifySubmitter(
  */
 function validateRosterPayload(
   type: ApprovalType,
-  payload: Record<string, any>
+  payload: Record<string, any>,
+  target?: Record<string, any>
 ): void {
+  const practiceId = payload.practiceId || target?.practiceId;
+  const doctorId = payload.doctorId || target?.doctorId;
+
   switch (type) {
     case 'doctor_join_practice': {
-      const p = payload as DoctorJoinPracticePayload;
-      if (!p.practiceId || typeof p.practiceId !== 'string') {
-        throw new ValidationError('practiceId is required and must be a string');
+      if (!practiceId || typeof practiceId !== 'string') {
+        throw new ValidationError('practiceId is required');
       }
-      if (!p.doctorId || typeof p.doctorId !== 'string') {
-        throw new ValidationError('doctorId is required and must be a string');
-      }
-      // Reject extra fields
-      const allowedKeys = ['practiceId', 'doctorId'];
-      const payloadKeys = Object.keys(payload);
-      const extraKeys = payloadKeys.filter(k => !allowedKeys.includes(k));
-      if (extraKeys.length > 0) {
-        throw new ValidationError(`Unexpected fields: ${extraKeys.join(', ')}`);
+      if (!doctorId || typeof doctorId !== 'string') {
+        throw new ValidationError('doctorId is required');
       }
       break;
     }
     case 'practice_doctor_add_request': {
-      const p = payload as PracticeAddDoctorPayload;
-      if (!p.practiceId || typeof p.practiceId !== 'string') {
-        throw new ValidationError('practiceId is required and must be a string');
+      if (!practiceId || typeof practiceId !== 'string') {
+        throw new ValidationError('practiceId is required');
       }
-      if (!p.doctorEmail || typeof p.doctorEmail !== 'string') {
-        throw new ValidationError('doctorEmail is required and must be a string');
+      const email = payload.email || payload.doctorEmail || target?.invitedDoctorEmail;
+      if (!email || typeof email !== 'string') {
+        throw new ValidationError('Doctor email is required');
       }
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(p.doctorEmail)) {
-        throw new ValidationError('doctorEmail must be a valid email address');
-      }
-      // Reject extra fields
-      const allowedKeys = ['practiceId', 'doctorEmail'];
-      const payloadKeys = Object.keys(payload);
-      const extraKeys = payloadKeys.filter(k => !allowedKeys.includes(k));
-      if (extraKeys.length > 0) {
-        throw new ValidationError(`Unexpected fields: ${extraKeys.join(', ')}`);
+      if (!emailRegex.test(email)) {
+        throw new ValidationError('Valid email is required');
       }
       break;
     }
     case 'practice_doctor_remove_request': {
-      const p = payload as PracticeRemoveDoctorPayload;
-      if (!p.practiceId || typeof p.practiceId !== 'string') {
-        throw new ValidationError('practiceId is required and must be a string');
+      if (!practiceId || typeof practiceId !== 'string') {
+        throw new ValidationError('practiceId is required');
       }
-      if (!p.doctorId || typeof p.doctorId !== 'string') {
-        throw new ValidationError('doctorId is required and must be a string');
-      }
-      // Reject extra fields
-      const allowedKeys = ['practiceId', 'doctorId'];
-      const payloadKeys = Object.keys(payload);
-      const extraKeys = payloadKeys.filter(k => !allowedKeys.includes(k));
-      if (extraKeys.length > 0) {
-        throw new ValidationError(`Unexpected fields: ${extraKeys.join(', ')}`);
+      if (!doctorId || typeof doctorId !== 'string') {
+        throw new ValidationError('doctorId is required');
       }
       break;
     }
@@ -242,7 +223,7 @@ function validateLocationApprovalRequest(
   target?: { practiceId?: string }
 ): void {
   const practiceId = target?.practiceId || payload.practiceId;
-  
+
   if (!practiceId) {
     throw new ValidationError('practiceId is required for location approval requests');
   }
@@ -255,7 +236,7 @@ function validateLocationApprovalRequest(
   switch (type) {
     case 'practice_location_add_request': {
       const addPayload = payload as PracticeLocationAddPayload;
-      
+
       if (!addPayload.location || !addPayload.location.id) {
         throw new ValidationError('location and location.id are required for location add request');
       }
@@ -272,7 +253,7 @@ function validateLocationApprovalRequest(
 
     case 'practice_location_edit_request': {
       const editPayload = payload as PracticeLocationEditPayload;
-      
+
       if (!editPayload.locationId) {
         throw new ValidationError('locationId is required for location edit request');
       }
@@ -293,7 +274,7 @@ function validateLocationApprovalRequest(
 
     case 'practice_location_remove_request': {
       const removePayload = payload as PracticeLocationRemovePayload;
-      
+
       if (!removePayload.locationId) {
         throw new ValidationError('locationId is required for location remove request');
       }
@@ -324,7 +305,9 @@ export function submitApprovalRequest(
   actor: Actor,
   input: SubmitApprovalInput
 ): ApprovalRequest {
-  assertAuthenticated(actor);
+  if (input.type !== 'new_practice_with_admin_doctor' && input.type !== 'doctor_join_practice') {
+    assertAuthenticated(actor);
+  }
 
   // Validate location approval requests before creating
   if (
@@ -341,7 +324,7 @@ export function submitApprovalRequest(
     input.type === 'practice_doctor_add_request' ||
     input.type === 'practice_doctor_remove_request'
   ) {
-    validateRosterPayload(input.type, input.payload);
+    validateRosterPayload(input.type, input.payload, input.target);
   }
 
   const now = nowISO();
@@ -357,7 +340,12 @@ export function submitApprovalRequest(
             ? 'practice_admin'
             : 'doctor'
           : 'public',
-    email: actor.kind === 'admin' ? actor.email : actor.kind === 'doctor' ? actor.email : undefined,
+    email:
+      actor.kind === 'admin'
+        ? actor.email
+        : actor.kind === 'doctor'
+          ? actor.email
+          : actor.email, // Capture email for public actor if available
     doctorId: actor.kind === 'doctor' ? actor.doctorId : undefined,
     practiceId: actor.kind === 'doctor' ? actor.practiceId : undefined,
   };
@@ -374,11 +362,19 @@ export function submitApprovalRequest(
     },
     ...(needsPracticeAdmin && practiceIdForApproval
       ? {
-          practiceAdmin: {
-            practiceId: practiceIdForApproval,
-            status: 'pending',
-          },
-        }
+        practiceAdmin: {
+          practiceId: practiceIdForApproval,
+          status:
+            submittedBy.role === 'practice_admin' &&
+              submittedBy.practiceId === practiceIdForApproval
+              ? 'approved'
+              : 'pending',
+          ...(submittedBy.role === 'practice_admin' &&
+            submittedBy.practiceId === practiceIdForApproval
+            ? { decidedAt: now }
+            : {}),
+        },
+      }
       : {}),
   };
 
@@ -433,6 +429,25 @@ export function submitApprovalRequest(
     by: historyBy,
     snapshot: snapshotClone,
   });
+
+  // If auto-approved by practice admin, append history
+  if (
+    approvals.practiceAdmin?.status === 'approved' &&
+    submittedBy.role === 'practice_admin' &&
+    submittedBy.practiceId === practiceIdForApproval
+  ) {
+    appendApprovalHistory({
+      id: makeId('ahr'),
+      requestId,
+      type: input.type,
+      practiceId: practiceIdForApproval,
+      doctorId: submittedBy.doctorId,
+      action: 'practice_admin_approved',
+      at: now,
+      by: historyBy,
+      notes: 'Auto-approved by submitting practice admin',
+    });
+  }
 
   // Notify admin (stub - returns recipients for UI)
   notifyAdmins(request);
@@ -541,19 +556,19 @@ export function decideAsAdmin(
   if (
     decision === 'approve' &&
     (request.type === 'doctor_join_practice' ||
-     request.type === 'practice_doctor_add_request' ||
-     request.type === 'practice_doctor_remove_request')
+      request.type === 'practice_doctor_add_request' ||
+      request.type === 'practice_doctor_remove_request')
   ) {
     const practiceId = request.target?.practiceId || (request.payload as any)?.practiceId;
     if (!practiceId) {
       throw new ValidationError('Missing practiceId in roster request');
     }
-    
+
     const practice = getPracticeById(practiceId);
     if (!practice) {
       throw new NotFoundError('Practice', practiceId);
     }
-    
+
     if (request.type === 'doctor_join_practice') {
       const payload = request.payload as DoctorJoinPracticePayload;
       const doctorId = payload.doctorId || request.target?.doctorId;
@@ -568,7 +583,7 @@ export function decideAsAdmin(
         throw new ConflictError(`Doctor ${doctorId} already belongs to practice ${doctor.practiceId}`);
       }
     }
-    
+
     if (request.type === 'practice_doctor_add_request') {
       const payload = request.payload as PracticeAddDoctorPayload;
       const doctor = doctors.find(d => d.email === payload.doctorEmail);
@@ -579,7 +594,7 @@ export function decideAsAdmin(
         throw new ConflictError(`Doctor ${doctor.id} already belongs to practice ${doctor.practiceId}`);
       }
     }
-    
+
     if (request.type === 'practice_doctor_remove_request') {
       const payload = request.payload as PracticeRemoveDoctorPayload;
       const doctor = doctors.find(d => d.id === payload.doctorId);
@@ -1042,28 +1057,28 @@ export function applyApprovedRequestSideEffects(
       const payload = request.payload as DoctorJoinPracticePayload;
       const practiceId = payload.practiceId || request.target?.practiceId;
       const doctorId = payload.doctorId || request.target?.doctorId;
-      
+
       if (!practiceId || !doctorId) {
         throw new ValidationError('Missing practiceId or doctorId');
       }
-      
+
       // Get entities
       const practice = getPracticeById(practiceId);
       const doctor = doctors.find(d => d.id === doctorId);
-      
+
       if (!practice) {
         throw new NotFoundError('Practice', practiceId);
       }
       if (!doctor) {
         throw new NotFoundError('Doctor', doctorId);
       }
-      
+
       // Idempotency check
       if (practice.doctorIds.includes(doctorId)) {
         // Already added, skip mutation
         return;
       }
-      
+
       // Deep clone before snapshots
       const beforePractice = (() => {
         try {
@@ -1076,7 +1091,7 @@ export function applyApprovedRequestSideEffects(
           return { ...practice };
         }
       })();
-      
+
       const beforeDoctor = (() => {
         try {
           if (typeof structuredClone !== 'undefined') {
@@ -1088,7 +1103,7 @@ export function applyApprovedRequestSideEffects(
           return { ...doctor };
         }
       })();
-      
+
       // Two-sided mutation
       const updatedDoctorIds = [...practice.doctorIds, doctorId];
       savePracticeOverride(practiceId, {
@@ -1101,7 +1116,7 @@ export function applyApprovedRequestSideEffects(
         ],
         updatedAt: now,
       });
-      
+
       // Handle old practice removal
       const oldPracticeId = doctor.practiceId;
       if (oldPracticeId && oldPracticeId !== practiceId) {
@@ -1114,16 +1129,16 @@ export function applyApprovedRequestSideEffects(
           });
         }
       }
-      
+
       saveDoctorOverride(doctorId, {
         practiceId: practiceId,
         roleInPractice: 'doctor',
       });
-      
+
       // Store snapshot in history
       const afterPractice = getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
-      
+
       if (afterPractice && afterDoctor) {
         appendApprovalHistory({
           id: makeId('ahr'),
@@ -1148,14 +1163,14 @@ export function applyApprovedRequestSideEffects(
           },
         });
       }
-      
+
       break;
     }
 
     case 'practice_edit_request': {
       const payload = request.payload as PracticeEditPayload;
       const practiceId = payload.practiceId || request.target?.practiceId;
-      
+
       if (!practiceId) {
         console.error('Missing practiceId in practice_edit_request');
         return;
@@ -1170,9 +1185,9 @@ export function applyApprovedRequestSideEffects(
         website: payload.after.website,
         services: payload.after.services,
         // Convert insurances array to insurance objects if needed
-        insurance: payload.after.insurances?.map(name => ({ 
-          name, 
-          slug: slugify(name) 
+        insurance: payload.after.insurances?.map(name => ({
+          name,
+          slug: slugify(name)
         })) || [],
         updatedAt: now,
       };
@@ -1229,17 +1244,17 @@ export function applyApprovedRequestSideEffects(
     case 'practice_location_add_request': {
       const payload = request.payload as PracticeLocationAddPayload;
       const practiceId = payload.practiceId || request.target?.practiceId;
-      
+
       if (!practiceId) {
         console.error('Missing practiceId');
         return;
       }
-      
+
       if (!payload.location || !payload.location.id) {
         console.error('Missing location or location.id');
         return;
       }
-      
+
       // Get current practice
       const allPractices = [...practices, ...getCreatedPractices()];
       const practice = allPractices.find(p => p.id === practiceId);
@@ -1247,37 +1262,37 @@ export function applyApprovedRequestSideEffects(
         console.error('Practice not found');
         return;
       }
-      
+
       // Guard: Reject if location.id already exists
       if (practice.locations.some(loc => loc.id === payload.location.id)) {
         console.error(`Location ${payload.location.id} already exists`);
         return;
       }
-      
+
       // Append location
       const updatedLocations = [...practice.locations, payload.location];
       savePracticeOverride(practiceId, {
         locations: updatedLocations,
         updatedAt: now,
       });
-      
+
       break;
     }
 
     case 'practice_location_edit_request': {
       const payload = request.payload as PracticeLocationEditPayload;
       const practiceId = payload.practiceId || request.target?.practiceId;
-      
+
       if (!practiceId) {
         console.error('Missing practiceId');
         return;
       }
-      
+
       if (!payload.locationId || !payload.updatedLocation) {
         console.error('Missing locationId or updatedLocation');
         return;
       }
-      
+
       // Get current practice
       const allPractices = [...practices, ...getCreatedPractices()];
       const practice = allPractices.find(p => p.id === practiceId);
@@ -1285,40 +1300,40 @@ export function applyApprovedRequestSideEffects(
         console.error('Practice not found');
         return;
       }
-      
+
       // Guard: Reject if locationId not found
       const locationIndex = practice.locations.findIndex(loc => loc.id === payload.locationId);
       if (locationIndex === -1) {
         console.error(`Location ${payload.locationId} not found`);
         return;
       }
-      
+
       // Replace location (preserve array order)
       const updatedLocations = [...practice.locations];
       updatedLocations[locationIndex] = payload.updatedLocation;
-      
+
       savePracticeOverride(practiceId, {
         locations: updatedLocations,
         updatedAt: now,
       });
-      
+
       break;
     }
 
     case 'practice_location_remove_request': {
       const payload = request.payload as PracticeLocationRemovePayload;
       const practiceId = payload.practiceId || request.target?.practiceId;
-      
+
       if (!practiceId) {
         console.error('Missing practiceId');
         return;
       }
-      
+
       if (!payload.locationId) {
         console.error('Missing locationId');
         return;
       }
-      
+
       // Get current practice
       const allPractices = [...practices, ...getCreatedPractices()];
       const practice = allPractices.find(p => p.id === practiceId);
@@ -1326,60 +1341,66 @@ export function applyApprovedRequestSideEffects(
         console.error('Practice not found');
         return;
       }
-      
+
       // Guard: Cannot remove last remaining location
       if (practice.locations.length <= 1) {
         console.error('Cannot remove last remaining location');
         return;
       }
-      
+
       // Guard: Location must exist
       if (!practice.locations.some(loc => loc.id === payload.locationId)) {
         console.error(`Location ${payload.locationId} not found`);
         return;
       }
-      
+
       // Remove location
       const updatedLocations = practice.locations.filter(loc => loc.id !== payload.locationId);
       savePracticeOverride(practiceId, {
         locations: updatedLocations,
         updatedAt: now,
       });
-      
+
       break;
     }
 
     case 'practice_doctor_add_request': {
       const payload = request.payload as PracticeAddDoctorPayload;
       const practiceId = payload.practiceId;
-      
+
       if (!practiceId) {
         throw new ValidationError('Missing practiceId');
       }
-      
-      // Find doctor by email
-      const doctor = doctors.find(d => d.email === payload.doctorEmail);
-      if (!doctor) {
-        throw new NotFoundError('Doctor', `email: ${payload.doctorEmail}`);
+
+      const p = request.payload as any;
+      const doctorEmail = p.email || p.doctorEmail || request.target?.invitedDoctorEmail;
+      if (!doctorEmail) {
+        throw new ValidationError('Missing doctor email in payload or target');
       }
-      
+
+      // Find doctor by email
+      const doctor = doctors.find(d => d.email === doctorEmail);
+      if (!doctor) {
+        throw new NotFoundError('Doctor', `email: ${doctorEmail}`);
+      }
+
       const doctorId = doctor.id;
-      
+
       // Get practice
       const practice = getPracticeById(practiceId);
       if (!practice) {
         throw new NotFoundError('Practice', practiceId);
       }
-      
+
       // Idempotency check
       if (practice.doctorIds.includes(doctorId)) {
         return; // Already added
       }
-      
+
       if (doctor.practiceId) {
         throw new ConflictError(`Doctor ${doctorId} already belongs to practice ${doctor.practiceId}`);
       }
-      
+
       // Deep clone before snapshots
       const beforePractice = (() => {
         try {
@@ -1392,7 +1413,7 @@ export function applyApprovedRequestSideEffects(
           return { ...practice };
         }
       })();
-      
+
       const beforeDoctor = (() => {
         try {
           if (typeof structuredClone !== 'undefined') {
@@ -1404,7 +1425,7 @@ export function applyApprovedRequestSideEffects(
           return { ...doctor };
         }
       })();
-      
+
       // Two-sided mutation
       const updatedDoctorIds = [...practice.doctorIds, doctorId];
       savePracticeOverride(practiceId, {
@@ -1417,16 +1438,16 @@ export function applyApprovedRequestSideEffects(
         ],
         updatedAt: now,
       });
-      
+
       saveDoctorOverride(doctorId, {
         practiceId: practiceId,
         roleInPractice: 'doctor',
       });
-      
+
       // Store snapshot in history
       const afterPractice = getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
-      
+
       if (afterPractice && afterDoctor) {
         appendApprovalHistory({
           id: makeId('ahr'),
@@ -1451,49 +1472,49 @@ export function applyApprovedRequestSideEffects(
           },
         });
       }
-      
+
       break;
     }
 
     case 'practice_doctor_remove_request': {
-      const payload = request.payload as PracticeRemoveDoctorPayload;
-      const practiceId = payload.practiceId;
-      const doctorId = payload.doctorId;
-      
+      const p = request.payload as any;
+      const practiceId = p.practiceId || request.target?.practiceId;
+      const doctorId = p.doctorId || request.target?.doctorId;
+
       if (!practiceId || !doctorId) {
         throw new ValidationError('Missing practiceId or doctorId');
       }
-      
+
       // Get entities
       const practice = getPracticeById(practiceId);
       const doctor = doctors.find(d => d.id === doctorId);
-      
+
       if (!practice) {
         throw new NotFoundError('Practice', practiceId);
       }
       if (!doctor) {
         throw new NotFoundError('Doctor', doctorId);
       }
-      
+
       // Idempotency check
       if (!practice.doctorIds.includes(doctorId)) {
         return; // Already removed
       }
-      
+
       if (doctor.practiceId !== practiceId) {
         throw new ConflictError(`Doctor ${doctorId} does not belong to practice ${practiceId}`);
       }
-      
+
       // Last practice_admin guard (MANDATORY)
       const allDoctors = [...doctors];
       const practiceAdmins = practice.doctorIds
         .map(id => allDoctors.find(d => d.id === id))
         .filter((d): d is Doctor => d !== undefined && d.roleInPractice === 'practice_admin');
-      
+
       if (practiceAdmins.length === 1 && practiceAdmins[0]?.id === doctorId) {
         throw new Error('Cannot remove the last practice_admin from a practice.');
       }
-      
+
       // Deep clone before snapshots
       const beforePractice = (() => {
         try {
@@ -1506,7 +1527,7 @@ export function applyApprovedRequestSideEffects(
           return { ...practice };
         }
       })();
-      
+
       const beforeDoctor = (() => {
         try {
           if (typeof structuredClone !== 'undefined') {
@@ -1518,23 +1539,23 @@ export function applyApprovedRequestSideEffects(
           return { ...doctor };
         }
       })();
-      
+
       // Two-sided mutation
       const updatedDoctorIds = practice.doctorIds.filter(id => id !== doctorId);
       savePracticeOverride(practiceId, {
         doctorIds: updatedDoctorIds,
         updatedAt: now,
       });
-      
+
       saveDoctorOverride(doctorId, {
         practiceId: undefined, // Remove practice association
         roleInPractice: undefined,
       });
-      
+
       // Store snapshot in history
       const afterPractice = getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
-      
+
       if (afterPractice && afterDoctor) {
         appendApprovalHistory({
           id: makeId('ahr'),
@@ -1547,19 +1568,19 @@ export function applyApprovedRequestSideEffects(
           by: {
             role: 'admin', // System action logged as admin
           },
-        snapshot: {
-          before: {
-            practice: beforePractice,
-            doctor: beforeDoctor,
+          snapshot: {
+            before: {
+              practice: beforePractice,
+              doctor: beforeDoctor,
+            },
+            after: {
+              practice: afterPractice,
+              doctor: afterDoctor,
+            },
           },
-          after: {
-            practice: afterPractice,
-            doctor: afterDoctor,
-          },
-        },
-      });
+        });
       }
-      
+
       break;
     }
 

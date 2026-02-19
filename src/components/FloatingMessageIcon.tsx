@@ -4,23 +4,43 @@ import { useEffect, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useDoctorSession } from '@/lib/useDoctorSession';
+import { getAdminSession } from '@/lib/adminSession';
 import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
 
 export function FloatingMessageIcon() {
     const { getSession } = useDoctorSession();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [href, setHref] = useState('/doctor/dashboard/messages');
+
+    const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        // Check admin session first
+        const adminSession = getAdminSession();
+        if (adminSession) {
+            setHref('/admin/announcements');
+            setIsVisible(true);
+            const unsubscribe = subscribeToTotalUnreadCount('admin', (count) => {
+                setUnreadCount(count);
+            });
+            return () => unsubscribe();
+        }
+
+        // Fallback to doctor session
         const session = getSession();
-        if (!session?.doctorId) return;
+        if (session?.doctorId) {
+            setHref('/doctor/dashboard/messages');
+            setIsVisible(true);
+            const unsubscribe = subscribeToTotalUnreadCount(session.doctorId, (count) => {
+                setUnreadCount(count);
+            });
+            return () => unsubscribe();
+        }
 
-        // Subscribe to real-time unread count
-        const unsubscribe = subscribeToTotalUnreadCount(session.doctorId, (count) => {
-            setUnreadCount(count);
-        });
-
-        return () => unsubscribe();
+        setIsVisible(false);
     }, [getSession]);
+
+    if (!isVisible) return null;
 
     return (
         <div
@@ -32,7 +52,7 @@ export function FloatingMessageIcon() {
             }}
         >
             <Link
-                href="/doctor/dashboard/messages"
+                href={href}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-dark-blue text-white shadow-2xl transition-all duration-300 hover:scale-110 hover:bg-brand-dark-blue/90 focus-ring md:h-14 md:w-14"
                 aria-label="Messages"
             >

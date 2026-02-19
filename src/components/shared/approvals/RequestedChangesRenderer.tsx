@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ApprovalRequest, PracticeLocationAddPayload, PracticeLocationEditPayload, PracticeLocationRemovePayload, PracticeEditPayload } from '@/types/approvals';
+import { ApprovalRequest, PracticeLocationAddPayload, PracticeLocationEditPayload, PracticeLocationRemovePayload, PracticeEditPayload, DoctorJoinPracticePayload, PracticeAddDoctorPayload, PracticeRemoveDoctorPayload } from '@/types/approvals';
 import { PracticeLocation } from '@/types/practice';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { LocationSummary } from './LocationSummary';
@@ -13,6 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 
 /**
  * Resolve practiceId from multiple possible locations in request/payload
@@ -549,6 +551,132 @@ function PracticeEditDiffView({ request }: { request: ApprovalRequest }) {
 }
 
 /**
+ * Roster Change View - Shows practice/doctor associations
+ */
+function RosterView({ request }: { request: ApprovalRequest }) {
+  const practiceId = request.target?.practiceId;
+  const doctorId = request.target?.doctorId;
+  const invitedEmail = request.target?.invitedDoctorEmail;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label className="text-muted-foreground">Request Type</Label>
+              <div className="mt-1 font-medium capitalize">
+                {request.type.replace(/_/g, ' ')}
+              </div>
+            </div>
+            {practiceId && (
+              <div>
+                <Label className="text-muted-foreground">Practice ID</Label>
+                <div className="mt-1 font-mono text-sm">{practiceId}</div>
+              </div>
+            )}
+            {doctorId && (
+              <div>
+                <Label className="text-muted-foreground">Doctor ID</Label>
+                <div className="mt-1 font-mono text-sm">{doctorId}</div>
+              </div>
+            )}
+            {invitedEmail && (
+              <div>
+                <Label className="text-muted-foreground">Invited Email</Label>
+                <div className="mt-1">{invitedEmail}</div>
+              </div>
+            )}
+          </div>
+
+          {request.payload?.message && (
+            <div className="mt-4 p-3 bg-muted rounded-md text-sm">
+              <Label className="text-muted-foreground block mb-1">Message from Practice</Label>
+              {request.payload.message}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * New Practice View - Shows signup application details
+ */
+function NewPracticeView({ request }: { request: ApprovalRequest }) {
+  const payload = request.payload;
+  const practice = payload.practice;
+  const doctor = payload.doctor;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h4 className="font-bold text-brand-dark-blue">Practice Details</h4>
+            <div>
+              <Label className="text-muted-foreground">Practice Name</Label>
+              <div className="mt-1 font-medium">{practice?.name}</div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Location</Label>
+              <div className="mt-1">
+                {practice?.address?.city}, {practice?.address?.state}
+              </div>
+            </div>
+            {practice?.website && (
+              <div>
+                <Label className="text-muted-foreground">Website</Label>
+                <div className="mt-1 text-brand-teal underline">{practice.website}</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h4 className="font-bold text-brand-dark-blue">Admin Doctor</h4>
+            <div>
+              <Label className="text-muted-foreground">Full Name</Label>
+              <div className="mt-1 font-medium">{doctor?.fullName} {doctor?.credentials}</div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Specialty</Label>
+              <div className="mt-1">{doctor?.specialty}</div>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Email</Label>
+              <div className="mt-1">{doctor?.email}</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <h4 className="font-bold text-brand-dark-blue mb-4">Membership Selection</h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Plan ID:</span>
+              <span className="ml-2 font-medium capitalize">{payload.plan?.planId}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Billing:</span>
+              <span className="ml-2 font-medium capitalize">{payload.plan?.billingCycle}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Payment Method:</span>
+              <span className="ml-2 font-medium capitalize">{payload.paymentMethod}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
  * Main renderer component - Routes to appropriate view based on request type
  */
 export function RequestedChangesRenderer({ request }: { request: ApprovalRequest }) {
@@ -569,6 +697,14 @@ export function RequestedChangesRenderer({ request }: { request: ApprovalRequest
     case 'practice_edit_request':
       content = <PracticeEditDiffView request={request} />;
       break;
+    case 'doctor_join_practice':
+    case 'practice_doctor_add_request':
+    case 'practice_doctor_remove_request':
+      content = <RosterView request={request} />;
+      break;
+    case 'new_practice_with_admin_doctor':
+      content = <NewPracticeView request={request} />;
+      break;
     default:
       content = <RawJsonPayload payload={request.payload} />;
   }
@@ -576,7 +712,7 @@ export function RequestedChangesRenderer({ request }: { request: ApprovalRequest
   return (
     <div className="space-y-4">
       {content}
-      
+
       {/* Collapsible Raw JSON */}
       <Accordion type="single" collapsible>
         <AccordionItem value="raw-json">
