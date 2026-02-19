@@ -268,22 +268,50 @@ npx tsc --noEmit
 **Steps**:
 1. Log in as Doctor
 2. Navigate to `/doctors/[slug]` (another doctor's profile)
-3. Click "Send Referral" button
-4. Fill in referral form (patient initials, age, sex, reason)
-5. Submit referral
-6. Verify referral appears in sent referrals
+3. Verify "Send Referral" button is visible (not visible for public users)
+4. Click "Send Referral" button
+5. Verify referral dialog/form opens
+6. Test form fields:
+   - **Condition** (required textarea): Enter condition description
+   - **Patient Initials** (optional, max 5 chars): Enter initials
+   - **Patient Age** (optional number): Enter age
+   - **Patient Sex** (optional select): Select male/female/other
+   - **Notes** (optional textarea): Enter additional notes
+7. Test form validation:
+   - Try submitting without condition (should show error)
+   - Test patient initials max length (should limit to 5 chars)
+   - Test age validation (should accept numbers only)
+8. Submit referral with valid data
+9. Verify referral appears in sent referrals
 
 **Expected Results**:
+- ✅ "Send Referral" button visible for doctors/admins
+- ✅ Dialog form opens correctly
+- ✅ All form fields display correctly
+- ✅ Form validation works (condition required)
 - ✅ Referral created successfully
 - ✅ Referral appears in `/doctor/dashboard/referrals` (Sent tab)
 - ✅ Notification sent to receiving doctor
 - ✅ Toast notification shows success
+- ✅ Form resets after submission
 
 **Verification**:
 - Check `/doctor/dashboard/referrals` → Sent tab
-- Verify referral details match submitted data
+- Verify referral details match submitted data:
+  - Condition matches
+  - Patient initials match (if provided)
+  - Patient age matches (if provided)
+  - Patient sex matches (if provided)
+  - Notes match (if provided)
 - Check receiving doctor's notifications
 - Verify referral history record created
+- Verify form dialog closes after successful submission
+
+**Edge Cases**:
+- Try sending referral to yourself (should be blocked)
+- Try sending referral as public user (button should not appear)
+- Test with minimal data (only condition required)
+- Test with all fields filled
 
 ### Test 4.5: Permission Service - Role-Based Access
 
@@ -320,22 +348,39 @@ npx tsc --noEmit
 1. Log in as Admin
 2. Navigate to `/admin/requests-v2`
 3. Verify request list displays
-4. Test filters (status, type)
-5. Test search functionality
-6. Click on a request to open detail page
+4. Check stats display (pending, under review, approved, rejected, total)
+5. Test filters:
+   - Filter by status (pending, under_review, approved, rejected)
+   - Filter by type (all approval types)
+6. Test search functionality (search by practice name, doctor name, etc.)
+7. Verify request table columns:
+   - Request type (with badge)
+   - Target (practice/doctor name)
+   - Submitted by
+   - Status
+   - Date
+   - Quick glance summary (for location/practice requests)
+8. Click on a request to open detail page
+9. Verify detail page navigation works
 
 **Expected Results**:
 - ✅ Request list displays all pending requests
-- ✅ Filters work correctly
+- ✅ Stats cards display correctly
+- ✅ Filters work correctly (status and type)
 - ✅ Search works correctly
+- ✅ Table displays all columns correctly
+- ✅ Quick glance summaries display (e.g., "+1 location", "X fields changed")
 - ✅ Detail page opens correctly
 - ✅ Request information displays correctly
 
 **Verification Points**:
-- Request type badges display correctly
+- Request type badges display correctly (all 10 types)
 - Status badges display correctly
-- Date formatting is correct
+- Date formatting is correct (using formatDateTime)
+- Target column shows practice/doctor names correctly
+- Quick glance text shows for location/practice requests
 - Pagination works (if implemented)
+- Empty state displays when no requests
 
 ### Test 5.2: Practice Admin Approval Queue
 
@@ -345,17 +390,25 @@ npx tsc --noEmit
 1. Log in as Practice Admin
 2. Navigate to `/doctor/dashboard/practice/approvals`
 3. Verify only practice's requests appear
-4. Test filters
-5. Open a request detail page
+4. Check that requests are scoped to practice admin's practice
+5. Test filters (status, type)
+6. Verify request table displays correctly
+7. Open a request detail page
+8. Verify approval/rejection actions work
 
 **Expected Results**:
 - ✅ Only practice's requests visible
+- ✅ Requests scoped correctly (practiceId matches)
 - ✅ Filters work correctly
+- ✅ Table displays correctly
 - ✅ Detail page displays correctly
+- ✅ Approval/rejection actions work
 
 **Verification**:
-- Verify requests have correct `practiceId`
+- Verify requests have correct `practiceId` (matches practice admin's practice)
 - Check that other practices' requests don't appear
+- Verify practice admin can approve/reject their practice's requests
+- Verify practice admin cannot see other practices' requests
 
 ### Test 5.3: Doctor Notifications
 
@@ -365,21 +418,37 @@ npx tsc --noEmit
 1. Log in as Doctor
 2. Navigate to `/doctor/dashboard/notifications`
 3. Verify notifications list displays
-4. Click "Mark as Read" on unread notification
-5. Verify notification updates
-6. Click notification link (if has href)
-7. Verify navigation works
+4. Check notification types display correctly:
+   - Referral received (`referral_received`)
+   - Referral status changed (`referral_status_changed`)
+   - Approval update (`approval_update`)
+   - Practice roster update (`practice_roster_update`)
+   - Announcement (`announcement`)
+5. Test filtering:
+   - Switch between "All" and "Unread" tabs
+   - Verify unread count displays correctly
+6. Click "Mark as Read" on unread notification
+7. Verify notification updates (read badge disappears)
+8. Click notification link (if has href)
+9. Verify navigation works to correct page
 
 **Expected Results**:
 - ✅ Notifications list displays
+- ✅ Unread count displays in header
 - ✅ Unread/read filtering works
+- ✅ Notification type badges display correctly
 - ✅ Mark as read updates notification
+- ✅ Read/unread visual states update (border, badge)
 - ✅ Links navigate correctly
+- ✅ Timestamps display correctly
 
 **Verification Points**:
-- Notification badges display correctly
-- Timestamps format correctly
+- Notification badges display correctly (Referral, Approval, Announcement, Roster)
+- Timestamps format correctly (using formatDateTime)
 - Read/unread states update correctly
+- Unread notifications have visual indicator (blue border)
+- Notification cards show title, message, timestamp
+- Deep links (href) navigate to correct pages
 
 ### Test 5.4: Doctor Referrals
 
@@ -983,7 +1052,7 @@ npx tsc --noEmit
 - ✅ Doctor receives notification (if implemented)
 
 **Verification Points**:
-- Request type is `practice_add_doctor_request`
+- Request type is `practice_doctor_add_request`
 - Payload structure correct
 - Request visible to admin
 - Validation prevents duplicate adds
@@ -1010,7 +1079,7 @@ npx tsc --noEmit
 **Verification Points**:
 - Remove button disabled if last practice admin
 - Confirmation dialog shows doctor details
-- Request type is `practice_remove_doctor_request`
+- Request type is `practice_doctor_remove_request`
 - Payload contains `doctorId` and `practiceId`
 - Last practice admin guard works in UI and engine
 
@@ -1026,7 +1095,7 @@ npx tsc --noEmit
 **Steps**:
 1. Log in as Admin
 2. Navigate to `/admin/requests-v2`
-3. Find a `practice_add_doctor_request` or `doctor_join_practice`
+3. Find a `practice_doctor_add_request` or `doctor_join_practice`
 4. Approve request
 5. Verify two-sided mutation:
    - Doctor added to practice.doctorIds
@@ -1060,7 +1129,7 @@ npx tsc --noEmit
 **Steps**:
 1. Log in as Admin
 2. Navigate to `/admin/requests-v2`
-3. Find a `practice_remove_doctor_request`
+3. Find a `practice_doctor_remove_request`
 4. Verify last practice admin guard (if removing practice admin)
 5. Approve request
 6. Verify two-sided mutation:
