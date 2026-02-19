@@ -1,16 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, FileText, Users, Heart } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import * as LucideIcons from 'lucide-react';
 
 interface PatientStep {
   number: string;
   title: string;
   description: string;
-  icon: string;
+  image: string;
 }
 
 const patientSteps: PatientStep[] = [
@@ -18,230 +16,130 @@ const patientSteps: PatientStep[] = [
     number: '01',
     title: 'Search',
     description: 'Find specialists by specialty and location',
-    icon: 'Search',
+    image: '/for_pt.png',
   },
   {
     number: '02',
     title: 'Compare',
     description: 'Review profiles, credentials, and reviews',
-    icon: 'FileText',
+    image: '/for_dr.png',
   },
   {
     number: '03',
     title: 'Onboarding',
     description: 'Request appointments or contact practices',
-    icon: 'Users',
+    image: '/for_dr2.png',
   },
   {
     number: '04',
     title: 'Care',
     description: 'Receive personalized treatment',
-    icon: 'Heart',
+    image: '/for_pt2.png',
   },
 ];
 
-const iconMap: Record<string, keyof typeof LucideIcons> = {
-  Search: 'Search',
-  FileText: 'FileText',
-  Users: 'Users',
-  Heart: 'Heart',
-};
-
 export function PatientSteps() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      setPrefersReducedMotion(mediaQuery.matches);
-
-      const handleChange = (e: MediaQueryListEvent) => {
-        setPrefersReducedMotion(e.matches);
-      };
-
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
+    setMounted(true);
   }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  const getIcon = (iconName: string) => {
-    const IconComponent = LucideIcons[iconMap[iconName] || 'Search'] as React.ComponentType<{ className?: string }>;
-    return IconComponent || Search;
-  };
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-16 md:py-24 relative overflow-hidden bg-white"
-    >
+    <section className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
+      {/* Background Shapes */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[10%] left-[5%] w-64 h-64 opacity-60">
+          <Image src="/shapes/shape-65.png" alt="" fill className="object-contain" />
+        </div>
+        <div className="absolute bottom-[10%] right-[5%] w-72 h-72 opacity-60">
+          <Image src="/shapes/shape-66.png" alt="" fill className="object-contain" />
+        </div>
+        <div className="absolute top-[40%] right-[2%] w-48 h-48 opacity-40">
+          <Image src="/shapes/shape-61.png" alt="" fill className="object-contain" />
+        </div>
+        <div className="absolute bottom-[20%] left-[2%] w-40 h-40 opacity-40">
+          <Image src="/shapes/shape-62.png" alt="" fill className="object-contain" />
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="max-w-6xl mx-auto">
-          <div
-            className="text-center mb-12 md:mb-16"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-              transition: prefersReducedMotion
-                ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
-            }}
-          >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue">
+        <div className="max-w-7xl mx-auto">
+
+          {/* Section Header */}
+          <div className="text-center mb-20 md:mb-24">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-12 h-px bg-brand-teal/30" />
+              <span className="text-brand-teal font-bold text-xs tracking-[0.3em] uppercase">
+                Patient Process
+              </span>
+              <div className="w-12 h-px bg-brand-teal/30" />
+            </div>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-[#1a4b7f] leading-tight max-w-3xl mx-auto">
               Your Path to Better Health
             </h2>
-            <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto">
+            <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
               Simple steps to connect with the right care provider.
             </p>
           </div>
 
-          {/* Desktop: Horizontal stepper with connecting lines */}
-          <div className="hidden md:block relative">
-            {/* Connector line */}
-            <div
-              className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible && !prefersReducedMotion ? 'scaleX(1)' : 'scaleX(0)',
-                transformOrigin: 'left',
-                transition: prefersReducedMotion
-                  ? 'opacity 0.3s ease'
-                  : 'opacity 0.6s ease-out 0.4s, transform 1s ease-out 0.4s',
-              }}
-            />
+          {/* Process Content */}
+          <div className="relative">
 
-            <div className="flex items-start justify-between relative z-10">
-              {patientSteps.map((step, index) => {
-                const IconComponent = getIcon(step.icon);
-                const cardDelay = prefersReducedMotion ? 0 : index * 150;
-                const accentColor = index % 2 === 0 ? 'brand-dark-blue' : 'emerald-600';
+            {/* Curved Path Shape (shape-64.png from reference) */}
+            <div className="hidden lg:block absolute top-[15%] left-1/2 -translate-x-1/2 w-[85%] h-[60%] pointer-events-none -z-0 opacity-80">
+              <Image
+                src="/shapes/shape-64.png"
+                alt=""
+                fill
+                className="object-contain"
+              />
+            </div>
 
-                return (
-                  <div
-                    key={step.number}
-                    className="flex-1 flex flex-col items-center"
-                    style={{
-                      opacity: isVisible ? 1 : 0,
-                      transform: isVisible && !prefersReducedMotion
-                        ? 'translateY(0) scale(1)'
-                        : 'translateY(30px) scale(0.95)',
-                      transition: prefersReducedMotion
-                        ? `opacity 0.3s ease ${cardDelay}ms`
-                        : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
-                    }}
-                  >
-                    {/* Number badge */}
-                    <div
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm mb-4 shadow-md',
-                        accentColor === 'brand-dark-blue' ? 'bg-brand-dark-blue' : 'bg-emerald-600'
-                      )}
-                    >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 relative z-10">
+              {patientSteps.map((step, index) => (
+                <div
+                  key={step.number}
+                  className={cn(
+                    "flex flex-col items-center group transition-all duration-500",
+                    index === 1 ? "lg:translate-y-16" : "",
+                    index === 2 ? "lg:translate-y-4" : "",
+                    index === 3 ? "lg:translate-y-24" : ""
+                  )}
+                >
+                  {/* Step Image Box */}
+                  <div className="relative mb-8">
+                    {/* Main Circle Image */}
+                    <div className="relative w-48 h-48 md:w-56 md:h-56 rounded-full overflow-hidden border-[12px] border-white shadow-xl transition-transform duration-500 group-hover:scale-105 group-hover:shadow-2xl">
+                      <Image
+                        src={step.image}
+                        alt={step.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    {/* Number Badge */}
+                    <div className="absolute -top-1 -left-1 w-12 h-12 md:w-14 md:h-14 bg-brand-teal rounded-full flex items-center justify-center text-white font-bold text-lg border-4 border-white shadow-lg z-20 group-hover:scale-110 transition-transform duration-300">
                       {step.number}
                     </div>
 
-                    {/* Icon */}
-                    <div
-                      className={cn(
-                        'w-16 h-16 rounded-full flex items-center justify-center mb-4',
-                        accentColor === 'brand-dark-blue'
-                          ? 'bg-brand-dark-blue/10 text-brand-dark-blue'
-                          : 'bg-emerald-600/10 text-emerald-600'
-                      )}
-                    >
-                      <IconComponent className="h-8 w-8" aria-hidden="true" />
-                    </div>
+                    {/* Decorative Ring (Subtle) */}
+                    <div className="absolute -inset-4 rounded-full border-2 border-brand-teal/10 -z-10 group-hover:scale-110 transition-transform duration-700" />
+                  </div>
 
-                    {/* Title */}
-                    <h3 className="text-lg font-bold text-brand-dark-blue mb-2 text-center">
+                  {/* Text Content */}
+                  <div className="text-center px-4">
+                    <h4 className="text-xl md:text-2xl font-bold text-[#112437] mb-3 leading-tight group-hover:text-brand-teal transition-colors">
                       {step.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-sm text-gray-600 text-center max-w-[150px]">
+                    </h4>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       {step.description}
                     </p>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Mobile: Stacked cards with numbered badges */}
-          <div className="md:hidden space-y-4">
-            {patientSteps.map((step, index) => {
-              const IconComponent = getIcon(step.icon);
-              const cardDelay = prefersReducedMotion ? 0 : index * 100;
-              const accentColor = index % 2 === 0 ? 'brand-dark-blue' : 'emerald-600';
-
-              return (
-                <Card
-                  key={step.number}
-                  className="bg-white border border-gray-200 hover:shadow-md transition-all duration-300"
-                  style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateX(0) scale(1)'
-                      : 'translateX(-20px) scale(0.95)',
-                    transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
-                  }}
-                >
-                  <CardContent className="p-6 flex items-center gap-4">
-                    {/* Number badge */}
-                    <div
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md',
-                        accentColor === 'brand-dark-blue' ? 'bg-brand-dark-blue' : 'bg-emerald-600'
-                      )}
-                    >
-                      {step.number}
-                    </div>
-
-                    {/* Icon */}
-                    <div
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center shrink-0',
-                        accentColor === 'brand-dark-blue'
-                          ? 'bg-brand-dark-blue/10 text-brand-dark-blue'
-                          : 'bg-emerald-600/10 text-emerald-600'
-                      )}
-                    >
-                      <IconComponent className="h-6 w-6" aria-hidden="true" />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-brand-dark-blue mb-1">
-                        {step.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {step.description}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
           </div>
         </div>
       </div>
