@@ -9,7 +9,7 @@ interface NewHomeHeroDocumentedProps {
   darkOverlay?: boolean; // If true, use darker/blacker overlay instead of blue
 }
 
-export function NewHomeHeroDocumented({ subheadline, videoSource = '/Backgroundnewvid.mp4', darkOverlay = false }: NewHomeHeroDocumentedProps) {
+export function NewHomeHeroDocumented({ subheadline, videoSource = '/bg.mp4', darkOverlay = false }: NewHomeHeroDocumentedProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [animatedStats, setAnimatedStats] = useState<Record<number, number>>({});

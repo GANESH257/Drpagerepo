@@ -96,7 +96,7 @@ export function PortalShell({
           transition-all duration-300 flex-1 bg-white
           lg:ml-64
           ${sidebarCollapsed ? 'lg:ml-16' : ''}
-          pt-24 md:pt-28
+          pt-40 md:pt-44
         `}
       >
         <div className="container mx-auto px-4 py-8 max-w-7xl">

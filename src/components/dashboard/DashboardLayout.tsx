@@ -23,6 +23,7 @@ import {
   CreditCard,
   Calendar,
   Users,
+  MessageCircle,
   Crown,
   Bell,
   Megaphone,
@@ -81,6 +82,12 @@ const baseDoctorNavItems = [
     href: '/doctor/dashboard/announcements',
     icon: Megaphone,
     description: 'View announcements',
+  },
+  {
+    label: 'Messages',
+    href: '/doctor/dashboard/messages',
+    icon: MessageCircle,
+    description: 'Message other physicians in the network',
   },
   {
     label: 'Membership',
@@ -158,7 +165,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
 
   // Determine nav items based on role
   const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
-  const navItems = isPracticeAdmin 
+  const navItems = isPracticeAdmin
     ? [...baseDoctorNavItems, ...practiceAdminNavItems]
     : baseDoctorNavItems;
 

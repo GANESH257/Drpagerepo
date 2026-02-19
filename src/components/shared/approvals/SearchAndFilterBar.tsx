@@ -96,7 +96,10 @@ export function SearchAndFilterBar({
             <SelectItem value="practice_edit_request">Practice Edit</SelectItem>
             <SelectItem value="practice_doctor_add_request">Add Doctor</SelectItem>
             <SelectItem value="practice_doctor_remove_request">Remove Doctor</SelectItem>
-            <SelectItem value="practice_location_change_request">Location Change</SelectItem>
+            <SelectItem value="practice_location_add_request">Location Add</SelectItem>
+            <SelectItem value="practice_location_edit_request">Location Edit</SelectItem>
+            <SelectItem value="practice_location_remove_request">Location Remove</SelectItem>
+            <SelectItem value="practice_location_change_request">Location Change (Legacy)</SelectItem>
             <SelectItem value="practice_insurance_services_change_request">Insurance/Services</SelectItem>
           </SelectContent>
         </Select>

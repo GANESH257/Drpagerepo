@@ -14,15 +14,15 @@ import { AuthRequiredError, PermissionDeniedError } from './errors';
  * Actor type representing the current user
  */
 export type Actor =
-  | { kind: 'public' }
+  | { kind: 'public'; email?: string }
   | { kind: 'admin'; email?: string }
   | {
-      kind: 'doctor';
-      doctorId: string;
-      email?: string;
-      practiceId?: string;
-      roleInPractice?: 'doctor' | 'practice_admin';
-    };
+    kind: 'doctor';
+    doctorId: string;
+    email?: string;
+    practiceId?: string;
+    roleInPractice?: 'doctor' | 'practice_admin';
+  };
 
 /**
  * Get actor from current session (SSR-safe)
