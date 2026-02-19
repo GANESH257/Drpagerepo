@@ -8,8 +8,19 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { homeFAQ } from '@/data/homeFAQ';
+import { HomeFAQ, MembershipFAQ } from '@/types';
 
-export function FAQSection() {
+interface FAQSectionProps {
+  faqData?: HomeFAQ[] | MembershipFAQ[];
+  title?: string;
+  description?: string;
+}
+
+export function FAQSection({ 
+  faqData = homeFAQ, 
+  title = 'Frequently Asked Questions',
+  description = 'Find answers to common questions about using our network and directory.'
+}: FAQSectionProps = {}) {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -63,15 +74,15 @@ export function FAQSection() {
             }}
           >
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 text-brand-dark-blue">
-              Frequently Asked Questions
+              {title}
             </h2>
             <p className="text-xs md:text-sm text-gray-700 leading-relaxed">
-              Find answers to common questions about using our network and directory.
+              {description}
             </p>
           </div>
 
           <Accordion type="single" collapsible className="w-full">
-            {homeFAQ.map((faq, index) => {
+            {faqData.map((faq, index) => {
               const itemDelay = prefersReducedMotion ? 0 : index * 50;
               return (
                 <AccordionItem 

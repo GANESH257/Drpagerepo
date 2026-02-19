@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, MapPin, Calendar, Building } from 'lucide-react';
 import { getInstitutionById } from '@/lib/institutionStorage';
+import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -95,21 +96,42 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
             <MapPin className="h-4 w-4 mr-2" />
             {doctor.locations[0]?.city}, {doctor.locations[0]?.state} {doctor.locations[0]?.zip}
           </div>
-          {showInstitution && doctor.institutionId && (() => {
-            const institution = getInstitutionById(doctor.institutionId);
-            if (institution) {
-              return (
-                <div className="flex items-center text-sm text-brand-teal">
-                  <Building className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <Link 
-                    href={`/institutions/${institution.slug}`}
-                    className="hover:underline font-medium"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {institution.name}
-                  </Link>
-                </div>
-              );
+          {showInstitution && (() => {
+            // Prefer practice link if practiceId exists
+            if (doctor.practiceId) {
+              const practice = getPracticeById(doctor.practiceId);
+              if (practice) {
+                return (
+                  <div className="flex items-center text-sm text-brand-teal">
+                    <Building className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <Link 
+                      href={`/practices/${practice.slug}`}
+                      className="hover:underline font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {practice.name}
+                    </Link>
+                  </div>
+                );
+              }
+            }
+            // Fallback to institution if no practice
+            if (doctor.institutionId) {
+              const institution = getInstitutionById(doctor.institutionId);
+              if (institution) {
+                return (
+                  <div className="flex items-center text-sm text-brand-teal">
+                    <Building className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <Link 
+                      href={`/institutions/${institution.slug}`}
+                      className="hover:underline font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {institution.name}
+                    </Link>
+                  </div>
+                );
+              }
             }
             return null;
           })()}

@@ -1,36 +1,31 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { departments } from '@/data/departments';
 import { getDepartmentIcon } from '@/lib/departmentIcons';
 import * as LucideIcons from 'lucide-react';
 
-// Map departments to icon paths, fallback to Lucide icons
-const departmentIconMap: Record<string, string> = {
-  'family-practice': '/Icons/icon_primary_care.png',
-  'cardiology': '/Icons/icon_cardiology.png',
-  'dermatology': '/Icons/icon_dermatology.png',
-  'gastroenterology': '/Icons/icon_gastroenterology.png',
-  'neurology': '/Icons/icon_neurology.png',
-  'ophthalmology': '/Icons/icon_ophthalmology.png',
-  'orthopedic-spine': '/Icons/icon_orthopedics.png',
-  'pediatrics': '/Icons/icon_pediatrics.png',
-  'psychiatry': '/Icons/icon_psychiatry.png',
-  'pulmonology': '/Icons/icon_pulmonology.png',
-};
-
-// Extended icon mapping for departments without custom icons
+// Complete icon mapping for all departments using Lucide icons
 const departmentLucideIconMap: Record<string, keyof typeof LucideIcons> = {
   'bariatric-general-surgery': 'Scissors',
+  'cardiology': 'HeartPulse',
+  'dermatology': 'Sparkles',
   'endocrinology': 'Beaker',
+  'family-practice': 'Users',
+  'gastroenterology': 'Activity',
   'internal-medicine': 'Heart',
   'nephrology': 'Droplet',
+  'neurology': 'Brain',
   'nurse-practitioners': 'UserCircle',
+  'ophthalmology': 'Eye',
+  'orthopedic-spine': 'Activity',
   'otolaryngology-ent': 'Headphones',
+  'pediatrics': 'Users',
   'plastic-reconstructive-surgery': 'Scissors',
   'podiatry': 'Footprints',
+  'psychiatry': 'Brain',
+  'pulmonology': 'Wind',
   'rheumatology': 'Activity',
   'sports-medicine': 'Dumbbell',
   'vascular-surgery': 'HeartPulse',
@@ -39,8 +34,7 @@ const departmentLucideIconMap: Record<string, keyof typeof LucideIcons> = {
 interface DepartmentItem {
   name: string;
   slug: string;
-  iconPath?: string;
-  IconComponent?: React.ComponentType<{ className?: string }>;
+  IconComponent: React.ComponentType<{ className?: string }>;
 }
 
 export function DepartmentsMarquee() {
@@ -80,26 +74,22 @@ export function DepartmentsMarquee() {
     return () => observer.disconnect();
   }, []);
 
-  // Create department items with icons
+  // Create department items with Lucide icons
   const departmentItems: DepartmentItem[] = departments.map((dept) => {
-    const iconPath = departmentIconMap[dept.slug];
-    let IconComponent: React.ComponentType<{ className?: string }> | undefined;
+    // Try Lucide icon mapping first
+    const lucideIconName = departmentLucideIconMap[dept.slug];
+    let IconComponent: React.ComponentType<{ className?: string }>;
     
-    if (!iconPath) {
-      // Try Lucide icon mapping first
-      const lucideIconName = departmentLucideIconMap[dept.slug];
-      if (lucideIconName && LucideIcons[lucideIconName]) {
-        IconComponent = LucideIcons[lucideIconName] as React.ComponentType<{ className?: string }>;
-      } else {
-        // Fallback to getDepartmentIcon or Stethoscope
-        IconComponent = getDepartmentIcon(dept.slug);
-      }
+    if (lucideIconName && LucideIcons[lucideIconName]) {
+      IconComponent = LucideIcons[lucideIconName] as React.ComponentType<{ className?: string }>;
+    } else {
+      // Fallback to getDepartmentIcon or Stethoscope
+      IconComponent = getDepartmentIcon(dept.slug);
     }
     
     return {
       name: dept.name,
       slug: dept.slug,
-      iconPath,
       IconComponent,
     };
   });
@@ -132,19 +122,7 @@ export function DepartmentsMarquee() {
                 aria-label={`Browse ${dept.name} specialists`}
               >
                 <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center bg-white rounded-full shadow-md group-hover:shadow-lg transition-all duration-300 mb-2">
-                  {dept.iconPath ? (
-                    <Image
-                      src={dept.iconPath}
-                      alt={`${dept.name} icon`}
-                      fill
-                      className="object-contain p-3"
-                      sizes="(max-width: 768px) 80px, (max-width: 1024px) 96px, 112px"
-                    />
-                  ) : dept.IconComponent ? (
-                    <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" />
-                  ) : (
-                    <LucideIcons.Stethoscope className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" />
-                  )}
+                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}
@@ -161,19 +139,7 @@ export function DepartmentsMarquee() {
                 aria-label={`Browse ${dept.name} specialists`}
               >
                 <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center bg-white rounded-full shadow-md group-hover:shadow-lg transition-all duration-300 mb-2">
-                  {dept.iconPath ? (
-                    <Image
-                      src={dept.iconPath}
-                      alt={`${dept.name} icon`}
-                      fill
-                      className="object-contain p-3"
-                      sizes="(max-width: 768px) 80px, (max-width: 1024px) 96px, 112px"
-                    />
-                  ) : dept.IconComponent ? (
-                    <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" />
-                  ) : (
-                    <LucideIcons.Stethoscope className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" />
-                  )}
+                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}

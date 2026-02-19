@@ -9,6 +9,8 @@ import { DepartmentsMarquee } from '@/components/DepartmentsMarquee';
 import { ImpactStats } from '@/components/physicians/ImpactStats';
 import { MemberStories } from '@/components/physicians/MemberStories';
 import { PracticeResources } from '@/components/physicians/PracticeResources';
+import { FAQSection } from '@/components/FAQSection';
+import { membershipFAQ } from '@/data/membershipFAQ';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -59,6 +61,11 @@ export default function PhysiciansPage() {
       <ImpactStats />
       <MemberStories />
       <PracticeResources />
+      <FAQSection 
+        faqData={membershipFAQ}
+        title="Membership Questions"
+        description="Find answers to common questions about membership, plans, and benefits."
+      />
     </>
   );
 }

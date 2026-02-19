@@ -21,6 +21,12 @@ export function getDepartmentIcon(slug: string): React.ComponentType<{ className
     'bariatric-general-surgery': 'Scissors',
     'otolaryngology-ent': 'Headphones',
     'vascular-surgery': 'HeartPulse',
+    'cardiology': 'HeartPulse',
+    'ophthalmology': 'Eye',
+    'pediatrics': 'Users',
+    'pulmonology': 'Wind',
+    'orthopedic-spine': 'Activity',
+    'neurology': 'Brain',
   };
 
   const iconName = iconMap[slug] || 'Stethoscope';

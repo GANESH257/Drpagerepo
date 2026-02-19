@@ -7,6 +7,8 @@ import {
   FileText,
   Crown,
   FileCheck,
+  Calendar,
+  Users,
   LogOut
 } from 'lucide-react';
 import {
@@ -34,10 +36,10 @@ const navItems: NavItem[] = [
     description: 'Overview and statistics',
   },
   {
-    label: 'Membership Requests',
-    href: '/admin/requests',
+    label: 'Approval Requests',
+    href: '/admin/requests-v2',
     icon: FileText,
-    description: 'Review and manage join requests',
+    description: 'Review and manage all approval requests',
   },
   {
     label: 'Membership Plans',
@@ -50,6 +52,18 @@ const navItems: NavItem[] = [
     href: '/admin/policies',
     icon: FileCheck,
     description: 'Manage organization policies',
+  },
+  {
+    label: 'Events',
+    href: '/admin/events',
+    icon: Calendar,
+    description: 'Edit meetings and events',
+  },
+  {
+    label: 'Member Management',
+    href: '/admin/members',
+    icon: Users,
+    description: 'Manage doctor members',
   },
 ];
 

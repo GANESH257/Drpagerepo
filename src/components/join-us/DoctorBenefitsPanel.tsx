@@ -11,6 +11,8 @@ import {
   UserPlus,
   FileCheck,
   TrendingUp,
+  Bell,
+  Building,
 } from 'lucide-react';
 
 const benefits = [
@@ -36,7 +38,15 @@ const benefits = [
   },
   {
     icon: Users,
-    text: 'Connect with the Board Certified Specialists community',
+    text: 'Track referrals sent and received with enhanced status management',
+  },
+  {
+    icon: Bell,
+    text: 'Stay updated with notifications for referrals, approvals, and announcements',
+  },
+  {
+    icon: Building,
+    text: 'Practice Admins: Manage your practice, locations, and team members',
   },
 ];
 
@@ -51,7 +61,7 @@ const steps = [
   },
   {
     icon: TrendingUp,
-    text: 'Start receiving referrals & patient requests',
+    text: 'Start receiving referrals, notifications & patient requests',
   },
 ];
 

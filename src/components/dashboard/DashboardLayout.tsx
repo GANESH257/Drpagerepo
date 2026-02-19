@@ -9,6 +9,13 @@ import { DoctorProvider } from './DoctorContext';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+
+interface DashboardLayoutProps {
+  doctor: Doctor;
+  children: React.ReactNode;
+  onProfileUpdate?: (doctor: Doctor) => void;
+}
+
 import {
   LayoutDashboard,
   User,
@@ -17,15 +24,16 @@ import {
   Calendar,
   Users,
   Crown,
+  Bell,
+  Megaphone,
+  Building,
+  FileCheck,
+  Settings,
+  History,
 } from 'lucide-react';
 
-interface DashboardLayoutProps {
-  doctor: Doctor;
-  children: React.ReactNode;
-  onProfileUpdate?: (doctor: Doctor) => void;
-}
-
-const doctorNavItems = [
+// Base nav items for all doctors
+const baseDoctorNavItems = [
   {
     label: 'Overview',
     href: '/doctor/dashboard',
@@ -63,10 +71,68 @@ const doctorNavItems = [
     description: 'Track referrals from other physicians in the network',
   },
   {
+    label: 'Notifications',
+    href: '/doctor/dashboard/notifications',
+    icon: Bell,
+    description: 'View notifications and updates',
+  },
+  {
+    label: 'Announcements',
+    href: '/doctor/dashboard/announcements',
+    icon: Megaphone,
+    description: 'View announcements',
+  },
+  {
     label: 'Membership',
     href: '/doctor/dashboard/membership',
     icon: Crown,
     description: 'Manage membership details, renewals, and upgrades',
+  },
+];
+
+// Practice admin nav items (additional)
+const practiceAdminNavItems = [
+  {
+    label: 'Practice',
+    href: '/doctor/dashboard/practice',
+    icon: Building,
+    description: 'Manage practice details',
+  },
+  {
+    label: 'Practice Approvals',
+    href: '/doctor/dashboard/practice/approvals',
+    icon: FileCheck,
+    description: 'Review and approve practice requests',
+  },
+  {
+    label: 'Practice Doctors',
+    href: '/doctor/dashboard/practice/doctors',
+    icon: Users,
+    description: 'Manage practice roster',
+  },
+  {
+    label: 'Practice Locations',
+    href: '/doctor/dashboard/practice/locations',
+    icon: MapPin,
+    description: 'View practice locations',
+  },
+  {
+    label: 'Services & Insurance',
+    href: '/doctor/dashboard/practice/services-insurance',
+    icon: Settings,
+    description: 'Manage services and insurance',
+  },
+  {
+    label: 'Practice Membership',
+    href: '/doctor/dashboard/practice/membership',
+    icon: Crown,
+    description: 'View practice membership overview',
+  },
+  {
+    label: 'Practice History',
+    href: '/doctor/dashboard/practice/history',
+    icon: History,
+    description: 'View approval history for your practice',
   },
 ];
 
@@ -90,6 +156,12 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
     router.push('/join-us');
   };
 
+  // Determine nav items based on role
+  const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
+  const navItems = isPracticeAdmin 
+    ? [...baseDoctorNavItems, ...practiceAdminNavItems]
+    : baseDoctorNavItems;
+
   const headerRight = (
     <>
       <div className="hidden items-center gap-3 sm:flex">
@@ -98,6 +170,11 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
           {currentDoctor.verified && (
             <Badge variant="outline" className="mt-1 border-[#0F5FA8] text-[#0F5FA8] bg-white">
               Verified
+            </Badge>
+          )}
+          {isPracticeAdmin && (
+            <Badge variant="default" className="mt-1 bg-blue-600 text-white">
+              Practice Admin
             </Badge>
           )}
         </div>
@@ -118,7 +195,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   return (
     <DoctorProvider doctor={currentDoctor} onUpdate={handleProfileUpdate}>
       <PortalShell
-        sidebarItems={doctorNavItems}
+        sidebarItems={navItems}
         headerTitle="Doctor Dashboard"
         headerRight={headerRight}
       >

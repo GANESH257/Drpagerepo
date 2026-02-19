@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Suspense } from 'react';
-import { TopSearchBar } from '../DoctorFilters';
+import { TopSearchBar as PracticeSearchBar } from '../PracticeFilters';
+import { TopSearchBar as DoctorSearchBar } from '../DoctorFilters';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function SearchSection() {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [searchMode, setSearchMode] = useState<'practices' | 'doctors'>('practices');
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -72,14 +75,34 @@ export function SearchSection() {
             className="text-sm md:text-base text-gray-300 mb-6 md:mb-8 text-center max-w-2xl mx-auto"
             style={animationStyle(200)}
           >
-            Find the right specialist quickly with our easy-to-use search tool. Filter by conditions, doctors, insurance, and location.
+            {searchMode === 'practices'
+              ? 'Find the right medical practice quickly with our easy-to-use search tool. Filter by specialty, location, insurance, and services.'
+              : 'Find the right specialist quickly with our easy-to-use search tool. Filter by conditions, doctors, insurance, and location.'}
           </p>
+          
+          {/* Search Mode Toggle */}
+          <div 
+            className="w-full mb-4 flex justify-center"
+            style={animationStyle(300)}
+          >
+            <Tabs value={searchMode} onValueChange={(value) => setSearchMode(value as 'practices' | 'doctors')} className="w-full max-w-md">
+              <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
+                <TabsTrigger value="practices" className="data-[state=active]:bg-white data-[state=active]:text-brand-dark-blue">
+                  Practices
+                </TabsTrigger>
+                <TabsTrigger value="doctors" className="data-[state=active]:bg-white data-[state=active]:text-brand-dark-blue">
+                  Doctors
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div 
             className="w-full"
             style={animationStyle(400)}
           >
             <Suspense fallback={<div className="h-16 w-full bg-white/10 rounded-xl animate-pulse" />}>
-              <TopSearchBar />
+              {searchMode === 'practices' ? <PracticeSearchBar /> : <DoctorSearchBar />}
             </Suspense>
           </div>
         </div>

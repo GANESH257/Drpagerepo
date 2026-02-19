@@ -27,10 +27,10 @@ const adminNavItems = [
     description: 'Overview and statistics',
   },
   {
-    label: 'Membership Requests',
-    href: '/admin/requests',
+    label: 'Approval Requests',
+    href: '/admin/requests-v2',
     icon: FileText,
-    description: 'Review and manage join requests',
+    description: 'Review and manage all approval requests',
   },
   {
     label: 'Membership Plans',

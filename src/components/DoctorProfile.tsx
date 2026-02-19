@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Doctor } from '@/types';
@@ -12,6 +12,18 @@ import { BookingModal } from '@/components/BookingModal';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { DoctorCard } from '@/components/DoctorCard';
 import { getInstitutionById } from '@/lib/institutionStorage';
+import { getActorFromSession, canSendReferral } from '@/lib/services/permissionService';
+import { getContactCard } from '@/lib/services/visibilityService';
+import { createReferral } from '@/lib/services/referralEngine';
+import { practices } from '@/data/practices';
+import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
+import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/lib/toast';
 import {
   CheckCircle2,
   MapPin,
@@ -24,7 +36,11 @@ import {
   Briefcase,
   Clock,
   Building,
+  Send,
+  Mail,
+  AlertTriangle,
 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DoctorProfileProps {
   doctor: Doctor;
@@ -35,7 +51,19 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [showReferralDialog, setShowReferralDialog] = useState(false);
+  const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
+  const [contactCard, setContactCard] = useState<any>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
+  
+  // Referral form state
+  const [referralForm, setReferralForm] = useState({
+    patientInitials: '',
+    patientAge: '',
+    patientSex: '' as 'male' | 'female' | 'other' | '',
+    condition: '',
+    notes: '',
+  });
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -68,6 +96,51 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
 
     return () => observer.disconnect();
   }, []);
+
+  // Load contact card with visibility rules
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const actor = getActorFromSession();
+      
+      // Get practice (v2) or institution (v1 backward compatibility)
+      let practice = null;
+      if (doctor.practiceId) {
+        practice = getPracticeById(doctor.practiceId);
+      }
+      
+      // If no practice found, try to get institution for backward compatibility
+      if (!practice && doctor.institutionId) {
+        const institution = getInstitutionById(doctor.institutionId);
+        if (institution) {
+          // Convert institution to practice-like structure for visibility service
+          practice = {
+            id: institution.id,
+            slug: institution.slug,
+            name: institution.name,
+            description: institution.description || '',
+            phone: institution.phone,
+            email: institution.email,
+            website: institution.website,
+            address: institution.address,
+            locations: [],
+            specialties: [],
+            doctorIds: [],
+            createdAt: '',
+            updatedAt: '',
+          };
+        }
+      }
+      
+      if (practice) {
+        const card = getContactCard(actor, doctor, practice);
+        setContactCard(card);
+      }
+    } catch (error) {
+      console.error('Error loading contact card:', error);
+    }
+  }, [doctor]);
 
   // Generate realistic doctor image URL - use consistent seed based on name
   const generateDoctorImage = (doctor: Doctor): string => {
@@ -112,6 +185,11 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
       return a.time.localeCompare(b.time);
     })
     .slice(0, 2);
+
+  // Compute practice once (reused in Practice and Institution sections)
+  const practice = useMemo(() => {
+    return doctor.practiceId ? getPracticeById(doctor.practiceId) : null;
+  }, [doctor.practiceId]);
 
   return (
     <div ref={sectionRef} className="min-h-screen">
@@ -197,6 +275,140 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   </a>
                 </Button>
               )}
+              {(() => {
+                const actor = getActorFromSession();
+                if (canSendReferral(actor) && actor.kind !== 'public') {
+                  return (
+                    <Dialog open={showReferralDialog} onOpenChange={setShowReferralDialog}>
+                      <DialogTrigger asChild>
+                        <Button
+                          size="lg"
+                          variant="outline"
+                          className="w-full md:w-auto border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white transition-all duration-200 hover:scale-105 shadow-md"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Referral
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Send Referral</DialogTitle>
+                          <DialogDescription>
+                            Send a referral to {doctor.fullName}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="condition">Condition *</Label>
+                            <Textarea
+                              id="condition"
+                              value={referralForm.condition}
+                              onChange={(e) => setReferralForm({ ...referralForm, condition: e.target.value })}
+                              placeholder="Describe the condition or reason for referral..."
+                              required
+                            />
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor="patient-initials">Patient Initials</Label>
+                              <Input
+                                id="patient-initials"
+                                value={referralForm.patientInitials}
+                                onChange={(e) => setReferralForm({ ...referralForm, patientInitials: e.target.value })}
+                                placeholder="ABC"
+                                maxLength={5}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="patient-age">Age</Label>
+                              <Input
+                                id="patient-age"
+                                type="number"
+                                value={referralForm.patientAge}
+                                onChange={(e) => setReferralForm({ ...referralForm, patientAge: e.target.value })}
+                                placeholder="45"
+                                min="0"
+                                max="150"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="patient-sex">Sex</Label>
+                              <Select
+                                value={referralForm.patientSex}
+                                onValueChange={(value) => setReferralForm({ ...referralForm, patientSex: value as any })}
+                              >
+                                <SelectTrigger id="patient-sex">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="male">Male</SelectItem>
+                                  <SelectItem value="female">Female</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label htmlFor="referral-notes">Notes (optional)</Label>
+                            <Textarea
+                              id="referral-notes"
+                              value={referralForm.notes}
+                              onChange={(e) => setReferralForm({ ...referralForm, notes: e.target.value })}
+                              placeholder="Additional notes about the referral..."
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowReferralDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={async () => {
+                              if (!referralForm.condition.trim()) {
+                                toast.error('Please provide a condition');
+                                return;
+                              }
+                              
+                              try {
+                                setIsSubmittingReferral(true);
+                                const actor = getActorFromSession();
+                                createReferral(actor, {
+                                  toDoctorId: doctor.id,
+                                  patient: {
+                                    initials: referralForm.patientInitials || undefined,
+                                    age: referralForm.patientAge ? parseInt(referralForm.patientAge) : undefined,
+                                    sex: referralForm.patientSex || undefined,
+                                  },
+                                  condition: referralForm.condition,
+                                  notes: referralForm.notes || undefined,
+                                });
+                                
+                                toast.success('Referral sent successfully');
+                                setShowReferralDialog(false);
+                                setReferralForm({
+                                  patientInitials: '',
+                                  patientAge: '',
+                                  patientSex: '',
+                                  condition: '',
+                                  notes: '',
+                                });
+                              } catch (error: any) {
+                                toast.error(error.message || 'Failed to send referral');
+                              } finally {
+                                setIsSubmittingReferral(false);
+                              }
+                            }}
+                            disabled={isSubmittingReferral || !referralForm.condition.trim()}
+                          >
+                            {isSubmittingReferral ? 'Sending...' : 'Send Referral'}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         </div>
@@ -229,30 +441,180 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               </CardContent>
             </Card>
 
-            {/* Institution Section */}
-            {doctor.institutionId && (() => {
-              const institution = getInstitutionById(doctor.institutionId);
-              if (!institution) return null;
+            {/* Practice Section (Primary) */}
+            {(() => {
+              // Practice is computed once at component level via useMemo
+              // If practice exists, show Practice section
+              if (practice) {
+                return (
+                  <>
+                    <Card 
+                      className="card-vibrant border-2 border-brand-teal/20"
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                        transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.55s, transform 0.7s ease-out 0.55s',
+                      }}
+                    >
+                      <CardHeader>
+                        <CardTitle className="text-brand-dark-blue flex items-center gap-2">
+                          <Building className="h-5 w-5 text-brand-teal" />
+                          Practice
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-brand-dark-blue mb-2">
+                              {practice.name}
+                            </h3>
+                            <div className="space-y-2 text-muted-foreground">
+                              <div className="flex items-start gap-2">
+                                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p>{practice.address.line1}</p>
+                                  {practice.address.line2 && <p>{practice.address.line2}</p>}
+                                  <p>
+                                    {practice.address.city}, {practice.address.state} {practice.address.zip}
+                                  </p>
+                                </div>
+                              </div>
+                              {contactCard && contactCard.phone && (
+                                <div className="flex items-center gap-2">
+                                  <Phone className="h-4 w-4 flex-shrink-0" />
+                                  <a 
+                                    href={`tel:${contactCard.phone}`}
+                                    className="hover:text-brand-teal transition-colors"
+                                  >
+                                    {contactCard.phone}
+                                  </a>
+                                  {contactCard.source === 'practice' && (
+                                    <span className="text-xs text-gray-500">(Practice Contact)</span>
+                                  )}
+                                </div>
+                              )}
+                              {contactCard && contactCard.email && (
+                                <div className="flex items-center gap-2">
+                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                  <a 
+                                    href={`mailto:${contactCard.email}`}
+                                    className="hover:text-brand-teal transition-colors"
+                                  >
+                                    {contactCard.email}
+                                  </a>
+                                  {contactCard.source === 'practice' && (
+                                    <span className="text-xs text-gray-500">(Practice Contact)</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {practice.description && (
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              {practice.description.substring(0, 200)}
+                              {practice.description.length > 200 ? '...' : ''}
+                            </p>
+                          )}
+                          
+                          <Button
+                            asChild
+                            variant="gradient"
+                            className="w-full sm:w-auto"
+                          >
+                            <Link href={`/practices/${practice.slug}`}>
+                              View Practice
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              }
               
+              // If practiceId exists but practice not found, show warning
+              if (doctor.practiceId && !practice) {
+                return (
+                  <>
+                    <Alert 
+                      variant="default"
+                      className="bg-amber-50 border-amber-200 text-amber-800"
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                        transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.55s, transform 0.7s ease-out 0.55s',
+                      }}
+                    >
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription>
+                        This doctor is linked to a practice that is not available in the directory.
+                      </AlertDescription>
+                    </Alert>
+                  </>
+                );
+              }
+              
+              return null;
+            })()}
+
+            {/* Institution Section (Legacy Fallback) */}
+            {(() => {
+              // Practice is computed once at component level via useMemo
+              // If practice exists, don't show Institution
+              if (practice) {
+                return null;
+              }
+              
+              // Load institution for fallback
+              let institution = null;
+              if (doctor.institutionId) {
+                institution = getInstitutionById(doctor.institutionId);
+              }
+              
+              if (!institution) {
+                // Show warning if practiceId is missing (legacy doctor)
+                if (!doctor.practiceId) {
+                  return (
+                    <Alert 
+                      variant="default"
+                      className="bg-amber-50 border-amber-200 text-amber-800"
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                        transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.55s, transform 0.7s ease-out 0.55s',
+                      }}
+                    >
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription>
+                        Legacy doctor record missing practice association.
+                      </AlertDescription>
+                    </Alert>
+                  );
+                }
+                return null;
+              }
+              
+              // Show Institution section with legacy label
               return (
                 <Card 
-                  className="card-vibrant border-2 border-brand-teal/20"
+                  className="card-vibrant border-2 border-gray-200"
                   style={{
                     opacity: isVisible ? 1 : 0,
                     transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.55s, transform 0.7s ease-out 0.55s',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.6s, transform 0.7s ease-out 0.6s',
                   }}
                 >
                   <CardHeader>
-                    <CardTitle className="text-brand-dark-blue flex items-center gap-2">
-                      <Building className="h-5 w-5 text-brand-teal" />
-                      Practice / Clinic
+                    <CardTitle className="text-gray-600 flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-gray-500" />
+                      Institution (Legacy)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-brand-dark-blue mb-2">
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
                           {institution.name}
                         </h3>
                         <div className="space-y-2 text-muted-foreground">
@@ -266,14 +628,25 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                               </p>
                             </div>
                           </div>
-                          {institution.phone && (
+                          {contactCard && contactCard.phone && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 flex-shrink-0" />
                               <a 
-                                href={`tel:${institution.phone}`}
+                                href={`tel:${contactCard.phone}`}
                                 className="hover:text-brand-teal transition-colors"
                               >
-                                {institution.phone}
+                                {contactCard.phone}
+                              </a>
+                            </div>
+                          )}
+                          {contactCard && contactCard.email && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 flex-shrink-0" />
+                              <a 
+                                href={`mailto:${contactCard.email}`}
+                                className="hover:text-brand-teal transition-colors"
+                              >
+                                {contactCard.email}
                               </a>
                             </div>
                           )}
@@ -286,16 +659,6 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                           {institution.description.length > 200 ? '...' : ''}
                         </p>
                       )}
-                      
-                      <Button
-                        asChild
-                        variant="gradient"
-                        className="w-full sm:w-auto"
-                      >
-                        <Link href={`/institutions/${institution.slug}`}>
-                          View Practice
-                        </Link>
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -535,13 +898,30 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                         {location.city}, {location.state} {location.zip}
                       </p>
                       <div className="flex items-center gap-4 mt-2">
-                        <a
-                          href={`tel:${location.phone}`}
-                          className="text-sm text-brand-teal hover:text-brand-dark-blue transition-colors flex items-center gap-1 focus-ring rounded-md px-1 -ml-1"
-                        >
-                          <Phone className="h-4 w-4" />
-                          {location.phone}
-                        </a>
+                        {contactCard && contactCard.phone && (
+                          <a
+                            href={`tel:${contactCard.phone}`}
+                            className="text-sm text-brand-teal hover:text-brand-dark-blue transition-colors flex items-center gap-1 focus-ring rounded-md px-1 -ml-1"
+                          >
+                            <Phone className="h-4 w-4" />
+                            {contactCard.phone}
+                            {contactCard.source === 'practice' && (
+                              <span className="text-xs text-gray-500 ml-1">(Practice)</span>
+                            )}
+                          </a>
+                        )}
+                        {contactCard && contactCard.email && (
+                          <a
+                            href={`mailto:${contactCard.email}`}
+                            className="text-sm text-brand-teal hover:text-brand-dark-blue transition-colors flex items-center gap-1 focus-ring rounded-md px-1 -ml-1"
+                          >
+                            <Mail className="h-4 w-4" />
+                            {contactCard.email}
+                            {contactCard.source === 'practice' && (
+                              <span className="text-xs text-gray-500 ml-1">(Practice)</span>
+                            )}
+                          </a>
+                        )}
                         {location.directionsUrl && (
                           <a
                             href={location.directionsUrl}

@@ -10,6 +10,8 @@ import {
   Calendar, 
   Users,
   Crown,
+  Bell,
+  Megaphone,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -59,6 +61,18 @@ const navItems: NavItem[] = [
     href: '/doctor/dashboard/referrals',
     icon: Users,
     description: 'Track referrals from other physicians in the network',
+  },
+  {
+    label: 'Notifications',
+    href: '/doctor/dashboard/notifications',
+    icon: Bell,
+    description: 'View notifications and updates',
+  },
+  {
+    label: 'Announcements',
+    href: '/doctor/dashboard/announcements',
+    icon: Megaphone,
+    description: 'View announcements',
   },
   {
     label: 'Membership',

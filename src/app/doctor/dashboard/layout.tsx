@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { findDoctorByEmail, loadDoctorProfile } from '@/lib/doctorStorage';
+import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
+import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
@@ -21,6 +23,21 @@ export default function DoctorDashboardLayout({
 
   useEffect(() => {
     const checkAuthAndLoadDoctor = () => {
+      // Check authentication using Step 4 services
+      try {
+        const actor = getActorFromSession();
+        assertDoctor(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.doctorId) {
+          throw new PermissionDeniedError('Must be a doctor');
+        }
+      } catch (error) {
+        if (error instanceof AuthRequiredError || error instanceof PermissionDeniedError) {
+          router.push('/join-us');
+          return;
+        }
+      }
+
       if (!isAuthenticated()) {
         router.push('/join-us');
         return;

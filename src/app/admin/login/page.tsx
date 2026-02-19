@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, Shield, Users, FileCheck, Settings } from 'lucide-react';
+import { Eye, EyeOff, Shield, Users, FileCheck, Settings, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
                 Admin Portal
               </h1>
               <p className="text-lg text-gray-700 mb-6">
-                Manage membership requests, plans, and policies for the Alliance of Independent Physicians.
+                Manage approval requests, practices, plans, and policies for the Alliance of Independent Physicians.
               </p>
             </div>
 
@@ -70,8 +70,13 @@ export default function AdminLoginPage() {
               {[
                 {
                   icon: FileCheck,
-                  title: 'Review Membership Requests',
-                  description: 'Approve or reject physician membership applications',
+                  title: 'Approval Requests (V2)',
+                  description: 'Review and manage all approval requests with multi-party workflows (Admin + Practice Admin)',
+                },
+                {
+                  icon: Building2,
+                  title: 'Practice Management',
+                  description: 'Manage practices, locations, insurance, and doctor rosters',
                 },
                 {
                   icon: Users,

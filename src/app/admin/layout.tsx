@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { isAdminAuthenticated } from '@/lib/adminSession';
 import { AdminShell } from '@/components/admin/AdminShell';
+import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
+import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 
 export default function AdminLayout({
   children,
@@ -57,6 +59,21 @@ export default function AdminLayout({
         router.replace('/admin/login');
       }
       return;
+    }
+
+    // Additional permission check using Step 4 services
+    try {
+      const actor = getActorFromSession();
+      assertAdmin(actor);
+    } catch (error) {
+      if (error instanceof AuthRequiredError || error instanceof PermissionDeniedError) {
+        if (!didRedirect.current) {
+          didRedirect.current = true;
+          setIsLoading(false);
+          router.replace('/admin/login');
+        }
+        return;
+      }
     }
 
     // Authenticated - clear loading immediately

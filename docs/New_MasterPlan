@@ -1,0 +1,727 @@
+Below is a single “master reference doc” you can paste into your repo (and also paste into Cursor) so both you and Cursor have one source of truth before we split work.
+
+AIP v2 Master Reference Doc — Practices, Permissions, Approvals, Referrals, Chat
+0) What changed from v1 → v2
+v1 (current)
+
+Doctors are the primary public directory entity.
+
+Institutions exist, but doctors mostly drive everything.
+
+Join requests are mostly “Doctor membership requests” approved by Admin.
+
+Doctor portal exists (profile, locations, insurance, appointments, referrals, membership).
+
+Admin portal manages requests, members (doctors), plans, policies, events.
+
+v2 (new)
+
+Practices (clinics) become the primary entity.
+
+Doctors belong to a practice.
+
+Doctors can join an existing practice OR create a new practice.
+
+If a doctor creates a practice, they become Practice Admin (extra permissions).
+
+Approval flows become multi-party:
+
+Admin approval always required
+
+Practice Admin approval required for doctors joining that practice
+
+Referral + notification layer expands.
+
+Chat feature planned and must be considered in data model + permissions.
+
+1) New Core Entities
+1.1 Practice (new primary directory entity)
+
+A “Practice” is what users search and see first.
+
+Practice fields (baseline)
+
+id, slug, name
+
+description
+
+phone, email, website
+
+address (line1, line2, city, state, zip, country)
+
+location (lat, lng)
+
+logo, images[]
+
+specialties[] (derived from doctors OR editable by practice admin with approval)
+
+services[] (practice-level)
+
+insurance[] (practice-level)
+
+locationList[] (practice can have multiple locations) (new)
+
+doctorIds[]
+
+createdAt, updatedAt
+
+NOTE: v1 “Institution” = now effectively “Practice”. We can rename or keep file name, but conceptually it becomes “Practice”.
+
+1.2 Doctor (still exists, now practice-linked)
+
+Doctor now has:
+
+practiceId (required in v2)
+
+Doctor’s personal contacts are visible only to logged-in doctors.
+
+Doctor retains existing fields (bio, credentials, specialties, etc.), but practice relationship is first-class.
+
+1.3 PracticeMembership / Membership (reworked)
+
+Membership is now meaningful at practice-level and doctor-level views.
+
+Practice Admin must see membership status for:
+
+the practice
+
+each doctor in practice
+
+Doctor sees their own membership status.
+
+We should decide later if membership is billed per practice or per doctor — but UI must support:
+
+membership details (plan, start date, expiry)
+
+status (active/expired/pending)
+
+renewal actions (future)
+
+1.4 Referral (expanded)
+
+A doctor can send a referral from a doctor profile page (only if logged in).
+
+Referral fields (simple, per your ask):
+
+id
+
+fromDoctorId
+
+toDoctorId
+
+patientNameOrInitials
+
+patientAge (optional)
+
+patientPhone (optional)
+
+conditionSummary (short text)
+
+notes (optional)
+
+status (new / attended / removed)
+
+createdAt, updatedAt
+
+Storage:
+
+Outgoing referrals: per-doctor
+
+Incoming referrals: per-doctor
+(Implementation can store one global list and filter, or store by doctorId key; see section 6)
+
+1.5 Notifications (new)
+
+Doctors need a notification screen.
+
+Triggers:
+
+Referral received
+
+Referral status changed
+
+Practice admin invites you / requests approval
+
+Admin approval results
+
+Membership expiry warnings (future)
+
+Chat announcements (future)
+
+Fields:
+
+id, type, title, message, link, read, createdAt
+
+1.6 Chat (planned)
+
+Not building now, but data + permissions must support:
+
+Direct doctor-to-doctor chat (or practice group chat later)
+
+Admin announcement to ALL members
+
+Practice admin announcement to practice doctors
+
+We will plan chat storage keys and role gating now to avoid refactors later.
+
+2) Role Hierarchy and Permissions (v2)
+Roles
+
+Admin (highest)
+
+Practice Admin (doctor with elevated permissions within their practice)
+
+Doctor (normal doctor member)
+
+Applicant (pending approval / not active)
+
+Public (unauthenticated)
+
+Admin (unchanged, plus new practice powers)
+
+Admin can:
+
+approve/reject:
+
+new doctor join request
+
+new practice creation request
+
+doctor joining existing practice request
+
+practice edits (locations/insurance/services changes)
+
+edit ANY doctor or practice (full override capabilities)
+
+manage membership plans, policies, events
+
+view all analytics
+
+Practice Admin (new elevated doctor)
+
+Practice Admin can:
+
+manage practice roster:
+
+invite/add doctor to practice (creates “pending join” record)
+
+approve/deny doctors requesting to join their practice
+
+edit practice info BUT requires Admin approval (configurable)
+
+edit doctor details inside their practice (may require Admin approval depending on field sensitivity)
+
+manage practice-level:
+
+locations (add/remove/edit) Admin approval
+
+insurance list (edit) Admin approval
+
+services list (edit) Admin approval
+
+send practice announcements (via chat/notifications later)
+
+Doctor (normal)
+
+Doctor can:
+
+edit own profile (same as v1)
+
+see personal contact info for other doctors when logged in
+
+send referrals
+
+view:
+
+referrals sent/received
+
+notifications
+
+cannot edit practice data
+
+cannot approve others (unless they’re practice admin)
+
+Applicant / Public
+
+Same general idea:
+
+applicant can submit application and track status
+
+public can search and view practice + doctor pages with limited info
+
+3) New Approval Workflows (Critical)
+
+We need clarity in Admin approval screens.
+
+3.1 Scenario A — Doctor joins an existing practice (doctor picks practice)
+
+Flow:
+
+Doctor signs up:
+
+selects an existing practice
+
+submits doctor info
+
+Status becomes: pending_practice_admin_approval + pending_admin_approval
+
+Practice Admin reviews and approves/denies
+
+Admin reviews and approves/denies
+
+Only when both approve:
+
+doctor becomes Active
+
+doctor appears in directory under that practice
+
+doctor portal access granted
+
+If either rejects → request rejected (store reason + who rejected)
+
+3.2 Scenario B — Doctor creates a new practice (becomes Practice Admin)
+
+Flow:
+
+Doctor chooses “Create new practice”
+
+They fill:
+
+Practice info
+
+Then their doctor profile info (as practice admin)
+
+Submit creates “PracticeCreationRequest” (new join request type)
+
+Admin reviews:
+
+Approve → practice created + doctor created as active practice admin
+
+Reject → nothing created; applicant notified
+
+Important:
+
+Practice Admin profile becomes active ONLY after Admin approval.
+
+3.3 Scenario C — Practice Admin invites/adds a doctor
+
+Flow:
+
+Practice Admin adds doctor basic details (name + email) → creates “Invitation”
+
+System sends email invitation (future; for now create a record + show link)
+
+Doctor signs up via invitation link:
+
+practice preselected
+
+Approval required:
+
+Admin approval required (always)
+
+Practice admin approval could be auto-approved since invite originated from practice admin (configurable)
+
+But per your requirement: still treat as approval flows if needed
+
+3.4 Practice edits by practice admin (needs admin approval)
+
+Practice Admin requests changes:
+
+practice name/description/contact
+
+practice locations
+
+insurance/services
+
+Admin sees pending “PracticeEditRequest”
+Admin approves → apply overrides to practice data
+
+4) Public Directory + Page Behavior
+4.1 Search screen (primary)
+
+Primary results = Practices
+Search filters remain:
+
+Specialty
+
+Zip
+
+Radius (5–100 miles)
+
+Name search
+
+Expected behavior:
+
+Specialty + zip search returns practice cards
+
+Clicking practice card opens practice page:
+
+practice details
+
+doctor list section with tags to filter specialties
+
+Name search:
+
+show practices first
+
+THEN (only in name search mode) show doctor cards as secondary section at end
+
+4.2 Doctor page behavior (contact visibility change)
+
+If user not logged in:
+
+show practice contact (phone/email)
+
+hide doctor personal phone/email
+
+If user logged in as doctor:
+
+show doctor personal contact phone/email
+
+plus a section: “Practice / Institution”
+
+practice name, location summary
+
+link/button “View Practice”
+
+4.3 Practice page behavior
+
+Practice page contains:
+
+Overview (name, description, contacts)
+
+Locations (list)
+
+Insurance + services
+
+Doctors section:
+
+filter by specialties
+
+doctor cards
+
+tags shown
+
+If logged in:
+
+doctors show personal contacts (as per rule)
+
+If public:
+
+doctor cards show minimal, and practice contact shown
+
+5) Doctor Portal Changes (v2)
+5.1 Doctor portal now depends on “role within practice”
+
+After login:
+
+If doctor is normal:
+
+keep existing dashboard modules
+
+add Notifications
+
+enhance Referrals (sent/received + status changes)
+
+membership tab shows own membership + expiry
+
+If doctor is Practice Admin:
+
+all normal doctor features
+
+PLUS practice admin screens:
+
+Practice Management (view/edit practice info → admin approval)
+
+Practice Locations Management (submit changes → admin approval)
+
+Practice Insurance & Services (submit changes → admin approval)
+
+Practice Doctors Management
+
+invite doctor (basic details)
+
+approve pending join requests for practice
+
+remove doctor from practice (may require admin approval)
+
+edit doctor details for doctors inside practice (rules TBD)
+
+Permissions screen
+
+show what practice admin can/can’t do
+
+show approval states
+
+5.2 Notifications Screen (new)
+
+Route example:
+
+/doctor/dashboard/notifications
+
+5.3 Referrals Screen (expanded)
+
+Route example:
+
+/doctor/dashboard/referrals
+Now includes 2 tabs:
+
+Sent
+
+Received
+and statuses:
+
+New
+
+Attended
+
+Removed
+
+Also allow sending referral from doctor profile page when logged in.
+
+6) Data Storage v2 (Seed + localStorage override approach)
+
+We will keep the v1 pattern:
+
+Seed in src/data/*.ts
+
+localStorage overrides + soft delete filter
+
+SSR uses seed only
+
+6.1 Seed files (proposed)
+
+src/data/doctors.ts
+
+src/data/practices.ts (rename from institutions.ts or alias)
+
+src/data/departments.ts
+
+src/data/membershipPlans.ts
+
+etc.
+
+6.2 localStorage keys (proposed additions + changes)
+
+Existing
+
+aip_doctor_overrides
+
+aip_institution_overrides (rename to practices but we can keep key or migrate)
+
+aip_deleted_doctors
+
+aip_deleted_institutions (rename optional)
+
+aip_join_requests
+
+aip_admin_session
+
+aip_doctor_session
+
+aip_doctor_passwords
+
+aip_membership_{doctorId}
+
+New (recommended)
+
+Practices:
+
+aip_practice_overrides (or keep aip_institution_overrides but treat as practice)
+
+aip_deleted_practices (or keep institutions key)
+
+Practice membership/roles:
+
+aip_practice_roles
+Example structure:
+
+{
+  [practiceId]: {
+    adminDoctorId: string,
+    doctorRoles: { [doctorId]: 'practice_admin' | 'doctor' }
+  }
+}
+
+
+Approvals queue (admin + practice admin):
+
+aip_approval_requests (unified queue)
+Each record contains:
+
+type: doctor_join_existing_practice | practice_create_with_admin | practice_edit | doctor_add_to_practice | etc.
+
+requestedBy (doctorId/email)
+
+practiceId (optional)
+
+payload (proposed changes)
+
+status per approver:
+
+adminStatus: pending/approved/rejected
+
+practiceAdminStatus: pending/approved/rejected (when applicable)
+
+timestamps + notes + rejection reasons
+
+(Alternative: keep everything in join_requests but it becomes messy. A unified approval queue is cleaner.)
+
+Invitations:
+
+aip_practice_invitations
+
+invitationId
+
+practiceId
+
+email
+
+status: sent/accepted/expired
+
+createdAt
+
+Referrals:
+Option A (simple): one global array key
+
+aip_referrals
+Option B (per doctor, like existing requests/referrals):
+
+aip_referrals_in_{doctorId}
+
+aip_referrals_out_{doctorId}
+
+Notifications:
+
+aip_notifications_{doctorId}
+
+aip_notifications_admin (optional)
+
+Chat (future-proof now)
+
+aip_chat_threads
+
+aip_chat_messages_{threadId}
+
+aip_chat_announcements_admin
+
+aip_chat_announcements_practice_{practiceId}
+
+7) Admin Portal Changes (v2)
+7.1 Approvals screen must become explicit and clear
+
+Admin should see:
+
+“New Practice + Practice Admin Doctor”
+
+“New Doctor joining Practice”
+
+“Practice edit request”
+
+“Doctor removal request” (if required)
+
+“Practice location change request”
+
+“Practice insurance/services change request”
+
+Each approval item must show:
+
+type badge
+
+who requested
+
+practice involved
+
+what will change (diff view)
+
+required approvals:
+
+Admin required (always)
+
+Practice admin required (sometimes)
+
+current statuses:
+
+pending/approved/rejected for each approver
+
+action buttons with reason fields where required
+
+7.2 Admin retains power to edit ANY doctor/practice directly
+
+Uses overrides
+
+Bypasses approvals (admin is final authority)
+
+But keep a note/log (future)
+
+8) Login-State Dependent Display Rules (important)
+Public (not logged in)
+
+Doctor pages:
+
+hide personal phone/email
+
+show practice contact
+
+Practice pages:
+
+show practice contact
+
+Doctor logged in
+
+Show personal phone/email for doctors
+
+Enable “Send Referral” action on doctor profile pages
+
+Show notifications and referrals dashboard
+
+9) Chat & Announcements (planned, not building yet)
+
+We must design permissions now:
+
+Admin → can broadcast announcement to all doctors
+
+Practice Admin → can broadcast to all doctors in their practice
+
+Doctor → can DM other doctors (future)
+
+Chat UI will likely live inside doctor dashboard
+
+Data model should allow:
+
+message threads
+
+participants
+
+announcements as special thread type or broadcast
+
+10) What “Second Opinion portal” was (just to keep continuity)
+
+This is the earlier system with:
+
+doctor portal + patient portal + admin portal for appointments and video consults
+
+Now AIP practice-based directory + membership + referrals + chat is a different product layer
+(We’re reusing patterns: portals, roles, approvals, localStorage architecture.)
+
+Next Steps (How we split work)
+
+When you say “split”, we can break into tracks:
+
+Data model + localStorage keys + migration plan
+
+Approval queue redesign (Admin UI + Practice Admin UI)
+
+Practice entity pages + directory search update
+
+Doctor portal upgrades
+
+Notifications
+
+Referrals (send + inbox/outbox)
+
+Practice admin screens
+
+Permission-based UI rendering + contact visibility rules
+
+Chat scaffolding (data structures + placeholder UI)

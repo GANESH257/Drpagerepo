@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-              <Link href="/admin/requests">
+              <Link href="/admin/requests-v2">
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
               {recentRequests.map((request) => (
                 <Link
                   key={request.id}
-                  href={`/admin/requests#${request.id}`}
+                  href={`/admin/requests-v2/${request.id}`}
                   className="block p-4 rounded-lg border border-gray-200 hover:border-[#0F5FA8]/30 hover:bg-[#0F5FA8]/5 transition-all"
                 >
                   <div className="flex items-center justify-between">

@@ -61,8 +61,24 @@ export interface Doctor {
   statesLicensedIn?: string[];
   website?: string; // Personal/practice website URL
   bookingUrl?: string; // Direct booking/contact page URL
-  institutionId?: string; // FK to Institution
+  institutionId?: string; // FK to Institution (backward compatibility)
+  practiceId?: string; // FK to Practice (V2)
+  roleInPractice?: 'doctor' | 'practice_admin'; // Role within practice (V2)
 }
+
+/**
+ * Doctor override for localStorage
+ * 
+ * @deprecated In Step 4/5, use SafeDoctorOverride instead to prevent id/slug overrides
+ * Currently allows all fields for backward compatibility with existing admin flows
+ */
+export type DoctorOverride = Partial<Doctor>;
+
+/**
+ * Safe doctor override type - excludes id and slug to prevent accidental overrides
+ * Use this in Step 4/5 for admin flows that should not allow id/slug changes
+ */
+export type SafeDoctorOverride = Partial<Omit<Doctor, 'id' | 'slug'>>;
 
 export interface AppointmentRequest {
   id: string;
@@ -76,7 +92,12 @@ export interface AppointmentRequest {
   createdAt: string;
 }
 
-export interface Referral {
+/**
+ * Legacy Referral type (V1) - kept for backward compatibility
+ * Used by existing doctorStorage.ts and dashboard components
+ * @deprecated Use Referral from './referrals' for V2
+ */
+export interface LegacyReferral {
   id: string;
   referringPhysicianName: string;
   referringPhysicianSpecialty: string;
@@ -86,6 +107,17 @@ export interface Referral {
   status: 'New' | 'In Progress' | 'Closed';
   createdAt: string;
 }
+
+/**
+ * Referral type alias for backward compatibility
+ * Existing code (doctorStorage.ts, ReferralsSection.tsx, etc.) uses this
+ * New V2 code should import Referral from './referrals' directly
+ * @deprecated Use LegacyReferral explicitly or import Referral from './referrals' for V2
+ * 
+ * NOTE: This type conflicts with V2 Referral from './referrals'. Legacy code should use
+ * LegacyReferral explicitly. V2 code must import from './referrals'.
+ */
+export type Referral = LegacyReferral;
 
 export interface Department {
   name: string;
@@ -427,3 +459,12 @@ export interface Institution {
   createdAt: string;
   updatedAt: string;
 }
+
+// V2 Type Exports
+export * from './practice';
+export * from './approvals';
+export * from './referrals';
+export * from './notifications';
+export * from './invitations';
+export * from './membership';
+export * from './announcements';

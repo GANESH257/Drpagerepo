@@ -1,0 +1,107 @@
+/**
+ * Approval History Helpers
+ * 
+ * Normalization and utility functions for approval history records
+ */
+
+import { ApprovalHistoryRecord, ApprovalRequest } from '@/types/approvals';
+import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { getAllDoctors } from '@/lib/memberStorage';
+import { deriveStatusFromAction } from './approvalStatusHelpers';
+
+/**
+ * Normalized approval history record for consistent filtering and display
+ */
+export interface NormalizedApprovalHistoryRecord {
+  id: string;
+  requestId: string;
+  type: ApprovalHistoryRecord['type'];
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: string; // Normalized from 'at'
+  practiceId?: string;
+  doctorId?: string;
+  practiceName?: string; // Looked up
+  doctorName?: string; // Looked up
+  actor: {
+    actorId: string;
+    actorRole: 'admin' | 'practice_admin' | 'doctor' | 'public';
+    actorName?: string;
+  };
+  reason?: string;
+  payloadSnapshot?: Record<string, any>; // From snapshot or request payload
+  action: ApprovalHistoryRecord['action'];
+}
+
+/**
+ * Normalize approval history record for filtering and display
+ * 
+ * @param record History record to normalize
+ * @param request Optional approval request for additional context (payload snapshot)
+ */
+export function normalizeApprovalHistoryRecord(
+  record: ApprovalHistoryRecord,
+  request?: ApprovalRequest
+): NormalizedApprovalHistoryRecord {
+  // Derive status from action
+  const status = deriveStatusFromAction(record.action);
+
+  // Lookup practice name
+  const practiceName = record.practiceId
+    ? getPracticeById(record.practiceId)?.name
+    : undefined;
+
+  // Lookup doctor name
+  const doctorName = record.doctorId
+    ? getAllDoctors().find((d: any) => d.id === record.doctorId)?.fullName
+    : undefined;
+
+  // Get actor info
+  const actorId =
+    record.by.doctorId ||
+    record.by.email ||
+    (record.by.role === 'admin' ? 'admin' : 'unknown');
+  const actorName =
+    record.by.doctorId && doctorName
+      ? doctorName
+      : record.by.email || undefined;
+
+  // Extract payload snapshot (prefer record.snapshot, fallback to request.payload)
+  const payloadSnapshot = record.snapshot || request?.payload;
+
+  return {
+    id: record.id,
+    requestId: record.requestId,
+    type: record.type,
+    status,
+    timestamp: record.at, // Normalize field name
+    practiceId: record.practiceId,
+    doctorId: record.doctorId,
+    practiceName,
+    doctorName,
+    actor: {
+      actorId,
+      actorRole: record.by.role,
+      actorName,
+    },
+    reason: record.reason,
+    payloadSnapshot,
+    action: record.action,
+  };
+}
+
+/**
+ * Normalize multiple approval history records
+ */
+export function normalizeApprovalHistoryRecords(
+  records: ApprovalHistoryRecord[],
+  requests?: ApprovalRequest[]
+): NormalizedApprovalHistoryRecord[] {
+  const requestMap = requests
+    ? new Map(requests.map((r) => [r.id, r]))
+    : undefined;
+
+  return records.map((record) => {
+    const request = requestMap?.get(record.requestId);
+    return normalizeApprovalHistoryRecord(record, request);
+  });
+}

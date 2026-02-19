@@ -1,0 +1,303 @@
+Here is your V2 Rules — Spec Freeze Document (1-Page Reference)
+This is the foundation document you and Cursor will follow.
+
+Alliance of Independent Physicians
+V2 Structural Rules (Spec Freeze)
+
+Version: 2.0
+Purpose: Defines new structural, permission, and approval rules before implementation.
+
+1️⃣ Practice Is the Primary Entity
+
+Practices (Clinics) are now the primary searchable and structural unit.
+
+Public directory displays Practices first, not individual doctors.
+
+Each Practice:
+
+Has its own profile page
+
+Has locations, insurance, services
+
+Has multiple doctors
+
+Derives specialties from associated doctors
+
+Doctors cannot exist independently without being associated with a Practice.
+
+2️⃣ Doctor Belongs to Exactly One Practice
+
+Every Doctor must have exactly one practiceId.
+
+No multi-practice membership allowed in V2.
+
+Doctor profile always shows associated Practice.
+
+Doctor cannot be activated without an approved practice association.
+
+3️⃣ Roles & Hierarchy
+System Roles
+
+Admin (Highest)
+
+Full system control
+
+Approves all requests
+
+Can edit any doctor or practice
+
+Overrides practice-level decisions
+
+Practice Admin
+
+A doctor who created the practice OR is promoted
+
+Can manage their practice (with approval where required)
+
+Can invite/add/remove doctors (approval required)
+
+Can edit practice details (approval required)
+
+Can manage practice locations, insurance, services (approval required)
+
+Can send announcements to practice doctors
+
+Doctor (Member)
+
+Manages own profile
+
+Sends referrals
+
+Receives referrals
+
+Views practice details
+
+Cannot edit practice
+
+Public
+
+Can search and view practices
+
+Can view doctor public profiles
+
+Cannot see protected data
+
+4️⃣ Dual Approval Model
+
+Certain actions require two layers of approval.
+
+Case A — Doctor joins existing practice
+
+Requires:
+
+Practice Admin approval
+
+Admin approval
+
+Case B — Doctor creates new practice
+
+Requires:
+
+Admin approval only
+(Doctor becomes Practice Admin upon approval)
+
+Case C — Practice modifications (edit, location change, roster change)
+
+Requires:
+
+Admin approval
+(Practice Admin initiates request)
+
+Approval Tracking Rules
+
+All requests are stored in ApprovalRequest
+
+All decisions logged in append-only ApprovalHistory
+
+Every approval must record:
+
+Who decided
+
+Role
+
+Timestamp
+
+Reason (if rejected)
+
+5️⃣ Contact Visibility Rules
+Public (Not Logged In)
+
+Doctor profile shows:
+
+Practice contact info only
+
+Practice phone/email
+
+Personal doctor phone/email hidden
+
+Logged-in Doctor
+
+Can see:
+
+Personal contact info of other doctors
+
+Direct email/phone if available
+
+Logged-in Practice Admin
+
+Same as Doctor
+
+Plus visibility into practice-level contact records
+
+6️⃣ Referrals System (Doctor-to-Doctor)
+Sending Referral
+
+Only logged-in doctors can send referrals
+
+Referral includes:
+
+Patient initials (no sensitive data)
+
+Condition summary
+
+Notes
+
+Stored with:
+
+fromDoctorId
+
+toDoctorId
+
+practice linkage
+
+status
+
+Referral Status
+
+new
+
+attended
+
+removed
+
+Referral History (Append-Only)
+
+Every change must log:
+
+Who changed it
+
+Old status → new status
+
+Timestamp
+
+Referral Views
+
+Doctors see:
+
+Sent
+
+Received
+
+History
+
+Practice Admin may see practice-level referral overview (future phase)
+
+7️⃣ Notifications System
+
+Notifications are generated for:
+
+Approval updates
+
+Referral received
+
+Referral status change
+
+Practice roster updates
+
+Admin announcements
+
+Practice Admin announcements
+
+Rules:
+
+Stored per doctor
+
+Append-only
+
+Mark as read capability
+
+No deletion (optional soft hide later)
+
+8️⃣ Chat System (Future-Ready Constraints)
+
+Chat is Phase 2/3 but database must support it.
+
+Required Structural Preparation:
+
+Maintain:
+
+doctorId
+
+practiceId
+
+roleInPractice
+
+Maintain clear permission model
+
+Keep approval logs structured for audit
+
+Chat Types (Future):
+
+Direct Doctor ↔ Doctor
+
+Practice-wide channel (Practice Admin → Practice Doctors)
+
+Global Admin Announcement Channel
+
+Security Constraint:
+
+Chat visibility must respect:
+
+Practice boundaries
+
+Role hierarchy
+
+Active membership only
+
+9️⃣ Membership Rules (V2)
+
+Membership is tied to Doctor account.
+
+Practice Admin dashboard shows:
+
+Membership status of all doctors in practice.
+
+Expiry tracking required.
+
+Membership does not auto-transfer between practices.
+
+🔒 Non-Negotiable Structural Constraints
+
+Every Doctor must have a practiceId
+
+Every approval action must generate a history record
+
+Public cannot access personal doctor contact data
+
+No UI should bypass approval flow
+
+All edits to practice-level data require Admin approval
+
+✅ V2 Spec Freeze Complete
+
+This document is the authoritative structural reference for:
+
+Data modeling
+
+Approval logic
+
+Role permissions
+
+Portal restructuring
+
+Future chat integration

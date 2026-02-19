@@ -462,6 +462,29 @@ export function BenefitsJumbledGrid() {
               );
             })}
           </div>
+
+          {/* Join Now CTA Button */}
+          <div
+            className="text-center mt-12 md:mt-16"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 0.8s ease-out 1s, transform 0.8s ease-out 1s',
+            }}
+          >
+            <Button
+              asChild
+              size="lg"
+              className="bg-brand-teal hover:bg-brand-teal/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-6 text-lg font-semibold"
+            >
+              <Link href="/membership">
+                View Membership Plans
+                <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>
