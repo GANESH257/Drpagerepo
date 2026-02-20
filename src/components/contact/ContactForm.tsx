@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
-import { saveContactEnquiry, ContactEnquiry } from '@/lib/contactStorage';
+import type { ContactEnquiry } from '@/lib/contactStorage';
 
 const subjectOptions = [
   'General Inquiry',
@@ -163,6 +163,8 @@ export function ContactForm() {
         consentSms: true,
       };
 
+      // Dynamically import to ensure client-side only execution
+      const { saveContactEnquiry } = await import('@/lib/contactStorage');
       saveContactEnquiry(enquiry);
       
       // Show success

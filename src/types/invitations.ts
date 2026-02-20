@@ -8,4 +8,5 @@ export interface PracticeInvitation {
   invitedAt: string;
   invitedByDoctorId: string;
   status: 'sent' | 'accepted' | 'expired' | 'revoked';
+  invitationLink?: string; // Generated invitation link URL
 }

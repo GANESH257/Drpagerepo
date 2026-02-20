@@ -48,6 +48,12 @@ const baseDoctorNavItems = [
     description: 'Update your professional information and credentials',
   },
   {
+    label: 'View Practice',
+    href: '/doctor/dashboard/practice-info',
+    icon: Building,
+    description: 'View your practice information',
+  },
+  {
     label: 'Manage Locations',
     href: '/doctor/dashboard/locations',
     icon: MapPin,

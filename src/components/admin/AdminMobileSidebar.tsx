@@ -9,6 +9,9 @@ import {
   FileCheck,
   Calendar,
   Users,
+  Building2,
+  Send,
+  Bell,
   LogOut
 } from 'lucide-react';
 import {
@@ -64,6 +67,24 @@ const navItems: NavItem[] = [
     href: '/admin/members',
     icon: Users,
     description: 'Manage doctor members',
+  },
+  {
+    label: 'Practice Management',
+    href: '/admin/practices',
+    icon: Building2,
+    description: 'Manage practices and locations',
+  },
+  {
+    label: 'Referrals',
+    href: '/admin/referrals',
+    icon: Send,
+    description: 'View all referrals system-wide',
+  },
+  {
+    label: 'Notifications',
+    href: '/admin/notifications',
+    icon: Bell,
+    description: 'View all notifications system-wide',
   },
 ];
 

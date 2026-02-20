@@ -15,6 +15,8 @@ import { getInstitutionById } from '@/lib/institutionStorage';
 import { getActorFromSession, canSendReferral } from '@/lib/services/permissionService';
 import { getContactCard } from '@/lib/services/visibilityService';
 import { createReferral } from '@/lib/services/referralEngine';
+import { useDoctorSession } from '@/lib/useDoctorSession';
+import { useRouter } from 'next/navigation';
 import { practices } from '@/data/practices';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
@@ -39,6 +41,7 @@ import {
   Send,
   Mail,
   AlertTriangle,
+  MessageCircle,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -47,6 +50,8 @@ interface DoctorProfileProps {
 }
 
 export function DoctorProfile({ doctor }: DoctorProfileProps) {
+  const router = useRouter();
+  const { isAuthenticated } = useDoctorSession();
   const [bookingOpen, setBookingOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -54,6 +59,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   const [showReferralDialog, setShowReferralDialog] = useState(false);
   const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
   const [contactCard, setContactCard] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   
   // Referral form state
@@ -64,6 +70,10 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
     condition: '',
     notes: '',
   });
+
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -409,6 +419,22 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 }
                 return null;
               })()}
+              {isLoggedIn && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => router.push(`/doctor/dashboard/messages/${doctor.id}`)}
+                  className="w-full md:w-auto border-2 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all duration-200 hover:scale-105 shadow-md"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.6s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s',
+                  }}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
+              )}
             </div>
           </div>
         </div>

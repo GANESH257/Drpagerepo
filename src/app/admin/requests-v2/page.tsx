@@ -269,6 +269,14 @@ export default function AdminRequestsV2Page() {
       <SearchAndFilterBar
         onSearch={(query) => handleFilterChange({ ...filters, searchQuery: query })}
         onFilterChange={handleFilterChange}
+        requestCounts={{
+          total: requests.length,
+          filtered: filteredRequests.length,
+          byType: requests.reduce((acc, r) => {
+            acc[r.type] = (acc[r.type] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+        }}
       />
 
       {/* Requests Table */}

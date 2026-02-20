@@ -15,29 +15,58 @@ export function FloatingMessageIcon() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        // Check admin session first
-        const adminSession = getAdminSession();
-        if (adminSession) {
-            setHref('/admin/announcements');
-            setIsVisible(true);
-            const unsubscribe = subscribeToTotalUnreadCount('admin', (count) => {
-                setUnreadCount(count);
-            });
-            return () => unsubscribe();
-        }
+        try {
+            // Check admin session first
+            const adminSession = getAdminSession();
+            if (adminSession) {
+                setHref('/admin/announcements');
+                setIsVisible(true);
+                try {
+                    const unsubscribe = subscribeToTotalUnreadCount('admin', (count) => {
+                        setUnreadCount(count);
+                    });
+                    return () => {
+                        try {
+                            unsubscribe();
+                        } catch (err) {
+                            // Ignore unsubscribe errors
+                        }
+                    };
+                } catch (err) {
+                    console.warn('[FloatingMessageIcon] Failed to subscribe to unread count:', err);
+                    setUnreadCount(0);
+                }
+                return;
+            }
 
-        // Fallback to doctor session
-        const session = getSession();
-        if (session?.doctorId) {
-            setHref('/doctor/dashboard/messages');
-            setIsVisible(true);
-            const unsubscribe = subscribeToTotalUnreadCount(session.doctorId, (count) => {
-                setUnreadCount(count);
-            });
-            return () => unsubscribe();
-        }
+            // Fallback to doctor session
+            const session = getSession();
+            if (session?.doctorId) {
+                setHref('/doctor/dashboard/messages');
+                setIsVisible(true);
+                try {
+                    const unsubscribe = subscribeToTotalUnreadCount(session.doctorId, (count) => {
+                        setUnreadCount(count);
+                    });
+                    return () => {
+                        try {
+                            unsubscribe();
+                        } catch (err) {
+                            // Ignore unsubscribe errors
+                        }
+                    };
+                } catch (err) {
+                    console.warn('[FloatingMessageIcon] Failed to subscribe to unread count:', err);
+                    setUnreadCount(0);
+                }
+                return;
+            }
 
-        setIsVisible(false);
+            setIsVisible(false);
+        } catch (err) {
+            console.warn('[FloatingMessageIcon] Error in useEffect:', err);
+            setIsVisible(false);
+        }
     }, [getSession]);
 
     if (!isVisible) return null;

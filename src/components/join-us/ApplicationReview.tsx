@@ -62,6 +62,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
           practiceName: basicDetails.practiceName,
           website: basicDetails.website,
           messageToAdmin: basicDetails.messageToAdmin,
+          practiceSelection: basicDetails.practiceSelection,
         },
         plan: {
           planId: selectedPlan.planId,
@@ -131,6 +132,16 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Website:</span>
                   <span className="font-medium">{basicDetails.website}</span>
+                </div>
+              )}
+              {basicDetails.practiceSelection && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Practice:</span>
+                  <span className="font-medium">
+                    {basicDetails.practiceSelection.type === 'existing'
+                      ? `Joining existing practice (ID: ${basicDetails.practiceSelection.practiceId})`
+                      : `Creating new practice: ${basicDetails.practiceSelection.practiceName}`}
+                  </span>
                 </div>
               )}
             </div>

@@ -31,6 +31,17 @@ export function addPracticeInvitation(invitation: PracticeInvitation): void {
 }
 
 /**
+ * Get practice invitation by ID
+ * 
+ * @param id Invitation ID
+ * @returns Invitation or null if not found
+ */
+export function getPracticeInvitationById(id: string): PracticeInvitation | null {
+  const invitations = getPracticeInvitations();
+  return invitations.find(inv => inv.id === id) || null;
+}
+
+/**
  * Update practice invitation by ID
  * 
  * @param id Invitation ID

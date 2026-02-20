@@ -186,6 +186,67 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
         return <RequestedChangesRenderer request={request} />;
     };
 
+    const renderApprovalEffects = () => {
+        if (!request) return null;
+
+        const effects: string[] = [];
+
+        switch (request.type) {
+            case 'new_practice_with_admin_doctor':
+                effects.push('A new practice will be created with the provided details');
+                effects.push('A doctor profile will be created for the applicant');
+                effects.push('The doctor will be assigned as Practice Admin');
+                effects.push('The practice will be added to the directory');
+                break;
+            case 'doctor_join_practice':
+                effects.push('The doctor will be added to the practice roster');
+                effects.push('The doctor\'s practiceId will be updated');
+                effects.push('The practice\'s doctorIds array will be updated');
+                effects.push('A notification will be sent to the doctor');
+                break;
+            case 'practice_edit_request':
+                effects.push('Practice information will be updated with the requested changes');
+                effects.push('Changes will be reflected immediately in the directory');
+                break;
+            case 'practice_doctor_add_request':
+                effects.push('The invited doctor will be added to the practice');
+                effects.push('The practice roster will be updated');
+                effects.push('A notification will be sent to the doctor');
+                break;
+            case 'practice_doctor_remove_request':
+                effects.push('The doctor will be removed from the practice roster');
+                effects.push('The doctor\'s practiceId will be cleared');
+                effects.push('The practice\'s doctorIds array will be updated');
+                break;
+            case 'practice_location_add_request':
+                effects.push('A new location will be added to the practice');
+                effects.push('The practice locations array will be updated');
+                break;
+            case 'practice_location_edit_request':
+                effects.push('The specified location will be updated');
+                effects.push('Changes will be reflected in the practice profile');
+                break;
+            case 'practice_location_remove_request':
+                effects.push('The specified location will be removed from the practice');
+                effects.push('The practice locations array will be updated');
+                break;
+            case 'practice_insurance_services_change_request':
+                effects.push('Practice insurance and services will be updated');
+                effects.push('Changes will be reflected in search filters');
+                break;
+            default:
+                effects.push('Approval will apply the requested changes');
+        }
+
+        return (
+            <ul className="list-disc list-inside space-y-2 text-sm">
+                {effects.map((effect, idx) => (
+                    <li key={idx} className="text-gray-700">{effect}</li>
+                ))}
+            </ul>
+        );
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -316,6 +377,16 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
                 </CardHeader>
                 <CardContent>
                     {renderPayload()}
+                </CardContent>
+            </Card>
+
+            {/* What Happens When Approved */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>What Happens When Approved</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {renderApprovalEffects()}
                 </CardContent>
             </Card>
 

@@ -7,7 +7,7 @@ import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permiss
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { practices } from '@/data/practices';
-import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
+import { getAllPracticesForAdmin, getDoctorsByPractice } from '@/lib/adminHelpers';
 import { doctors } from '@/data/doctors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,7 +52,7 @@ export default function PracticeDetailsPage() {
       }
       
       // Load practice
-      const allPractices = mergePractices([...practices, ...getCreatedPractices()]);
+      const allPractices = getAllPracticesForAdmin();
       const foundPractice = allPractices.find(p => p.id === actor.practiceId);
       
       if (!foundPractice) {
@@ -188,7 +188,7 @@ export default function PracticeDetailsPage() {
     );
   }
 
-  const practiceDoctors = doctors.filter(d => d.practiceId === practice.id);
+  const practiceDoctors = getDoctorsByPractice(practice.id);
 
   return (
     <div className="space-y-6">

@@ -18,12 +18,15 @@ import {
 import { getAllDoctors, deleteDoctor } from '@/lib/memberStorage';
 import { Doctor } from '@/types';
 import { MemberEditDialog } from './MemberEditDialog';
+import { CreateDoctorDialog } from './CreateDoctorDialog';
+import { Plus } from 'lucide-react';
 
 export function MembersTable() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [doctorToDelete, setDoctorToDelete] = useState<Doctor | null>(null);
 
@@ -77,9 +80,26 @@ export function MembersTable() {
     setEditingDoctor(null);
   };
 
+  const handleCreate = () => {
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleCreateSave = () => {
+    loadDoctors();
+    setIsCreateDialogOpen(false);
+  };
+
   return (
     <>
       <div className="space-y-6">
+        {/* Header with Create Button */}
+        <div className="flex items-center justify-between">
+          <Button onClick={handleCreate} className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Doctor
+          </Button>
+        </div>
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -179,6 +199,13 @@ export function MembersTable() {
           onSave={handleSave}
         />
       )}
+
+      {/* Create Dialog */}
+      <CreateDoctorDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSave={handleCreateSave}
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

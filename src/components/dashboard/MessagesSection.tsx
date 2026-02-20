@@ -66,63 +66,93 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
 
   // Real-time Sidebar & Thread subscriptions
   useEffect(() => {
-    // Subscribe to conversation partners, then fetch last message per partner
-    const unsubPartners = subscribeToConversationPartners(doctor.id, async (partnerIds) => {
-      const summaries: ConversationSummary[] = await Promise.all(
-        partnerIds.map(async (pid) => {
-          // Fetch all messages between doctor and this partner (no orderBy = no composite index)
-          const qA = query(
-            collection(db, 'messages'),
-            where('senderId', '==', doctor.id),
-            where('receiverId', '==', pid)
+    try {
+      // Subscribe to conversation partners, then fetch last message per partner
+      const unsubPartners = subscribeToConversationPartners(doctor.id, async (partnerIds) => {
+        try {
+          const summaries: ConversationSummary[] = await Promise.all(
+            partnerIds.map(async (pid) => {
+              try {
+                // Fetch all messages between doctor and this partner (no orderBy = no composite index)
+                const qA = query(
+                  collection(db, 'messages'),
+                  where('senderId', '==', doctor.id),
+                  where('receiverId', '==', pid)
+                );
+                const qB = query(
+                  collection(db, 'messages'),
+                  where('senderId', '==', pid),
+                  where('receiverId', '==', doctor.id)
+                );
+                const [snapA, snapB] = await Promise.all([getDocs(qA), getDocs(qB)]);
+                const candidates: DoctorMessage[] = [];
+                const toMsg = (docSnap: any): DoctorMessage => {
+                  const d = docSnap.data();
+                  return {
+                    id: docSnap.id,
+                    senderId: d.senderId,
+                    receiverId: d.receiverId,
+                    content: d.content,
+                    sentAt: d.sentAt instanceof Timestamp ? d.sentAt.toDate().toISOString() : (d.sentAt ?? ''),
+                    readAt: d.readAt instanceof Timestamp ? d.readAt.toDate().toISOString() : d.readAt,
+                  };
+                };
+                snapA.docs.forEach(d => candidates.push(toMsg(d)));
+                snapB.docs.forEach(d => candidates.push(toMsg(d)));
+                candidates.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+                return {
+                  otherDoctorId: pid,
+                  lastMessage: candidates[0],
+                  unreadCount: 0,
+                };
+              } catch (err) {
+                console.warn('[MessagesSection] Error fetching messages for partner:', pid, err);
+                return {
+                  otherDoctorId: pid,
+                  lastMessage: undefined,
+                  unreadCount: 0,
+                };
+              }
+            })
           );
-          const qB = query(
-            collection(db, 'messages'),
-            where('senderId', '==', pid),
-            where('receiverId', '==', doctor.id)
-          );
-          const [snapA, snapB] = await Promise.all([getDocs(qA), getDocs(qB)]);
-          const candidates: DoctorMessage[] = [];
-          const toMsg = (docSnap: any): DoctorMessage => {
-            const d = docSnap.data();
-            return {
-              id: docSnap.id,
-              senderId: d.senderId,
-              receiverId: d.receiverId,
-              content: d.content,
-              sentAt: d.sentAt instanceof Timestamp ? d.sentAt.toDate().toISOString() : (d.sentAt ?? ''),
-              readAt: d.readAt instanceof Timestamp ? d.readAt.toDate().toISOString() : d.readAt,
-            };
-          };
-          snapA.docs.forEach(d => candidates.push(toMsg(d)));
-          snapB.docs.forEach(d => candidates.push(toMsg(d)));
-          candidates.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-          return {
-            otherDoctorId: pid,
-            lastMessage: candidates[0],
-            unreadCount: 0,
-          };
-        })
-      );
-      setConversations(summaries);
-    });
-
-    // Subscribe to the active thread
-    let unsubThread: (() => void) | undefined;
-    if (selectedOtherId) {
-      unsubThread = subscribeToConversation(doctor.id, selectedOtherId, (messages: DoctorMessage[]) => {
-        setThreadMessages(messages);
+          setConversations(summaries);
+        } catch (err) {
+          console.warn('[MessagesSection] Error processing conversation partners:', err);
+          setConversations([]);
+        }
       });
-      markConversationAsRead(doctor.id, selectedOtherId);
-      setIsNewChatMode(false);
-    } else {
-      setThreadMessages([]);
-    }
 
-    return () => {
-      unsubPartners();
-      if (unsubThread) unsubThread();
-    };
+      // Subscribe to the active thread
+      let unsubThread: (() => void) | undefined;
+      if (selectedOtherId) {
+        try {
+          unsubThread = subscribeToConversation(doctor.id, selectedOtherId, (messages: DoctorMessage[]) => {
+            setThreadMessages(messages);
+          });
+          markConversationAsRead(doctor.id, selectedOtherId).catch(err => {
+            console.warn('[MessagesSection] Error marking as read:', err);
+          });
+          setIsNewChatMode(false);
+        } catch (err) {
+          console.warn('[MessagesSection] Error subscribing to conversation:', err);
+          setThreadMessages([]);
+        }
+      } else {
+        setThreadMessages([]);
+      }
+
+      return () => {
+        try {
+          unsubPartners();
+          if (unsubThread) unsubThread();
+        } catch (err) {
+          // Ignore unsubscribe errors
+        }
+      };
+    } catch (err) {
+      console.warn('[MessagesSection] Error in useEffect:', err);
+      return () => {};
+    }
   }, [doctor.id, selectedOtherId]);
 
   useEffect(() => {
@@ -156,8 +186,13 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
 
   const handleSend = async () => {
     if (!selectedOtherId || !composer.trim()) return;
-    await sendMessage(doctor.id, selectedOtherId, composer);
-    setComposer('');
+    try {
+      await sendMessage(doctor.id, selectedOtherId, composer);
+      setComposer('');
+    } catch (err) {
+      console.warn('[MessagesSection] Error sending message:', err);
+      // Keep composer text so user can retry
+    }
   };
 
   const selectedDoctor = selectedOtherId ? doctorsById.get(selectedOtherId) : null;
@@ -226,7 +261,12 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-gray-900">{d.fullName}</div>
-                        <div className="truncate text-xs text-gray-500">{d.specialty}</div>
+                        <div className="truncate text-xs text-gray-500">
+                          {d.specialty}
+                          {d.email && (
+                            <span className="ml-2 text-[10px] text-gray-400">({d.email})</span>
+                          )}
+                        </div>
                       </div>
                     </button>
                   ))

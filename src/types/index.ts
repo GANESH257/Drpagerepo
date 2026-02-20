@@ -402,6 +402,14 @@ export interface ApplicationDraft {
     practiceName?: string;
     website?: string;
     messageToAdmin?: string;
+    practiceSelection?: {
+      type: 'existing';
+      practiceId: string;
+    } | {
+      type: 'new';
+      practiceName: string;
+      website?: string;
+    };
   };
   selectedPlan?: {
     planId: string;
@@ -429,6 +437,14 @@ export interface JoinRequest {
     practiceName?: string;
     website?: string;
     messageToAdmin?: string;
+    practiceSelection?: {
+      type: 'existing';
+      practiceId: string;
+    } | {
+      type: 'new';
+      practiceName: string;
+      website?: string;
+    };
   };
   plan: {
     planId: string;

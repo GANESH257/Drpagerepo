@@ -3,17 +3,21 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDarkMode } from '@/lib/useDarkMode';
+import { useDoctorSession } from '@/lib/useDoctorSession';
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { getHomeLink } = useDarkMode();
+  const { isAuthenticated, getSession } = useDoctorSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   // Use pathname for initial render to avoid hydration mismatch
   // Then update based on localStorage preference after mount
@@ -30,6 +34,22 @@ export function Header() {
   useEffect(() => {
     setHomeLink(getHomeLink());
   }, [getHomeLink, pathname]);
+
+  // Check authentication status
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+    
+    // Listen for storage changes (login/logout in other tabs)
+    const handleStorageChange = () => {
+      setIsLoggedIn(isAuthenticated());
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!isHomePage) {
@@ -65,8 +85,16 @@ export function Header() {
     { href: '/physicians', label: 'Physicians' },
     { href: '/about', label: 'About' },
     { href: '/contact-us', label: 'Contact' },
-    { href: '/join-us', label: 'Sign In' },
   ];
+
+  const handleSignInClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isAuthenticated()) {
+      router.push('/doctor/dashboard');
+    } else {
+      router.push('/join-us');
+    }
+  };
 
   // Conditional classes based on scroll position and page
   // Always show solid navbar (removed transparent/invisible state)
@@ -166,12 +194,12 @@ export function Header() {
               <Link href="/practices">Find a Practice</Link>
             </Button>
             <Button
-              asChild
               size="sm"
               variant="outline"
               className="text-xs xl:text-sm border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all whitespace-nowrap"
+              onClick={handleSignInClick}
             >
-              <Link href="/join-us">Join Us</Link>
+              {isLoggedIn ? 'Dashboard' : 'Sign In'}
             </Button>
           </div>
 
@@ -237,12 +265,15 @@ export function Header() {
                   <Link href="/practices" onClick={() => setMobileMenuOpen(false)}>Find a Practice</Link>
                 </Button>
                 <Button
-                  asChild
                   size="sm"
                   variant="outline"
                   className="w-full border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white"
+                  onClick={(e) => {
+                    setMobileMenuOpen(false);
+                    handleSignInClick(e);
+                  }}
                 >
-                  <Link href="/join-us" onClick={() => setMobileMenuOpen(false)}>Join Us</Link>
+                  {isLoggedIn ? 'Dashboard' : 'Sign In'}
                 </Button>
               </div>
             </nav>

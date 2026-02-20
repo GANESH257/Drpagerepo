@@ -1,3 +1,5 @@
+'use client';
+
 export interface ContactEnquiry {
   id: string;
   createdAt: string; // ISO string

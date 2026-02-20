@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { departments } from '@/data/departments';
 import { ApplicationDraft } from '@/types';
 import { getJoinEmail } from '@/lib/joinRequestStorage';
+import { PracticeSelectionSection, PracticeSelection } from '@/components/join-us/PracticeSelectionSection';
+import { useSearchParams } from 'next/navigation';
+import { getPracticeInvitationById } from '@/lib/storage/invitationStorage';
 
 interface ApplicationBasicDetailsFormProps {
   initialData?: ApplicationDraft['basicDetails'];
@@ -33,6 +36,9 @@ export function ApplicationBasicDetailsForm({
   const [practiceName, setPracticeName] = useState(initialData?.practiceName || '');
   const [website, setWebsite] = useState(initialData?.website || '');
   const [messageToAdmin, setMessageToAdmin] = useState(initialData?.messageToAdmin || '');
+  const [practiceSelection, setPracticeSelection] = useState<PracticeSelection | null>(
+    initialData?.practiceSelection || null
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -45,6 +51,23 @@ export function ApplicationBasicDetailsForm({
       }
     }
   }, [email]);
+
+  // Check for invitation token in URL
+  const searchParams = useSearchParams();
+  const [preselectedPracticeId, setPreselectedPracticeId] = useState<string | undefined>();
+
+  useEffect(() => {
+    const invitationId = searchParams?.get('invitation');
+    if (invitationId && typeof window !== 'undefined') {
+      // Try to get invitation from storage
+      const invitation = getPracticeInvitationById(invitationId);
+      if (invitation && invitation.status === 'sent' && invitation.practiceId) {
+        setPreselectedPracticeId(invitation.practiceId);
+        // Pre-select existing practice
+        setPracticeSelection({ type: 'existing', practiceId: invitation.practiceId });
+      }
+    }
+  }, [searchParams]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -59,6 +82,11 @@ export function ApplicationBasicDetailsForm({
     if (!phone.trim()) newErrors.phone = 'Phone number is required';
     if (!city.trim()) newErrors.city = 'City is required';
     if (!state.trim()) newErrors.state = 'State is required';
+    if (!practiceSelection) {
+      newErrors.practiceSelection = 'Please select or create a practice';
+    } else if (practiceSelection.type === 'new' && !practiceSelection.practiceName.trim()) {
+      newErrors.practiceSelection = 'Practice name is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,6 +107,7 @@ export function ApplicationBasicDetailsForm({
       practiceName: practiceName.trim() || undefined,
       website: website.trim() || undefined,
       messageToAdmin: messageToAdmin.trim() || undefined,
+      practiceSelection: practiceSelection || undefined,
     });
   };
 
@@ -274,28 +303,23 @@ export function ApplicationBasicDetailsForm({
         </div>
       </div>
 
-      {/* Practice Name (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="practiceName">Practice Name (Optional)</Label>
-        <Input
-          id="practiceName"
-          value={practiceName}
-          onChange={(e) => setPracticeName(e.target.value)}
-          placeholder="Smith Medical Group"
-        />
-      </div>
-
-      {/* Website (Optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="website">Website (Optional)</Label>
-        <Input
-          id="website"
-          type="url"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
-          placeholder="https://www.example.com"
-        />
-      </div>
+      {/* Practice Selection */}
+      <PracticeSelectionSection
+        value={practiceSelection || undefined}
+        onChange={(selection) => {
+          setPracticeSelection(selection);
+          if (errors.practiceSelection) {
+            setErrors({ ...errors, practiceSelection: '' });
+          }
+        }}
+        disabled={false}
+        preselectedPracticeId={preselectedPracticeId}
+      />
+      {errors.practiceSelection && (
+        <p className="text-sm text-destructive" role="alert">
+          {errors.practiceSelection}
+        </p>
+      )}
 
       {/* Message to Admin (Optional) */}
       <div className="space-y-2">

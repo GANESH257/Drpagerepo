@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Key, X, Plus } from 'lucide-react';
+import { Save, Key, X, Plus, AlertTriangle, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,10 +25,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Doctor, Location, Insurance } from '@/types';
+import { Practice } from '@/types/practice';
 import { saveDoctorOverride } from '@/lib/memberStorage';
 import { resetPassword, setPassword } from '@/lib/passwordUtils';
 import { departments } from '@/data/departments';
+import { getAllPracticesForAdmin, assignPracticeAdminRole, getDoctorsByPractice } from '@/lib/adminHelpers';
+import { loadMembership } from '@/lib/membershipStorage';
+import { membershipPlans } from '@/data/membershipPlans';
+import { Badge } from '@/components/ui/badge';
 
 interface MemberEditDialogProps {
   doctor: Doctor;
@@ -44,39 +57,79 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
   const [newPassword, setNewPassword] = useState<string | null>(null);
   const [customPassword, setCustomPassword] = useState('');
   const [useCustomPassword, setUseCustomPassword] = useState(false);
+  const [practices, setPractices] = useState<Practice[]>([]);
+  const [showRoleWarning, setShowRoleWarning] = useState(false);
+  const [membership, setMembership] = useState<any>(null);
 
   useEffect(() => {
-    if (open && doctor) {
-      setFormData({
-        firstName: doctor.firstName,
-        lastName: doctor.lastName,
-        credentials: doctor.credentials,
-        email: doctor.email,
-        specialty: doctor.specialty,
-        specialties: doctor.specialties || [doctor.specialty],
-        bio: doctor.bio,
-        about: doctor.about,
-        verified: doctor.verified,
-        featured: doctor.featured,
-        acceptsNewPatients: doctor.acceptsNewPatients,
-        locations: doctor.locations || [],
-        insurance: doctor.insurance || [],
-      });
+    if (open) {
+      const allPractices = getAllPracticesForAdmin();
+      setPractices(allPractices);
+      
+      if (doctor) {
+        setFormData({
+          firstName: doctor.firstName,
+          lastName: doctor.lastName,
+          credentials: doctor.credentials,
+          email: doctor.email,
+          specialty: doctor.specialty,
+          specialties: doctor.specialties || [doctor.specialty],
+          bio: doctor.bio,
+          about: doctor.about,
+          verified: doctor.verified,
+          featured: doctor.featured,
+          acceptsNewPatients: doctor.acceptsNewPatients,
+          locations: doctor.locations || [],
+          insurance: doctor.insurance || [],
+          practiceId: doctor.practiceId,
+          roleInPractice: doctor.roleInPractice,
+        });
+        
+        // Load membership
+        if (doctor.id) {
+          const membershipData = loadMembership(doctor.id);
+          setMembership(membershipData);
+        }
+      }
     }
   }, [open, doctor]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Update fullName based on firstName and lastName
-      const fullName = `${formData.firstName} ${formData.lastName}, ${formData.credentials}`;
-      
-      const updated: Partial<Doctor> = {
-        ...formData,
-        fullName,
-      };
+      // Handle Practice Admin role transfer if needed
+      if (formData.practiceId && formData.roleInPractice === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
+        // Check if practice already has a Practice Admin
+        const practiceDoctors = getDoctorsByPractice(formData.practiceId);
+        const currentAdmin = practiceDoctors.find(d => d.roleInPractice === 'practice_admin' && d.id !== doctor.id);
+        
+        if (currentAdmin) {
+          // Transfer role: demote old admin, promote new admin
+          assignPracticeAdminRole(formData.practiceId, doctor.id, currentAdmin.id);
+        } else {
+          // Just assign the role
+          assignPracticeAdminRole(formData.practiceId, doctor.id);
+        }
+      } else if (formData.practiceId && formData.roleInPractice !== 'practice_admin' && doctor.roleInPractice === 'practice_admin') {
+        // Removing Practice Admin role - need to handle this
+        // For now, just update the doctor
+        const updated: Partial<Doctor> = {
+          ...formData,
+          fullName: `${formData.firstName} ${formData.lastName}, ${formData.credentials}`,
+        };
+        saveDoctorOverride(doctor.id, updated);
+      } else {
+        // Update fullName based on firstName and lastName
+        const fullName = `${formData.firstName} ${formData.lastName}, ${formData.credentials}`;
+        
+        const updated: Partial<Doctor> = {
+          ...formData,
+          fullName,
+        };
 
-      saveDoctorOverride(doctor.id, updated);
+        saveDoctorOverride(doctor.id, updated);
+      }
+      
       onSave();
       onOpenChange(false);
     } catch (error) {
@@ -238,6 +291,74 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
               </div>
             </div>
 
+            {/* Practice Assignment (V2) */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-brand-dark-blue">Practice Assignment (V2)</h3>
+              <div>
+                <Label htmlFor="practiceId">Practice</Label>
+                <Select
+                  value={formData.practiceId || ''}
+                  onValueChange={(value) => {
+                    setFormData({ 
+                      ...formData, 
+                      practiceId: value || undefined,
+                      roleInPractice: value ? (formData.roleInPractice || 'doctor') : undefined,
+                    });
+                    if (value && formData.roleInPractice === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
+                      setShowRoleWarning(true);
+                    } else {
+                      setShowRoleWarning(false);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a practice..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Practice</SelectItem>
+                    {practices.map((practice) => (
+                      <SelectItem key={practice.id} value={practice.id}>
+                        {practice.name}
+                        {practice.address && ` - ${practice.address.city}, ${practice.address.state}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.practiceId && (
+                <div>
+                  <Label htmlFor="roleInPractice">Role in Practice</Label>
+                  <Select
+                    value={formData.roleInPractice || 'doctor'}
+                    onValueChange={(value: 'doctor' | 'practice_admin') => {
+                      setFormData({ ...formData, roleInPractice: value });
+                      if (value === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
+                        setShowRoleWarning(true);
+                      } else {
+                        setShowRoleWarning(false);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="practice_admin">Practice Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {showRoleWarning && (
+                    <Alert className="mt-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Assigning Practice Admin role will transfer the role from the current Practice Admin (if one exists).
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Professional Information */}
             <div className="space-y-4">
               <h3 className="font-semibold text-brand-dark-blue">Professional Information</h3>
@@ -336,6 +457,35 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                 </div>
               </div>
             </div>
+
+            {/* Membership Status */}
+            {membership && (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-brand-dark-blue">Membership Status</h3>
+                <div className="p-4 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Plan:</span>
+                    <Badge variant="outline">
+                      {membershipPlans.find(p => p.id === membership.planId)?.name || membership.planId}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Status:</span>
+                    <Badge variant={membership.status === 'active' ? 'default' : 'secondary'}>
+                      {membership.status}
+                    </Badge>
+                  </div>
+                  {membership.renewalDate && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Renewal Date:</span>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(membership.renewalDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Password Management */}
             <div className="space-y-4">

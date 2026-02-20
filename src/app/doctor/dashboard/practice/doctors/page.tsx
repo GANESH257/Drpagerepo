@@ -6,12 +6,10 @@ import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
-import { addPracticeInvitation } from '@/lib/storage/invitationStorage';
+import { addPracticeInvitation, getPracticeInvitations } from '@/lib/storage/invitationStorage';
 import { makeId, nowISO } from '@/lib/services/id';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { practices } from '@/data/practices';
-import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
-import { doctors } from '@/data/doctors';
+import { getAllPracticesForAdmin, getDoctorsByPractice } from '@/lib/adminHelpers';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,15 +20,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/lib/toast';
-import { UserPlus, UserMinus } from 'lucide-react';
+import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone } from 'lucide-react';
+import { PracticeInvitation } from '@/types/invitations';
+import { loadMembership } from '@/lib/membershipStorage';
+import { membershipPlans } from '@/data/membershipPlans';
 
 export default function PracticeRosterPage() {
   const router = useRouter();
   const [practice, setPractice] = useState<Practice | null>(null);
   const [practiceDoctors, setPracticeDoctors] = useState<Doctor[]>([]);
+  const [invitations, setInvitations] = useState<PracticeInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastCreatedInvitation, setLastCreatedInvitation] = useState<PracticeInvitation | null>(null);
   
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
@@ -44,8 +47,8 @@ export default function PracticeRosterPage() {
         throw new PermissionDeniedError('Practice admin must have practiceId');
       }
       
-      // Load practice
-      const allPractices = mergePractices([...practices, ...getCreatedPractices()]);
+      // Load practice using helper
+      const allPractices = getAllPracticesForAdmin();
       const foundPractice = allPractices.find(p => p.id === actor.practiceId);
       
       if (!foundPractice) {
@@ -54,9 +57,14 @@ export default function PracticeRosterPage() {
       
       setPractice(foundPractice);
       
-      // Load practice doctors
-      const doctorsInPractice = doctors.filter(d => d.practiceId === foundPractice.id);
+      // Load practice doctors using helper
+      const doctorsInPractice = getDoctorsByPractice(foundPractice.id);
       setPracticeDoctors(doctorsInPractice);
+      
+      // Load invitations for this practice
+      const allInvitations = getPracticeInvitations();
+      const practiceInvitations = allInvitations.filter(inv => inv.practiceId === foundPractice.id);
+      setInvitations(practiceInvitations);
       
       setIsLoading(false);
     } catch (error) {
@@ -82,16 +90,19 @@ export default function PracticeRosterPage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
-      // Create invitation
+      // Create invitation with link
       const invitationId = makeId('inv');
-      addPracticeInvitation({
+      const invitationLink = `${window.location.origin}/join-us/application?invitation=${invitationId}`;
+      const newInvitation: PracticeInvitation = {
         id: invitationId,
         practiceId: practice.id,
         email: inviteEmail.trim(),
         invitedAt: nowISO(),
         invitedByDoctorId: actor.doctorId,
         status: 'sent',
-      });
+        invitationLink,
+      };
+      addPracticeInvitation(newInvitation);
       
       // Create approval request
       submitApprovalRequest(actor, {
@@ -107,15 +118,22 @@ export default function PracticeRosterPage() {
         },
       });
       
-      toast.success('Invitation sent and approval request submitted');
-      setShowInviteDialog(false);
-      setInviteEmail('');
-      setInviteMessage('');
+      // Update local state
+      setInvitations([newInvitation, ...invitations]);
+      setLastCreatedInvitation(newInvitation);
+      
+      toast.success('Invitation created and approval request submitted');
+      // Don't close dialog yet - show invitation link
     } catch (error: any) {
       toast.error(error.message || 'Failed to invite doctor');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopyInvitationLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success('Invitation link copied to clipboard');
   };
 
   const handleRemoveDoctor = async (doctorId: string) => {
@@ -187,40 +205,127 @@ export default function PracticeRosterPage() {
                   Invite a doctor to join your practice. This will create an approval request.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="invite-email">Email *</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="doctor@example.com"
-                    required
-                  />
+              {lastCreatedInvitation ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-900 mb-2">Invitation Created Successfully!</p>
+                    <p className="text-xs text-green-700 mb-3">
+                      Share this link with the doctor. They can use it to sign up with the practice preselected.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={lastCreatedInvitation.invitationLink || ''}
+                        readOnly
+                        className="flex-1 text-sm"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => lastCreatedInvitation.invitationLink && handleCopyInvitationLink(lastCreatedInvitation.invitationLink)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={() => {
+                      setShowInviteDialog(false);
+                      setLastCreatedInvitation(null);
+                      setInviteEmail('');
+                      setInviteMessage('');
+                    }}>
+                      Done
+                    </Button>
+                  </DialogFooter>
                 </div>
-                <div>
-                  <Label htmlFor="invite-message">Message (optional)</Label>
-                  <Textarea
-                    id="invite-message"
-                    value={inviteMessage}
-                    onChange={(e) => setInviteMessage(e.target.value)}
-                    placeholder="Optional invitation message..."
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
-                  {isSubmitting ? 'Submitting...' : 'Send Invitation'}
-                </Button>
-              </DialogFooter>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="invite-email">Email *</Label>
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="doctor@example.com"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="invite-message">Message (optional)</Label>
+                      <Textarea
+                        id="invite-message"
+                        value={inviteMessage}
+                        onChange={(e) => setInviteMessage(e.target.value)}
+                        placeholder="Optional invitation message..."
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
+                      {isSubmitting ? 'Submitting...' : 'Create Invitation'}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         }
       />
+
+      {/* Pending Invitations */}
+      {invitations.filter(inv => inv.status === 'sent').length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Pending Invitations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {invitations
+                .filter(inv => inv.status === 'sent')
+                .map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{invitation.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Sent {new Date(invitation.invitedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {invitation.invitationLink && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCopyInvitationLink(invitation.invitationLink!)}
+                        >
+                          <Copy className="h-4 w-4 mr-1" />
+                          Copy Link
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.open(invitation.invitationLink, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Doctors List */}
       {practiceDoctors.length === 0 ? (
@@ -231,50 +336,94 @@ export default function PracticeRosterPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {practiceDoctors.map((doctor) => (
-            <Card key={doctor.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{doctor.fullName}</CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">{doctor.specialty}</p>
+          {practiceDoctors.map((doctor) => {
+            const membership = loadMembership(doctor.id);
+            const membershipPlan = membership ? membershipPlans.find(p => p.id === membership.planId) : null;
+
+            return (
+              <Card key={doctor.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{doctor.fullName}</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">{doctor.specialty}</p>
+                    </div>
+                    <Badge variant={doctor.roleInPractice === 'practice_admin' ? 'default' : 'outline'}>
+                      {doctor.roleInPractice === 'practice_admin' ? 'Practice Admin' : 'Doctor'}
+                    </Badge>
                   </div>
-                  <Badge variant={doctor.roleInPractice === 'practice_admin' ? 'default' : 'outline'}>
-                    {doctor.roleInPractice === 'practice_admin' ? 'Practice Admin' : 'Doctor'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {doctor.roleInPractice !== 'practice_admin' && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" className="w-full">
-                        <UserMinus className="h-4 w-4 mr-2" />
-                        Remove Doctor
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remove Doctor from Practice?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will submit a removal request that requires admin approval. The doctor will remain in the practice until approved.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleRemoveDoctor(doctor.id)}
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? 'Submitting...' : 'Submit Request'}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* Contact Information */}
+                  <div className="space-y-1.5 text-sm">
+                    {doctor.email && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="h-3.5 w-3.5" />
+                        <span className="truncate">{doctor.email}</span>
+                      </div>
+                    )}
+                    {doctor.locations && doctor.locations.length > 0 && doctor.locations[0].phone && (
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>{doctor.locations[0].phone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Membership Status */}
+                  {membership && (
+                    <div className="pt-2 border-t">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Membership:</span>
+                        <Badge variant={membership.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                          {membershipPlan?.name || membership.planId} ({membership.status})
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => router.push(`/doctors/${doctor.slug || doctor.id}`)}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                      View Profile
+                    </Button>
+                    {doctor.roleInPractice !== 'practice_admin' && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <UserMinus className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Doctor from Practice?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will submit a removal request that requires admin approval. The doctor will remain in the practice until approved.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleRemoveDoctor(doctor.id)}
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

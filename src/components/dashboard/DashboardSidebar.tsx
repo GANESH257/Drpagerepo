@@ -12,6 +12,7 @@ import {
   Crown,
   Bell,
   Megaphone,
+  Building,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -37,6 +38,12 @@ const navItems: NavItem[] = [
     href: '/doctor/dashboard/profile',
     icon: User,
     description: 'Update your professional information and credentials',
+  },
+  {
+    label: 'View Practice',
+    href: '/doctor/dashboard/practice-info',
+    icon: Building,
+    description: 'View your practice information',
   },
   {
     label: 'Manage Locations',

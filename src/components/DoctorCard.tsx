@@ -1,13 +1,16 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Doctor } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, MapPin, Calendar, Building } from 'lucide-react';
+import { CheckCircle2, MapPin, Calendar, Building, MessageCircle } from 'lucide-react';
 import { getInstitutionById } from '@/lib/institutionStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { useDoctorSession } from '@/lib/useDoctorSession';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -16,6 +19,12 @@ interface DoctorCardProps {
 
 export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps) {
   const [imageError, setImageError] = useState(false);
+  const { isAuthenticated } = useDoctorSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, [isAuthenticated]);
   
   const earliestSlot = doctor.availability
     .filter((slot) => slot.available)
@@ -164,7 +173,19 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
           </div>
         )}
 
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col gap-2">
+          {isLoggedIn && (
+            <Button 
+              asChild 
+              variant="outline"
+              className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
+            >
+              <Link href={`/doctor/dashboard/messages/${doctor.id}`}>
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Message
+              </Link>
+            </Button>
+          )}
           <Button 
             asChild 
             variant="gradient"

@@ -7,7 +7,7 @@ import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permiss
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { practices } from '@/data/practices';
-import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
+import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ export default function PracticeServicesInsurancePage() {
         throw new PermissionDeniedError('Practice admin must have practiceId');
       }
       
-      const allPractices = mergePractices([...practices, ...getCreatedPractices()]);
+      const allPractices = getAllPracticesForAdmin();
       const foundPractice = allPractices.find(p => p.id === actor.practiceId);
       
       if (!foundPractice) {
