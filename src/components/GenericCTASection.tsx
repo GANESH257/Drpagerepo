@@ -102,8 +102,8 @@ export function GenericCTASection() {
               size="lg"
               className="bg-white text-brand-teal hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <Link href="/doctors">
-                Find a Doctor
+              <Link href="/practices">
+                Find a Practice
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

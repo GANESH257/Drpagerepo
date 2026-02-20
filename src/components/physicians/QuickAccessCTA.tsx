@@ -93,11 +93,11 @@ export function QuickAccessCTA() {
               asChild
               size="lg"
               className="bg-white text-brand-dark-blue hover:bg-white/90 shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
-              aria-label="Find a doctor"
+              aria-label="Find a practice"
             >
-              <Link href="/doctors">
+              <Link href="/practices">
                 <Search className="mr-2 h-5 w-5" aria-hidden="true" />
-                Find a Doctor
+                Find a Practice
               </Link>
             </Button>
             <Button

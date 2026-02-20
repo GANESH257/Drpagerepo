@@ -18,7 +18,7 @@ export function FloatingCTA() {
 
   return (
     <>
-      {/* Find a Doctor - Above Join (Right Side) */}
+      {/* Find a Practice - Above Join (Right Side) */}
       <div
         className="fixed bottom-24 right-4 z-[100] md:bottom-32 md:right-8 pointer-events-auto"
         style={{
@@ -28,7 +28,7 @@ export function FloatingCTA() {
         }}
       >
         <Link
-          href="/doctors"
+          href="/practices"
           className="bg-brand-teal hover:bg-brand-teal/90 shadow-2xl hover:shadow-brand-teal/50 hover:scale-105 transition-all duration-300 focus-ring group text-sm md:text-base px-4 md:px-6 py-3 md:py-4 rounded-lg md:rounded-xl flex items-center gap-2 font-semibold whitespace-nowrap inline-flex text-white no-underline cursor-pointer"
           style={{
             background: 'linear-gradient(135deg, #1DD4C4 0%, #1AB8A8 100%)',
@@ -37,7 +37,7 @@ export function FloatingCTA() {
           }}
         >
           <Search className="h-4 w-4 md:h-5 md:w-5 group-hover:scale-110 transition-transform flex-shrink-0" />
-          <span className="font-semibold">Find a Doctor</span>
+          <span className="font-semibold">Find a Practice</span>
         </Link>
       </div>
 

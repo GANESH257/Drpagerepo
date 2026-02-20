@@ -164,8 +164,8 @@ export function HomeHero() {
               variant="gradient-multi"
               className="w-full sm:w-auto focus-ring shadow-lg hover:shadow-xl"
             >
-              <Link href="/doctors">
-                Find a Doctor
+              <Link href="/practices">
+                Find a Practice
                 <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>

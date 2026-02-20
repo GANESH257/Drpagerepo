@@ -27,7 +27,7 @@ export function InsuranceInfoSection() {
                 Coverage varies by plan. Confirm with your insurer about specific benefits, deductibles, copays, and out-of-pocket maximums.
               </p>
               <p>
-                If you need help finding a physician who accepts your insurance, visit our <Link href="/doctors" className="text-brand-teal hover:underline">Find a Doctor</Link> directory.
+                If you need help finding a physician who accepts your insurance, visit our <Link href="/practices" className="text-brand-teal hover:underline">Find a Practice</Link> directory.
               </p>
             </div>
           </div>
@@ -144,8 +144,8 @@ export function InsuranceInfoSection() {
           </p>
           <div className="text-sm text-gray-600 mt-2">
             <span>Accepted insurance varies by physician.{' '}</span>
-            <Link href="/doctors" className="text-brand-teal hover:underline">
-              Find a doctor who accepts your insurance
+            <Link href="/practices" className="text-brand-teal hover:underline">
+              Find a practice who accepts your insurance
             </Link>
           </div>
         </div>

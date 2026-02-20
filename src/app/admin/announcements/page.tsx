@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import { createAnnouncement, CreateAnnouncementInput } from '@/lib/services/anno
 import { getActorFromSession } from '@/lib/services/permissionService';
 
 export default function AdminAnnouncementsPage() {
+    const searchParams = useSearchParams();
     const [search, setSearch] = useState('');
     const [selectedDoctorId, setSelectedDoctorId] = useState<string | 'all' | null>(null);
     const [message, setMessage] = useState('');
@@ -27,6 +29,14 @@ export default function AdminAnnouncementsPage() {
     const [activePartnerIds, setActivePartnerIds] = useState<string[]>([]);
     const [threadMessages, setThreadMessages] = useState<DoctorMessage[]>([]);
     const [announcementTitle, setAnnouncementTitle] = useState('System Announcement');
+
+    // Handle doctorId query parameter from doctor profile page
+    useEffect(() => {
+        const doctorIdFromQuery = searchParams?.get('doctorId');
+        if (doctorIdFromQuery) {
+            setSelectedDoctorId(doctorIdFromQuery);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         setAllDoctors(getAllDoctors());

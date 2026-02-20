@@ -11,6 +11,7 @@ import { CheckCircle2, MapPin, Calendar, Building, MessageCircle } from 'lucide-
 import { getInstitutionById } from '@/lib/institutionStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { useDoctorSession } from '@/lib/useDoctorSession';
+import { getAdminSession } from '@/lib/adminSession';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -21,9 +22,31 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
   const [imageError, setImageError] = useState(false);
   const { isAuthenticated } = useDoctorSession();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
 
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
+    setIsAdminLoggedIn(getAdminSession() !== null);
+    
+    // Listen for storage changes (login/logout in other tabs)
+    const handleStorageChange = () => {
+      setIsLoggedIn(isAuthenticated());
+      setIsAdminLoggedIn(getAdminSession() !== null);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically for admin session changes (for same-tab login/logout)
+    const checkAdminSession = () => {
+      setIsAdminLoggedIn(getAdminSession() !== null);
+    };
+    
+    const interval = setInterval(checkAdminSession, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, [isAuthenticated]);
   
   const earliestSlot = doctor.availability
@@ -174,13 +197,13 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
         )}
 
         <div className="mt-auto flex flex-col gap-2">
-          {isLoggedIn && (
+          {(isLoggedIn || isAdminLoggedIn) && (
             <Button 
               asChild 
               variant="outline"
               className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
             >
-              <Link href={`/doctor/dashboard/messages/${doctor.id}`}>
+              <Link href={isAdminLoggedIn ? `/admin/announcements?doctorId=${doctor.id}` : `/doctor/dashboard/messages/${doctor.id}`}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Message
               </Link>

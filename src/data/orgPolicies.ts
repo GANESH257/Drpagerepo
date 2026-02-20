@@ -21,7 +21,7 @@ export const orgPolicies: OrgPolicy[] = [
     id: 'policy-003',
     category: 'Governance',
     title: 'Governance Bylaws',
-    body: 'The Alliance of Independent Physicians operates under a set of bylaws that govern:\n\n• Board composition and election procedures\n• Meeting schedules and quorum requirements\n• Decision-making processes\n• Financial management and reporting\n• Amendment procedures\n\nAll members are entitled to review the complete bylaws document. The bylaws may be amended by a two-thirds majority vote of the Board of Trustees.',
+    body: 'The Alliance of Independent Physicians operates under a set of bylaws that govern:\n\n• Board composition and election procedures\n• Meeting schedules and quorum requirements\n• Decision-making processes\n• Financial management and reporting\n• Amendment procedures\n\nAll members are entitled to review the complete bylaws document. The current bylaws are effective February 4, 2026, and may be amended by a two-thirds majority vote of the Board of Trustees.\n\n[Download the complete bylaws document](/policies/governance-bylaws.pdf)',
   },
   {
     id: 'policy-004',

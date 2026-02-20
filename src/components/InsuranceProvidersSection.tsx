@@ -91,7 +91,7 @@ export function InsuranceProvidersSection() {
           <div className="flex items-center justify-center gap-2 mb-3">
             <Building2 className="h-6 w-6 md:h-7 md:w-7 text-brand-dark-blue" />
             <h2 className="text-2xl md:text-3xl font-bold text-brand-dark-blue">
-              Find Doctors Who Accept Your Insurance
+              Find Practices Who Accept Your Insurance
             </h2>
           </div>
           <p className="text-sm md:text-base text-gray-700 max-w-3xl mx-auto leading-relaxed">
@@ -107,7 +107,7 @@ export function InsuranceProvidersSection() {
             return (
               <Link
                 key={provider.name}
-                href={`/doctors?insurance=${encodeURIComponent(provider.name)}`}
+                href={`/practices?insurance=${encodeURIComponent(provider.name)}`}
                 className="group"
                 style={{
                   opacity: isVisible ? 1 : 0,
@@ -144,7 +144,7 @@ export function InsuranceProvidersSection() {
                     
                     {/* Hover Indicator */}
                     <div className="mt-2 text-xs text-gray-500 group-hover:text-brand-teal transition-colors duration-300 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                      Find Doctors →
+                      Find Practices →
                     </div>
                   </div>
                   
@@ -168,10 +168,10 @@ export function InsuranceProvidersSection() {
           }}
         >
           <Link
-            href="/doctors"
+            href="/practices"
             className="inline-flex items-center gap-2 text-brand-dark-blue hover:text-brand-teal font-semibold transition-colors duration-300 hover:gap-3"
           >
-            View All Doctors
+            View All Practices
             <span className="text-xl">→</span>
           </Link>
         </div>

@@ -16,6 +16,7 @@ import { getActorFromSession, canSendReferral } from '@/lib/services/permissionS
 import { getContactCard } from '@/lib/services/visibilityService';
 import { createReferral } from '@/lib/services/referralEngine';
 import { useDoctorSession } from '@/lib/useDoctorSession';
+import { getAdminSession } from '@/lib/adminSession';
 import { useRouter } from 'next/navigation';
 import { practices } from '@/data/practices';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
@@ -60,6 +61,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
   const [contactCard, setContactCard] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
   
   // Referral form state
@@ -73,6 +75,27 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
 
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
+    setIsAdminLoggedIn(getAdminSession() !== null);
+    
+    // Listen for storage changes (login/logout in other tabs)
+    const handleStorageChange = () => {
+      setIsLoggedIn(isAuthenticated());
+      setIsAdminLoggedIn(getAdminSession() !== null);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically for admin session changes (for same-tab login/logout)
+    const checkAdminSession = () => {
+      setIsAdminLoggedIn(getAdminSession() !== null);
+    };
+    
+    const interval = setInterval(checkAdminSession, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -419,11 +442,19 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 }
                 return null;
               })()}
-              {isLoggedIn && (
+              {(isLoggedIn || isAdminLoggedIn) && (
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => router.push(`/doctor/dashboard/messages/${doctor.id}`)}
+                  onClick={() => {
+                    if (isAdminLoggedIn) {
+                      // Admin goes to announcements page with doctor ID selected
+                      router.push(`/admin/announcements?doctorId=${doctor.id}`);
+                    } else {
+                      // Doctor goes to messages page
+                      router.push(`/doctor/dashboard/messages/${doctor.id}`);
+                    }
+                  }}
                   className="w-full md:w-auto border-2 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all duration-200 hover:scale-105 shadow-md"
                   style={{
                     opacity: isVisible ? 1 : 0,

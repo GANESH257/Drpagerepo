@@ -46,9 +46,9 @@ export const trusteePolicies: TrusteePolicy[] = [
   {
     id: '6',
     title: 'Governance Bylaws',
-    description: 'Comprehensive bylaws governing the structure, operations, and decision-making processes of the Board of Trustees.',
+    description: 'Comprehensive bylaws governing the structure, operations, and decision-making processes of the Board of Trustees. Effective February 4, 2026.',
     category: 'Governance',
     filePath: '/policies/governance-bylaws.pdf',
-    fileSize: '478 KB',
+    fileSize: '170 KB',
   },
 ];
