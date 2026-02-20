@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { DoctorsPerDepartmentChart } from '@/components/admin/DoctorsPerDepartme
 import { DoctorsPerPlanChart } from '@/components/admin/DoctorsPerPlanChart';
 import { RequestStatusChart } from '@/components/admin/RequestStatusChart';
 import { GrowthTrendChart } from '@/components/admin/GrowthTrendChart';
+import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
+import { getAllDoctors } from '@/lib/memberStorage';
 
 export default function AdminDashboardPage() {
   useEffect(() => {
@@ -26,6 +28,10 @@ export default function AdminDashboardPage() {
   const recentRequests = requests
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
     .slice(0, 5);
+
+  // Get practices and doctors for quick stats
+  const practices = getAllPracticesForAdmin();
+  const doctors = getAllDoctors();
 
   const getStatusBadge = (status: AdminJoinRequest['status']) => {
     switch (status) {
@@ -61,6 +67,90 @@ export default function AdminDashboardPage() {
 
       {/* Stats Cards */}
       <StatsCards />
+
+      {/* Quick Access Cards */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Practice Management Card */}
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-teal/10 rounded-lg">
+                  <Building2 className="h-6 w-6 text-brand-teal" />
+                </div>
+                <div>
+                  <CardTitle className="text-[#0F5FA8]">Practice Management</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Manage practices, locations, and rosters
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-[#0F5FA8]">{practices.length}</div>
+                  <p className="text-sm text-gray-600">Total Practices</p>
+                </div>
+                <Button asChild className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
+                  <Link href="/admin/practices">
+                    Manage Practices
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="pt-3 border-t">
+                <p className="text-xs text-gray-500">
+                  Edit practice details, manage locations, insurance, services, and doctor rosters. 
+                  Changes apply immediately (admin override).
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Member Management Card */}
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-brand-teal/10 rounded-lg">
+                  <Users className="h-6 w-6 text-brand-teal" />
+                </div>
+                <div>
+                  <CardTitle className="text-[#0F5FA8]">Member Management</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    Edit doctor profiles and manage members
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-2xl font-bold text-[#0F5FA8]">{doctors.length}</div>
+                  <p className="text-sm text-gray-600">Total Doctors</p>
+                </div>
+                <Button asChild variant="outline" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
+                  <Link href="/admin/members">
+                    Manage Members
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="pt-3 border-t">
+                <p className="text-xs text-gray-500">
+                  Edit doctor profiles, manage passwords, assign practices, and remove members.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Analytics Charts */}
       <div className="space-y-6">

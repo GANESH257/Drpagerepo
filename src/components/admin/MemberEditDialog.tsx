@@ -297,12 +297,12 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
               <div>
                 <Label htmlFor="practiceId">Practice</Label>
                 <Select
-                  value={formData.practiceId || ''}
+                  value={formData.practiceId || 'none'}
                   onValueChange={(value) => {
                     setFormData({ 
                       ...formData, 
-                      practiceId: value || undefined,
-                      roleInPractice: value ? (formData.roleInPractice || 'doctor') : undefined,
+                      practiceId: value === 'none' ? undefined : value,
+                      roleInPractice: value && value !== 'none' ? (formData.roleInPractice || 'doctor') : undefined,
                     });
                     if (value && formData.roleInPractice === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
                       setShowRoleWarning(true);
@@ -315,7 +315,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                     <SelectValue placeholder="Select a practice..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Practice</SelectItem>
+                    <SelectItem value="none">No Practice</SelectItem>
                     {practices.map((practice) => (
                       <SelectItem key={practice.id} value={practice.id}>
                         {practice.name}

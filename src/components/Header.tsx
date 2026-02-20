@@ -8,6 +8,8 @@ import { Menu, X, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDarkMode } from '@/lib/useDarkMode';
 import { useDoctorSession } from '@/lib/useDoctorSession';
+import { getAdminSession } from '@/lib/adminSession';
+import { LayoutDashboard } from 'lucide-react';
 
 export function Header() {
   const pathname = usePathname();
@@ -18,6 +20,7 @@ export function Header() {
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   
   // Use pathname for initial render to avoid hydration mismatch
   // Then update based on localStorage preference after mount
@@ -38,16 +41,26 @@ export function Header() {
   // Check authentication status
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
+    setIsAdminLoggedIn(getAdminSession() !== null);
     
     // Listen for storage changes (login/logout in other tabs)
     const handleStorageChange = () => {
       setIsLoggedIn(isAuthenticated());
+      setIsAdminLoggedIn(getAdminSession() !== null);
     };
     
     window.addEventListener('storage', handleStorageChange);
     
+    // Also check periodically for admin session changes (for same-tab login/logout)
+    const checkAdminSession = () => {
+      setIsAdminLoggedIn(getAdminSession() !== null);
+    };
+    
+    const interval = setInterval(checkAdminSession, 1000);
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
     };
   }, [pathname]);
 
@@ -193,6 +206,18 @@ export function Header() {
             >
               <Link href="/practices">Find a Practice</Link>
             </Button>
+            {isAdminLoggedIn && (
+              <Button
+                asChild
+                size="sm"
+                className="text-xs xl:text-sm bg-[#0F5FA8] hover:bg-[#0F5FA8]/90 text-white transition-all whitespace-nowrap flex items-center gap-1.5"
+              >
+                <Link href="/admin">
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Admin Dashboard
+                </Link>
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -264,6 +289,18 @@ export function Header() {
                 >
                   <Link href="/practices" onClick={() => setMobileMenuOpen(false)}>Find a Practice</Link>
                 </Button>
+                {isAdminLoggedIn && (
+                  <Button
+                    asChild
+                    size="sm"
+                    className="w-full bg-[#0F5FA8] hover:bg-[#0F5FA8]/90 text-white flex items-center justify-center gap-2"
+                  >
+                    <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <LayoutDashboard className="h-4 w-4" />
+                      Admin Dashboard
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"

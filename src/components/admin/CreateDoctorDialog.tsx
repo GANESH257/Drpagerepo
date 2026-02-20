@@ -41,7 +41,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
     email: '',
     specialty: '',
     bio: '',
-    practiceId: '',
+    practiceId: '' as string | undefined,
     roleInPractice: 'doctor' as 'doctor' | 'practice_admin',
     password: '',
   });
@@ -179,21 +179,21 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
             <div>
               <Label htmlFor="create-practiceId">Practice</Label>
               <Select
-                value={formData.practiceId}
-                onValueChange={(value) => setFormData({ ...formData, practiceId: value })}
+                value={formData.practiceId || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, practiceId: value === 'none' ? undefined : (value as string) })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a practice (optional)..." />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No Practice</SelectItem>
-                  {practices.map((practice) => (
-                    <SelectItem key={practice.id} value={practice.id}>
-                      {practice.name}
-                      {practice.address && ` - ${practice.address.city}, ${practice.address.state}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="none">No Practice</SelectItem>
+                    {practices.map((practice) => (
+                      <SelectItem key={practice.id} value={practice.id}>
+                        {practice.name}
+                        {practice.address && ` - ${practice.address.city}, ${practice.address.state}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
               </Select>
             </div>
             {formData.practiceId && (
