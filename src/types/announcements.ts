@@ -7,7 +7,9 @@
  */
 export type AnnouncementAudience =
   | { kind: 'all_doctors' }
-  | { kind: 'practice_doctors'; practiceId: string };
+  | { kind: 'practice_doctors'; practiceId: string }
+  | { kind: 'specialty_doctors'; specialty: string }
+  | { kind: 'specific_doctors'; doctorIds: string[] };
 
 /**
  * Announcement entity

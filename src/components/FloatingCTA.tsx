@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Users, Search } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export function FloatingCTA() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -15,6 +16,11 @@ export function FloatingCTA() {
       setPrefersReducedMotion(mediaQuery.matches);
     }
   }, []);
+
+  // Hide on portal pages
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/doctor')) {
+    return null;
+  }
 
   return (
     <>

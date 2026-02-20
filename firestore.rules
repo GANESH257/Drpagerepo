@@ -9,5 +9,8 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read, write: if true;
     }
+    match /announcement_read_status/{statusId} {
+      allow read, write: if true;
+    }
   }
 }

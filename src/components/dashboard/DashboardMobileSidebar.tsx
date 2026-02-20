@@ -2,15 +2,14 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
-  User, 
-  MapPin, 
-  CreditCard, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  User,
+  MapPin,
+  CreditCard,
+  Calendar,
   Users,
   Crown,
-  Bell,
   Megaphone,
   Building,
   X,
@@ -77,12 +76,6 @@ const navItems: NavItem[] = [
     description: 'Track referrals from other physicians in the network',
   },
   {
-    label: 'Notifications',
-    href: '/doctor/dashboard/notifications',
-    icon: Bell,
-    description: 'View notifications and updates',
-  },
-  {
     label: 'Announcements',
     href: '/doctor/dashboard/announcements',
     icon: Megaphone,
@@ -121,7 +114,7 @@ export function DashboardMobileSidebar({ open, onOpenChange }: DashboardMobileSi
         <nav className="flex flex-col gap-1 p-4 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || 
+            const isActive = pathname === item.href ||
               (item.href !== '/doctor/dashboard' && pathname.startsWith(item.href));
 
             return (

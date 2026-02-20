@@ -21,7 +21,7 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  
+
   // Use pathname for initial render to avoid hydration mismatch
   // Then update based on localStorage preference after mount
   const [homeLink, setHomeLink] = useState<string>(() => {
@@ -29,7 +29,7 @@ export function Header() {
     if (pathname === '/homedark') return '/homedark';
     return '/';
   });
-  
+
   // Only check scroll on home page
   const isHomePage = pathname === '/' || pathname === '/homedark';
 
@@ -42,22 +42,22 @@ export function Header() {
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
     setIsAdminLoggedIn(getAdminSession() !== null);
-    
+
     // Listen for storage changes (login/logout in other tabs)
     const handleStorageChange = () => {
       setIsLoggedIn(isAuthenticated());
       setIsAdminLoggedIn(getAdminSession() !== null);
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Also check periodically for admin session changes (for same-tab login/logout)
     const checkAdminSession = () => {
       setIsAdminLoggedIn(getAdminSession() !== null);
     };
-    
+
     const interval = setInterval(checkAdminSession, 1000);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
@@ -92,6 +92,11 @@ export function Header() {
     };
   }, [isHomePage]);
 
+  // Hide public navbar on dashboard / admin pages (after all hooks)
+  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/admin')) {
+    return null;
+  }
+
   const navLinks = [
     { href: homeLink, label: 'Home', iconOnly: true },
     { href: '/patients', label: 'Patients' },
@@ -115,11 +120,11 @@ export function Header() {
   const getHeaderClasses = () => {
     const base = 'fixed top-4 md:top-6 z-50 w-full transition-all duration-300';
     const shadow = isScrolled ? 'shadow-md' : 'shadow-sm';
-    
+
     // Always show solid navbar with background
     return `${base} border-b bg-background/95 backdrop-blur ${shadow}`;
   };
-  
+
   const headerClasses = getHeaderClasses();
 
   // Always use standard text colors (navbar is always visible now)
@@ -137,25 +142,25 @@ export function Header() {
         <div className={`flex items-center justify-between transition-all duration-300 flex-nowrap ${isScrolled ? 'h-20 md:h-24' : 'h-24 md:h-28'}`}>
           {/* Logo */}
           <Link href={homeLink} className="flex items-center space-x-2 flex-shrink-0 mr-4 lg:mr-6">
-              <Image
-                src="/logodrpnew.png"
-                alt="Alliance of Independent Physicians"
-                width={200}
-                height={200}
-                className="h-12 md:h-16 lg:h-20 w-auto object-contain"
-                priority
-              />
+            <Image
+              src="/logodrpnew.png"
+              alt="Alliance of Independent Physicians"
+              width={200}
+              height={200}
+              className="h-12 md:h-16 lg:h-20 w-auto object-contain"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation - Right Side */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0 ml-auto mr-4">
             {navLinks.map((link, index) => {
               let isActive = false;
-              
+
               // Check if this is the home link (could be / or /homedark)
               if (link.iconOnly || link.href === homeLink || link.href === '/' || link.href === '/homedark') {
                 isActive = pathname === '/' || pathname === '/homedark';
-              } 
+              }
               // Check exact match first
               else if (pathname === link.href) {
                 isActive = true;
@@ -168,7 +173,7 @@ export function Header() {
               else if (pathname.startsWith(link.href) && link.href !== '/') {
                 isActive = true;
               }
-              
+
               return (
                 <div key={link.href} className="flex items-center">
                   {index > 1 && !link.iconOnly && (
@@ -176,11 +181,10 @@ export function Header() {
                   )}
                   <Link
                     href={link.href}
-                    className={`relative px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold transition-all duration-200 whitespace-nowrap rounded-md flex items-center justify-center ${
-                      isActive
-                        ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30'
-                        : 'text-gray-700 hover:text-brand-dark-blue hover:bg-gray-50'
-                    }`}
+                    className={`relative px-3 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-sm font-semibold transition-all duration-200 whitespace-nowrap rounded-md flex items-center justify-center ${isActive
+                      ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30'
+                      : 'text-gray-700 hover:text-brand-dark-blue hover:bg-gray-50'
+                      }`}
                     aria-label={link.iconOnly ? 'Home' : link.label}
                   >
                     {link.iconOnly ? (
@@ -248,11 +252,11 @@ export function Header() {
             <nav className="flex flex-col space-y-4">
               {navLinks.map((link) => {
                 let isActive = false;
-                
+
                 // Check if this is the home link (could be / or /homedark)
                 if (link.iconOnly || link.href === homeLink || link.href === '/' || link.href === '/homedark') {
                   isActive = pathname === '/' || pathname === '/homedark';
-                } 
+                }
                 // Check exact match first
                 else if (pathname === link.href) {
                   isActive = true;
@@ -269,11 +273,10 @@ export function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-medium transition-colors flex items-center gap-2 rounded-md px-3 py-2 ${
-                      isActive 
-                        ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30' 
-                        : `${mobileTextColorClasses} ${mobileHoverTextColorClasses}`
-                    }`}
+                    className={`text-sm font-medium transition-colors flex items-center gap-2 rounded-md px-3 py-2 ${isActive
+                      ? 'text-brand-dark-blue bg-brand-teal/30 font-bold border border-brand-teal/30'
+                      : `${mobileTextColorClasses} ${mobileHoverTextColorClasses}`
+                      }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.iconOnly && <Home className="h-4 w-4" />}

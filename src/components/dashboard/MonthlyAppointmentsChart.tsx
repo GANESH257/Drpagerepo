@@ -19,7 +19,7 @@ interface MonthlyData {
 function generateMonthlyAppointmentsData(appointments: AppointmentRequest[]): MonthlyData[] {
   const now = new Date();
   const months: MonthlyData[] = [];
-  
+
   // Get current month count from actual data
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -32,7 +32,7 @@ function generateMonthlyAppointmentsData(appointments: AppointmentRequest[]): Mo
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    
+
     let count: number;
     if (i === 0) {
       // Current month - use actual data
@@ -43,10 +43,10 @@ function generateMonthlyAppointmentsData(appointments: AppointmentRequest[]): Mo
       const variation = Math.floor(Math.random() * 8) - 4; // -4 to +4 variation
       count = Math.max(3, baseCount + variation);
     }
-    
+
     months.push({ month: monthName, count });
   }
-  
+
   return months;
 }
 
@@ -54,7 +54,7 @@ export function MonthlyAppointmentsChart({ appointments }: MonthlyAppointmentsCh
   const chartData = useMemo(() => generateMonthlyAppointmentsData(appointments), [appointments]);
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
+    <Card className="border-none shadow-lg rounded-3xl overflow-hidden bg-white/50 backdrop-blur-sm transition-all duration-300 hover:shadow-xl hover:bg-white">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-gray-700">New Appointments Trend</CardTitle>
         <Calendar className="h-4 w-4 text-gray-500" />
@@ -63,18 +63,18 @@ export function MonthlyAppointmentsChart({ appointments }: MonthlyAppointmentsCh
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="month" 
+            <XAxis
+              dataKey="month"
               tick={{ fontSize: 12, fill: '#6b7280' }}
               stroke="#9ca3af"
             />
-            <YAxis 
+            <YAxis
               tick={{ fontSize: 12, fill: '#6b7280' }}
               stroke="#9ca3af"
             />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#fff', 
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#fff',
                 border: '1px solid #e5e7eb',
                 borderRadius: '8px',
                 padding: '8px 12px'
@@ -82,9 +82,9 @@ export function MonthlyAppointmentsChart({ appointments }: MonthlyAppointmentsCh
               labelStyle={{ fontWeight: 600, color: '#1f2937' }}
               formatter={(value: number | undefined) => [value ?? 0, 'Appointments']}
             />
-            <Bar 
-              dataKey="count" 
-              fill="#2EC4B6" 
+            <Bar
+              dataKey="count"
+              fill="#2EC4B6"
               radius={[8, 8, 0, 0]}
               stroke="#2EC4B6"
               strokeWidth={1}

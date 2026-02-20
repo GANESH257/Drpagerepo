@@ -16,8 +16,9 @@ import {
   Megaphone,
   Building2,
   Send,
-  Bell,
+  MessageCircle,
 } from 'lucide-react';
+import { MessageBell } from '@/components/dashboard/MessageBell';
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -73,16 +74,16 @@ const adminNavItems = [
     description: 'View all referrals system-wide',
   },
   {
-    label: 'Notifications',
-    href: '/admin/notifications',
-    icon: Bell,
-    description: 'View all notifications system-wide',
-  },
-  {
     label: 'Announcements',
     href: '/admin/announcements',
     icon: Megaphone,
     description: 'Broadcast and manage announcements',
+  },
+  {
+    label: 'Messages',
+    href: '/admin/messages',
+    icon: MessageCircle,
+    description: 'Direct communication with network members',
   },
 ];
 
@@ -105,15 +106,18 @@ export function AdminShell({ children }: AdminShellProps) {
           </Badge>
         </div>
       </div>
+      <div className="flex items-center gap-1 md:gap-2 mr-2 md:mr-4">
+        <MessageBell userId="admin" href="/admin/messages" />
+      </div>
       <Button
         variant="outline"
         size="sm"
         onClick={handleLogout}
-        className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+        className="px-2 md:px-4 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-colors"
         aria-label="Log out"
       >
-        <LogOut className="h-4 w-4 sm:mr-2" />
-        <span className="hidden sm:inline">Log Out</span>
+        <LogOut className="h-4 w-4 md:mr-2" />
+        <span className="hidden md:inline">Log Out</span>
       </Button>
     </>
   );

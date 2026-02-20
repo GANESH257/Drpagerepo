@@ -8,7 +8,7 @@ import { getReferralsForDoctor, setReferralStatus, getReferralTimeline } from '@
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { doctors } from '@/data/doctors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,32 +16,44 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Timeline } from '@/components/shared/approvals/Timeline';
 import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
 
 export default function ReferralsV2Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralIdParam = searchParams.get('referralId');
   const tabParam = searchParams.get('tab') as 'sent' | 'received' | null;
-  
+
   const [referralsSent, setReferralsSent] = useState<Referral[]>([]);
   const [referralsReceived, setReferralsReceived] = useState<Referral[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [timeline, setTimeline] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'sent' | 'received'>('received');
+  const [activeTab, setActiveTab] = useState<'sent' | 'received' | 'search'>('received');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [specialtyFilter, setSpecialtyFilter] = useState('all');
+
+  const filteredDoctors = (doctors || []).filter(d => {
+    const matchesSearch = d.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSpecialty = specialtyFilter === 'all' || d.specialty === specialtyFilter;
+    return matchesSearch && matchesSpecialty;
+  });
 
   useEffect(() => {
     try {
       const actor = getActorFromSession();
       assertDoctor(actor);
-      
+
       if (actor.kind !== 'doctor' || !actor.doctorId) {
         throw new PermissionDeniedError('Must be a doctor');
       }
-      
+
       const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
       setReferralsSent(referralsSent);
       setReferralsReceived(referralsReceived);
@@ -61,19 +73,19 @@ export default function ReferralsV2Page() {
     if (referralIdParam && !isLoading && (referralsSent.length > 0 || referralsReceived.length > 0)) {
       const allReferrals = [...referralsSent, ...referralsReceived];
       const referral = allReferrals.find(r => r.id === referralIdParam);
-      
+
       if (referral) {
         // Determine correct tab
         const isReceived = referralsReceived.some(r => r.id === referralIdParam);
         const correctTab = isReceived ? 'received' : 'sent';
-        
+
         // Switch tab if needed
         if (tabParam && tabParam !== correctTab) {
           setActiveTab(correctTab);
         } else if (!tabParam) {
           setActiveTab(correctTab);
         }
-        
+
         // Open dialog (inline logic to avoid dependency issue)
         setSelectedReferral(referral);
         try {
@@ -101,15 +113,15 @@ export default function ReferralsV2Page() {
       if (actor.kind !== 'doctor') {
         throw new PermissionDeniedError('Must be a doctor');
       }
-      
+
       setReferralStatus(actor, referralId, newStatus);
       toast.success(`Referral marked as ${newStatus}`);
-      
+
       // Reload referrals
       const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
       setReferralsSent(referralsSent);
       setReferralsReceived(referralsReceived);
-      
+
       // Reload timeline if dialog is open for this referral
       if (selectedReferral?.id === referralId && showDetailDialog) {
         try {
@@ -170,7 +182,7 @@ export default function ReferralsV2Page() {
         description="Manage your referrals sent and received"
       />
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'sent' | 'received')} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'sent' | 'received' | 'search')} className="space-y-4">
         <TabsList>
           <TabsTrigger value="received">
             Received ({referralsReceived.length})
@@ -178,7 +190,68 @@ export default function ReferralsV2Page() {
           <TabsTrigger value="sent">
             Sent ({referralsSent.length})
           </TabsTrigger>
+          <TabsTrigger value="search">
+            Find Physicians
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="search" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Find & Refer Physicians</CardTitle>
+              <CardDescription>Search our network to initiate a peer-to-peer referral</CardDescription>
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="Search by name..."
+                  className="flex-1"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="All Specialties" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Specialties</SelectItem>
+                    {Array.from(new Set(doctors.map(d => d.specialty))).sort().map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredDoctors.length === 0 ? (
+                  <div className="col-span-full py-12 text-center text-gray-500">
+                    No physicians found matching your criteria.
+                  </div>
+                ) : (
+                  filteredDoctors.map((doc) => (
+                    <div key={doc.id} className="group relative flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-brand-teal/50 hover:bg-brand-teal/5">
+                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/10 text-brand-dark-blue text-lg font-bold">
+                        {doc.fullName.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-gray-900 truncate">{doc.fullName}</div>
+                        <div className="text-xs text-gray-500 truncate">{doc.specialty}</div>
+                        <ReferralDialog
+                          doctor={doc}
+                          trigger={
+                            <button className="mt-2 inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline">
+                              Send Referral
+                              <ArrowRight className="ml-1 h-3 w-3" />
+                            </button>
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="received" className="space-y-4">
           {referralsReceived.length === 0 ? (
@@ -202,10 +275,10 @@ export default function ReferralsV2Page() {
                       <p className="text-gray-700 mb-1">
                         <strong>Condition:</strong> {referral.condition}
                       </p>
-                      {referral.patient.initials && (
+                      {referral.patient.name && (
                         <p className="text-sm text-gray-600 mb-1">
-                          Patient: {referral.patient.initials}
-                          {referral.patient.age && `, Age ${referral.patient.age}`}
+                          Patient: {referral.patient.name}
+                          {referral.patient.dob && `, DOB: ${referral.patient.dob}`}
                           {referral.patient.sex && `, ${referral.patient.sex}`}
                         </p>
                       )}
@@ -279,10 +352,10 @@ export default function ReferralsV2Page() {
                       <p className="text-gray-700 mb-1">
                         <strong>Condition:</strong> {referral.condition}
                       </p>
-                      {referral.patient.initials && (
+                      {referral.patient.name && (
                         <p className="text-sm text-gray-600 mb-1">
-                          Patient: {referral.patient.initials}
-                          {referral.patient.age && `, Age ${referral.patient.age}`}
+                          Patient: {referral.patient.name}
+                          {referral.patient.dob && `, DOB: ${referral.patient.dob}`}
                           {referral.patient.sex && `, ${referral.patient.sex}`}
                         </p>
                       )}
@@ -313,8 +386,8 @@ export default function ReferralsV2Page() {
 
       {/* Detail Dialog */}
       {selectedReferral && (
-        <Dialog 
-          open={showDetailDialog} 
+        <Dialog
+          open={showDetailDialog}
           onOpenChange={(open) => {
             setShowDetailDialog(open);
             // Remove both referralId and tab params from URL when dialog closes
@@ -336,12 +409,12 @@ export default function ReferralsV2Page() {
                 <h4 className="font-semibold mb-2">Condition</h4>
                 <p className="text-gray-700">{selectedReferral.condition}</p>
               </div>
-              {selectedReferral.patient.initials && (
+              {selectedReferral.patient.name && (
                 <div>
                   <h4 className="font-semibold mb-2">Patient Information</h4>
                   <p className="text-gray-700">
-                    Initials: {selectedReferral.patient.initials}
-                    {selectedReferral.patient.age && `, Age: ${selectedReferral.patient.age}`}
+                    Name: {selectedReferral.patient.name}
+                    {selectedReferral.patient.dob && `, DOB: ${selectedReferral.patient.dob}`}
                     {selectedReferral.patient.sex && `, Sex: ${selectedReferral.patient.sex}`}
                   </p>
                 </div>

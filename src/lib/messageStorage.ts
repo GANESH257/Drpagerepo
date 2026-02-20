@@ -103,7 +103,7 @@ export function subscribeToConversation(
       callback(all);
     };
 
-    const unsubSent = onSnapshot(qSent, 
+    const unsubSent = onSnapshot(qSent,
       (snapshot) => {
         sentMessages = snapshot.docs.map(toMessage);
         merge();
@@ -116,7 +116,7 @@ export function subscribeToConversation(
       }
     );
 
-    const unsubReceived = onSnapshot(qReceived, 
+    const unsubReceived = onSnapshot(qReceived,
       (snapshot) => {
         receivedMessages = snapshot.docs.map(toMessage);
         merge();
@@ -137,7 +137,7 @@ export function subscribeToConversation(
     console.warn('[subscribeToConversation] Failed to subscribe:', error);
     // Return empty unsubscribe function
     callback([]);
-    return () => {};
+    return () => { };
   }
 }
 
@@ -185,7 +185,7 @@ export function subscribeToConversationPartners(doctorId: string, callback: (par
       callback(Array.from(all));
     };
 
-    const unsubSent = onSnapshot(qSent, 
+    const unsubSent = onSnapshot(qSent,
       (snapshot) => {
         sentPartners = snapshot.docs.map(d => d.data().receiverId).filter(Boolean);
         merge();
@@ -197,7 +197,7 @@ export function subscribeToConversationPartners(doctorId: string, callback: (par
       }
     );
 
-    const unsubReceived = onSnapshot(qReceived, 
+    const unsubReceived = onSnapshot(qReceived,
       (snapshot) => {
         receivedPartners = snapshot.docs.map(d => d.data().senderId).filter(Boolean);
         merge();
@@ -216,7 +216,7 @@ export function subscribeToConversationPartners(doctorId: string, callback: (par
   } catch (error) {
     console.warn('[subscribeToConversationPartners] Failed to subscribe:', error);
     callback([]);
-    return () => {};
+    return () => { };
   }
 }
 
@@ -232,7 +232,7 @@ export function subscribeToTotalUnreadCount(doctorId: string, callback: (count: 
       where("isRead", "==", false)
     );
 
-    return onSnapshot(q, 
+    return onSnapshot(q,
       (snapshot) => {
         callback(snapshot.size);
       },
@@ -245,6 +245,79 @@ export function subscribeToTotalUnreadCount(doctorId: string, callback: (count: 
   } catch (error) {
     console.warn('[subscribeToTotalUnreadCount] Failed to subscribe:', error);
     callback(0);
-    return () => {};
+    return () => { };
+  }
+}
+/**
+ * Total information about a conversation with another doctor
+ */
+export type ConversationSummary = {
+  otherDoctorId: string;
+  lastMessage?: DoctorMessage;
+  unreadCount: number;
+};
+
+/**
+ * Subscribes to all conversation summaries for a doctor in real-time.
+ * This aggregates messages in-memory to provide latest message and unread count per partner.
+ */
+export function subscribeToConversationsSummary(doctorId: string, callback: (summaries: ConversationSummary[]) => void) {
+  try {
+    const qSent = query(collection(db, MESSAGES_COLLECTION), where("senderId", "==", doctorId));
+    const qReceived = query(collection(db, MESSAGES_COLLECTION), where("receiverId", "==", doctorId));
+
+    let sentMessages: DoctorMessage[] = [];
+    let receivedMessages: DoctorMessage[] = [];
+
+    const compute = () => {
+      const allMessages = [...sentMessages, ...receivedMessages];
+      const partnerMap = new Map<string, DoctorMessage[]>();
+
+      allMessages.forEach(m => {
+        const partnerId = m.senderId === doctorId ? m.receiverId : m.senderId;
+        if (!partnerMap.has(partnerId)) partnerMap.set(partnerId, []);
+        partnerMap.get(partnerId)!.push(m);
+      });
+
+      const summaries: ConversationSummary[] = Array.from(partnerMap.entries()).map(([pid, msgs]) => {
+        const sorted = msgs.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+        const last = sorted[0];
+        const unread = msgs.filter(m => m.receiverId === doctorId && !m.readAt).length;
+
+        return {
+          otherDoctorId: pid,
+          lastMessage: last,
+          unreadCount: unread
+        };
+      });
+
+      // Sort by latest message overall
+      summaries.sort((a, b) => {
+        const timeA = a.lastMessage ? new Date(a.lastMessage.sentAt).getTime() : 0;
+        const timeB = b.lastMessage ? new Date(b.lastMessage.sentAt).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      callback(summaries);
+    };
+
+    const unsubSent = onSnapshot(qSent, (snapshot) => {
+      sentMessages = snapshot.docs.map(toMessage);
+      compute();
+    });
+
+    const unsubReceived = onSnapshot(qReceived, (snapshot) => {
+      receivedMessages = snapshot.docs.map(toMessage);
+      compute();
+    });
+
+    return () => {
+      unsubSent();
+      unsubReceived();
+    };
+  } catch (error) {
+    console.warn('[subscribeToConversationsSummary] Failed:', error);
+    callback([]);
+    return () => { };
   }
 }

@@ -9,6 +9,9 @@ import { DoctorProvider } from './DoctorContext';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { MessageBell } from './MessageBell';
+import { AnnouncementBell } from './AnnouncementBell';
+import { NotificationBell } from './NotificationBell';
 
 interface DashboardLayoutProps {
   doctor: Doctor;
@@ -25,7 +28,6 @@ import {
   Users,
   MessageCircle,
   Crown,
-  Bell,
   Megaphone,
   Building,
   FileCheck,
@@ -76,12 +78,6 @@ const baseDoctorNavItems = [
     href: '/doctor/dashboard/referrals',
     icon: Users,
     description: 'Track referrals from other physicians in the network',
-  },
-  {
-    label: 'Notifications',
-    href: '/doctor/dashboard/notifications',
-    icon: Bell,
-    description: 'View notifications and updates',
   },
   {
     label: 'Announcements',
@@ -179,11 +175,12 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
     <>
       <div className="hidden items-center gap-3 sm:flex">
         <div className="text-right">
-          <div className="font-semibold text-[#0F5FA8]">{currentDoctor.fullName}</div>
+          <div className="font-bold text-brand-dark-blue leading-tight">{currentDoctor.fullName}</div>
           {currentDoctor.verified && (
-            <Badge variant="outline" className="mt-1 border-[#0F5FA8] text-[#0F5FA8] bg-white">
-              Verified
-            </Badge>
+            <div className="flex items-center mt-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-brand-teal mr-1.5 animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal">Verified Physician</span>
+            </div>
           )}
           {isPracticeAdmin && (
             <Badge variant="default" className="mt-1 bg-blue-600 text-white">
@@ -192,15 +189,20 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
           )}
         </div>
       </div>
+      <div className="flex items-center gap-1 md:gap-2 mr-2 md:mr-4">
+        <MessageBell userId={currentDoctor.id} />
+        <AnnouncementBell doctorId={currentDoctor.id} practiceId={currentDoctor.practiceId} />
+        <NotificationBell doctorId={currentDoctor.id} />
+      </div>
       <Button
         variant="outline"
-        size="sm"
+        size="lg"
         onClick={handleLogout}
-        className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+        className="h-10 px-3 md:px-5 rounded-2xl border-gray-200 text-gray-600 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all duration-300 group"
         aria-label="Log out"
       >
-        <LogOut className="h-4 w-4 sm:mr-2" />
-        <span className="hidden sm:inline">Log Out</span>
+        <LogOut className="h-4 w-4 md:mr-2 group-hover:scale-110 transition-transform" />
+        <span className="hidden md:inline">Sign Out</span>
       </Button>
     </>
   );

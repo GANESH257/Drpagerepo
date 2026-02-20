@@ -1229,13 +1229,11 @@
 
   /* Vibrant Card Styles */
   .card-vibrant {
-    @apply rounded-xl border-2;
-    border-color: rgba(29, 212, 196, 0.3) !important;
+    @apply rounded-[2rem] border;
+    border-color: rgba(29, 212, 196, 0.15) !important;
     background-color: white !important;
-    background: white !important;
-    color: hsl(var(--foreground)) !important;
-    box-shadow: 0 4px 20px rgba(29, 212, 196, 0.1), 0 2px 8px rgba(15, 95, 168, 0.08) !important;
-    transition: all 0.3s ease;
+    box-shadow: 0 10px 40px -10px rgba(29, 212, 196, 0.12), 0 4px 12px rgba(15, 95, 168, 0.05) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
   .card-vibrant * {
@@ -1243,17 +1241,17 @@
   }
 
   .card-vibrant:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-colorful) !important;
-    border-color: rgba(29, 212, 196, 0.5) !important;
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: var(--shadow-colorful), 0 20px 40px -20px rgba(15, 95, 168, 0.2) !important;
+    border-color: rgba(29, 212, 196, 0.4) !important;
   }
 
   .card-gradient {
-    @apply rounded-xl border-2 border-transparent;
-    background: linear-gradient(135deg, rgba(29, 212, 196, 0.05) 0%, rgba(15, 95, 168, 0.03) 100%),
+    @apply rounded-[2rem] border border-transparent;
+    background: linear-gradient(135deg, rgba(29, 212, 196, 0.08) 0%, rgba(15, 95, 168, 0.05) 100%),
       white;
-    box-shadow: 0 4px 20px rgba(29, 212, 196, 0.15);
-    transition: all 0.3s ease;
+    box-shadow: 0 10px 40px -10px rgba(29, 212, 196, 0.15);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
   .card-gradient:hover {

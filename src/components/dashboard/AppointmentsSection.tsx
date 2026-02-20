@@ -154,9 +154,9 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-brand-dark-blue">Appointment Requests</h2>
-          <p className="text-muted-foreground mt-2">
-            View and manage patient appointment requests
+          <h2 className="text-3xl font-extrabold tracking-tight text-brand-dark-blue">Care Requests</h2>
+          <p className="text-gray-500 mt-2 font-medium">
+            Review and schedule upcoming patient consultations
           </p>
         </div>
         {requests.length === 0 && (

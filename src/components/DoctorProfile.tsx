@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { BookingModal } from '@/components/BookingModal';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { DoctorCard } from '@/components/DoctorCard';
+import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
 import { getInstitutionById } from '@/lib/institutionStorage';
 import { getActorFromSession, canSendReferral } from '@/lib/services/permissionService';
 import { getContactCard } from '@/lib/services/visibilityService';
@@ -58,40 +59,30 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [showReferralDialog, setShowReferralDialog] = useState(false);
-  const [isSubmittingReferral, setIsSubmittingReferral] = useState(false);
   const [contactCard, setContactCard] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
-  
-  // Referral form state
-  const [referralForm, setReferralForm] = useState({
-    patientInitials: '',
-    patientAge: '',
-    patientSex: '' as 'male' | 'female' | 'other' | '',
-    condition: '',
-    notes: '',
-  });
 
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
     setIsAdminLoggedIn(getAdminSession() !== null);
-    
+
     // Listen for storage changes (login/logout in other tabs)
     const handleStorageChange = () => {
       setIsLoggedIn(isAuthenticated());
       setIsAdminLoggedIn(getAdminSession() !== null);
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Also check periodically for admin session changes (for same-tab login/logout)
     const checkAdminSession = () => {
       setIsAdminLoggedIn(getAdminSession() !== null);
     };
-    
+
     const interval = setInterval(checkAdminSession, 1000);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
@@ -133,16 +124,16 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   // Load contact card with visibility rules
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     try {
       const actor = getActorFromSession();
-      
+
       // Get practice (v2) or institution (v1 backward compatibility)
       let practice = null;
       if (doctor.practiceId) {
         practice = getPracticeById(doctor.practiceId);
       }
-      
+
       // If no practice found, try to get institution for backward compatibility
       if (!practice && doctor.institutionId) {
         const institution = getInstitutionById(doctor.institutionId);
@@ -165,7 +156,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
           };
         }
       }
-      
+
       if (practice) {
         const card = getContactCard(actor, doctor, practice);
         setContactCard(card);
@@ -178,7 +169,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
   // Generate realistic doctor image URL - use consistent seed based on name
   const generateDoctorImage = (doctor: Doctor): string => {
     if (doctor.image) return doctor.image;
-    
+
     // Create a hash from doctor's name for consistent image
     let hash = 0;
     const name = doctor.fullName.toLowerCase();
@@ -186,16 +177,16 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
       hash = ((hash << 5) - hash) + name.charCodeAt(i);
       hash = hash & hash; // Convert to 32bit integer
     }
-    
+
     // Use hash to select from professional photo range (0-99)
     const photoId = Math.abs(hash % 100);
-    
+
     // Use a professional medical photo service
     // Using randomuser.me portraits which look more professional and realistic
     const gender = Math.abs(hash) % 2 === 0 ? 'men' : 'women';
     return `https://randomuser.me/api/portraits/${gender}/${photoId}.jpg`;
   };
-  
+
   const imageUrl = generateDoctorImage(doctor);
   const fallbackImageUrl = `https://i.pravatar.cc/400?img=${Math.abs(doctor.id.charCodeAt(0) % 70)}`;
 
@@ -241,7 +232,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
             ← Back to Directory
           </Link>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            <div 
+            <div
               style={{
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
@@ -253,7 +244,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   {doctor.fullName}
                 </h1>
                 {doctor.verified && (
-                  <Badge 
+                  <Badge
                     variant="secondary"
                     className="bg-brand-teal/10 text-brand-teal border border-brand-teal/20"
                     style={{
@@ -272,9 +263,9 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               </p>
             </div>
             <div className="flex flex-col gap-3 w-full md:w-auto">
-              <Button 
-                size="lg" 
-                onClick={() => setBookingOpen(true)} 
+              <Button
+                size="lg"
+                onClick={() => setBookingOpen(true)}
                 className="w-full md:w-auto bg-brand-teal hover:bg-brand-teal/90 text-white transition-all duration-200 hover:scale-105 shadow-lg animate-pulse-subtle"
                 style={{
                   opacity: isVisible ? 1 : 0,
@@ -312,8 +303,11 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 const actor = getActorFromSession();
                 if (canSendReferral(actor) && actor.kind !== 'public') {
                   return (
-                    <Dialog open={showReferralDialog} onOpenChange={setShowReferralDialog}>
-                      <DialogTrigger asChild>
+                    <ReferralDialog
+                      doctor={doctor}
+                      open={showReferralDialog}
+                      onOpenChange={setShowReferralDialog}
+                      trigger={
                         <Button
                           size="lg"
                           variant="outline"
@@ -322,122 +316,8 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                           <Send className="h-4 w-4 mr-2" />
                           Send Referral
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Send Referral</DialogTitle>
-                          <DialogDescription>
-                            Send a referral to {doctor.fullName}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="condition">Condition *</Label>
-                            <Textarea
-                              id="condition"
-                              value={referralForm.condition}
-                              onChange={(e) => setReferralForm({ ...referralForm, condition: e.target.value })}
-                              placeholder="Describe the condition or reason for referral..."
-                              required
-                            />
-                          </div>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <Label htmlFor="patient-initials">Patient Initials</Label>
-                              <Input
-                                id="patient-initials"
-                                value={referralForm.patientInitials}
-                                onChange={(e) => setReferralForm({ ...referralForm, patientInitials: e.target.value })}
-                                placeholder="ABC"
-                                maxLength={5}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="patient-age">Age</Label>
-                              <Input
-                                id="patient-age"
-                                type="number"
-                                value={referralForm.patientAge}
-                                onChange={(e) => setReferralForm({ ...referralForm, patientAge: e.target.value })}
-                                placeholder="45"
-                                min="0"
-                                max="150"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="patient-sex">Sex</Label>
-                              <Select
-                                value={referralForm.patientSex}
-                                onValueChange={(value) => setReferralForm({ ...referralForm, patientSex: value as any })}
-                              >
-                                <SelectTrigger id="patient-sex">
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="male">Male</SelectItem>
-                                  <SelectItem value="female">Female</SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div>
-                            <Label htmlFor="referral-notes">Notes (optional)</Label>
-                            <Textarea
-                              id="referral-notes"
-                              value={referralForm.notes}
-                              onChange={(e) => setReferralForm({ ...referralForm, notes: e.target.value })}
-                              placeholder="Additional notes about the referral..."
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setShowReferralDialog(false)}>
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              if (!referralForm.condition.trim()) {
-                                toast.error('Please provide a condition');
-                                return;
-                              }
-                              
-                              try {
-                                setIsSubmittingReferral(true);
-                                const actor = getActorFromSession();
-                                createReferral(actor, {
-                                  toDoctorId: doctor.id,
-                                  patient: {
-                                    initials: referralForm.patientInitials || undefined,
-                                    age: referralForm.patientAge ? parseInt(referralForm.patientAge) : undefined,
-                                    sex: referralForm.patientSex || undefined,
-                                  },
-                                  condition: referralForm.condition,
-                                  notes: referralForm.notes || undefined,
-                                });
-                                
-                                toast.success('Referral sent successfully');
-                                setShowReferralDialog(false);
-                                setReferralForm({
-                                  patientInitials: '',
-                                  patientAge: '',
-                                  patientSex: '',
-                                  condition: '',
-                                  notes: '',
-                                });
-                              } catch (error: any) {
-                                toast.error(error.message || 'Failed to send referral');
-                              } finally {
-                                setIsSubmittingReferral(false);
-                              }
-                            }}
-                            disabled={isSubmittingReferral || !referralForm.condition.trim()}
-                          >
-                            {isSubmittingReferral ? 'Sending...' : 'Send Referral'}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                      }
+                    />
                   );
                 }
                 return null;
@@ -478,7 +358,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* About */}
-            <Card 
+            <Card
               className="card-vibrant mt-8"
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -505,7 +385,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               if (practice) {
                 return (
                   <>
-                    <Card 
+                    <Card
                       className="card-vibrant border-2 border-brand-teal/20"
                       style={{
                         opacity: isVisible ? 1 : 0,
@@ -539,7 +419,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                               {contactCard && contactCard.phone && (
                                 <div className="flex items-center gap-2">
                                   <Phone className="h-4 w-4 flex-shrink-0" />
-                                  <a 
+                                  <a
                                     href={`tel:${contactCard.phone}`}
                                     className="hover:text-brand-teal transition-colors"
                                   >
@@ -553,7 +433,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                               {contactCard && contactCard.email && (
                                 <div className="flex items-center gap-2">
                                   <Mail className="h-4 w-4 flex-shrink-0" />
-                                  <a 
+                                  <a
                                     href={`mailto:${contactCard.email}`}
                                     className="hover:text-brand-teal transition-colors"
                                   >
@@ -566,14 +446,14 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                               )}
                             </div>
                           </div>
-                          
+
                           {practice.description && (
                             <p className="text-sm text-muted-foreground leading-relaxed">
                               {practice.description.substring(0, 200)}
                               {practice.description.length > 200 ? '...' : ''}
                             </p>
                           )}
-                          
+
                           <Button
                             asChild
                             variant="gradient"
@@ -589,12 +469,12 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   </>
                 );
               }
-              
+
               // If practiceId exists but practice not found, show warning
               if (doctor.practiceId && !practice) {
                 return (
                   <>
-                    <Alert 
+                    <Alert
                       variant="default"
                       className="bg-amber-50 border-amber-200 text-amber-800"
                       style={{
@@ -611,7 +491,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   </>
                 );
               }
-              
+
               return null;
             })()}
 
@@ -622,18 +502,18 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               if (practice) {
                 return null;
               }
-              
+
               // Load institution for fallback
               let institution = null;
               if (doctor.institutionId) {
                 institution = getInstitutionById(doctor.institutionId);
               }
-              
+
               if (!institution) {
                 // Show warning if practiceId is missing (legacy doctor)
                 if (!doctor.practiceId) {
                   return (
-                    <Alert 
+                    <Alert
                       variant="default"
                       className="bg-amber-50 border-amber-200 text-amber-800"
                       style={{
@@ -651,10 +531,10 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 }
                 return null;
               }
-              
+
               // Show Institution section with legacy label
               return (
-                <Card 
+                <Card
                   className="card-vibrant border-2 border-gray-200"
                   style={{
                     opacity: isVisible ? 1 : 0,
@@ -688,7 +568,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                           {contactCard && contactCard.phone && (
                             <div className="flex items-center gap-2">
                               <Phone className="h-4 w-4 flex-shrink-0" />
-                              <a 
+                              <a
                                 href={`tel:${contactCard.phone}`}
                                 className="hover:text-brand-teal transition-colors"
                               >
@@ -699,7 +579,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                           {contactCard && contactCard.email && (
                             <div className="flex items-center gap-2">
                               <Mail className="h-4 w-4 flex-shrink-0" />
-                              <a 
+                              <a
                                 href={`mailto:${contactCard.email}`}
                                 className="hover:text-brand-teal transition-colors"
                               >
@@ -709,7 +589,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                           )}
                         </div>
                       </div>
-                      
+
                       {institution.description && (
                         <p className="text-sm text-muted-foreground leading-relaxed">
                           {institution.description.substring(0, 200)}
@@ -729,154 +609,154 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               doctor.boardCertifications ||
               doctor.hospitalPrivileges ||
               doctor.statesLicensedIn) && (
-              <Card 
-                className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.6s, transform 0.7s ease-out 0.6s',
-                }}
-              >
-                <CardHeader>
-                  <CardTitle className="text-brand-dark-blue">Professional Credentials</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Medical School */}
-                    {doctor.medicalSchool && (
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 p-2 rounded-lg bg-brand-teal/10 transition-all duration-300 hover:bg-brand-teal/20 hover-scale">
-                          <GraduationCap className="h-5 w-5 text-brand-teal" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-brand-dark-blue mb-1">
-                            Medical School
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {doctor.medicalSchool}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Internship */}
-                    {doctor.internship && (
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
-                          <Building2 className="h-5 w-5 text-brand-teal" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-brand-dark-blue mb-1">
-                            Internship
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {doctor.internship}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Residency */}
-                    {doctor.residency && (
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
-                          <Building2 className="h-5 w-5 text-brand-teal" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-brand-dark-blue mb-1">
-                            Residency
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {doctor.residency}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Board Certifications */}
-                    {doctor.boardCertifications &&
-                      doctor.boardCertifications.length > 0 && (
+                <Card
+                  className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.6s, transform 0.7s ease-out 0.6s',
+                  }}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-brand-dark-blue">Professional Credentials</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Medical School */}
+                      {doctor.medicalSchool && (
                         <div className="flex items-start gap-3">
-                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
-                            <Award className="h-5 w-5 text-brand-teal" />
+                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10 transition-all duration-300 hover:bg-brand-teal/20 hover-scale">
+                            <GraduationCap className="h-5 w-5 text-brand-teal" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-brand-dark-blue mb-2">
-                              Board Certifications
+                            <p className="text-sm font-semibold text-brand-dark-blue mb-1">
+                              Medical School
                             </p>
-                            <div className="flex flex-wrap gap-2">
-                              {doctor.boardCertifications.map((cert, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {cert}
-                                </Badge>
-                              ))}
+                            <p className="text-sm text-muted-foreground">
+                              {doctor.medicalSchool}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Internship */}
+                      {doctor.internship && (
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                            <Building2 className="h-5 w-5 text-brand-teal" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-brand-dark-blue mb-1">
+                              Internship
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {doctor.internship}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Residency */}
+                      {doctor.residency && (
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                            <Building2 className="h-5 w-5 text-brand-teal" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-brand-dark-blue mb-1">
+                              Residency
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {doctor.residency}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Board Certifications */}
+                      {doctor.boardCertifications &&
+                        doctor.boardCertifications.length > 0 && (
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                              <Award className="h-5 w-5 text-brand-teal" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-brand-dark-blue mb-2">
+                                Board Certifications
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {doctor.boardCertifications.map((cert, index) => (
+                                  <Badge
+                                    key={index}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {cert}
+                                  </Badge>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                    {/* Hospital Privileges */}
-                    {doctor.hospitalPrivileges &&
-                      doctor.hospitalPrivileges.length > 0 && (
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
-                            <Briefcase className="h-5 w-5 text-brand-teal" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-brand-dark-blue mb-2">
-                              Hospital Privileges
-                            </p>
-                            <ul className="space-y-1">
-                              {doctor.hospitalPrivileges.map((hospital, index) => (
-                                <li
-                                  key={index}
-                                  className="text-sm text-muted-foreground"
-                                >
-                                  • {hospital}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                    {/* States Licensed In */}
-                    {doctor.statesLicensedIn &&
-                      doctor.statesLicensedIn.length > 0 && (
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
-                            <MapPin className="h-5 w-5 text-brand-teal" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-brand-dark-blue mb-2">
-                              States Licensed In
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {doctor.statesLicensedIn.map((state, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {state}
-                                </Badge>
-                              ))}
+                      {/* Hospital Privileges */}
+                      {doctor.hospitalPrivileges &&
+                        doctor.hospitalPrivileges.length > 0 && (
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                              <Briefcase className="h-5 w-5 text-brand-teal" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-brand-dark-blue mb-2">
+                                Hospital Privileges
+                              </p>
+                              <ul className="space-y-1">
+                                {doctor.hospitalPrivileges.map((hospital, index) => (
+                                  <li
+                                    key={index}
+                                    className="text-sm text-muted-foreground"
+                                  >
+                                    • {hospital}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           </div>
-                        </div>
-                      )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                        )}
+
+                      {/* States Licensed In */}
+                      {doctor.statesLicensedIn &&
+                        doctor.statesLicensedIn.length > 0 && (
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                              <MapPin className="h-5 w-5 text-brand-teal" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-brand-dark-blue mb-2">
+                                States Licensed In
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {doctor.statesLicensedIn.map((state, index) => (
+                                  <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {state}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
             {/* Specialties */}
             {(doctor.specialties && doctor.specialties.length > 0) && (
-              <Card 
+              <Card
                 className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
                 style={{
                   opacity: isVisible ? 1 : 0,
@@ -890,9 +770,9 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 <CardContent className="p-6">
                   <div className="flex flex-wrap gap-2">
                     {doctor.specialties.map((spec, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="secondary" 
+                      <Badge
+                        key={index}
+                        variant="secondary"
                         className="text-base py-1.5 px-3 bg-brand-teal/10 text-brand-teal border border-brand-teal/20 hover:bg-brand-teal/20 transition-colors"
                       >
                         {spec}
@@ -923,7 +803,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
             )}
 
             {/* Locations */}
-            <Card 
+            <Card
               className="card-vibrant"
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -937,8 +817,8 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {doctor.locations.map((location, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="border-l-4 border-brand-teal pl-4 transition-all duration-300 hover:border-brand-teal/70 hover:pl-5"
                       style={{
                         opacity: isVisible ? 1 : 0,
@@ -1121,7 +1001,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
             )}
 
             {/* Quick Info */}
-            <Card 
+            <Card
               className="card-vibrant"
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -1156,7 +1036,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
         {/* Related Doctors */}
         {relatedDoctors.length > 0 && (
           <section className="mt-12 py-8 skin-paper rounded-xl">
-            <h2 
+            <h2
               className="text-2xl md:text-3xl lg:text-3xl font-bold mb-6 text-brand-dark-blue"
               style={{
                 opacity: isVisible ? 1 : 0,
@@ -1173,7 +1053,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                   style={{
                     opacity: isVisible ? 1 : 0,
                     transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)' 
+                      ? 'translateY(0) scale(1)'
                       : 'translateY(30px) scale(0.95)',
                     transition: prefersReducedMotion
                       ? `opacity 0.3s ease ${index * 100}ms`

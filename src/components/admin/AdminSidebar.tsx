@@ -2,8 +2,8 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   FileText,
   Crown,
   FileCheck,
@@ -11,7 +11,7 @@ import {
   Users,
   Building2,
   Send,
-  Bell,
+  MessageSquare,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -75,10 +75,10 @@ const navItems: NavItem[] = [
     description: 'View all referrals system-wide',
   },
   {
-    label: 'Notifications',
-    href: '/admin/notifications',
-    icon: Bell,
-    description: 'View all notifications system-wide',
+    label: 'Messages',
+    href: '/admin/messages',
+    icon: MessageSquare,
+    description: 'Chat with alliance physicians',
   },
 ];
 
@@ -124,7 +124,7 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || 
+            const isActive = pathname === item.href ||
               (item.href !== '/admin' && pathname.startsWith(item.href));
 
             return (

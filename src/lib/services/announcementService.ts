@@ -5,18 +5,19 @@ import {
   where,
   onSnapshot,
   orderBy,
-  Timestamp
+  Timestamp,
+  getDocs,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Announcement, AnnouncementAudience } from '@/types/announcements';
-import { Actor } from './permissionService';
-import { assertAdmin, assertPracticeAdmin } from './permissionService';
-import { makeId, nowISO } from './id';
+import { Actor, assertAdmin, assertPracticeAdmin } from './permissionService';
+import { makeId } from './id';
 import { PermissionDeniedError } from './errors';
 import { addNotification } from '@/lib/storage/notificationStorage';
 import { doctors } from '@/data/doctors';
 
 const ANNOUNCEMENTS_COLLECTION = 'announcements';
+const ANNOUNCEMENT_READ_COLLECTION = 'announcement_read_status';
 
 /**
  * Input type for creating announcements
@@ -44,6 +45,10 @@ export async function createAnnouncement(
         'Practice admin can only send announcements to their own practice'
       );
     }
+  } else if (input.audience.kind === 'specialty_doctors') {
+    assertAdmin(actor);
+  } else if (input.audience.kind === 'specific_doctors') {
+    assertAdmin(actor);
   } else {
     throw new PermissionDeniedError('Invalid audience type');
   }
@@ -65,54 +70,114 @@ export async function createAnnouncement(
 
   const docRef = await addDoc(collection(db, ANNOUNCEMENTS_COLLECTION), announcementData);
 
-  // Also send legacy notifications for now to ensure they show up in the Bell icon
-  if (input.audience.kind === 'all_doctors') {
-    doctors.forEach((doctor) => {
-      if (doctor.id) {
-        addNotification(doctor.id, {
-          id: makeId('ntf'),
-          doctorId: doctor.id,
-          createdAt: now,
-          type: 'announcement',
-          title: input.title,
-          message: input.message,
-          href: `/doctor/dashboard/notifications`,
-          meta: { announcementId: docRef.id },
-        });
-      }
+  // Send legacy notifications to ensure they show up in the Bell icon
+  const recipientDoctors = doctors.filter(doctor => {
+    if (!doctor.id) return false;
+    if (input.audience.kind === 'all_doctors') return true;
+    if (input.audience.kind === 'practice_doctors') return doctor.practiceId === input.audience.practiceId;
+    if (input.audience.kind === 'specialty_doctors') return doctor.specialty === input.audience.specialty;
+    if (input.audience.kind === 'specific_doctors') return input.audience.doctorIds.includes(doctor.id);
+    return false;
+  });
+
+  recipientDoctors.forEach((doctor) => {
+    addNotification(doctor.id!, {
+      id: makeId('ntf'),
+      doctorId: doctor.id!,
+      createdAt: now,
+      type: 'announcement',
+      title: input.title,
+      message: input.message,
+      href: `/doctor/dashboard/notifications`,
+      meta: { announcementId: docRef.id },
     });
-  }
+  });
 
   return { id: docRef.id, ...announcementData } as Announcement;
 }
 
 /**
- * Subscribe to announcements relevant to a doctor
+ * Marks an announcement as read for a specific user
+ */
+export async function markAnnouncementAsRead(userId: string, announcementId: string): Promise<void> {
+  try {
+    const q = query(
+      collection(db, ANNOUNCEMENT_READ_COLLECTION),
+      where('userId', '==', userId),
+      where('announcementId', '==', announcementId)
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      await addDoc(collection(db, ANNOUNCEMENT_READ_COLLECTION), {
+        userId,
+        announcementId,
+        readAt: Timestamp.now(),
+      });
+    }
+  } catch (err) {
+    console.error('[markAnnouncementAsRead] Failed:', err);
+  }
+}
+
+/**
+ * Subscribe to announcements relevant to a doctor, including read status
  */
 export function subscribeToAnnouncements(
   doctorId: string,
   practiceId: string | undefined,
-  callback: (announcements: Announcement[]) => void
+  callback: (announcements: (Announcement & { isRead?: boolean })[]) => void
 ) {
-  // Query for "all_doctors" or specifically for this doctor's practice
-  const q = query(
+  // Query announcements
+  const qAnn = query(
     collection(db, ANNOUNCEMENTS_COLLECTION),
     orderBy('serverTimestamp', 'desc')
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const all = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Announcement[];
+  // Query read status for this doctor
+  const qRead = query(
+    collection(db, ANNOUNCEMENT_READ_COLLECTION),
+    where('userId', '==', doctorId)
+  );
 
-    // Filter on client side for now to handle complex audience matching easily
-    const filtered = all.filter(ann => {
+  let announcements: Announcement[] = [];
+  let readIds: Set<string> = new Set();
+
+  const merge = () => {
+    const filtered = announcements.filter(ann => {
       if (ann.audience.kind === 'all_doctors') return true;
       if (ann.audience.kind === 'practice_doctors' && practiceId && ann.audience.practiceId === practiceId) return true;
+      if (ann.audience.kind === 'specialty_doctors') {
+        const docSpecialty = doctors.find(d => d.id === doctorId)?.specialty;
+        return docSpecialty === ann.audience.specialty;
+      }
+      if (ann.audience.kind === 'specific_doctors') return ann.audience.doctorIds.includes(doctorId);
       return false;
     });
 
-    callback(filtered);
+    const result = filtered.map(ann => ({
+      ...ann,
+      isRead: readIds.has(ann.id)
+    }));
+
+    callback(result);
+  };
+
+  const unsubAnn = onSnapshot(qAnn, (snapshot) => {
+    announcements = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Announcement[];
+    merge();
   });
+
+  const unsubRead = onSnapshot(qRead, (snapshot) => {
+    readIds = new Set(snapshot.docs.map(doc => doc.data().announcementId));
+    merge();
+  });
+
+  return () => {
+    unsubAnn();
+    unsubRead();
+  };
 }

@@ -2,9 +2,14 @@ import { MessagesSectionWrapper } from '@/components/dashboard/MessagesSectionWr
 import { doctors } from '@/data/doctors';
 
 export function generateStaticParams() {
-  return doctors.map((doctor) => ({
+  const params = doctors.map((doctor) => ({
     otherDoctorId: doctor.id,
   }));
+
+  // Add admin to static params to support messaging the admin
+  params.push({ otherDoctorId: 'admin' });
+
+  return params;
 }
 
 export default async function MessagesWithDoctorPage({

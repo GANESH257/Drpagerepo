@@ -2,15 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
-  User, 
-  MapPin, 
-  CreditCard, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  User,
+  MapPin,
+  CreditCard,
+  Calendar,
   Users,
   Crown,
-  Bell,
   Megaphone,
   Building,
   ChevronLeft,
@@ -70,12 +69,6 @@ const navItems: NavItem[] = [
     description: 'Track referrals from other physicians in the network',
   },
   {
-    label: 'Notifications',
-    href: '/doctor/dashboard/notifications',
-    icon: Bell,
-    description: 'View notifications and updates',
-  },
-  {
     label: 'Announcements',
     href: '/doctor/dashboard/announcements',
     icon: Megaphone,
@@ -128,10 +121,10 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
+        <nav className="flex-1 space-y-2 p-4">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || 
+            const isActive = pathname === item.href ||
               (item.href !== '/doctor/dashboard' && pathname.startsWith(item.href));
 
             return (
@@ -139,23 +132,28 @@ export function DashboardSidebar({ isCollapsed, onToggleCollapse }: DashboardSid
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                  'hover:bg-accent hover:text-accent-foreground',
+                  'group flex items-center px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 mb-2 border border-transparent',
                   isActive
-                    ? 'bg-brand-teal/15 text-brand-teal border-l-4 border-brand-teal shadow-sm'
-                    : 'text-muted-foreground hover:bg-brand-teal/5',
-                  isCollapsed && 'justify-center'
+                    ? 'bg-brand-teal text-white shadow-lg shadow-brand-teal/20 border-brand-teal/20 scale-[1.02]'
+                    : 'text-gray-600 hover:bg-brand-teal/10 hover:text-brand-teal hover:border-brand-teal/10'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-brand-teal')} />
+                <Icon
+                  className={cn(
+                    'h-5 w-5 transition-all duration-300',
+                    isCollapsed ? 'mx-auto' : 'mr-3',
+                    isActive ? 'text-white scale-110' : 'text-gray-400 group-hover:text-brand-teal group-hover:scale-110'
+                  )}
+                />
                 {!isCollapsed && (
-                  <div className="flex-1">
-                    <div className="font-medium">{item.label}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {item.description}
-                    </div>
+                  <div className="flex flex-col">
+                    <span className="leading-none">{item.label}</span>
+                    {/* Optional: item.description if you want it small, but for sidebar usually just label is cleaner */}
                   </div>
+                )}
+                {isActive && !isCollapsed && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                 )}
               </Link>
             );

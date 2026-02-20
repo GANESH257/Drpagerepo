@@ -22,31 +22,35 @@ export function DashboardHeader({ doctor, onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-24 md:top-28 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+    <header className="sticky top-24 md:top-28 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md transition-all duration-300">
+      <div className="container flex h-16 items-center justify-between px-6">
         {/* Left: Menu button (mobile) + Title */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden hover:bg-brand-teal/10 text-brand-dark-blue"
             onClick={onMenuClick}
             aria-label="Toggle menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold text-brand-dark-blue">Doctor Dashboard</h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-extrabold tracking-tight text-brand-dark-blue">Physician Portal</h1>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-teal leading-none">Management Console</span>
+          </div>
         </div>
 
         {/* Right: Doctor info + Logout */}
-        <div className="flex items-center gap-4">
-          <div className="hidden items-center gap-3 sm:flex">
-            <div className="text-right">
-              <div className="font-semibold text-brand-dark-blue">{doctor.fullName}</div>
+        <div className="flex items-center gap-6">
+          <div className="hidden items-center gap-3 md:flex">
+            <div className="flex flex-col items-end">
+              <div className="text-sm font-bold text-brand-dark-blue leading-tight">{doctor.fullName}</div>
               {doctor.verified && (
-                <Badge variant="outline" className="mt-1 border-brand-teal text-brand-teal">
-                  Verified
-                </Badge>
+                <div className="flex items-center mt-1">
+                  <div className="h-1.5 w-1.5 rounded-full bg-brand-teal mr-1.5 animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal">Verified Physician</span>
+                </div>
               )}
             </div>
           </div>
@@ -54,11 +58,11 @@ export function DashboardHeader({ doctor, onMenuClick }: DashboardHeaderProps) {
             variant="outline"
             size="sm"
             onClick={handleLogout}
-            className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+            className="h-9 px-4 rounded-xl border-gray-200 text-gray-600 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all duration-300"
             aria-label="Log out"
           >
-            <LogOut className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Log Out</span>
+            <LogOut className="h-4 w-4 mr-2" />
+            <span>Sign Out</span>
           </Button>
         </div>
       </div>

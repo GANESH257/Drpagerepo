@@ -43,10 +43,10 @@ export function JoinUsLayout() {
   }, []);
 
   return (
-    <div ref={sectionRef} className="min-h-screen bg-white relative overflow-hidden">
+    <div ref={sectionRef} className="min-h-screen bg-white relative overflow-hidden mt-12 md:mt-16">
       {/* Subtle top gradient */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-gray-50/50 to-transparent pointer-events-none" />
-      <div className="container mx-auto px-4 md:px-6 py-12 lg:py-16 relative z-10">
+      <div className="container mx-auto px-4 md:px-6 py-8 md:py-12 lg:py-16 relative z-10">
         <div className="flex flex-col lg:flex-row items-center lg:items-stretch gap-6 md:gap-8 lg:gap-10 max-w-6xl mx-auto">
           {/* Left Panel - Benefits */}
           <div
@@ -61,7 +61,7 @@ export function JoinUsLayout() {
           </div>
 
           {/* Right Panel - Auth Card */}
-          <div 
+          <div
             className="w-full lg:w-1/2 flex items-center justify-center"
             style={{
               opacity: isVisible ? 1 : 0,

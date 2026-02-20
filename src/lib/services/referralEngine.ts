@@ -32,8 +32,8 @@ import { doctors } from '@/data/doctors';
 export type CreateReferralInput = {
   toDoctorId: string;
   patient: {
-    initials?: string;
-    age?: number;
+    name?: string;
+    dob?: string;
     sex?: 'male' | 'female' | 'other';
   };
   condition: string;
@@ -53,15 +53,15 @@ function appendReferralHistoryRecord(
 ): void {
   // Resolve actor info
   const actorId = actor.kind === 'doctor' ? actor.doctorId : 'admin';
-  const actorRole = actor.kind === 'admin' 
-    ? 'admin' 
+  const actorRole = actor.kind === 'admin'
+    ? 'admin'
     : (actor.kind === 'doctor' && actor.roleInPractice === 'practice_admin' ? 'practice_admin' : 'doctor');
-  
+
   // Get actor name (optional, from doctor lookup)
-  const actorName = actor.kind === 'doctor' 
-    ? doctors.find(d => d.id === actor.doctorId)?.fullName 
+  const actorName = actor.kind === 'doctor'
+    ? doctors.find(d => d.id === actor.doctorId)?.fullName
     : undefined;
-  
+
   addReferralHistory({
     id: makeId('rhr'),
     referralId,
@@ -142,10 +142,10 @@ export function createReferral(
   appendReferralHistoryRecord(referralId, 'created', actor);
 
   // Notify recipient with deep link
-  const conditionMessage = input.condition.length > 120 
-    ? `${input.condition.substring(0, 120)}...` 
+  const conditionMessage = input.condition.length > 120
+    ? `${input.condition.substring(0, 120)}...`
     : input.condition;
-  
+
   addNotification(input.toDoctorId, {
     id: makeId('ntf'),
     doctorId: input.toDoctorId,
@@ -282,7 +282,7 @@ export function getReferralTimeline(
 
   // Get history from new storage
   const history = getHistoryForReferral(referralId);
-  
+
   // If no history exists (legacy referral), synthesize a created record
   if (history.length === 0) {
     const fromDoctor = doctors.find(d => d.id === referral.fromDoctorId);
@@ -300,6 +300,6 @@ export function getReferralTimeline(
     };
     return [synthesizedRecord];
   }
-  
+
   return history;
 }

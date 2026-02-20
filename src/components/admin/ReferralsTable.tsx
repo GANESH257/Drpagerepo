@@ -40,7 +40,7 @@ export function ReferralsTable() {
     const allReferrals = getAllReferrals();
     const allDoctors = getAllDoctors();
     const allPractices = getAllPracticesForAdmin();
-    
+
     setReferrals(allReferrals);
     setDoctors(allDoctors);
     setPractices(allPractices);
@@ -56,14 +56,14 @@ export function ReferralsTable() {
 
     // Doctor filter
     if (doctorFilter !== 'all') {
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.fromDoctorId === doctorFilter || r.toDoctorId === doctorFilter
       );
     }
 
     // Practice filter
     if (practiceFilter !== 'all') {
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.fromPracticeId === practiceFilter || r.toPracticeId === practiceFilter
       );
     }
@@ -76,19 +76,19 @@ export function ReferralsTable() {
         const toDoctor = doctors.find(d => d.id === r.toDoctorId);
         const condition = r.condition.toLowerCase();
         const notes = r.notes?.toLowerCase() || '';
-        
+
         return (
           fromDoctor?.fullName.toLowerCase().includes(query) ||
           toDoctor?.fullName.toLowerCase().includes(query) ||
           condition.includes(query) ||
           notes.includes(query) ||
-          r.patient.initials?.toLowerCase().includes(query)
+          r.patient.name?.toLowerCase().includes(query)
         );
       });
     }
 
     // Sort by createdAt desc (newest first)
-    return filtered.sort((a, b) => 
+    return filtered.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [referrals, statusFilter, doctorFilter, practiceFilter, searchQuery, doctors]);
@@ -237,12 +237,12 @@ export function ReferralsTable() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          {referral.patient.initials && (
-                            <span className="font-medium">{referral.patient.initials}</span>
+                          {referral.patient.name && (
+                            <span className="font-medium">{referral.patient.name}</span>
                           )}
-                          {referral.patient.age && (
+                          {referral.patient.dob && (
                             <span className="text-xs text-muted-foreground">
-                              Age: {referral.patient.age}
+                              DOB: {referral.patient.dob}
                             </span>
                           )}
                         </div>

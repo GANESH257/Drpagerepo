@@ -14,29 +14,17 @@ import {
   markConversationAsRead,
   sendMessage,
   subscribeToConversation,
-  subscribeToConversationPartners,
+  subscribeToConversationsSummary,
+  ConversationSummary,
 } from '@/lib/messageStorage';
-import { query, collection, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 interface MessagesSectionProps {
   doctor: Doctor;
   otherDoctorId?: string;
+  basePath?: string;
 }
 
-type ConversationSummary = {
-  otherDoctorId: string;
-  lastMessage?: DoctorMessage;
-  unreadCount: number;
-};
-
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps) {
+export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSectionProps) {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [isNewChatMode, setIsNewChatMode] = useState(false);
@@ -47,7 +35,21 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
 
   const allDoctors = useMemo(() => {
     const all = getAllDoctors();
-    return all.filter((d) => d.id !== doctor.id);
+    const filtered = all.filter((d) => d.id !== doctor.id);
+
+    // If current user is not admin, add admin to the list of available contacts
+    if (doctor.id !== 'admin') {
+      const adminDoctor: Doctor = {
+        id: 'admin',
+        fullName: 'Alliance Admin',
+        specialty: 'System Administrator',
+        email: 'admin@alliance.com',
+        // Minimal fields needed for the list
+      } as Doctor;
+      return [adminDoctor, ...filtered];
+    }
+
+    return filtered;
   }, [doctor.id]);
 
   const doctorsById = useMemo(() => {
@@ -67,91 +69,32 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
   // Real-time Sidebar & Thread subscriptions
   useEffect(() => {
     try {
-      // Subscribe to conversation partners, then fetch last message per partner
-      const unsubPartners = subscribeToConversationPartners(doctor.id, async (partnerIds) => {
-        try {
-          const summaries: ConversationSummary[] = await Promise.all(
-            partnerIds.map(async (pid) => {
-              try {
-                // Fetch all messages between doctor and this partner (no orderBy = no composite index)
-                const qA = query(
-                  collection(db, 'messages'),
-                  where('senderId', '==', doctor.id),
-                  where('receiverId', '==', pid)
-                );
-                const qB = query(
-                  collection(db, 'messages'),
-                  where('senderId', '==', pid),
-                  where('receiverId', '==', doctor.id)
-                );
-                const [snapA, snapB] = await Promise.all([getDocs(qA), getDocs(qB)]);
-                const candidates: DoctorMessage[] = [];
-                const toMsg = (docSnap: any): DoctorMessage => {
-                  const d = docSnap.data();
-                  return {
-                    id: docSnap.id,
-                    senderId: d.senderId,
-                    receiverId: d.receiverId,
-                    content: d.content,
-                    sentAt: d.sentAt instanceof Timestamp ? d.sentAt.toDate().toISOString() : (d.sentAt ?? ''),
-                    readAt: d.readAt instanceof Timestamp ? d.readAt.toDate().toISOString() : d.readAt,
-                  };
-                };
-                snapA.docs.forEach(d => candidates.push(toMsg(d)));
-                snapB.docs.forEach(d => candidates.push(toMsg(d)));
-                candidates.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-                return {
-                  otherDoctorId: pid,
-                  lastMessage: candidates[0],
-                  unreadCount: 0,
-                };
-              } catch (err) {
-                console.warn('[MessagesSection] Error fetching messages for partner:', pid, err);
-                return {
-                  otherDoctorId: pid,
-                  lastMessage: undefined,
-                  unreadCount: 0,
-                };
-              }
-            })
-          );
-          setConversations(summaries);
-        } catch (err) {
-          console.warn('[MessagesSection] Error processing conversation partners:', err);
-          setConversations([]);
-        }
+      // Subscribe to real-time summaries (already sorted by latest message in helper)
+      const unsubSummaries = subscribeToConversationsSummary(doctor.id, (summaries) => {
+        setConversations(summaries);
       });
 
       // Subscribe to the active thread
       let unsubThread: (() => void) | undefined;
       if (selectedOtherId) {
-        try {
-          unsubThread = subscribeToConversation(doctor.id, selectedOtherId, (messages: DoctorMessage[]) => {
-            setThreadMessages(messages);
-          });
-          markConversationAsRead(doctor.id, selectedOtherId).catch(err => {
-            console.warn('[MessagesSection] Error marking as read:', err);
-          });
-          setIsNewChatMode(false);
-        } catch (err) {
-          console.warn('[MessagesSection] Error subscribing to conversation:', err);
-          setThreadMessages([]);
-        }
+        unsubThread = subscribeToConversation(doctor.id, selectedOtherId, (messages: DoctorMessage[]) => {
+          setThreadMessages(messages);
+        });
+        markConversationAsRead(doctor.id, selectedOtherId).catch(err => {
+          console.warn('[MessagesSection] Error marking as read:', err);
+        });
+        setIsNewChatMode(false);
       } else {
         setThreadMessages([]);
       }
 
       return () => {
-        try {
-          unsubPartners();
-          if (unsubThread) unsubThread();
-        } catch (err) {
-          // Ignore unsubscribe errors
-        }
+        unsubSummaries();
+        if (unsubThread) unsubThread();
       };
     } catch (err) {
       console.warn('[MessagesSection] Error in useEffect:', err);
-      return () => {};
+      return () => { };
     }
   }, [doctor.id, selectedOtherId]);
 
@@ -181,7 +124,9 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
   }, [isNewChatMode, allDoctors, conversations, doctorsById, search]);
 
   const openConversation = (id: string) => {
-    router.push(`/doctor/dashboard/messages/${id}`);
+    const base = basePath || '/doctor/dashboard/messages';
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    router.push(`${cleanBase}/${id}`);
   };
 
   const handleSend = async () => {
@@ -191,7 +136,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
       setComposer('');
     } catch (err) {
       console.warn('[MessagesSection] Error sending message:', err);
-      // Keep composer text so user can retry
     }
   };
 
@@ -248,7 +192,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
             ) : (
               <div className="space-y-0.5">
                 {isNewChatMode ? (
-                  // Displaying all doctors for new chat
                   (filteredItems as Doctor[]).map((d) => (
                     <button
                       key={d.id}
@@ -271,7 +214,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                     </button>
                   ))
                 ) : (
-                  // Displaying existing conversations
                   (filteredItems as ConversationSummary[]).map((c) => {
                     const d = doctorsById.get(c.otherDoctorId);
                     const active = selectedOtherId === c.otherDoctorId;
@@ -355,11 +297,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                   {selectedDoctor?.specialty}
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
-                  <UserRound className="h-5 w-5 text-gray-400" />
-                </Button>
-              </div>
             </CardHeader>
             <CardContent className="relative flex-1 overflow-y-auto p-0" style={{
               backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")',
@@ -369,7 +306,7 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                 {threadMessages.length === 0 ? (
                   <div className="mb-auto flex h-full flex-col items-center justify-center p-12 text-center">
                     <div className="mb-4 rounded-xl bg-white/80 px-4 py-2 text-xs font-medium text-gray-500 shadow-sm backdrop-blur-sm">
-                      Messages are end-to-end encrypted for demo purposes.
+                      Messages are private and secure.
                     </div>
                     <p className="mt-4 text-sm text-gray-400">No messages yet. Send a greeting!</p>
                   </div>
@@ -409,19 +346,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                                 mine ? 'text-white' : 'text-gray-500'
                               )}>
                                 {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                {mine && (
-                                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor">
-                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
-                                    <path d="M10.354 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l3.146-3.147a.5.5 0 0 1 .708 0z" />
-                                  </svg>
-                                )}
-                              </div>
-                              {/* Tail */}
-                              <div className={cn(
-                                "absolute bottom-0 h-4 w-4",
-                                mine ? "-right-1 text-brand-dark-blue" : "-left-1 text-white"
-                              )}>
-                                {/* Simplified tail or just use rounded corners for now */}
                               </div>
                             </div>
                           </div>
@@ -457,14 +381,6 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
                   <Send className="h-5 w-5" />
                 </Button>
               </div>
-              <div className="mt-2 flex items-center justify-between px-2">
-                <p className="text-[10px] text-gray-400">
-                  Press Enter to send
-                </p>
-                <p className="text-[10px] font-medium text-brand-teal">
-                  Secure connection
-                </p>
-              </div>
             </div>
           </>
         )}
@@ -472,4 +388,3 @@ export function MessagesSection({ doctor, otherDoctorId }: MessagesSectionProps)
     </div>
   );
 }
-

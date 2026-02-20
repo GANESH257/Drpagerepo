@@ -2,9 +2,17 @@
 
 import { Phone, Mail } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
 
 export function TopBar() {
+  const pathname = usePathname();
+
+  // Hide on dashboard / admin portal pages
+  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <div className="fixed top-0 left-0 right-0 z-[60] h-6 md:h-7 bg-brand-dark-blue border-b border-brand-teal/20">
       <div className="container mx-auto px-4 h-full">
@@ -27,7 +35,7 @@ export function TopBar() {
               <span className="sm:hidden">info@alliance...</span>
             </Link>
           </div>
-          
+
           {/* Dark Mode Toggle */}
           <DarkModeToggle />
         </div>

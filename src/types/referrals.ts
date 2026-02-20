@@ -18,8 +18,8 @@ export interface Referral {
   toPracticeId?: string;
 
   patient: {
-    initials?: string;
-    age?: number;
+    name?: string;
+    dob?: string;
     sex?: 'male' | 'female' | 'other';
   };
 
@@ -53,8 +53,8 @@ export interface ReferralHistoryRecord {
   };
   timestamp: string;             // ISO string
   metadata?: {
-    fromStatus?: 'new'|'attended'|'removed';
-    toStatus?: 'new'|'attended'|'removed';
+    fromStatus?: 'new' | 'attended' | 'removed';
+    toStatus?: 'new' | 'attended' | 'removed';
     note?: string;               // for note_added
   };
 }

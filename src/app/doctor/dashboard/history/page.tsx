@@ -41,7 +41,7 @@ export default function DoctorHistoryPage() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [timeline, setTimeline] = useState<ReferralHistoryRecord[]>([]);
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('received');
-  
+
   // Default filters: last 30 days
   const defaultDateRange: DateRange = useMemo(() => {
     const now = new Date();
@@ -83,11 +83,11 @@ export default function DoctorHistoryPage() {
     try {
       const actor = getActorFromSession();
       assertDoctor(actor);
-      
+
       if (actor.kind !== 'doctor' || !actor.doctorId) {
         throw new PermissionDeniedError('Must be a doctor');
       }
-      
+
       const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
       setReferralsSent(referralsSent);
       setReferralsReceived(referralsReceived);
@@ -142,7 +142,7 @@ export default function DoctorHistoryPage() {
     }
 
     // Sort by createdAt descending (newest first)
-    return filtered.sort((a, b) => 
+    return filtered.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [referralsSent, referralsReceived, activeTab, filters]);
@@ -400,12 +400,12 @@ export default function DoctorHistoryPage() {
                       <span className="text-gray-600">Condition:</span>
                       <span className="font-medium">{selectedReferral.condition}</span>
                     </div>
-                    {selectedReferral.patient.initials && (
+                    {selectedReferral.patient.name && (
                       <div className="flex items-center justify-between">
                         <span className="text-gray-600">Patient:</span>
                         <span className="font-medium">
-                          {selectedReferral.patient.initials}
-                          {selectedReferral.patient.age && `, Age ${selectedReferral.patient.age}`}
+                          {selectedReferral.patient.name}
+                          {selectedReferral.patient.dob && `, DOB ${selectedReferral.patient.dob}`}
                           {selectedReferral.patient.sex && `, ${selectedReferral.patient.sex}`}
                         </span>
                       </div>

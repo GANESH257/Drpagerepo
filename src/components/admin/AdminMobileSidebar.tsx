@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   FileText,
   Crown,
   FileCheck,
@@ -11,7 +11,6 @@ import {
   Users,
   Building2,
   Send,
-  Bell,
   LogOut
 } from 'lucide-react';
 import {
@@ -80,12 +79,6 @@ const navItems: NavItem[] = [
     icon: Send,
     description: 'View all referrals system-wide',
   },
-  {
-    label: 'Notifications',
-    href: '/admin/notifications',
-    icon: Bell,
-    description: 'View all notifications system-wide',
-  },
 ];
 
 interface AdminMobileSidebarProps {
@@ -112,7 +105,7 @@ export function AdminMobileSidebar({ open, onOpenChange }: AdminMobileSidebarPro
         <nav className="flex flex-col gap-1 p-4 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || 
+            const isActive = pathname === item.href ||
               (item.href !== '/admin' && pathname.startsWith(item.href));
 
             return (
