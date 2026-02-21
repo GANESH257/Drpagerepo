@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Building2, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatsCards } from '@/components/admin/StatsCards';
-import { getJoinRequests, AdminJoinRequest } from '@/lib/adminStorage';
-import { seedMockJoinRequests } from '@/data/mockJoinRequests';
+import { AdminJoinRequest } from '@/lib/adminStorage';
+import { getJoinRequests } from '@/lib/api/join-requests';
 import { DoctorsJoinedPerMonthChart } from '@/components/admin/DoctorsJoinedPerMonthChart';
 import { DoctorsPerDepartmentChart } from '@/components/admin/DoctorsPerDepartmentChart';
 import { DoctorsPerPlanChart } from '@/components/admin/DoctorsPerPlanChart';
@@ -16,22 +16,39 @@ import { RequestStatusChart } from '@/components/admin/RequestStatusChart';
 import { GrowthTrendChart } from '@/components/admin/GrowthTrendChart';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { getAllDoctors } from '@/lib/memberStorage';
+import { Practice } from '@/types/practice';
+import { Doctor } from '@/types';
 
 export default function AdminDashboardPage() {
+  const [practices, setPractices] = useState<Practice[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [requests, setRequests] = useState<AdminJoinRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Seed mock data if empty
-    seedMockJoinRequests();
+    // Load all data
+    async function loadStats() {
+      try {
+        const [practicesData, doctorsData, requestsData] = await Promise.all([
+          getAllPracticesForAdmin(),
+          getAllDoctors(),
+          getJoinRequests().catch(() => []), // Handle errors gracefully
+        ]);
+        setPractices(practicesData);
+        setDoctors(doctorsData);
+        setRequests(requestsData);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadStats();
   }, []);
 
-  // Get requests - this will be reactive since getJoinRequests reads from localStorage
-  const requests = getJoinRequests();
   const recentRequests = requests
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
     .slice(0, 5);
-
-  // Get practices and doctors for quick stats
-  const practices = getAllPracticesForAdmin();
-  const doctors = getAllDoctors();
 
   const getStatusBadge = (status: AdminJoinRequest['status']) => {
     switch (status) {

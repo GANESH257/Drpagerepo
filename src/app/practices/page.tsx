@@ -10,7 +10,7 @@ import { GenericCTASection } from '@/components/GenericCTASection';
 import { EmptyState } from '@/components/shared/approvals/EmptyState';
 import { Search } from 'lucide-react';
 import { searchPractices, PracticeSearchFilters, PracticeSearchResult, getDoctorsForPractice } from '@/lib/services/practiceDirectoryService';
-import { Doctor } from '@/types';
+import { Doctor, Practice } from '@/types';
 import { Button } from '@/components/ui/button';
 
 // Dynamically import map component with SSR disabled
@@ -57,6 +57,7 @@ function PracticesPageContent() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPracticeId, setSelectedPracticeId] = useState<string | undefined>();
+  const [practicesWithDerivedSpecialties, setPracticesWithDerivedSpecialties] = useState<Array<Practice & { derivedSpecialties: string[]; distanceMiles?: number }>>([]);
 
   const getSearchParam = (key: string, defaultValue: string = '') => {
     try {
@@ -122,23 +123,32 @@ function PracticesPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Perform search with current filters
-    const results = searchPractices({
-      ...filters,
-      page: currentPage,
-    });
-    setSearchResults(results);
+    async function performSearch() {
+      // Perform search with current filters
+      const results = await searchPractices({
+        ...filters,
+        page: currentPage,
+      });
+      setSearchResults(results);
+    }
+    performSearch();
   }, [filters, currentPage]);
 
   // Compute derived specialties for each practice in results
-  const practicesWithDerivedSpecialties = useMemo(() => {
-    return searchResults.practices.map(practice => {
-      const practiceDoctors = getDoctorsForPractice(practice.id);
-      const derivedSpecialties = practiceDoctors.length > 0
-        ? deriveSpecialtiesFromDoctors(practiceDoctors)
-        : (practice.specialties || []); // Fallback to practice.specialties
-      return { ...practice, derivedSpecialties };
-    });
+  useEffect(() => {
+    async function computeDerivedSpecialties() {
+      const practicesWithSpecialties = await Promise.all(
+        searchResults.practices.map(async (practice) => {
+          const practiceDoctors = await getDoctorsForPractice(practice.id);
+          const derivedSpecialties = practiceDoctors.length > 0
+            ? deriveSpecialtiesFromDoctors(practiceDoctors)
+            : (practice.specialties || []); // Fallback to practice.specialties
+          return { ...practice, derivedSpecialties };
+        })
+      );
+      setPracticesWithDerivedSpecialties(practicesWithSpecialties);
+    }
+    computeDerivedSpecialties();
   }, [searchResults.practices]);
 
   // Handle practice selection (from list or map)

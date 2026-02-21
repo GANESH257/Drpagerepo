@@ -1,6 +1,6 @@
 import { Practice } from '@/types/practice';
 import { Doctor } from '@/types';
-import { practices as seedPractices } from '@/data/practices';
+import { getAllPracticesArray } from '@/lib/api/practices';
 import { getAllDoctors } from '@/lib/memberStorage';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { haversineDistance } from '@/lib/distanceUtils';
@@ -83,6 +83,33 @@ function ensureLocationsArray(practice: any): Practice {
 }
 
 /**
+ * Ensure practice has API-safe shape (specialties, address, doctorIds as arrays/object)
+ * Backend may return flat address (address_line1, city, state, zip) and missing arrays
+ */
+function ensurePracticeShape(practice: any): Practice {
+  const addr = practice.address ?? {};
+  const flat = practice;
+  const address = (addr && typeof addr === 'object' && (addr.city != null || addr.line1 != null))
+    ? addr
+    : {
+        line1: flat.address_line1 ?? '',
+        line2: flat.address_line2,
+        city: flat.city ?? '',
+        state: flat.state ?? '',
+        zip: flat.zip ?? '',
+        country: flat.country ?? 'USA',
+      };
+  return {
+    ...practice,
+    address,
+    specialties: Array.isArray(practice.specialties) ? practice.specialties : (practice.specialty ? [practice.specialty] : []),
+    doctorIds: Array.isArray(practice.doctorIds) ? practice.doctorIds : (Array.isArray(practice.doctors) ? practice.doctors.map((d: any) => d.id ?? d) : []),
+    insurance: Array.isArray(practice.insurance) ? practice.insurance : [],
+    services: Array.isArray(practice.services) ? practice.services : [],
+  } as Practice;
+}
+
+/**
  * Check if practice has coordinates
  */
 function hasCoords(practice: Practice): boolean {
@@ -107,53 +134,26 @@ function getPrimaryPracticeCoords(practice: Practice): { lat: number; lng: numbe
 }
 
 /**
- * Get all practices combining seed + created + overrides, filtering deleted
- * SSR-safe: returns seed-only if window is undefined
+ * Get all practices from API
+ * @deprecated Use getAllPracticesArray from @/lib/api/practices directly
  */
-export function getAllPractices(): Practice[] {
-  // SSR: return seed-only (acceptable for SSR)
-  // Apply migration helper to seed practices as well
-  if (typeof window === 'undefined') {
-    return seedPractices.map(ensureLocationsArray);
-  }
-
+export async function getAllPractices(): Promise<Practice[]> {
   try {
-    // Get seed practices
-    const seed = seedPractices;
-
-    // Get created practices (from approval workflow)
-    const created = getCreatedPractices();
-
-    // Combine seed + created (deduplicate by id, prefer created if duplicate)
-    const practiceMap = new Map<string, Practice>();
-    
-    // Add seed practices first
-    seed.forEach((p) => practiceMap.set(p.id, p));
-    
-    // Add created practices (will overwrite seed if duplicate)
-    created.forEach((p) => practiceMap.set(p.id, p));
-
-    // Convert to array and apply overrides + filter deleted
-    const combined = Array.from(practiceMap.values());
-    const merged = mergePractices(combined);
-
-    // Apply migration helper to ensure locations array
-    const migrated = merged.map(ensureLocationsArray);
-
-    // Sort by name ascending
-    return migrated.sort((a, b) => a.name.localeCompare(b.name));
+    const practices = await getAllPracticesArray();
+    // Apply migration helpers: locations array + API-safe shape (address, specialties, doctorIds)
+    return practices.map((p) => ensurePracticeShape(ensureLocationsArray(p)));
   } catch (error) {
     console.error('Error loading practices:', error);
-    // Fallback to seed on error
-    return seedPractices;
+    // Fallback to empty array on error
+    return [];
   }
 }
 
 /**
  * Get practice by slug
  */
-export function getPracticeBySlug(slug: string): Practice | null {
-  const allPractices = getAllPractices();
+export async function getPracticeBySlug(slug: string): Promise<Practice | null> {
+  const allPractices = await getAllPractices();
   const practice = allPractices.find((p) => p.slug === slug);
   return practice ? ensureLocationsArray(practice) : null;
 }
@@ -161,8 +161,8 @@ export function getPracticeBySlug(slug: string): Practice | null {
 /**
  * Get practice by ID
  */
-export function getPracticeById(id: string): Practice | null {
-  const allPractices = getAllPractices();
+export async function getPracticeById(id: string): Promise<Practice | null> {
+  const allPractices = await getAllPractices();
   const practice = allPractices.find((p) => p.id === id);
   return practice ? ensureLocationsArray(practice) : null;
 }
@@ -171,8 +171,8 @@ export function getPracticeById(id: string): Practice | null {
  * Get doctors for a practice
  * Filters by practiceId and sorts: practice_admin first, then by lastName, firstName
  */
-export function getDoctorsForPractice(practiceId: string): Doctor[] {
-  const allDoctors = getAllDoctors();
+export async function getDoctorsForPractice(practiceId: string): Promise<Doctor[]> {
+  const allDoctors = await getAllDoctors();
   
   // Filter by practiceId
   const practiceDoctors = allDoctors.filter((d) => d.practiceId === practiceId);
@@ -200,10 +200,10 @@ export function getDoctorsForPractice(practiceId: string): Doctor[] {
  * Search practices with filters
  * Returns paginated results with total count and distance information
  */
-export function searchPractices(
+export async function searchPractices(
   filters: PracticeSearchFilters
-): PracticeSearchResult {
-  const allPractices = getAllPractices();
+): Promise<PracticeSearchResult> {
+  const allPractices = await getAllPractices();
   const page = filters.page || 1;
   const pageSize = filters.pageSize || 12;
   const sort = filters.sort || 'relevance';
@@ -217,18 +217,18 @@ export function searchPractices(
     // Query filter (keyword search)
     if (filters.query) {
       const queryLower = filters.query.toLowerCase();
-      const matchesName = practice.name.toLowerCase().includes(queryLower);
-      const matchesDescription = practice.description.toLowerCase().includes(queryLower);
-      const matchesSpecialties = practice.specialties.some((s) =>
-        s.toLowerCase().includes(queryLower)
-      );
+      const matchesName = (practice.name ?? '').toLowerCase().includes(queryLower);
+      const matchesDescription = (practice.description ?? '').toLowerCase().includes(queryLower);
+      const specs = Array.isArray(practice.specialties) ? practice.specialties : [];
+      const matchesSpecialties = specs.some((s) => String(s).toLowerCase().includes(queryLower));
       const matchesServices =
-        practice.services?.some((s) => s.toLowerCase().includes(queryLower)) || false;
+        practice.services?.some((s) => String(s).toLowerCase().includes(queryLower)) || false;
       const matchesInsurance =
-        practice.insurance?.some((i) => i.name.toLowerCase().includes(queryLower)) || false;
-      const matchesCity = practice.address.city.toLowerCase().includes(queryLower);
-      const matchesState = practice.address.state.toLowerCase().includes(queryLower);
-      const matchesZip = practice.address.zip.includes(queryLower);
+        practice.insurance?.some((i) => (i?.name ?? i).toLowerCase().includes(queryLower)) || false;
+      const addr = practice.address ?? {};
+      const matchesCity = (addr.city ?? '').toLowerCase().includes(queryLower);
+      const matchesState = (addr.state ?? '').toLowerCase().includes(queryLower);
+      const matchesZip = (addr.zip ?? '').includes(queryLower);
 
       if (
         !matchesName &&
@@ -260,7 +260,7 @@ export function searchPractices(
       const zipMatch = filters.zip.match(/\b\d{5}(-\d{4})?\b/);
       const zipCode = zipMatch ? zipMatch[0].substring(0, 5) : filters.zip.trim().substring(0, 5);
       if (zipCode && zipCode.length === 5 && /^\d+$/.test(zipCode)) {
-        const practiceZip = practice.address.zip?.trim().substring(0, 5);
+        const practiceZip = (practice.address?.zip ?? (practice as any).zip ?? '').toString().trim().substring(0, 5);
         const locationZipMatch =
           practice.locations?.some((loc) => loc.zip.trim().substring(0, 5) === zipCode) || false;
         if (practiceZip !== zipCode && !locationZipMatch) {
@@ -272,8 +272,8 @@ export function searchPractices(
     if (filters.city) {
       const cityLower = filters.city.toLowerCase();
       const matchesCity =
-        practice.address.city.toLowerCase().includes(cityLower) ||
-        practice.locations?.some((loc) => loc.city.toLowerCase().includes(cityLower)) ||
+        (practice.address?.city ?? (practice as any).city ?? '').toLowerCase().includes(cityLower) ||
+        practice.locations?.some((loc: any) => (loc.city ?? '').toLowerCase().includes(cityLower)) ||
         false;
       if (!matchesCity) {
         continue;
@@ -283,8 +283,8 @@ export function searchPractices(
     if (filters.state) {
       const stateUpper = filters.state.toUpperCase();
       const matchesState =
-        practice.address.state.toUpperCase() === stateUpper ||
-        practice.locations?.some((loc) => loc.state.toUpperCase() === stateUpper) ||
+        (practice.address?.state ?? (practice as any).state ?? '').toUpperCase() === stateUpper ||
+        practice.locations?.some((loc: any) => (loc.state ?? '').toUpperCase() === stateUpper) ||
         false;
       if (!matchesState) {
         continue;
@@ -294,7 +294,8 @@ export function searchPractices(
     // Specialty filter
     if (filters.specialty && filters.specialty !== 'all') {
       const normalizedFilter = filters.specialty.toLowerCase().replace(/-/g, ' ');
-      const hasSpecialty = practice.specialties.some((spec) => {
+      const specs = Array.isArray(practice.specialties) ? practice.specialties : [];
+      const hasSpecialty = specs.some((spec: string) => {
         const specLower = spec.toLowerCase();
         return specLower === normalizedFilter || specLower.includes(normalizedFilter);
       });
@@ -307,7 +308,7 @@ export function searchPractices(
     if (filters.insurance && filters.insurance !== 'all') {
       const targetInsurance = filters.insurance.toLowerCase();
       const hasInsurance =
-        practice.insurance?.some((ins) => ins.name.toLowerCase() === targetInsurance) || false;
+        practice.insurance?.some((ins: any) => (ins.name ?? ins).toLowerCase() === targetInsurance) || false;
       if (!hasInsurance) {
         continue;
       }
@@ -381,20 +382,21 @@ export function searchPractices(
       }
 
       // Specialty match: +2
-      if (practice.specialties.some((s) => s.toLowerCase().includes(queryLower))) {
+      const specs = Array.isArray(practice.specialties) ? practice.specialties : [];
+      if (specs.some((s: string) => String(s).toLowerCase().includes(queryLower))) {
         score += 2;
       }
 
       // Service/insurance match: +1
-      if (practice.services?.some((s) => s.toLowerCase().includes(queryLower))) {
+      if (practice.services?.some((s: string) => String(s).toLowerCase().includes(queryLower))) {
         score += 1;
       }
-      if (practice.insurance?.some((i) => i.name.toLowerCase().includes(queryLower))) {
+      if (practice.insurance?.some((i: any) => (i?.name ?? i).toLowerCase().includes(queryLower))) {
         score += 1;
       }
 
       // Description match: +1
-      if (practice.description.toLowerCase().includes(queryLower)) {
+      if ((practice.description ?? '').toLowerCase().includes(queryLower)) {
         score += 1;
       }
 
@@ -440,40 +442,42 @@ export function searchPractices(
  * Get filter options for practice directory
  * Computes unique values from all practices + their doctors
  */
-export function getPracticeFilterOptions(): {
+export async function getPracticeFilterOptions(): Promise<{
   specialties: string[];
   states: string[];
   insurances: string[];
   services: string[];
-} {
-  const allPractices = getAllPractices();
-  const allDoctors = getAllDoctors();
+}> {
+  const allPractices = await getAllPractices();
+  const allDoctors = await getAllDoctors();
 
   const specialtiesSet = new Set<string>();
   const statesSet = new Set<string>();
   const insurancesSet = new Set<string>();
   const servicesSet = new Set<string>();
 
-  // Collect from practices
-  allPractices.forEach((practice) => {
-    practice.specialties.forEach((spec) => specialtiesSet.add(spec));
-    statesSet.add(practice.address.state);
-    practice.insurance?.forEach((ins) => insurancesSet.add(ins.name));
-    practice.services?.forEach((service) => servicesSet.add(service));
+  // Collect from practices (guard API shape: specialties/address may be missing or flat)
+  allPractices.forEach((practice: any) => {
+    const specs = Array.isArray(practice.specialties) ? practice.specialties : [];
+    specs.forEach((spec: string) => specialtiesSet.add(spec));
+    const state = practice.address?.state ?? practice.state;
+    if (state) statesSet.add(state);
+    practice.insurance?.forEach((ins: any) => insurancesSet.add(ins.name ?? ins));
+    practice.services?.forEach((service: string) => servicesSet.add(service));
 
     // Also check locations
-    practice.locations?.forEach((loc) => {
-      statesSet.add(loc.state);
+    practice.locations?.forEach((loc: any) => {
+      if (loc.state) statesSet.add(loc.state);
     });
   });
 
   // Also collect from doctors (for specialties and insurance)
-  allDoctors.forEach((doctor) => {
+  allDoctors.forEach((doctor: any) => {
     if (doctor.specialty) {
       specialtiesSet.add(doctor.specialty);
     }
-    doctor.specialties?.forEach((spec) => specialtiesSet.add(spec));
-    doctor.insurance.forEach((ins) => insurancesSet.add(ins.name));
+    doctor.specialties?.forEach((spec: string) => specialtiesSet.add(spec));
+    doctor.insurance?.forEach((ins: any) => insurancesSet.add(ins.name ?? ins));
   });
 
   return {

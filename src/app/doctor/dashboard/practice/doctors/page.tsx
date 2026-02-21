@@ -39,42 +39,45 @@ export default function PracticeRosterPage() {
   const [inviteMessage, setInviteMessage] = useState('');
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertPracticeAdmin(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Practice admin must have practiceId');
+    async function loadData() {
+      try {
+        const actor = getActorFromSession();
+        assertPracticeAdmin(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.practiceId) {
+          throw new PermissionDeniedError('Practice admin must have practiceId');
+        }
+        
+        // Load practice using helper
+        const allPractices = await getAllPracticesForAdmin();
+        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
+        
+        if (!foundPractice) {
+          throw new Error('Practice not found');
+        }
+        
+        setPractice(foundPractice);
+        
+        // Load practice doctors using helper
+        const doctorsInPractice = await getDoctorsByPractice(foundPractice.id);
+        setPracticeDoctors(doctorsInPractice);
+        
+        // Load invitations for this practice
+        const allInvitations = getPracticeInvitations();
+        const practiceInvitations = allInvitations.filter(inv => inv.practiceId === foundPractice.id);
+        setInvitations(practiceInvitations);
+        
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      
-      // Load practice using helper
-      const allPractices = getAllPracticesForAdmin();
-      const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-      
-      if (!foundPractice) {
-        throw new Error('Practice not found');
-      }
-      
-      setPractice(foundPractice);
-      
-      // Load practice doctors using helper
-      const doctorsInPractice = getDoctorsByPractice(foundPractice.id);
-      setPracticeDoctors(doctorsInPractice);
-      
-      // Load invitations for this practice
-      const allInvitations = getPracticeInvitations();
-      const practiceInvitations = allInvitations.filter(inv => inv.practiceId === foundPractice.id);
-      setInvitations(practiceInvitations);
-      
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
-      setIsLoading(false);
     }
+    loadData();
   }, [router]);
 
   const handleInviteDoctor = async () => {
@@ -105,7 +108,7 @@ export default function PracticeRosterPage() {
       addPracticeInvitation(newInvitation);
       
       // Create approval request
-      submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_doctor_add_request',
         payload: {
           invitationId,
@@ -146,7 +149,7 @@ export default function PracticeRosterPage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
-      submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_doctor_remove_request',
         payload: {},
         target: {
@@ -362,7 +365,7 @@ export default function PracticeRosterPage() {
                         <span className="truncate">{doctor.email}</span>
                       </div>
                     )}
-                    {doctor.locations && doctor.locations.length > 0 && doctor.locations[0].phone && (
+                    {doctor.locations?.[0]?.phone && (
                       <div className="flex items-center gap-2 text-gray-600">
                         <Phone className="h-3.5 w-3.5" />
                         <span>{doctor.locations[0].phone}</span>

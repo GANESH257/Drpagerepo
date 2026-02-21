@@ -1,34 +1,17 @@
 import { Doctor } from '@/types';
-import { doctors } from '@/data/doctors';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
 
 /**
- * Get all doctors, merging seed data with localStorage overrides
+ * Get all doctors from API
+ * @deprecated Use getAllDoctorsArray from @/lib/api/doctors directly
  */
-export function getAllDoctors(): Doctor[] {
-  if (typeof window === 'undefined') {
-    return doctors;
-  }
-
+export async function getAllDoctors(): Promise<Doctor[]> {
   try {
-    const deletedIds = getDeletedDoctorIds();
-    const overrides = getDoctorOverrides();
-    
-    // Start with seed data, filter out deleted doctors
-    let allDoctors = doctors.filter((d) => !deletedIds.includes(d.id));
-    
-    // Apply overrides
-    allDoctors = allDoctors.map((doctor) => {
-      const override = overrides[doctor.id];
-      if (override) {
-        return { ...doctor, ...override };
-      }
-      return doctor;
-    });
-    
-    return allDoctors;
+    const doctors = await getAllDoctorsArray();
+    return doctors;
   } catch (error) {
     console.error('Error loading doctors:', error);
-    return doctors;
+    return [];
   }
 }
 
@@ -116,17 +99,29 @@ export function restoreDoctor(doctorId: string): void {
 }
 
 /**
- * Get a doctor by ID (with overrides applied)
+ * Get a doctor by ID from API
+ * @deprecated Use getDoctor from @/lib/api/doctors directly
  */
-export function getDoctorById(doctorId: string): Doctor | null {
-  const allDoctors = getAllDoctors();
-  return allDoctors.find((d) => d.id === doctorId) || null;
+export async function getDoctorById(doctorId: string): Promise<Doctor | null> {
+  try {
+    const { getDoctor } = await import('@/lib/api/doctors');
+    return await getDoctor(doctorId);
+  } catch (error) {
+    console.error('Error loading doctor:', error);
+    return null;
+  }
 }
 
 /**
- * Get a doctor by email (with overrides applied)
+ * Get a doctor by email from API
+ * @deprecated Use getDoctors with search filter from @/lib/api/doctors directly
  */
-export function getDoctorByEmail(email: string): Doctor | null {
-  const allDoctors = getAllDoctors();
-  return allDoctors.find((d) => d.email?.toLowerCase() === email.toLowerCase()) || null;
+export async function getDoctorByEmail(email: string): Promise<Doctor | null> {
+  try {
+    const doctors = await getAllDoctorsArray();
+    return doctors.find((d) => d.email?.toLowerCase() === email.toLowerCase()) || null;
+  } catch (error) {
+    console.error('Error loading doctor by email:', error);
+    return null;
+  }
 }

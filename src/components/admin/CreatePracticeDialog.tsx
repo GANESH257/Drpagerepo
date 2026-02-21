@@ -71,7 +71,7 @@ export function CreatePracticeDialog({ open, onOpenChange, onSave }: CreatePract
         slug: slugify(formData.name),
       };
 
-      createNewPractice(practiceData);
+      await createNewPractice(practiceData);
       toast.success('Practice created successfully');
       
       // Reset form

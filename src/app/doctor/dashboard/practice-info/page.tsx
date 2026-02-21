@@ -9,41 +9,65 @@ import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
+import { getPractice } from '@/lib/api/practices';
 import { MapPin, Phone, Mail, Globe, Building2, Users, Shield } from 'lucide-react';
+import { useDoctorContext } from '@/components/dashboard/DoctorContext';
 
 export default function PracticeInfoPage() {
   const router = useRouter();
+  const { doctor } = useDoctorContext();
   const [practice, setPractice] = useState<Practice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        router.push('/doctor/dashboard');
-        return;
-      }
-
-      // Load practice
-      const allPractices = getAllPracticesForAdmin();
-      const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-      
-      if (!foundPractice) {
-        router.push('/doctor/dashboard');
-        return;
-      }
-      
-      setPractice(foundPractice);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
+    async function loadPractice() {
+      try {
+        const actor = getActorFromSession();
+        if (actor.kind !== 'doctor') {
+          router.push('/join-us');
+          return;
+        }
+        // API returns snake_case (practice_id); frontend type uses practiceId
+        const practiceId = (doctor as any)?.practice_id ?? doctor?.practiceId ?? actor.practiceId;
+        if (!practiceId) {
+          setPractice(null);
+          setIsLoading(false);
+          return;
+        }
+        const raw = await getPractice(practiceId);
+        const r = raw as any;
+        // Normalize API shape: backend uses flat address_line1, city, state, zip; may use created_at/updated_at
+        const foundPractice: Practice = {
+          ...raw,
+          slug: r.slug ?? r.id ?? '',
+          description: r.description ?? '',
+          phone: r.phone ?? '',
+          createdAt: r.created_at ?? r.createdAt ?? new Date().toISOString(),
+          updatedAt: r.updated_at ?? r.updatedAt ?? new Date().toISOString(),
+          address: raw.address ?? {
+            line1: r.address_line1 ?? '',
+            line2: r.address_line2,
+            city: r.city ?? '',
+            state: r.state ?? '',
+            zip: r.zip ?? '',
+            country: r.country ?? 'USA',
+          },
+          locations: Array.isArray(raw.locations) ? raw.locations : [],
+          specialties: Array.isArray(raw.specialties) ? raw.specialties : [],
+          doctorIds: Array.isArray(r.doctors) ? r.doctors.map((d: { id: string }) => d.id) : [],
+        };
+        setPractice(foundPractice);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+          return;
+        }
+        setPractice(null);
       }
       setIsLoading(false);
     }
-  }, [router]);
+    loadPractice();
+  }, [router, doctor]);
 
   if (isLoading) {
     return (

@@ -56,7 +56,7 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse }: PortalSi
               pathname === item.href ||
               (item.href !== '/admin' &&
                 item.href !== '/doctor/dashboard' &&
-                pathname.startsWith(item.href));
+                pathname.startsWith(item.href + '/'));
 
             return (
               <Link

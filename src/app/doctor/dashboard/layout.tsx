@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoctorSession } from '@/lib/useDoctorSession';
-import { findDoctorByEmail, loadDoctorProfile } from '@/lib/doctorStorage';
+import { getDoctor } from '@/lib/api/doctors';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -16,66 +16,77 @@ export default function DoctorDashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { getSession, isAuthenticated, updateSessionDoctorId } = useDoctorSession();
+  const { getToken, getUser, isAuthenticated, updateSessionDoctorId } = useDoctorSession();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkAuthAndLoadDoctor = () => {
-      // Check authentication using Step 4 services
-      try {
-        const actor = getActorFromSession();
-        assertDoctor(actor);
-        
-        if (actor.kind !== 'doctor' || !actor.doctorId) {
-          throw new PermissionDeniedError('Must be a doctor');
-        }
-      } catch (error) {
-        if (error instanceof AuthRequiredError || error instanceof PermissionDeniedError) {
-          router.push('/join-us');
-          return;
-        }
-      }
-
+    const checkAuthAndLoadDoctor = async () => {
+      // Check authentication
       if (!isAuthenticated()) {
         router.push('/join-us');
         return;
       }
 
-      const session = getSession();
-      if (!session || !session.email) {
+      const token = getToken();
+      const user = getUser();
+
+      if (!token || !user) {
         router.push('/join-us');
         return;
       }
 
-      // Find doctor by email
-      const foundDoctor = findDoctorByEmail(session.email);
-      
-      // If doctor not found in seed data
-      if (!foundDoctor) {
-        setError('Dashboard access is available after approval.');
+      // Check if user is a doctor
+      if (user.role !== 'doctor') {
+        setError('Dashboard access is available after your membership is approved.');
         setIsLoading(false);
         return;
       }
 
-      // Update session with doctorId if not present
-      if (!session.doctorId) {
-        updateSessionDoctorId(foundDoctor.id);
-      }
-
-      // Load doctor profile (from localStorage or seed data)
-      const loadedDoctor = loadDoctorProfile(foundDoctor.id);
-      
-      // Check if profile exists and has email
-      if (!loadedDoctor || !loadedDoctor.email) {
-        setError('Dashboard access is available after approval.');
+      // Get doctorId from user or session
+      const doctorId = user.doctorId;
+      if (!doctorId) {
+        setError('Doctor profile not found. Please contact support.');
         setIsLoading(false);
         return;
       }
-      
-      setDoctor(loadedDoctor);
-      setIsLoading(false);
+
+      try {
+        // Load doctor profile from API
+        const loadedDoctor = await getDoctor(doctorId, token);
+        
+        // Check if profile exists
+        if (!loadedDoctor) {
+          setError('Dashboard access is available after approval.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Update session with doctorId if not present
+        if (!user.doctorId) {
+          updateSessionDoctorId(doctorId);
+        }
+        
+        setDoctor(loadedDoctor);
+        setIsLoading(false);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load doctor profile';
+        
+        // Handle 401 (unauthorized) - token expired or invalid
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('token')) {
+          router.push('/join-us');
+          return;
+        }
+        
+        // Handle 404 (not found)
+        if (errorMessage.includes('not found')) {
+          setError('Dashboard access is available after approval.');
+        } else {
+          setError('Failed to load dashboard. Please try again.');
+        }
+        setIsLoading(false);
+      }
     };
 
     checkAuthAndLoadDoctor();

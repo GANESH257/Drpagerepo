@@ -52,11 +52,16 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const saved = loadDoctorProfile(doctor.id);
-    if (saved) {
-      setDoctor(saved);
+    async function load() {
+      const saved = await loadDoctorProfile(doctor.id);
+      if (saved) {
+        setDoctor(saved);
+      }
     }
+    load();
   }, [doctor.id]);
+
+  const insurance = doctor.insurance ?? [];
 
   const handleAddInsurance = () => {
     if (!newInsuranceName.trim()) return;
@@ -68,11 +73,11 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
     };
 
     // Check if already exists
-    if (doctor.insurance.some((ins) => ins.name.toLowerCase() === newInsuranceName.toLowerCase())) {
+    if (insurance.some((ins) => ins.name.toLowerCase() === newInsuranceName.toLowerCase())) {
       return;
     }
 
-    const updatedInsurance = [...doctor.insurance, newInsurance];
+    const updatedInsurance = [...insurance, newInsurance];
     const updatedDoctor = { ...doctor, insurance: updatedInsurance };
     setDoctor(updatedDoctor);
     saveDoctorProfile(doctor.id, updatedDoctor);
@@ -81,7 +86,7 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   };
 
   const handleRemoveInsurance = (insuranceToRemove: Insurance) => {
-    const updatedInsurance = doctor.insurance.filter(
+    const updatedInsurance = insurance.filter(
       (ins) => ins.name !== insuranceToRemove.name
     );
     const updatedDoctor = { ...doctor, insurance: updatedInsurance };
@@ -118,9 +123,9 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current Insurance */}
-            {doctor.insurance.length > 0 ? (
+            {insurance.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {doctor.insurance.map((ins) => (
+                {insurance.map((ins) => (
                   <Badge
                     key={ins.slug}
                     variant="colorful"
@@ -153,7 +158,7 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
                   <SelectContent>
                     {COMMON_INSURANCE_PROVIDERS.filter(
                       (provider) =>
-                        !doctor.insurance.some(
+                        !insurance.some(
                           (ins) => ins.name.toLowerCase() === provider.toLowerCase()
                         )
                     ).map((provider) => (

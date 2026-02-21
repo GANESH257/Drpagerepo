@@ -31,25 +31,35 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
   const [composer, setComposer] = useState('');
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [threadMessages, setThreadMessages] = useState<DoctorMessage[]>([]);
+  const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
   const threadEndRef = useRef<HTMLDivElement | null>(null);
 
-  const allDoctors = useMemo(() => {
-    const all = getAllDoctors();
-    const filtered = all.filter((d) => d.id !== doctor.id);
+  // Load all doctors asynchronously
+  useEffect(() => {
+    async function loadDoctors() {
+      try {
+        const all = await getAllDoctors();
+        const filtered = all.filter((d) => d.id !== doctor.id);
 
-    // If current user is not admin, add admin to the list of available contacts
-    if (doctor.id !== 'admin') {
-      const adminDoctor: Doctor = {
-        id: 'admin',
-        fullName: 'Alliance Admin',
-        specialty: 'System Administrator',
-        email: 'admin@alliance.com',
-        // Minimal fields needed for the list
-      } as Doctor;
-      return [adminDoctor, ...filtered];
+        // If current user is not admin, add admin to the list of available contacts
+        if (doctor.id !== 'admin') {
+          const adminDoctor: Doctor = {
+            id: 'admin',
+            fullName: 'Alliance Admin',
+            specialty: 'System Administrator',
+            email: 'admin@alliance.com',
+            // Minimal fields needed for the list
+          } as Doctor;
+          setAllDoctors([adminDoctor, ...filtered]);
+        } else {
+          setAllDoctors(filtered);
+        }
+      } catch (error) {
+        console.error('Error loading doctors:', error);
+        setAllDoctors([]);
+      }
     }
-
-    return filtered;
+    loadDoctors();
   }, [doctor.id]);
 
   const doctorsById = useMemo(() => {

@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Notification } from '@/types/notifications';
-import { getAllNotifications } from '@/lib/adminHelpers';
+import { Notification, NotificationType } from '@/types/notifications';
+import { getAllNotifications } from '@/lib/api/notifications';
 import { formatDateTime } from '@/lib/dateUtils';
 
 type NotificationWithDoctor = Notification & { doctorName?: string; doctorEmail?: string };
@@ -27,14 +27,38 @@ export function NotificationsTable() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [readFilter, setReadFilter] = useState<'all' | 'read' | 'unread'>('all');
   const [doctorFilter, setDoctorFilter] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadNotifications();
   }, []);
 
-  const loadNotifications = () => {
-    const allNotifications = getAllNotifications();
-    setNotifications(allNotifications);
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const allNotifications = await getAllNotifications();
+      // Transform API format to frontend format
+      const transformed = allNotifications.map(n => ({
+        id: n.id,
+        doctorId: n.doctor_id,
+        type: n.type as NotificationType,
+        title: n.title,
+        message: n.message,
+        link: n.link,
+        readAt: n.read_at || undefined,
+        createdAt: n.created_at,
+        doctorName: n.doctorName,
+        doctorEmail: n.doctorEmail,
+      }));
+      setNotifications(transformed);
+    } catch (err) {
+      console.error('Error loading notifications:', err);
+      setError('Failed to load notifications');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const uniqueDoctors = useMemo(() => {
@@ -112,6 +136,14 @@ export function NotificationsTable() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
+          <CardContent className="pt-6">
+            <p className="text-red-600">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -202,7 +234,13 @@ export function NotificationsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredNotifications.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Loading notifications...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredNotifications.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No notifications found matching your filters.

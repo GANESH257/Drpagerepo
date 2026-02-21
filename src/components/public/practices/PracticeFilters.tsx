@@ -184,7 +184,12 @@ export function TopSearchBar() {
   const { lat, lng, loading, error, requestLocation, permissionDenied } = useGeolocation();
   
   // Load dynamic filter options
-  const [filterOptions, setFilterOptions] = useState<ReturnType<typeof getPracticeFilterOptions>>({
+  const [filterOptions, setFilterOptions] = useState<{
+    specialties: string[];
+    states: string[];
+    insurances: string[];
+    services: string[];
+  }>({
     specialties: [],
     states: [],
     insurances: [],
@@ -192,10 +197,13 @@ export function TopSearchBar() {
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const options = getPracticeFilterOptions();
-      setFilterOptions(options);
+    async function loadOptions() {
+      if (typeof window !== 'undefined') {
+        const options = await getPracticeFilterOptions();
+        setFilterOptions(options);
+      }
     }
+    loadOptions();
   }, []);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -400,7 +408,12 @@ export function SidebarFilters({ className }: { className?: string }) {
   }, [getSearchParam]);
   
   // Load dynamic filter options
-  const [filterOptions, setFilterOptions] = useState<ReturnType<typeof getPracticeFilterOptions>>({
+  const [filterOptions, setFilterOptions] = useState<{
+    specialties: string[];
+    states: string[];
+    insurances: string[];
+    services: string[];
+  }>({
     specialties: [],
     states: [],
     insurances: [],
@@ -408,10 +421,13 @@ export function SidebarFilters({ className }: { className?: string }) {
   });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const options = getPracticeFilterOptions();
-      setFilterOptions(options);
+    async function loadOptions() {
+      if (typeof window !== 'undefined') {
+        const options = await getPracticeFilterOptions();
+        setFilterOptions(options);
+      }
     }
+    loadOptions();
   }, []);
   
   // Compute counts for specialties, insurances, and services
@@ -420,17 +436,18 @@ export function SidebarFilters({ className }: { className?: string }) {
   const [serviceCounts, setServiceCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 
-        (filterOptions.specialties.length > 0 || filterOptions.insurances.length > 0 || filterOptions.services.length > 0)) {
-      const allPractices = getAllPractices();
-      const counts: Record<string, number> = {};
-      const insCounts: Record<string, number> = {};
-      const servCounts: Record<string, number> = {};
-      
-      // Single pass through practices for better performance (O(n) instead of O(n*m))
-      allPractices.forEach((practice) => {
+    async function loadCounts() {
+      if (typeof window !== 'undefined' && 
+          (filterOptions.specialties.length > 0 || filterOptions.insurances.length > 0 || filterOptions.services.length > 0)) {
+        const allPractices = await getAllPractices();
+        const counts: Record<string, number> = {};
+        const insCounts: Record<string, number> = {};
+        const servCounts: Record<string, number> = {};
+        
+        // Single pass through practices for better performance (O(n) instead of O(n*m))
+        allPractices.forEach((practice: any) => {
         // Count specialties (case-insensitive)
-        practice.specialties.forEach((spec) => {
+        (practice.specialties || []).forEach((spec: string) => {
           const specLower = spec.toLowerCase();
           // Find matching specialty from filterOptions (case-insensitive)
           const matchingSpec = filterOptions.specialties.find(s => s.toLowerCase() === specLower);
@@ -440,8 +457,8 @@ export function SidebarFilters({ className }: { className?: string }) {
         });
         
         // Count insurances (case-insensitive)
-        practice.insurance?.forEach((ins) => {
-          const insLower = ins.name.toLowerCase();
+        practice.insurance?.forEach((ins: any) => {
+          const insLower = (ins.name ?? ins).toLowerCase();
           // Find matching insurance from filterOptions (case-insensitive)
           const matchingIns = filterOptions.insurances.find(i => i.toLowerCase() === insLower);
           if (matchingIns) {
@@ -450,7 +467,7 @@ export function SidebarFilters({ className }: { className?: string }) {
         });
         
         // Count services (case-insensitive)
-        practice.services?.forEach((service) => {
+        practice.services?.forEach((service: string) => {
           const serviceLower = service.toLowerCase();
           // Find matching service from filterOptions (case-insensitive)
           const matchingService = filterOptions.services.find(s => s.toLowerCase() === serviceLower);
@@ -460,10 +477,12 @@ export function SidebarFilters({ className }: { className?: string }) {
         });
       });
       
-      setSpecialtyCounts(counts);
-      setInsuranceCounts(insCounts);
-      setServiceCounts(servCounts);
+        setSpecialtyCounts(counts);
+        setInsuranceCounts(insCounts);
+        setServiceCounts(servCounts);
+      }
     }
+    loadCounts();
   }, [filterOptions]);
 
   const hasActiveFilters =

@@ -15,12 +15,13 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { getHomeLink } = useDarkMode();
-  const { isAuthenticated, getSession } = useDoctorSession();
+  const { isAuthenticated, getSession, getUser } = useDoctorSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [canAccessDashboard, setCanAccessDashboard] = useState(false);
 
   // Use pathname for initial render to avoid hydration mismatch
   // Then update based on localStorage preference after mount
@@ -40,13 +41,30 @@ export function Header() {
 
   // Check authentication status
   useEffect(() => {
-    setIsLoggedIn(isAuthenticated());
+    const authenticated = isAuthenticated();
+    setIsLoggedIn(authenticated);
     setIsAdminLoggedIn(getAdminSession() !== null);
+    
+    // Check if user can access dashboard (must be doctor with doctorId)
+    if (authenticated) {
+      const user = getUser();
+      setCanAccessDashboard(user?.role === 'doctor' && !!user?.doctorId);
+    } else {
+      setCanAccessDashboard(false);
+    }
 
     // Listen for storage changes (login/logout in other tabs)
     const handleStorageChange = () => {
-      setIsLoggedIn(isAuthenticated());
+      const auth = isAuthenticated();
+      setIsLoggedIn(auth);
       setIsAdminLoggedIn(getAdminSession() !== null);
+      
+      if (auth) {
+        const user = getUser();
+        setCanAccessDashboard(user?.role === 'doctor' && !!user?.doctorId);
+      } else {
+        setCanAccessDashboard(false);
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -54,6 +72,12 @@ export function Header() {
     // Also check periodically for admin session changes (for same-tab login/logout)
     const checkAdminSession = () => {
       setIsAdminLoggedIn(getAdminSession() !== null);
+      
+      // Also re-check dashboard access
+      if (isAuthenticated()) {
+        const user = getUser();
+        setCanAccessDashboard(user?.role === 'doctor' && !!user?.doctorId);
+      }
     };
 
     const interval = setInterval(checkAdminSession, 1000);
@@ -107,7 +131,7 @@ export function Header() {
 
   const handleSignInClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isAuthenticated()) {
+    if (canAccessDashboard) {
       router.push('/doctor/dashboard');
     } else {
       router.push('/join-us');
@@ -228,7 +252,7 @@ export function Header() {
               className="text-xs xl:text-sm border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all whitespace-nowrap"
               onClick={handleSignInClick}
             >
-              {isLoggedIn ? 'Dashboard' : 'Sign In'}
+              {canAccessDashboard ? 'Dashboard' : 'Sign In'}
             </Button>
           </div>
 
@@ -313,7 +337,7 @@ export function Header() {
                     handleSignInClick(e);
                   }}
                 >
-                  {isLoggedIn ? 'Dashboard' : 'Sign In'}
+                  {canAccessDashboard ? 'Dashboard' : 'Sign In'}
                 </Button>
               </div>
             </nav>

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
-import { getApprovalRequests } from '@/lib/storage/approvalStorage';
+import { getApprovalRequest as getApprovalRequestAPI } from '@/lib/api/approval-requests';
+import { transformApprovalRequestFromAPI } from '@/lib/api/approval-requests-transform';
 import { getApprovalTimeline, decideAsPracticeAdmin } from '@/lib/services/approvalEngine';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError, NotFoundError } from '@/lib/services/errors';
@@ -38,43 +39,46 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
     const [rejectNotes, setRejectNotes] = useState('');
 
     useEffect(() => {
-        try {
-            const actor = getActorFromSession();
-            assertPracticeAdmin(actor);
+        async function loadRequest() {
+            try {
+                const actor = getActorFromSession();
+                assertPracticeAdmin(actor);
 
-            if (actor.kind !== 'doctor' || !actor.practiceId) {
-                throw new PermissionDeniedError('Practice admin must have practiceId');
+                if (actor.kind !== 'doctor' || !actor.practiceId) {
+                    throw new PermissionDeniedError('Practice admin must have practiceId');
+                }
+
+                // Load request from API
+                const apiRequest = await getApprovalRequestAPI(requestId);
+                const foundRequest = transformApprovalRequestFromAPI(apiRequest);
+
+                if (!foundRequest) {
+                    throw new NotFoundError('ApprovalRequest', requestId);
+                }
+
+                // Verify this request is for this practice admin
+                if (foundRequest.approvals.practiceAdmin?.practiceId !== actor.practiceId) {
+                    throw new PermissionDeniedError('This approval request is not for your practice');
+                }
+
+                setRequest(foundRequest);
+
+                // Load timeline
+                const history = await getApprovalTimeline(requestId);
+                setTimeline(history);
+
+                setIsLoading(false);
+            } catch (error) {
+                if (error instanceof AuthRequiredError) {
+                    router.push('/join-us');
+                } else if (error instanceof PermissionDeniedError || error instanceof NotFoundError) {
+                    toast.error((error as Error).message);
+                    router.push('/doctor/dashboard/practice/approvals');
+                }
+                setIsLoading(false);
             }
-
-            // Load request
-            const requests = getApprovalRequests();
-            const foundRequest = requests.find(r => r.id === requestId);
-
-            if (!foundRequest) {
-                throw new NotFoundError('ApprovalRequest', requestId);
-            }
-
-            // Verify this request is for this practice admin
-            if (foundRequest.approvals.practiceAdmin?.practiceId !== actor.practiceId) {
-                throw new PermissionDeniedError('This approval request is not for your practice');
-            }
-
-            setRequest(foundRequest);
-
-            // Load timeline
-            const history = getApprovalTimeline(requestId);
-            setTimeline(history);
-
-            setIsLoading(false);
-        } catch (error) {
-            if (error instanceof AuthRequiredError) {
-                router.push('/join-us');
-            } else if (error instanceof PermissionDeniedError || error instanceof NotFoundError) {
-                toast.error((error as Error).message);
-                router.push('/doctor/dashboard/practice/approvals');
-            }
-            setIsLoading(false);
         }
+        loadRequest();
     }, [requestId, router]);
 
     const handleApprove = async () => {
@@ -87,18 +91,18 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                 throw new PermissionDeniedError('Must be a doctor');
             }
 
-            decideAsPracticeAdmin(actor, request.id, 'approve', {
+            await decideAsPracticeAdmin(actor, request.id, 'approve', {
                 notes: approveNotes || undefined,
             });
             toast.success('Request approved');
             setShowApproveDialog(false);
             setApproveNotes('');
             // Reload request
-            const requests = getApprovalRequests();
-            const updated = requests.find(r => r.id === request.id);
+            const apiRequest = await getApprovalRequestAPI(request.id);
+            const updated = transformApprovalRequestFromAPI(apiRequest);
             if (updated) {
                 setRequest(updated);
-                const history = getApprovalTimeline(request.id);
+                const history = await getApprovalTimeline(request.id);
                 setTimeline(history);
             }
         } catch (error: any) {
@@ -121,7 +125,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                 throw new PermissionDeniedError('Must be a doctor');
             }
 
-            decideAsPracticeAdmin(actor, request.id, 'reject', {
+            await decideAsPracticeAdmin(actor, request.id, 'reject', {
                 reason: rejectReason,
                 notes: rejectNotes || undefined,
             });
@@ -130,11 +134,11 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
             setRejectReason('');
             setRejectNotes('');
             // Reload request
-            const requests = getApprovalRequests();
-            const updated = requests.find(r => r.id === request.id);
+            const apiRequest = await getApprovalRequestAPI(request.id);
+            const updated = transformApprovalRequestFromAPI(apiRequest);
             if (updated) {
                 setRequest(updated);
-                const history = getApprovalTimeline(request.id);
+                const history = await getApprovalTimeline(request.id);
                 setTimeline(history);
             }
         } catch (error: any) {

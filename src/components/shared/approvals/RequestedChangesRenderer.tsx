@@ -49,13 +49,22 @@ function LocationAddView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload as PracticeLocationAddPayload;
   const location = payload.location;
   const practiceId = resolvePracticeId(request, payload);
-  const practice = React.useMemo(() => {
-    if (!practiceId) return null;
-    try {
-      return getPracticeById(practiceId);
-    } catch {
-      return null;
+  const [practice, setPractice] = React.useState<any>(null);
+  
+  React.useEffect(() => {
+    async function loadPractice() {
+      if (!practiceId) {
+        setPractice(null);
+        return;
+      }
+      try {
+        const p = await getPracticeById(practiceId);
+        setPractice(p);
+      } catch {
+        setPractice(null);
+      }
     }
+    loadPractice();
   }, [practiceId]);
 
   // Show warning if practiceId is missing
@@ -109,7 +118,7 @@ function LocationAddView({ request }: { request: ApprovalRequest }) {
     if (!practice || !location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
       return false;
     }
-    return practice.locations.some((loc) => {
+    return practice.locations.some((loc: PracticeLocation) => {
       if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return false;
       // Compare with 6 decimal precision
       return (
@@ -123,7 +132,7 @@ function LocationAddView({ request }: { request: ApprovalRequest }) {
   const hasDuplicateAddress = React.useMemo(() => {
     if (!practice || !location) return false;
     const newKey = normalizeLocationAddressKey(location);
-    return practice.locations.some((loc) => {
+    return practice.locations.some((loc: PracticeLocation) => {
       const existingKey = normalizeLocationAddressKey(loc);
       return existingKey === newKey && existingKey !== '';
     });
@@ -172,18 +181,27 @@ function LocationAddView({ request }: { request: ApprovalRequest }) {
 function LocationRemoveView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload as PracticeLocationRemovePayload;
   const practiceId = resolvePracticeId(request, payload);
-  const practice = React.useMemo(() => {
-    if (!practiceId) return null;
-    try {
-      return getPracticeById(practiceId);
-    } catch {
-      return null;
+  const [practice, setPractice] = React.useState<any>(null);
+  
+  React.useEffect(() => {
+    async function loadPractice() {
+      if (!practiceId) {
+        setPractice(null);
+        return;
+      }
+      try {
+        const p = await getPracticeById(practiceId);
+        setPractice(p);
+      } catch {
+        setPractice(null);
+      }
     }
+    loadPractice();
   }, [practiceId]);
 
   const location = React.useMemo(() => {
     if (!practice) return null;
-    return practice.locations.find((l) => l.id === payload.locationId) || null;
+    return practice.locations.find((l: PracticeLocation) => l.id === payload.locationId) || null;
   }, [practice, payload.locationId]);
 
   const isLastLocation = practice ? practice.locations.length <= 1 : false;
@@ -281,18 +299,27 @@ function LocationRemoveView({ request }: { request: ApprovalRequest }) {
 function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload as PracticeLocationEditPayload;
   const practiceId = resolvePracticeId(request, payload);
-  const practice = React.useMemo(() => {
-    if (!practiceId) return null;
-    try {
-      return getPracticeById(practiceId);
-    } catch {
-      return null;
+  const [practice, setPractice] = React.useState<any>(null);
+  
+  React.useEffect(() => {
+    async function loadPractice() {
+      if (!practiceId) {
+        setPractice(null);
+        return;
+      }
+      try {
+        const p = await getPracticeById(practiceId);
+        setPractice(p);
+      } catch {
+        setPractice(null);
+      }
     }
+    loadPractice();
   }, [practiceId]);
 
   const beforeLocation = React.useMemo(() => {
     if (!practice) return null;
-    return practice.locations.find((l) => l.id === payload.locationId) || null;
+    return practice.locations.find((l: PracticeLocation) => l.id === payload.locationId) || null;
   }, [practice, payload.locationId]);
 
   const afterLocation = payload.updatedLocation;
@@ -351,7 +378,7 @@ function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
     if (!practice || !afterLocation || typeof afterLocation.lat !== 'number' || typeof afterLocation.lng !== 'number') {
       return false;
     }
-    return practice.locations.some((loc) => {
+    return practice.locations.some((loc: PracticeLocation) => {
       if (loc.id === payload.locationId) return false; // Exclude current
       if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return false;
       return (
@@ -365,7 +392,7 @@ function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
   const hasDuplicateAddress = React.useMemo(() => {
     if (!practice || !afterLocation) return false;
     const newKey = normalizeLocationAddressKey(afterLocation);
-    return practice.locations.some((loc) => {
+    return practice.locations.some((loc: PracticeLocation) => {
       if (loc.id === payload.locationId) return false; // Exclude current
       const existingKey = normalizeLocationAddressKey(loc);
       return existingKey === newKey && existingKey !== '';
@@ -442,13 +469,22 @@ function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
 function PracticeEditDiffView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload as PracticeEditPayload;
   const practiceId = resolvePracticeId(request, payload);
-  const practice = React.useMemo(() => {
-    if (!practiceId) return null;
-    try {
-      return getPracticeById(practiceId);
-    } catch {
-      return null;
+  const [practice, setPractice] = React.useState<any>(null);
+  
+  React.useEffect(() => {
+    async function loadPractice() {
+      if (!practiceId) {
+        setPractice(null);
+        return;
+      }
+      try {
+        const p = await getPracticeById(practiceId);
+        setPractice(p);
+      } catch {
+        setPractice(null);
+      }
     }
+    loadPractice();
   }, [practiceId]);
 
   // Show warning if practiceId is missing

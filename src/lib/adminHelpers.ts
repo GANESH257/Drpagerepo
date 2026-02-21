@@ -18,7 +18,7 @@ import { makeId } from '@/lib/services/id';
  * Get all practices for admin (combines seed + created + overrides, filters deleted)
  * Alias for getAllPractices() for consistency
  */
-export function getAllPracticesForAdmin(): Practice[] {
+export async function getAllPracticesForAdmin(): Promise<Practice[]> {
   return getAllPractices();
 }
 
@@ -26,7 +26,7 @@ export function getAllPracticesForAdmin(): Practice[] {
  * Get doctors by practice ID
  * Alias for getDoctorsForPractice() for consistency
  */
-export function getDoctorsByPractice(practiceId: string): Doctor[] {
+export async function getDoctorsByPractice(practiceId: string): Promise<Doctor[]> {
   return getDoctorsForPractice(practiceId);
 }
 
@@ -38,12 +38,12 @@ export function getDoctorsByPractice(practiceId: string): Doctor[] {
  * @param newAdminDoctorId New Practice Admin doctor ID
  * @param oldAdminDoctorId Optional old Practice Admin doctor ID (if known)
  */
-export function assignPracticeAdminRole(
+export async function assignPracticeAdminRole(
   practiceId: string,
   newAdminDoctorId: string,
   oldAdminDoctorId?: string
-): void {
-  const allDoctors = getAllDoctors();
+): Promise<void> {
+  const allDoctors = await getAllDoctors();
   
   // Find old practice admin if not provided
   if (!oldAdminDoctorId) {
@@ -83,7 +83,8 @@ export function assignPracticeAdminRole(
   }
   
   // Update practice doctorIds if needed
-  const practice = getAllPracticesForAdmin().find(p => p.id === practiceId);
+  const allPractices = await getAllPracticesForAdmin();
+  const practice = allPractices.find(p => p.id === practiceId);
   if (practice) {
     const doctorIds = practice.doctorIds || [];
     if (!doctorIds.includes(newAdminDoctorId)) {
@@ -101,8 +102,8 @@ export function assignPracticeAdminRole(
  * @param doctorData Partial doctor data (must include required fields)
  * @returns New doctor ID
  */
-export function createNewDoctor(doctorData: Partial<Doctor>): string {
-  const allDoctors = getAllDoctors();
+export async function createNewDoctor(doctorData: Partial<Doctor>): Promise<string> {
+  const allDoctors = await getAllDoctors();
   
   // Generate new ID
   const newId = makeId('doc');
@@ -147,7 +148,8 @@ export function createNewDoctor(doctorData: Partial<Doctor>): string {
   
   // If practice is assigned, update practice doctorIds
   if (newDoctor.practiceId) {
-    const practice = getAllPractices().find(p => p.id === newDoctor.practiceId);
+    const allPractices = await getAllPractices();
+    const practice = allPractices.find(p => p.id === newDoctor.practiceId);
     if (practice) {
       const doctorIds = practice.doctorIds || [];
       if (!doctorIds.includes(newId)) {
@@ -168,8 +170,8 @@ export function createNewDoctor(doctorData: Partial<Doctor>): string {
  * @param practiceData Partial practice data (must include required fields)
  * @returns New practice ID
  */
-export function createNewPractice(practiceData: Partial<Practice>): string {
-  const allPractices = getAllPractices();
+export async function createNewPractice(practiceData: Partial<Practice>): Promise<string> {
+  const allPractices = await getAllPractices();
   
   // Generate new ID
   const newId = makeId('practice');
@@ -229,8 +231,8 @@ export function getAllReferrals(): Referral[] {
  * Get all notifications system-wide
  * Aggregates all notifications from all doctors
  */
-export function getAllNotifications(): Array<Notification & { doctorName?: string; doctorEmail?: string }> {
-  const allDoctors = getAllDoctors();
+export async function getAllNotifications(): Promise<Array<Notification & { doctorName?: string; doctorEmail?: string }>> {
+  const allDoctors = await getAllDoctors();
   const allNotifications: Array<Notification & { doctorName?: string; doctorEmail?: string }> = [];
   
   // Iterate through all doctors and collect their notifications

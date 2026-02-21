@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
-import { getPendingApprovalsForAdmin } from '@/lib/services/approvalEngine';
-import { getApprovalRequests } from '@/lib/storage/approvalStorage';
+import { getApprovalRequests as getApprovalRequestsAPI } from '@/lib/api/approval-requests';
+import { transformApprovalRequestsFromAPI } from '@/lib/api/approval-requests-transform';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -17,40 +17,55 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/dateUtils';
 import { Eye } from 'lucide-react';
-import { practices } from '@/data/practices';
-import { getCreatedPractices } from '@/lib/storage/practiceStorage';
-import { doctors } from '@/data/doctors';
-import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { getAllPractices } from '@/lib/services/practiceDirectoryService';
 import { PracticeLocationAddPayload, PracticeLocationEditPayload, PracticeLocationRemovePayload, PracticeEditPayload } from '@/types/approvals';
+import { PracticeLocation } from '@/types/practice';
 import { diffPracticeChangedOnly } from '@/lib/utils/practiceDiff';
 import { getAllDoctors } from '@/lib/memberStorage';
 
 export default function AdminRequestsV2Page() {
   const router = useRouter();
+  const pathname = usePathname();
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<ApprovalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({});
+  const [practices, setPractices] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
 
+  // Refetch when we land on this page (including when navigating back from detail) so list and status stay in sync
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertAdmin(actor);
+    async function loadData() {
+      try {
+        const actor = getActorFromSession();
+        assertAdmin(actor);
 
-      // Load all requests (for filtering)
-      const allRequests = getApprovalRequests();
-      setRequests(allRequests);
-      setFilteredRequests(allRequests);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/admin/login');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/admin');
+        // Load all data from API (no cache so we see latest approval state)
+        const [apiRequests, allPractices, allDoctors] = await Promise.all([
+          getApprovalRequestsAPI(),
+          getAllPractices(),
+          getAllDoctors(),
+        ]);
+
+        const transformedRequests = transformApprovalRequestsFromAPI(apiRequests);
+        setRequests(transformedRequests);
+        setFilteredRequests(transformedRequests);
+        setPractices(allPractices);
+        setDoctors(allDoctors);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/admin/login');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/admin');
+        } else {
+          console.error('Error loading approval requests:', error);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
-  }, [router]);
+    loadData();
+  }, [router, pathname]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -71,17 +86,15 @@ export default function AdminRequestsV2Page() {
         // Search in practice name
         try {
           if (r.target?.practiceId) {
-            const allPractices = [...practices, ...getCreatedPractices()];
-            const practice = allPractices.find(p => p.id === r.target.practiceId);
+            const practice = practices.find(p => p.id === r.target.practiceId);
             if (practice?.name.toLowerCase().includes(query)) return true;
           }
         } catch (e) { /* ignore */ }
 
         // Search in doctor name
         try {
-          const allDocs = getAllDoctors();
           if (r.target?.doctorId) {
-            const doctor = allDocs.find(d => d.id === r.target.doctorId);
+            const doctor = doctors.find(d => d.id === r.target.doctorId);
             if (doctor?.fullName.toLowerCase().includes(query)) return true;
           }
         } catch (e) { /* ignore */ }
@@ -91,7 +104,7 @@ export default function AdminRequestsV2Page() {
 
         // Search in location info
         try {
-          const locationInfo = getLocationDisplay(r);
+          const locationInfo = getLocationDisplay(r, practices);
           if (locationInfo) {
             if (locationInfo.name.toLowerCase().includes(query)) return true;
             if (locationInfo.address.toLowerCase().includes(query)) return true;
@@ -106,7 +119,7 @@ export default function AdminRequestsV2Page() {
     setFilteredRequests(filtered);
   };
 
-  const getLocationDisplay = (request: ApprovalRequest): { name: string; address: string; locationId?: string } | null => {
+  const getLocationDisplay = (request: ApprovalRequest, practicesList: any[] = practices): { name: string; address: string; locationId?: string } | null => {
     const locationTypes = ['practice_location_add_request', 'practice_location_edit_request', 'practice_location_remove_request'];
     if (!locationTypes.includes(request.type)) return null;
 
@@ -129,9 +142,9 @@ export default function AdminRequestsV2Page() {
         };
       } else if (request.type === 'practice_location_remove_request') {
         const payload = request.payload as PracticeLocationRemovePayload;
-        const practice = getPracticeById(payload.practiceId);
+        const practice = practices.find(p => p.id === payload.practiceId);
         if (practice) {
-          const location = practice.locations.find(l => l.id === payload.locationId);
+          const location = practice.locations?.find((l: PracticeLocation) => l.id === payload.locationId);
           if (location) {
             return {
               name: location.name || 'Location',
@@ -155,13 +168,11 @@ export default function AdminRequestsV2Page() {
   const getTargetDisplay = (request: ApprovalRequest): string => {
     try {
       if (request.target?.practiceId) {
-        const allPractices = [...practices, ...getCreatedPractices()];
-        const practice = allPractices.find(p => p.id === request.target.practiceId);
+        const practice = practices.find(p => p.id === request.target.practiceId);
         return practice?.name || request.target.practiceId;
       }
       if (request.target?.doctorId) {
-        const allDocs = getAllDoctors();
-        const doctor = allDocs.find(d => d.id === request.target.doctorId);
+        const doctor = doctors.find(d => d.id === request.target.doctorId);
         return doctor?.fullName || request.target.doctorId;
       }
     } catch {
@@ -302,7 +313,7 @@ export default function AdminRequestsV2Page() {
               </TableHeader>
               <TableBody>
                 {filteredRequests.map((request) => {
-                  const locationInfo = getLocationDisplay(request);
+                  const locationInfo = getLocationDisplay(request, practices);
                   const quickGlance = getQuickGlanceText(request);
 
                   return (

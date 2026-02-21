@@ -26,7 +26,7 @@ export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel
   const remainingSpecialtyCount = specialtiesToDisplay.length - 3;
   
   // Use provided doctorCount or compute from doctorIds
-  const count = doctorCount ?? practice.doctorIds.length;
+  const count = doctorCount ?? (practice.doctorIds?.length ?? 0);
 
   // Generate practice image URL
   const generatePracticeImage = (practice: Practice): string => {
@@ -88,7 +88,7 @@ export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel
                 {practice.locations && practice.locations.length > 1 ? (
                   <span>{practice.locations.length} Locations</span>
                 ) : (
-                  <span>{practice.address.city}, {practice.address.state} {practice.address.zip}</span>
+                  <span>{[practice.address?.city ?? (practice as any).city, practice.address?.state ?? (practice as any).state, practice.address?.zip ?? (practice as any).zip].filter(Boolean).join(', ')}</span>
                 )}
               </CardDescription>
               {distanceMiles !== undefined && originLabel && (
@@ -112,8 +112,8 @@ export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel
         <div className="space-y-2 mb-4 flex-shrink-0">
           <div className="flex items-center text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 mr-2" />
-            {practice.address.line1}
-            {practice.address.line2 && `, ${practice.address.line2}`}
+            {practice.address?.line1 ?? (practice as any).address_line1 ?? ''}
+            {(practice.address?.line2 ?? (practice as any).address_line2) && `, ${practice.address?.line2 ?? (practice as any).address_line2}`}
           </div>
           {practice.phone && (
             <div className="flex items-center text-sm text-muted-foreground">

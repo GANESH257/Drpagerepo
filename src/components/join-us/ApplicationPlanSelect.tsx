@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PlanCard } from '@/components/membership/PlanCard';
-import { membershipPlans } from '@/data/membershipPlans';
+import { getMembershipPlans } from '@/lib/api/membership-plans';
+import { transformMembershipPlansFromAPI } from '@/lib/api/membership-plans-transform';
+import { MembershipPlan } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface ApplicationPlanSelectProps {
@@ -26,6 +28,27 @@ export function ApplicationPlanSelect({
     initialPlanId || null
   );
   const [error, setError] = useState('');
+  const [plans, setPlans] = useState<MembershipPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        setLoading(true);
+        setLoadError(null);
+        const apiPlans = await getMembershipPlans();
+        const transformedPlans = transformMembershipPlansFromAPI(apiPlans);
+        setPlans(transformedPlans);
+      } catch (err) {
+        console.error('Error loading membership plans:', err);
+        setLoadError('Failed to load membership plans. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPlans();
+  }, []);
 
   const handleBillingChange = useCallback((checked: boolean) => {
     setBillingCycle(checked ? 'annual' : 'monthly');
@@ -80,18 +103,35 @@ export function ApplicationPlanSelect({
       </div>
 
       {/* Plan Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {membershipPlans.map((plan) => (
-          <PlanCard
-            key={plan.id}
-            plan={plan}
-            billingCycle={billingCycle}
-            isSelected={selectedPlanId === plan.id}
-            onSelect={() => handleSelectPlan(plan.id)}
-            showSelectButton={true}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading membership plans...</p>
+          </div>
+        </div>
+      ) : loadError ? (
+        <div className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-md">
+          {loadError}
+        </div>
+      ) : plans.length === 0 ? (
+        <div className="text-sm text-muted-foreground text-center bg-gray-50 p-6 rounded-md">
+          No membership plans available. Please contact support.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              billingCycle={billingCycle}
+              isSelected={selectedPlanId === plan.id}
+              onSelect={() => handleSelectPlan(plan.id)}
+              showSelectButton={true}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

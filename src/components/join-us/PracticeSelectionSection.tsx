@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Building2, Plus, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { getAllPractices } from '@/lib/services/practiceDirectoryService';
 import { Practice } from '@/types/practice';
 
@@ -40,46 +41,78 @@ export function PracticeSelectionSection({
     value?.type === 'new' ? value.website || '' : ''
   );
   const [practices, setPractices] = useState<Practice[]>([]);
+  const [practicesLoading, setPracticesLoading] = useState(true);
+  const [practicesLoadError, setPracticesLoadError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const prevSelectionRef = useRef<string>('');
 
-  // Load practices on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const allPractices = getAllPractices();
+  // Load practices from backend API on mount
+  const loadPractices = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    setPracticesLoading(true);
+    setPracticesLoadError(null);
+    try {
+      const allPractices = await getAllPractices();
       setPractices(allPractices);
+    } catch (error) {
+      console.error('Error loading practices:', error);
+      setPractices([]);
+      setPracticesLoadError('Could not load practice list. You can still create a new practice.');
+    } finally {
+      setPracticesLoading(false);
     }
   }, []);
 
-  // Handle preselected practice
+  useEffect(() => {
+    loadPractices();
+  }, [loadPractices]);
+
+  // Handle preselected practice (only once)
   useEffect(() => {
     if (preselectedPracticeId && !value) {
       setSelectionType('existing');
       setSelectedPracticeId(preselectedPracticeId);
       onChange({ type: 'existing', practiceId: preselectedPracticeId });
     }
-  }, [preselectedPracticeId, value, onChange]);
+  }, [preselectedPracticeId]); // Only run when preselectedPracticeId changes
 
-  // Update parent when selection changes
+  // Update parent when selection changes (only when internal state changes)
   useEffect(() => {
-    if (selectionType === 'existing' && selectedPracticeId) {
-      onChange({ type: 'existing', practiceId: selectedPracticeId });
-      setErrors({});
+    let currentSelection: PracticeSelection | null = null;
+    
+    if (selectionType === 'existing' && selectedPracticeId && selectedPracticeId !== 'none' && selectedPracticeId !== '') {
+      currentSelection = { type: 'existing', practiceId: selectedPracticeId };
     } else if (selectionType === 'new' && newPracticeName.trim()) {
-      onChange({
+      currentSelection = {
         type: 'new',
         practiceName: newPracticeName.trim(),
         website: newPracticeWebsite.trim() || undefined,
-      });
-      // Validate new practice name
+      };
+    }
+
+    // Create a key to compare selections
+    const selectionKey = currentSelection
+      ? currentSelection.type === 'existing' 
+        ? `existing-${currentSelection.practiceId}`
+        : `new-${currentSelection.practiceName}`
+      : '';
+
+    // Only call onChange if selection actually changed from our internal state
+    if (currentSelection && selectionKey !== prevSelectionRef.current) {
+      prevSelectionRef.current = selectionKey;
+      onChange(currentSelection);
+      setErrors({});
+    }
+
+    // Validate new practice name
+    if (selectionType === 'new' && newPracticeName.trim()) {
       if (newPracticeName.trim().length < 2) {
         setErrors({ practiceName: 'Practice name must be at least 2 characters' });
       } else {
         setErrors({});
       }
-    } else {
-      onChange(null);
     }
-  }, [selectionType, selectedPracticeId, newPracticeName, newPracticeWebsite, onChange]);
+  }, [selectionType, selectedPracticeId, newPracticeName, newPracticeWebsite]); // Removed value and onChange from deps
 
   const handleTypeChange = (newType: 'existing' | 'new') => {
     setSelectionType(newType);
@@ -87,8 +120,14 @@ export function PracticeSelectionSection({
     if (newType === 'existing') {
       setNewPracticeName('');
       setNewPracticeWebsite('');
+      // Don't clear selectedPracticeId if it was preselected
+      if (!preselectedPracticeId) {
+        setSelectedPracticeId('');
+        onChange(null);
+      }
     } else {
       setSelectedPracticeId('');
+      onChange(null);
     }
   };
 
@@ -120,35 +159,65 @@ export function PracticeSelectionSection({
             {selectionType === 'existing' && (
               <div className="ml-6 space-y-2">
                 <Select
-                  value={selectedPracticeId}
+                  value={selectedPracticeId || undefined}
                   onValueChange={(val) => {
-                    setSelectedPracticeId(val);
-                    setErrors({});
+                    if (val && val !== 'none') {
+                      setSelectedPracticeId(val);
+                      setErrors({});
+                    }
                   }}
-                  disabled={disabled || !!preselectedPracticeId}
+                  disabled={disabled || !!preselectedPracticeId || practicesLoading}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a practice" />
+                    <SelectValue
+                      placeholder={
+                        practicesLoading
+                          ? 'Loading practices...'
+                          : 'Select a practice'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {practices.length === 0 ? (
+                    {practicesLoading ? (
                       <SelectItem value="none" disabled>
-                        No practices available
+                        Loading...
+                      </SelectItem>
+                    ) : practices.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        {practicesLoadError
+                          ? 'Could not load list. Create a new practice or retry below.'
+                          : 'No practices in network yet. Create a new practice below.'}
                       </SelectItem>
                     ) : (
-                      practices.map((practice) => (
-                        <SelectItem key={practice.id} value={practice.id}>
-                          {practice.name}
-                          {practice.address?.city && practice.address?.state && (
-                            <span className="text-muted-foreground ml-2">
-                              ({practice.address.city}, {practice.address.state})
-                            </span>
-                          )}
-                        </SelectItem>
-                      ))
+                      practices.map((practice) => {
+                        const city = practice.address?.city ?? (practice as any).city;
+                        const state = practice.address?.state ?? (practice as any).state;
+                        return (
+                          <SelectItem key={practice.id} value={practice.id}>
+                            {practice.name}
+                            {city && state && (
+                              <span className="text-muted-foreground ml-2">
+                                ({city}, {state})
+                              </span>
+                            )}
+                          </SelectItem>
+                        );
+                      })
                     )}
                   </SelectContent>
                 </Select>
+                {practicesLoadError && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={loadPractices}
+                    disabled={practicesLoading}
+                  >
+                    {practicesLoading ? 'Loading...' : 'Retry loading practices'}
+                  </Button>
+                )}
                 {preselectedPracticeId && (
                   <Alert className="mt-2">
                     <AlertCircle className="h-4 w-4" />

@@ -61,26 +61,29 @@ export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load practice
-    const practiceData = getPracticeBySlug(slug);
-    if (!practiceData) {
+    async function loadPracticeData() {
+      // Load practice
+      const practiceData = await getPracticeBySlug(slug);
+      if (!practiceData) {
+        setLoading(false);
+        return;
+      }
+
+      setPractice(practiceData);
+
+      // Load doctors for this practice
+      const practiceDoctors = await getDoctorsForPractice(practiceData.id);
+      setDoctors(practiceDoctors);
+
+      // Derive specialties from doctors
+      const specialties = practiceDoctors.length > 0
+        ? deriveSpecialtiesFromDoctors(practiceDoctors)
+        : (practiceData.specialties || []); // Fallback to practice.specialties
+      setDerivedSpecialties(specialties);
+
       setLoading(false);
-      return;
     }
-
-    setPractice(practiceData);
-
-    // Load doctors for this practice
-    const practiceDoctors = getDoctorsForPractice(practiceData.id);
-    setDoctors(practiceDoctors);
-
-    // Derive specialties from doctors
-    const specialties = practiceDoctors.length > 0
-      ? deriveSpecialtiesFromDoctors(practiceDoctors)
-      : (practiceData.specialties || []); // Fallback to practice.specialties
-    setDerivedSpecialties(specialties);
-
-    setLoading(false);
+    loadPracticeData();
   }, [slug]);
 
   if (loading) {

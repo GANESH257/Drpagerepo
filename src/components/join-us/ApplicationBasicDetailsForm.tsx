@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -306,12 +306,16 @@ export function ApplicationBasicDetailsForm({
       {/* Practice Selection */}
       <PracticeSelectionSection
         value={practiceSelection || undefined}
-        onChange={(selection) => {
+        onChange={useCallback((selection) => {
           setPracticeSelection(selection);
-          if (errors.practiceSelection) {
-            setErrors({ ...errors, practiceSelection: '' });
-          }
-        }}
+          setErrors((prev) => {
+            if (prev.practiceSelection) {
+              const { practiceSelection: _, ...rest } = prev;
+              return rest;
+            }
+            return prev;
+          });
+        }, [])}
         disabled={false}
         preselectedPracticeId={preselectedPracticeId}
       />

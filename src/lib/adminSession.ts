@@ -52,6 +52,9 @@ export function clearAdminSession(): void {
   
   try {
     localStorage.removeItem(SESSION_KEY);
+    // Also clear JWT token and user info used by API calls
+    localStorage.removeItem('aip_doctor_token');
+    localStorage.removeItem('aip_doctor_user');
     // Also clear dummy join requests on logout
     localStorage.removeItem('aip_join_requests');
     // Clear events overrides

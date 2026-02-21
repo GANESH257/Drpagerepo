@@ -33,8 +33,18 @@ import {
   ConflictError,
 } from './errors';
 import {
-  getApprovalRequests,
-  addApprovalRequest,
+  getApprovalRequests as getApprovalRequestsAPI,
+  getApprovalRequest as getApprovalRequestAPI,
+  getApprovalHistory as getApprovalHistoryAPI,
+  createApprovalRequest,
+  approveRequest,
+  rejectRequest,
+} from '@/lib/api/approval-requests';
+import {
+  transformApprovalRequestFromAPI,
+  transformApprovalRequestsFromAPI,
+} from '@/lib/api/approval-requests-transform';
+import {
   updateApprovalRequest,
   appendApprovalHistory,
   getApprovalHistory,
@@ -217,18 +227,18 @@ function validateRosterPayload(
 /**
  * Validate location approval request payload
  */
-function validateLocationApprovalRequest(
+async function validateLocationApprovalRequest(
   type: ApprovalType,
   payload: Record<string, any>,
   target?: { practiceId?: string }
-): void {
+): Promise<void> {
   const practiceId = target?.practiceId || payload.practiceId;
 
   if (!practiceId) {
     throw new ValidationError('practiceId is required for location approval requests');
   }
 
-  const practice = getPracticeById(practiceId);
+  const practice = await getPracticeById(practiceId);
   if (!practice) {
     throw new ValidationError(`Practice with ID ${practiceId} not found`);
   }
@@ -301,10 +311,10 @@ function validateLocationApprovalRequest(
 /**
  * Submit approval request
  */
-export function submitApprovalRequest(
+export async function submitApprovalRequest(
   actor: Actor,
   input: SubmitApprovalInput
-): ApprovalRequest {
+): Promise<ApprovalRequest> {
   if (input.type !== 'new_practice_with_admin_doctor' && input.type !== 'doctor_join_practice') {
     assertAuthenticated(actor);
   }
@@ -315,7 +325,7 @@ export function submitApprovalRequest(
     input.type === 'practice_location_edit_request' ||
     input.type === 'practice_location_remove_request'
   ) {
-    validateLocationApprovalRequest(input.type, input.payload, input.target);
+    await validateLocationApprovalRequest(input.type, input.payload, input.target);
   }
 
   // Validate roster approval requests before creating (strict normalization)
@@ -459,24 +469,70 @@ export function submitApprovalRequest(
     notifyPracticeAdmin(practiceIdForNotification, request);
   }
 
-  // Save request
-  addApprovalRequest(request);
+  // Submit to API
+  try {
+    const apiRequest = await createApprovalRequest({
+      type: input.type,
+      practice_id: practiceIdForApproval,
+      target_doctor_id: input.target?.doctorId,
+      payload: input.payload,
+    });
 
-  return request;
+    // Transform API response to frontend format
+    const frontendRequest = transformApprovalRequestFromAPI(apiRequest);
+
+    // Append history record locally (for UI notifications)
+    appendApprovalHistory({
+      id: makeId('ahr'),
+      requestId: frontendRequest.id,
+      type: input.type,
+      practiceId,
+      doctorId: input.target?.doctorId,
+      action: 'submitted',
+      at: now,
+      by: historyBy,
+      snapshot: snapshotClone,
+    });
+
+    // If auto-approved by practice admin, append history
+    if (
+      approvals.practiceAdmin?.status === 'approved' &&
+      submittedBy.role === 'practice_admin' &&
+      submittedBy.practiceId === practiceIdForApproval
+    ) {
+      appendApprovalHistory({
+        id: makeId('ahr'),
+        requestId: frontendRequest.id,
+        type: input.type,
+        practiceId: practiceIdForApproval,
+        doctorId: submittedBy.doctorId,
+        action: 'practice_admin_approved',
+        at: now,
+        by: historyBy,
+        notes: 'Auto-approved by submitting practice admin',
+      });
+    }
+
+    return frontendRequest;
+  } catch (error) {
+    console.error('Error submitting approval request:', error);
+    throw error;
+  }
 }
 
 /**
  * Mark request as under review (admin only)
  */
-export function markUnderReview(
+export async function markUnderReview(
   actor: Actor,
   requestId: string,
   notes?: string
-): void {
+): Promise<void> {
   assertAdmin(actor);
 
-  const requests = getApprovalRequests();
-  const request = requests.find((r) => r.id === requestId);
+  const requests = await getApprovalRequestsAPI();
+  const transformedRequests = transformApprovalRequestsFromAPI(requests);
+  const request = transformedRequests.find((r) => r.id === requestId);
   if (!request) {
     throw new NotFoundError('ApprovalRequest', requestId);
   }
@@ -487,7 +543,7 @@ export function markUnderReview(
 
   const now = nowISO();
 
-  // Update request
+  // Update request (still using localStorage for now, but should migrate to API)
   updateApprovalRequest(requestId, {
     status: 'under_review',
     updatedAt: now,
@@ -500,7 +556,7 @@ export function markUnderReview(
     },
   });
 
-  // Append history
+  // Append history (still using localStorage for now, but should migrate to API)
   appendApprovalHistory({
     id: makeId('ahr'),
     requestId,
@@ -535,16 +591,18 @@ export function markUnderReview(
 /**
  * Admin decision on approval request
  */
-export function decideAsAdmin(
+export async function decideAsAdmin(
   actor: Actor,
   requestId: string,
   decision: 'approve' | 'reject',
   opts?: { reason?: string; notes?: string }
-): void {
+): Promise<void> {
   assertAdmin(actor);
 
-  const requests = getApprovalRequests();
-  const request = requests.find((r) => r.id === requestId);
+  // Get request from API
+  const apiRequest = await getApprovalRequestAPI(requestId);
+  const request = transformApprovalRequestFromAPI(apiRequest);
+  
   if (!request) {
     throw new NotFoundError('ApprovalRequest', requestId);
   }
@@ -564,7 +622,7 @@ export function decideAsAdmin(
       throw new ValidationError('Missing practiceId in roster request');
     }
 
-    const practice = getPracticeById(practiceId);
+    const practice = await getPracticeById(practiceId);
     if (!practice) {
       throw new NotFoundError('Practice', practiceId);
     }
@@ -611,27 +669,10 @@ export function decideAsAdmin(
   }
 
   if (decision === 'reject') {
-    // Reject: finalize immediately
-    updateApprovalRequest(requestId, {
-      status: 'rejected',
-      updatedAt: now,
-      approvals: {
-        ...request.approvals,
-        admin: {
-          status: 'rejected',
-          decidedAt: now,
-          notes: opts?.notes,
-        },
-      },
-      decision: {
-        decidedAt: now,
-        decidedBy: 'admin',
-        reason: opts?.reason,
-        notes: opts?.notes,
-      },
-    });
+    // Reject via API
+    await rejectRequest(requestId, opts?.reason || 'No reason provided');
 
-    // Append history
+    // Append history locally for UI
     appendApprovalHistory({
       id: makeId('ahr'),
       requestId,
@@ -648,21 +689,6 @@ export function decideAsAdmin(
       notes: opts?.notes,
     });
 
-    appendApprovalHistory({
-      id: makeId('ahr'),
-      requestId,
-      type: request.type,
-      practiceId: request.target?.practiceId,
-      doctorId: request.target?.doctorId,
-      action: 'final_rejected',
-      at: now,
-      by: {
-        role: 'admin',
-        email: actor.kind === 'admin' ? actor.email : undefined,
-      },
-      reason: opts?.reason,
-    });
-
     // Notify submitter and practice admin
     notifySubmitter(
       { ...request, status: 'rejected' },
@@ -677,20 +703,10 @@ export function decideAsAdmin(
       });
     }
   } else {
-    // Approve
-    updateApprovalRequest(requestId, {
-      updatedAt: now,
-      approvals: {
-        ...request.approvals,
-        admin: {
-          status: 'approved',
-          decidedAt: now,
-          notes: opts?.notes,
-        },
-      },
-    });
+    // Approve via API (backend handles side effects)
+    await approveRequest(requestId, opts?.notes);
 
-    // Append history
+    // Append history locally for UI
     appendApprovalHistory({
       id: makeId('ahr'),
       requestId,
@@ -706,35 +722,25 @@ export function decideAsAdmin(
       notes: opts?.notes,
     });
 
+    // Get updated request to check final status
+    const updatedApiRequest = await getApprovalRequestAPI(requestId);
+    const updatedRequest = transformApprovalRequestFromAPI(updatedApiRequest);
+
     // Check if practice admin approval is still needed
+    const needsPracticeAdmin = requiresPracticeAdminApproval(request.type);
     if (
       needsPracticeAdmin &&
-      request.approvals.practiceAdmin?.status === 'pending'
+      updatedRequest.approvals.practiceAdmin?.status === 'pending'
     ) {
-      // Keep status as under_review, wait for practice admin
-      updateApprovalRequest(requestId, {
-        status: 'under_review',
-      });
-
-      // Notify practice admin again
-      if (request.approvals.practiceAdmin?.practiceId) {
+      // Notify practice admin
+      if (updatedRequest.approvals.practiceAdmin?.practiceId) {
         notifyPracticeAdmin(
-          request.approvals.practiceAdmin.practiceId,
-          { ...request, approvals: { ...request.approvals, admin: { status: 'approved', decidedAt: now } } }
+          updatedRequest.approvals.practiceAdmin.practiceId,
+          updatedRequest
         );
       }
     } else {
-      // No practice admin needed or already approved: finalize
-      updateApprovalRequest(requestId, {
-        status: 'approved',
-        decision: {
-          decidedAt: now,
-          decidedBy: 'admin',
-          notes: opts?.notes,
-        },
-      });
-
-      // Append final approved history
+      // Fully approved - backend already applied side effects
       appendApprovalHistory({
         id: makeId('ahr'),
         requestId,
@@ -750,15 +756,9 @@ export function decideAsAdmin(
         notes: opts?.notes,
       });
 
-      // Apply side effects
-      const updatedRequest = getApprovalRequests().find((r) => r.id === requestId);
-      if (updatedRequest) {
-        applyApprovedRequestSideEffects(updatedRequest);
-      }
-
       // Notify submitter
       notifySubmitter(
-        { ...request, status: 'approved' },
+        updatedRequest,
         'Your approval request was approved',
         `/join-us/submitted`
       );
@@ -769,16 +769,18 @@ export function decideAsAdmin(
 /**
  * Practice admin decision on approval request
  */
-export function decideAsPracticeAdmin(
+export async function decideAsPracticeAdmin(
   actor: Actor,
   requestId: string,
   decision: 'approve' | 'reject',
   opts?: { reason?: string; notes?: string }
-): void {
+): Promise<void> {
   assertPracticeAdmin(actor);
 
-  const requests = getApprovalRequests();
-  const request = requests.find((r) => r.id === requestId);
+  // Get request from API
+  const apiRequest = await getApprovalRequestAPI(requestId);
+  const request = transformApprovalRequestFromAPI(apiRequest);
+  
   if (!request) {
     throw new NotFoundError('ApprovalRequest', requestId);
   }
@@ -803,32 +805,10 @@ export function decideAsPracticeAdmin(
   const now = nowISO();
 
   if (decision === 'reject') {
-    // Reject: finalize immediately
-    updateApprovalRequest(requestId, {
-      status: 'rejected',
-      updatedAt: now,
-      approvals: {
-        ...request.approvals,
-        practiceAdmin: {
-          ...request.approvals.practiceAdmin!,
-          status: 'rejected',
-          decidedAt: now,
-          notes: opts?.notes,
-        },
-      },
-      decision: {
-        decidedAt: now,
-        decidedBy: 'practice_admin',
-        reason: opts?.reason,
-        notes: opts?.notes,
-      },
-    });
+    // Reject via API
+    await rejectRequest(requestId, opts?.reason || 'No reason provided');
 
-    // Append history
-    if (actor.kind !== 'doctor') {
-      throw new PermissionDeniedError('Expected doctor actor');
-    }
-
+    // Append history locally for UI
     appendApprovalHistory({
       id: makeId('ahr'),
       requestId,
@@ -847,23 +827,6 @@ export function decideAsPracticeAdmin(
       notes: opts?.notes,
     });
 
-    appendApprovalHistory({
-      id: makeId('ahr'),
-      requestId,
-      type: request.type,
-      practiceId: requestPracticeId,
-      doctorId: request.target?.doctorId,
-      action: 'final_rejected',
-      at: now,
-      by: {
-        role: 'practice_admin',
-        doctorId: actor.doctorId,
-        practiceId: actor.practiceId,
-        email: actor.email,
-      },
-      reason: opts?.reason,
-    });
-
     // Notify admin and submitter
     notifySubmitter(
       { ...request, status: 'rejected' },
@@ -871,25 +834,10 @@ export function decideAsPracticeAdmin(
       `/join-us/submitted`
     );
   } else {
-    // Approve
-    updateApprovalRequest(requestId, {
-      updatedAt: now,
-      approvals: {
-        ...request.approvals,
-        practiceAdmin: {
-          ...request.approvals.practiceAdmin!,
-          status: 'approved',
-          decidedAt: now,
-          notes: opts?.notes,
-        },
-      },
-    });
+    // Approve via API (backend handles side effects)
+    await approveRequest(requestId, opts?.notes);
 
-    // Append history
-    if (actor.kind !== 'doctor') {
-      throw new PermissionDeniedError('Expected doctor actor');
-    }
-
+    // Append history locally for UI
     appendApprovalHistory({
       id: makeId('ahr'),
       requestId,
@@ -907,23 +855,13 @@ export function decideAsPracticeAdmin(
       notes: opts?.notes,
     });
 
+    // Get updated request to check final status
+    const updatedApiRequest = await getApprovalRequestAPI(requestId);
+    const updatedRequest = transformApprovalRequestFromAPI(updatedApiRequest);
+
     // Check if admin already approved
-    if (request.approvals.admin.status === 'approved') {
-      // Both approved: finalize
-      updateApprovalRequest(requestId, {
-        status: 'approved',
-        decision: {
-          decidedAt: now,
-          decidedBy: 'practice_admin',
-          notes: opts?.notes,
-        },
-      });
-
-      // Append final approved history
-      if (actor.kind !== 'doctor') {
-        throw new PermissionDeniedError('Expected doctor actor');
-      }
-
+    if (updatedRequest.approvals.admin.status === 'approved') {
+      // Both approved - backend already applied side effects
       appendApprovalHistory({
         id: makeId('ahr'),
         requestId,
@@ -941,21 +879,12 @@ export function decideAsPracticeAdmin(
         notes: opts?.notes,
       });
 
-      // Apply side effects
-      const updatedRequest = getApprovalRequests().find((r) => r.id === requestId);
-      if (updatedRequest) {
-        applyApprovedRequestSideEffects(updatedRequest);
-      }
-
       // Notify admin and submitter
       notifySubmitter(
-        { ...request, status: 'approved' },
+        updatedRequest,
         'Your approval request was approved',
         `/join-us/submitted`
       );
-    } else {
-      // Keep pending admin, notify admin
-      // Admin will be notified via their pending queue
     }
   }
 }
@@ -963,9 +892,9 @@ export function decideAsPracticeAdmin(
 /**
  * Apply side effects when request is approved
  */
-export function applyApprovedRequestSideEffects(
+export async function applyApprovedRequestSideEffects(
   request: ApprovalRequest
-): void {
+): Promise<void> {
   const now = nowISO();
 
   switch (request.type) {
@@ -1063,7 +992,7 @@ export function applyApprovedRequestSideEffects(
       }
 
       // Get entities
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       const doctor = doctors.find(d => d.id === doctorId);
 
       if (!practice) {
@@ -1120,7 +1049,7 @@ export function applyApprovedRequestSideEffects(
       // Handle old practice removal
       const oldPracticeId = doctor.practiceId;
       if (oldPracticeId && oldPracticeId !== practiceId) {
-        const oldPractice = getPracticeById(oldPracticeId);
+        const oldPractice = await getPracticeById(oldPracticeId);
         if (oldPractice) {
           const updatedOldDoctorIds = oldPractice.doctorIds.filter(id => id !== doctorId);
           savePracticeOverride(oldPracticeId, {
@@ -1136,7 +1065,7 @@ export function applyApprovedRequestSideEffects(
       });
 
       // Store snapshot in history
-      const afterPractice = getPracticeById(practiceId);
+      const afterPractice = await getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
 
       if (afterPractice && afterDoctor) {
@@ -1387,7 +1316,7 @@ export function applyApprovedRequestSideEffects(
       const doctorId = doctor.id;
 
       // Get practice
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       if (!practice) {
         throw new NotFoundError('Practice', practiceId);
       }
@@ -1445,7 +1374,7 @@ export function applyApprovedRequestSideEffects(
       });
 
       // Store snapshot in history
-      const afterPractice = getPracticeById(practiceId);
+      const afterPractice = await getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
 
       if (afterPractice && afterDoctor) {
@@ -1486,7 +1415,7 @@ export function applyApprovedRequestSideEffects(
       }
 
       // Get entities
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       const doctor = doctors.find(d => d.id === doctorId);
 
       if (!practice) {
@@ -1553,7 +1482,7 @@ export function applyApprovedRequestSideEffects(
       });
 
       // Store snapshot in history
-      const afterPractice = getPracticeById(practiceId);
+      const afterPractice = await getPracticeById(practiceId);
       const afterDoctor = doctors.find(d => d.id === doctorId);
 
       if (afterPractice && afterDoctor) {
@@ -1592,18 +1521,20 @@ export function applyApprovedRequestSideEffects(
 /**
  * Get pending approvals for admin
  */
-export function getPendingApprovalsForAdmin(): ApprovalRequest[] {
-  const requests = getApprovalRequests();
+export async function getPendingApprovalsForAdmin(): Promise<ApprovalRequest[]> {
+  const apiRequests = await getApprovalRequestsAPI({ status: 'pending' });
+  const requests = transformApprovalRequestsFromAPI(apiRequests);
   return requests.filter((r) => r.approvals.admin.status === 'pending');
 }
 
 /**
  * Get pending approvals for practice admin
  */
-export function getPendingApprovalsForPracticeAdmin(
+export async function getPendingApprovalsForPracticeAdmin(
   practiceId: string
-): ApprovalRequest[] {
-  const requests = getApprovalRequests();
+): Promise<ApprovalRequest[]> {
+  const apiRequests = await getApprovalRequestsAPI({ practiceId, status: 'pending' });
+  const requests = transformApprovalRequestsFromAPI(apiRequests);
   return requests.filter(
     (r) =>
       r.approvals.practiceAdmin?.status === 'pending' &&
@@ -1614,11 +1545,61 @@ export function getPendingApprovalsForPracticeAdmin(
 /**
  * Get approval timeline (history) for a request
  */
-export function getApprovalTimeline(
+export async function getApprovalTimeline(
   requestId: string
-): ApprovalHistoryRecord[] {
-  const history = getApprovalHistory();
-  return history
-    .filter((h) => h.requestId === requestId)
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+): Promise<ApprovalHistoryRecord[]> {
+  // Get request with history from API
+  const { getApprovalRequest } = await import('@/lib/api/approval-requests');
+  const apiRequest = await getApprovalRequest(requestId);
+  
+  // Transform history records
+  if (apiRequest.history && Array.isArray(apiRequest.history)) {
+    return apiRequest.history.map((h: any) => ({
+      id: h.id,
+      requestId: h.approval_request_id,
+      type: apiRequest.type as ApprovalType,
+      practiceId: apiRequest.practice_id,
+      doctorId: apiRequest.target_doctor_id,
+      action: h.action as ApprovalHistoryRecord['action'],
+      at: h.created_at,
+      by: {
+        role: (h.actor_type || h.performed_by_type) as 'admin' | 'practice_admin' | 'doctor' | 'public',
+        email: undefined,
+        doctorId: (h.actor_type || h.performed_by_type) === 'doctor' ? (h.actor_id || h.performed_by) : undefined,
+        practiceId: (h.actor_type || h.performed_by_type) === 'practice_admin' ? apiRequest.practice_id : undefined,
+      },
+      reason: h.notes || undefined,
+      notes: h.notes || undefined,
+      snapshot: undefined,
+    })).sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }
+  
+  // Fallback to API history endpoint if request doesn't have history
+  try {
+    const history = await getApprovalHistoryAPI();
+    const filtered = history
+      .filter((h: any) => h.approval_request_id === requestId)
+      .map((h: any) => ({
+        id: h.id,
+        requestId: h.approval_request_id,
+        type: apiRequest.type as ApprovalType,
+        practiceId: apiRequest.practice_id,
+        doctorId: apiRequest.target_doctor_id,
+        action: h.action as ApprovalHistoryRecord['action'],
+        at: h.created_at,
+        by: {
+          role: (h.actor_type || h.performed_by_type) as 'admin' | 'practice_admin' | 'doctor' | 'public',
+          email: undefined,
+          doctorId: (h.actor_type || h.performed_by_type) === 'doctor' ? (h.actor_id || h.performed_by) : undefined,
+          practiceId: (h.actor_type || h.performed_by_type) === 'practice_admin' ? apiRequest.practice_id : undefined,
+        },
+        reason: h.notes || undefined,
+        notes: h.notes || undefined,
+        snapshot: undefined,
+      }));
+    return filtered.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  } catch {
+    // Final fallback to empty array
+    return [];
+  }
 }

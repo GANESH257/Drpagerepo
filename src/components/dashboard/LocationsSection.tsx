@@ -32,10 +32,13 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const saved = loadDoctorProfile(doctor.id);
-    if (saved) {
-      setDoctor(saved);
+    async function load() {
+      const saved = await loadDoctorProfile(doctor.id);
+      if (saved) {
+        setDoctor(saved);
+      }
     }
+    load();
   }, [doctor.id]);
 
   const handleAddLocation = () => {
@@ -48,18 +51,20 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
     setIsDialogOpen(true);
   };
 
+  const locations = doctor.locations ?? [];
+
   const handleSaveLocation = (location: Location) => {
     setIsSaving(true);
     let updatedLocations: Location[];
 
     if (editingLocation) {
       // Update existing location
-      updatedLocations = doctor.locations.map((loc) =>
+      updatedLocations = locations.map((loc) =>
         loc === editingLocation ? location : loc
       );
     } else {
       // Add new location
-      updatedLocations = [...doctor.locations, location];
+      updatedLocations = [...locations, location];
     }
 
     const updatedDoctor = { ...doctor, locations: updatedLocations };
@@ -78,7 +83,7 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
   const handleDeleteConfirm = () => {
     if (!deleteLocation) return;
 
-    const updatedLocations = doctor.locations.filter((loc) => loc !== deleteLocation);
+    const updatedLocations = locations.filter((loc) => loc !== deleteLocation);
     const updatedDoctor = { ...doctor, locations: updatedLocations };
     setDoctor(updatedDoctor);
     saveDoctorProfile(doctor.id, updatedDoctor);
@@ -88,7 +93,7 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
 
   const handleSetPrimary = (location: Location) => {
     // Move primary location to first position
-    const otherLocations = doctor.locations.filter((loc) => loc !== location);
+    const otherLocations = locations.filter((loc) => loc !== location);
     const updatedLocations = [location, ...otherLocations];
     const updatedDoctor = { ...doctor, locations: updatedLocations };
     setDoctor(updatedDoctor);
@@ -113,7 +118,7 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
       </div>
 
       {/* Locations List */}
-      {doctor.locations.length === 0 ? (
+      {locations.length === 0 ? (
         <Card className="card-vibrant">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">No locations added yet.</p>
@@ -125,7 +130,7 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {doctor.locations.map((location, index) => (
+          {locations.map((location, index) => (
             <div key={index} className="relative">
               <LocationCard
                 location={location}

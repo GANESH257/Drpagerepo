@@ -23,7 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AdminJoinRequest, acceptJoinRequest, rejectJoinRequest } from '@/lib/adminStorage';
+import { AdminJoinRequest } from '@/lib/adminStorage';
+import { approveJoinRequest, rejectJoinRequest } from '@/lib/api/join-requests';
 
 interface RequestDetailDrawerProps {
   request: AdminJoinRequest | null;
@@ -44,26 +45,42 @@ export function RequestDetailDrawer({
   const [rejectionReason, setRejectionReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     if (!request) return;
-    setIsProcessing(true);
-    acceptJoinRequest(request.id, notes || undefined);
-    setIsProcessing(false);
-    setShowAcceptDialog(false);
-    setNotes('');
-    onRequestUpdate();
-    onOpenChange(false);
+    try {
+      setIsProcessing(true);
+      await approveJoinRequest(request.id, notes || undefined);
+      setShowAcceptDialog(false);
+      setNotes('');
+      onRequestUpdate();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error approving request:', error);
+      alert('Failed to approve request. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!request) return;
-    setIsProcessing(true);
-    rejectJoinRequest(request.id, rejectionReason || undefined);
-    setIsProcessing(false);
-    setShowRejectDialog(false);
-    setRejectionReason('');
-    onRequestUpdate();
-    onOpenChange(false);
+    if (!rejectionReason.trim()) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+    try {
+      setIsProcessing(true);
+      await rejectJoinRequest(request.id, rejectionReason);
+      setShowRejectDialog(false);
+      setRejectionReason('');
+      onRequestUpdate();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+      alert('Failed to reject request. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const formatDate = (dateString: string) => {

@@ -1,15 +1,44 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Users, Crown, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJoinRequests } from '@/lib/adminStorage';
-import { doctors } from '@/data/doctors';
-import { membershipPlans } from '@/data/membershipPlans';
+import { getJoinRequests } from '@/lib/api/join-requests';
+import { getAllDoctors } from '@/lib/memberStorage';
+import { getMembershipPlans } from '@/lib/api/membership-plans';
 
 export function StatsCards() {
-  const requests = getJoinRequests();
-  const acceptedRequests = requests.filter((r) => r.status === 'approved');
-  const pendingRequests = requests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [membershipPlans, setMembershipPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const [requestsData, doctorsData, plansData] = await Promise.all([
+          getJoinRequests().catch(() => []),
+          getAllDoctors().catch(() => []),
+          getMembershipPlans().catch(() => []),
+        ]);
+        setJoinRequests(requestsData);
+        setDoctors(doctorsData);
+        setMembershipPlans(plansData);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading stats:', err);
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const acceptedRequests = joinRequests.filter((r) => r.status === 'approved');
+  const pendingRequests = joinRequests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
   
   const totalDoctors = doctors.length + acceptedRequests.length;
   
@@ -50,6 +79,36 @@ export function StatsCards() {
       color: 'text-accent-emerald',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">Loading...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-[#0F5FA8]">-</div>
+              <p className="text-xs text-gray-500 mt-1">Loading data...</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-white border border-red-200 rounded-xl shadow-sm col-span-4">
+          <CardContent className="pt-6">
+            <p className="text-red-600">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

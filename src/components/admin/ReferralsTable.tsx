@@ -16,7 +16,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Referral } from '@/types/referrals';
-import { getAllReferrals } from '@/lib/adminHelpers';
+import { getAllReferrals as getAllReferralsAPI, Referral as ApiReferral } from '@/lib/api/referrals';
 import { getAllDoctors } from '@/lib/memberStorage';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { Doctor } from '@/types';
@@ -31,19 +31,49 @@ export function ReferralsTable() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'attended' | 'removed'>('all');
   const [doctorFilter, setDoctorFilter] = useState<string>('all');
   const [practiceFilter, setPracticeFilter] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const allReferrals = getAllReferrals();
-    const allDoctors = getAllDoctors();
-    const allPractices = getAllPracticesForAdmin();
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [apiReferrals, allDoctors, allPractices] = await Promise.all([
+        getAllReferralsAPI(),
+        getAllDoctors(),
+        getAllPracticesForAdmin()
+      ]);
 
-    setReferrals(allReferrals);
-    setDoctors(allDoctors);
-    setPractices(allPractices);
+      // Transform API format to frontend format
+      const transformedReferrals: Referral[] = apiReferrals.map((r: ApiReferral) => ({
+        id: r.id,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        fromDoctorId: r.from_doctor_id,
+        toDoctorId: r.to_doctor_id,
+        patient: {
+          name: r.patient_name_or_initials,
+          sex: r.patient_sex as 'male' | 'female' | 'other' | undefined,
+        },
+        condition: r.condition_summary,
+        notes: r.notes,
+        status: r.status as 'new' | 'attended' | 'removed',
+      }));
+
+      setReferrals(transformedReferrals);
+      setDoctors(allDoctors);
+      setPractices(allPractices);
+    } catch (err) {
+      console.error('Error loading referrals data:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load referrals';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredReferrals = useMemo(() => {
@@ -119,6 +149,14 @@ export function ReferralsTable() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
+          <CardContent className="pt-6">
+            <p className="text-red-600">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -210,7 +248,13 @@ export function ReferralsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReferrals.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Loading referrals...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredReferrals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No referrals found matching your filters.

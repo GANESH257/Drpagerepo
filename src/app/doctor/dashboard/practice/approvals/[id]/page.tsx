@@ -1,7 +1,8 @@
 import { PracticeAdminApprovalDetailClient } from './PracticeAdminApprovalDetailClient';
 
-export function generateStaticParams() {
-  return [];
+// Static export: provide placeholder so route is included; client uses real id from URL
+export async function generateStaticParams() {
+  return [{ id: 'placeholder' }];
 }
 
 interface PageProps {

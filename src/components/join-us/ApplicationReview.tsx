@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ApplicationDraft } from '@/types';
-import { submitJoinRequest, clearApplicationDraft, clearJoinEmail } from '@/lib/joinRequestStorage';
-import { membershipPlans } from '@/data/membershipPlans';
+import { clearApplicationDraft, clearJoinEmail } from '@/lib/joinRequestStorage';
+import { getMembershipPlans } from '@/lib/api/membership-plans';
+import { transformMembershipPlansFromAPI } from '@/lib/api/membership-plans-transform';
+import { MembershipPlan } from '@/types';
+import { login } from '@/lib/api/auth';
+import { createApprovalRequest } from '@/lib/api/approval-requests';
 
 interface ApplicationReviewProps {
   draft: ApplicationDraft;
@@ -21,6 +25,23 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
   const [confirmAccurate, setConfirmAccurate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [plans, setPlans] = useState<MembershipPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        const apiPlans = await getMembershipPlans();
+        const transformedPlans = transformMembershipPlansFromAPI(apiPlans);
+        setPlans(transformedPlans);
+      } catch (err) {
+        console.error('Error loading membership plans:', err);
+      } finally {
+        setLoadingPlans(false);
+      }
+    }
+    loadPlans();
+  }, []);
 
   if (!draft.basicDetails || !draft.selectedPlan || !draft.paymentMethod) {
     return (
@@ -33,7 +54,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
   }
 
   const { basicDetails, selectedPlan, paymentMethod, paymentDetails } = draft;
-  const selectedPlanData = membershipPlans.find((p) => p.id === selectedPlan.planId);
+  const selectedPlanData = plans.find((p) => p.id === selectedPlan.planId);
   const planPrice = selectedPlanData?.pricing[selectedPlan.billingCycle];
   const priceDisplay = typeof planPrice === 'number' 
     ? `$${planPrice.toLocaleString()}` 
@@ -49,30 +70,112 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
     setError('');
 
     try {
-      // Create join request
-      const request = submitJoinRequest({
-        applicant: {
-          email: basicDetails.email,
-          fullName: basicDetails.fullName,
-          credentials: basicDetails.credentials,
-          specialty: basicDetails.specialty,
-          phone: basicDetails.phone,
-          city: basicDetails.city,
-          state: basicDetails.state,
-          practiceName: basicDetails.practiceName,
-          website: basicDetails.website,
-          messageToAdmin: basicDetails.messageToAdmin,
-          practiceSelection: basicDetails.practiceSelection,
-        },
-        plan: {
-          planId: selectedPlan.planId,
-          billingCycle: selectedPlan.billingCycle,
-        },
-        paymentMethod,
-        paymentDetails,
+      // Get email and password for silent login
+      const email = basicDetails.email;
+      const tempPassword = typeof window !== 'undefined' 
+        ? sessionStorage.getItem('aip_temp_password') 
+        : null;
+
+      if (!tempPassword) {
+        throw new Error('Session expired. Please sign up again.');
+      }
+
+      // Silently login to get JWT token (no UI shown to user)
+      let token: string;
+      try {
+        const loginResponse = await login(email, tempPassword);
+        token = loginResponse.token;
+        
+        // Store token in localStorage so createApprovalRequest can use it
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('aip_doctor_token', token);
+          if (loginResponse.user) {
+            localStorage.setItem('aip_doctor_user', JSON.stringify(loginResponse.user));
+          }
+        }
+      } catch (loginErr) {
+        console.error('Silent login error:', loginErr);
+        throw new Error('Authentication failed. Please try again.');
+      }
+
+      // Determine approval request type and payload
+      const practiceSelection = basicDetails.practiceSelection;
+      let requestType: string;
+      let apiPayload: any;
+      let practiceId: string | undefined;
+      let targetDoctorId: string | undefined;
+
+      if (practiceSelection?.type === 'existing') {
+        // Doctor joining existing practice
+        requestType = 'doctor_join_practice';
+        practiceId = practiceSelection.practiceId;
+        // doctorId will be created on approval, use temporary ID for now
+        const tempDoctorId = `temp-doctor-${Date.now()}`;
+        targetDoctorId = tempDoctorId;
+        apiPayload = {
+          practiceId: practiceSelection.practiceId,
+          doctorId: tempDoctorId,
+          doctor: {
+            email: basicDetails.email,
+            fullName: basicDetails.fullName,
+            credentials: basicDetails.credentials,
+            specialty: basicDetails.specialty,
+            phone: basicDetails.phone,
+          },
+          plan: {
+            planId: selectedPlan.planId,
+            billingCycle: selectedPlan.billingCycle,
+          },
+          paymentMethod,
+          paymentDetails,
+        };
+      } else {
+        // Creating new practice
+        requestType = 'new_practice_with_admin_doctor';
+        apiPayload = {
+          practice: {
+            name: practiceSelection?.type === 'new' 
+              ? practiceSelection.practiceName 
+              : basicDetails.practiceName || 'New Practice',
+            website: practiceSelection?.type === 'new'
+              ? practiceSelection.website
+              : basicDetails.website,
+            address: {
+              line1: '',
+              city: basicDetails.city,
+              state: basicDetails.state,
+              zip: '',
+              country: 'USA',
+            },
+          },
+          doctor: {
+            email: basicDetails.email,
+            fullName: basicDetails.fullName,
+            credentials: basicDetails.credentials,
+            specialty: basicDetails.specialty,
+            phone: basicDetails.phone,
+          },
+          plan: {
+            planId: selectedPlan.planId,
+            billingCycle: selectedPlan.billingCycle,
+          },
+          paymentMethod,
+          paymentDetails,
+        };
+      }
+
+      // Create approval request via API
+      await createApprovalRequest({
+        type: requestType,
+        practice_id: practiceId,
+        target_doctor_id: targetDoctorId,
+        payload: apiPayload,
       });
 
-      // Clear draft and email
+      // Clear temporary password and draft data
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('aip_temp_password');
+      }
       clearApplicationDraft();
       clearJoinEmail();
 
@@ -80,7 +183,8 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
       router.push('/join-us/submitted');
     } catch (err) {
       console.error('Error submitting join request:', err);
-      setError('Failed to submit request. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit request. Please try again.';
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };

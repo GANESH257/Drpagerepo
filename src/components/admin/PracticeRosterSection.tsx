@@ -50,15 +50,21 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
     loadData();
   }, [practiceId]);
 
-  const loadData = () => {
-    const practiceDoctorsList = getDoctorsByPractice(practiceId);
-    const allDoctorsList = getAllDoctors();
-    const practices = getAllPracticesForAdmin();
-    const foundPractice = practices.find(p => p.id === practiceId);
-    
-    setPracticeDoctors(practiceDoctorsList);
-    setAllDoctors(allDoctorsList);
-    setPractice(foundPractice || null);
+  const loadData = async () => {
+    try {
+      const [practiceDoctorsList, allDoctorsList, practices] = await Promise.all([
+        getDoctorsByPractice(practiceId),
+        getAllDoctors(),
+        getAllPracticesForAdmin()
+      ]);
+      const foundPractice = practices.find(p => p.id === practiceId);
+      
+      setPracticeDoctors(practiceDoctorsList);
+      setAllDoctors(allDoctorsList);
+      setPractice(foundPractice || null);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
   };
 
   // Get doctors not in any practice or in a different practice
@@ -124,12 +130,12 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
     setIsPromoteDialogOpen(true);
   };
 
-  const confirmPromoteToAdmin = () => {
+  const confirmPromoteToAdmin = async () => {
     if (!doctorToPromote) return;
 
     try {
       const oldAdminId = currentPracticeAdmin?.id;
-      assignPracticeAdminRole(practiceId, doctorToPromote.id, oldAdminId);
+      await assignPracticeAdminRole(practiceId, doctorToPromote.id, oldAdminId);
       toast.success(`${doctorToPromote.fullName} is now Practice Admin`);
       setIsPromoteDialogOpen(false);
       setDoctorToPromote(null);

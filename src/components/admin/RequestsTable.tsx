@@ -2,13 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AdminJoinRequest, getJoinRequests, saveJoinRequests } from '@/lib/adminStorage';
+import { AdminJoinRequest } from '@/lib/adminStorage';
+import { getJoinRequests } from '@/lib/api/join-requests';
 import { RequestDetailDrawer } from './RequestDetailDrawer';
-import { seedMockJoinRequests, mockJoinRequests } from '@/data/mockJoinRequests';
-import { Sparkles } from 'lucide-react';
 
 type FilterStatus = 'All' | 'Pending' | 'Accepted' | 'Rejected';
 
@@ -25,14 +23,24 @@ export function RequestsTable() {
   const [filter, setFilter] = useState<FilterStatus>('All');
   const [selectedRequest, setSelectedRequest] = useState<AdminJoinRequest | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadRequests();
   }, []);
 
-  const loadRequests = () => {
-    const allRequests = getJoinRequests();
-    setRequests(allRequests);
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const allRequests = await getJoinRequests();
+      setRequests(allRequests);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load requests');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredRequests = requests.filter((req) => {
@@ -68,25 +76,16 @@ export function RequestsTable() {
     setDrawerOpen(true);
   };
 
-  const handleGenerateSampleRequests = () => {
-    // Save mock requests to localStorage
-    saveJoinRequests(mockJoinRequests);
-    loadRequests();
-  };
-
   return (
     <>
       <div className="space-y-6">
-        {/* Generate Sample Requests Button */}
-        <div className="flex justify-end">
-          <Button
-            onClick={handleGenerateSampleRequests}
-            className="gap-2 bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
-          >
-            <Sparkles className="h-4 w-4" />
-            Generate Sample Requests
-          </Button>
-        </div>
+        {error && (
+          <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-red-600">{error}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
@@ -107,7 +106,13 @@ export function RequestsTable() {
         </Tabs>
 
         {/* Table */}
-        {filteredRequests.length === 0 ? (
+        {loading ? (
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <p className="text-gray-600 mb-4">Loading requests...</p>
+            </CardContent>
+          </Card>
+        ) : filteredRequests.length === 0 ? (
           <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <p className="text-gray-600 mb-4">

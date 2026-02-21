@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown } from 'lucide-react';
@@ -14,7 +14,22 @@ interface DoctorsPerPlanChartProps {
 const COLORS = ['#2EC4B6', '#1A4B7F', '#F59E0B'];
 
 export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
-  const chartData = useMemo(() => getDoctorsPerPlan(requests), [requests]);
+  const [chartData, setChartData] = useState<PlanData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getDoctorsPerPlan(requests);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error loading plan data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [requests]);
 
   return (
     <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -23,7 +38,11 @@ export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
         <Crown className="h-4 w-4 text-gray-500" />
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+            <p>Loading plan data...</p>
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[250px] text-muted-foreground">
             <p>No plan data available</p>
           </div>

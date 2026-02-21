@@ -125,7 +125,7 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href ||
-              (item.href !== '/admin' && pathname.startsWith(item.href));
+              (item.href !== '/admin' && pathname.startsWith(item.href + '/'));
 
             return (
               <Link

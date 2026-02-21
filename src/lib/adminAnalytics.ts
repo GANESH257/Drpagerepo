@@ -1,7 +1,7 @@
 import { AdminJoinRequest } from './adminStorage';
 import { getAllDoctors } from './memberStorage';
 import { loadMembership } from './membershipStorage';
-import { departments } from '@/data/departments';
+import { getDepartments } from '@/lib/api/departments';
 import { Doctor } from '@/types';
 
 export interface MonthlyJoinData {
@@ -92,8 +92,12 @@ export function getDoctorsJoinedPerMonth(requests: AdminJoinRequest[]): MonthlyJ
 /**
  * Get doctors per department/specialty
  */
-export function getDoctorsPerDepartment(): DepartmentData[] {
-  const doctors = getAllDoctors();
+export async function getDoctorsPerDepartment(): Promise<DepartmentData[]> {
+  const [doctors, departments] = await Promise.all([
+    getAllDoctors(),
+    getDepartments()
+  ]);
+  
   const departmentCounts: Record<string, number> = {};
 
   // Initialize all departments with 0
@@ -137,7 +141,7 @@ export function getDoctorsPerDepartment(): DepartmentData[] {
 /**
  * Get doctors per membership plan
  */
-export function getDoctorsPerPlan(requests: AdminJoinRequest[]): PlanData[] {
+export async function getDoctorsPerPlan(requests: AdminJoinRequest[]): Promise<PlanData[]> {
   const planCounts: Record<string, number> = {
     basic: 0,
     professional: 0,
@@ -156,7 +160,7 @@ export function getDoctorsPerPlan(requests: AdminJoinRequest[]): PlanData[] {
   });
 
   // Count existing doctors (check membership storage)
-  const doctors = getAllDoctors();
+  const doctors = await getAllDoctors();
   doctors.forEach((doctor) => {
     if (typeof window !== 'undefined') {
       const membership = loadMembership(doctor.id);
@@ -258,7 +262,7 @@ export function getRequestStatusDistribution(requests: AdminJoinRequest[]): Stat
 /**
  * Get growth trend data (cumulative doctors over time)
  */
-export function getGrowthTrendData(requests: AdminJoinRequest[]): GrowthData[] {
+export async function getGrowthTrendData(requests: AdminJoinRequest[]): Promise<GrowthData[]> {
   const approvedRequests = requests
     .filter((r) => r.status === 'approved')
     .map((r) => ({
@@ -270,8 +274,8 @@ export function getGrowthTrendData(requests: AdminJoinRequest[]): GrowthData[] {
   const now = new Date();
   const monthlyTotals: Record<string, number> = {};
 
-  // Get existing doctors count (seed data)
-  const allDoctors = getAllDoctors();
+  // Get existing doctors count from API
+  const allDoctors = await getAllDoctors();
   const existingDoctorsCount = allDoctors.length;
   const baseCount = Math.max(50, existingDoctorsCount - approvedRequests.length);
 

@@ -1,7 +1,8 @@
 import { ApprovalRequestDetailClient } from './ApprovalRequestDetailClient';
 
-export function generateStaticParams() {
-  return [];
+// Static export: provide at least one param so the route is included; client handles real id from URL
+export async function generateStaticParams() {
+  return [{ id: 'placeholder' }];
 }
 
 interface PageProps {

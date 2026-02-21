@@ -1,0 +1,26 @@
+#!/bin/bash
+# Quick Backend Endpoint Tests
+
+BACKEND_URL="https://aip-backend-112180822704.us-central1.run.app"
+
+echo "=== Testing Public Endpoints ==="
+echo ""
+echo "1. Health Check:"
+curl -s "$BACKEND_URL/health" | jq '.' || echo "Failed"
+echo ""
+echo "2. Policies:"
+curl -s "$BACKEND_URL/api/policies" | jq 'length' || echo "Failed"
+echo ""
+echo "3. Events:"
+curl -s "$BACKEND_URL/api/events" | jq 'length' || echo "Failed"
+echo ""
+echo "4. Membership Plans:"
+curl -s "$BACKEND_URL/api/membership-plans" | jq 'length' || echo "Failed"
+echo ""
+echo "5. Departments:"
+curl -s "$BACKEND_URL/api/departments" | jq 'length' || echo "Failed"
+echo ""
+echo "=== Testing Admin Endpoints (Requires Login) ==="
+echo ""
+echo "Login first to get token, then test:"
+echo "curl -X POST $BACKEND_URL/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@aip.com\",\"password\":\"Admin@12345\"}'"

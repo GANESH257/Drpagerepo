@@ -22,6 +22,7 @@ import { Edit } from 'lucide-react';
 export default function PracticeDetailsPage() {
   const router = useRouter();
   const [practice, setPractice] = useState<Practice | null>(null);
+  const [practiceDoctors, setPracticeDoctors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,49 +44,56 @@ export default function PracticeDetailsPage() {
   });
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertPracticeAdmin(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Practice admin must have practiceId');
+    async function loadPractice() {
+      try {
+        const actor = getActorFromSession();
+        assertPracticeAdmin(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.practiceId) {
+          throw new PermissionDeniedError('Practice admin must have practiceId');
+        }
+        
+        // Load practice
+        const allPractices = await getAllPracticesForAdmin();
+        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
+        
+        if (!foundPractice) {
+          throw new Error('Practice not found');
+        }
+        
+        setPractice(foundPractice);
+        
+        // Load practice doctors
+        const doctorsInPractice = await getDoctorsByPractice(foundPractice.id);
+        setPracticeDoctors(doctorsInPractice);
+        
+        // Pre-fill form
+        setFormData({
+          description: foundPractice.description || '',
+          phone: foundPractice.phone || '',
+          email: foundPractice.email || '',
+          website: foundPractice.website || '',
+          address: {
+            line1: foundPractice.address.line1 || '',
+            line2: foundPractice.address.line2 || '',
+            city: foundPractice.address.city || '',
+            state: foundPractice.address.state || '',
+            zip: foundPractice.address.zip || '',
+            country: foundPractice.address.country || 'USA',
+          },
+        });
+        
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      
-      // Load practice
-      const allPractices = getAllPracticesForAdmin();
-      const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-      
-      if (!foundPractice) {
-        throw new Error('Practice not found');
-      }
-      
-      setPractice(foundPractice);
-      
-      // Pre-fill form
-      setFormData({
-        description: foundPractice.description || '',
-        phone: foundPractice.phone || '',
-        email: foundPractice.email || '',
-        website: foundPractice.website || '',
-        address: {
-          line1: foundPractice.address.line1 || '',
-          line2: foundPractice.address.line2 || '',
-          city: foundPractice.address.city || '',
-          state: foundPractice.address.state || '',
-          zip: foundPractice.address.zip || '',
-          country: foundPractice.address.country || 'USA',
-        },
-      });
-      
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
-      setIsLoading(false);
     }
+    loadPractice();
   }, [router]);
 
   const handleSubmitEdit = async () => {
@@ -145,7 +153,7 @@ export default function PracticeDetailsPage() {
         services: practice.services || [], // preserve for now (not editable in form)
       };
       
-      submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_edit_request',
         payload: {
           practiceId: practice.id,
@@ -187,8 +195,6 @@ export default function PracticeDetailsPage() {
       </div>
     );
   }
-
-  const practiceDoctors = getDoctorsByPractice(practice.id);
 
   return (
     <div className="space-y-6">

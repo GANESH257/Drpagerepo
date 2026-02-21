@@ -1,13 +1,28 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
 import { getDoctorsPerDepartment, DepartmentData } from '@/lib/adminAnalytics';
 
 export function DoctorsPerDepartmentChart() {
-  const chartData = useMemo(() => getDoctorsPerDepartment(), []);
+  const [chartData, setChartData] = useState<DepartmentData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getDoctorsPerDepartment();
+        setChartData(data);
+      } catch (error) {
+        console.error('Error loading department data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -16,7 +31,11 @@ export function DoctorsPerDepartmentChart() {
         <Building2 className="h-4 w-4 text-gray-500" />
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <p>Loading department data...</p>
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
             <p>No department data available</p>
           </div>

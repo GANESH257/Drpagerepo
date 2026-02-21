@@ -82,8 +82,8 @@ export function createDummyReferral(): Referral {
     fromPracticeId: 'practice-test-1',
     toPracticeId: 'practice-test-2',
     patient: {
-      initials: 'JD',
-      age: 45,
+      name: 'J. Doe',
+      dob: '1979-01-15',
       sex: 'male',
     },
     condition: 'Cardiac evaluation needed',

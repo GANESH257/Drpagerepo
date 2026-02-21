@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getDoctors } from '@/lib/api/doctors';
 import { DoctorCard } from '@/components/DoctorCard';
 import { SidebarFilters, TopSearchBar } from '@/components/DoctorFilters';
 import { GenericCTASection } from '@/components/GenericCTASection';
@@ -13,17 +13,42 @@ function DoctorsPageContent() {
   const searchParams = useSearchParams();
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [allDoctors, setAllDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load doctors (with deleted filter applied)
-    const doctors = getAllDoctors();
-    // Add original index to preserve order for featured doctors
-    const doctorsWithIndex = doctors.map((doctor, index) => ({
-      ...doctor,
-      originalIndex: index,
-    }));
-    setAllDoctors(doctorsWithIndex as Doctor[]);
-    setFilteredDoctors(doctorsWithIndex as Doctor[]);
+    const loadDoctors = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Load from API
+        const response = await getDoctors();
+        const apiDoctors = response.doctors;
+        
+        if (apiDoctors && apiDoctors.length > 0) {
+          // Add original index to preserve order for featured doctors
+          const doctorsWithIndex = apiDoctors.map((doctor, index) => ({
+            ...doctor,
+            originalIndex: index,
+          }));
+          setAllDoctors(doctorsWithIndex as Doctor[]);
+          setFilteredDoctors(doctorsWithIndex as Doctor[]);
+        } else {
+          setAllDoctors([]);
+          setFilteredDoctors([]);
+        }
+      } catch (error) {
+        console.error('Error loading doctors from API:', error);
+        setError('Failed to load doctors. Please try again later.');
+        setAllDoctors([]);
+        setFilteredDoctors([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDoctors();
   }, []);
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);

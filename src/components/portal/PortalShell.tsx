@@ -67,7 +67,7 @@ export function PortalShell({
                 pathname === item.href ||
                 (item.href !== '/admin' &&
                   item.href !== '/doctor/dashboard' &&
-                  pathname.startsWith(item.href));
+                  pathname.startsWith(item.href + '/'));
               return (
                 <Link
                   key={item.href}

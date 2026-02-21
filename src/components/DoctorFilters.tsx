@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { departments } from '@/data/departments';
-import { doctors } from '@/data/doctors';
+import { getDepartments, Department } from '@/lib/api/departments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,14 +23,10 @@ import {
 import { Filter, X, Search, MapPin, UserSearch } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Get unique values from doctors data
-const allStates = Array.from(
-  new Set(doctors.flatMap((d) => d.locations.map((l) => l.state)))
-).sort();
-
-const allInsurance = Array.from(
-  new Set(doctors.flatMap((d) => d.insurance.map((i) => i.name)))
-).sort();
+// These will be loaded from API when needed
+// For now, keeping static lists for insurance/states (can be migrated later)
+const allStates: string[] = [];
+const allInsurance: string[] = [];
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -133,8 +128,22 @@ export function TopSearchBar() {
   const { filters, nameInput, setNameInput, locationInput, setLocationInput, insuranceInput, setInsuranceInput, updateFilter, router } = useFilters();
   const [isFocused, setIsFocused] = useState<string | null>(null);
   const [specialtyInput, setSpecialtyInput] = useState(filters.specialty || 'all');
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+
+  // Load departments from API
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const depts = await getDepartments();
+        setDepartments(depts);
+      } catch (error) {
+        console.error('Error loading departments:', error);
+      }
+    };
+    loadDepartments();
+  }, []);
 
   // Sync specialtyInput with filters.specialty when URL params change
   useEffect(() => {
@@ -257,6 +266,20 @@ export function TopSearchBar() {
 export function SidebarFilters({ className }: { className?: string }) {
   const { filters, updateFilter, clearFilters } = useFilters();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Load departments from API
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const depts = await getDepartments();
+        setDepartments(depts);
+      } catch (error) {
+        console.error('Error loading departments:', error);
+      }
+    };
+    loadDepartments();
+  }, []);
 
   const hasActiveFilters =
     (filters.insurance && filters.insurance !== 'all') ||

@@ -69,8 +69,11 @@ export function ReferralsSection({ doctorId }: ReferralsSectionProps) {
   const [statusFilter, setStatusFilter] = useState<Referral['status'] | 'All'>('All');
 
   useEffect(() => {
-    const loaded = loadReferrals(doctorId);
-    setReferrals(loaded);
+    async function load() {
+      const loaded = await loadReferrals(doctorId);
+      setReferrals(loaded);
+    }
+    load();
   }, [doctorId]);
 
   useEffect(() => {

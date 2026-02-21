@@ -54,21 +54,24 @@ export function getActorFromSession(): Actor {
         loginAt: string;
       };
 
-      // If doctorId already in session, use it
-      if (session.doctorId) {
-        const doctor = doctors.find((d) => d.id === session.doctorId);
-        if (doctor) {
-          return {
-            kind: 'doctor',
-            doctorId: doctor.id,
-            email: session.email,
-            practiceId: doctor.practiceId,
-            roleInPractice: doctor.roleInPractice,
-          };
-        }
+      // Require role doctor so we don't treat applicants as doctors
+      if (session.role !== 'doctor') {
+        return { kind: 'public' };
       }
 
-      // Otherwise, resolve doctorId from email
+      // If doctorId already in session, use it (session is source of truth for API-created doctors)
+      if (session.doctorId) {
+        const doctor = doctors.find((d) => d.id === session.doctorId);
+        return {
+          kind: 'doctor',
+          doctorId: session.doctorId,
+          email: session.email,
+          practiceId: doctor?.practiceId,
+          roleInPractice: doctor?.roleInPractice,
+        };
+      }
+
+      // Otherwise, resolve doctorId from email (for legacy/static doctors)
       const normalizedEmail = normalizeEmail(session.email);
       if (normalizedEmail) {
         const doctor = doctors.find(

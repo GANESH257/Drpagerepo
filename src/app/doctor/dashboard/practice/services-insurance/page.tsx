@@ -32,33 +32,36 @@ export default function PracticeServicesInsurancePage() {
   const [newInsuranceSlug, setNewInsuranceSlug] = useState('');
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertPracticeAdmin(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Practice admin must have practiceId');
+    async function loadPractice() {
+      try {
+        const actor = getActorFromSession();
+        assertPracticeAdmin(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.practiceId) {
+          throw new PermissionDeniedError('Practice admin must have practiceId');
+        }
+        
+        const allPractices = await getAllPracticesForAdmin();
+        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
+        
+        if (!foundPractice) {
+          throw new Error('Practice not found');
+        }
+        
+        setPractice(foundPractice);
+        setServices(foundPractice.services || []);
+        setInsurance(foundPractice.insurance || []);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      
-      const allPractices = getAllPracticesForAdmin();
-      const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-      
-      if (!foundPractice) {
-        throw new Error('Practice not found');
-      }
-      
-      setPractice(foundPractice);
-      setServices(foundPractice.services || []);
-      setInsurance(foundPractice.insurance || []);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
-      setIsLoading(false);
     }
+    loadPractice();
   }, [router]);
 
   const handleSubmitServices = async () => {
@@ -71,7 +74,7 @@ export default function PracticeServicesInsurancePage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
-      submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_insurance_services_change_request',
         payload: {
           services,
@@ -100,7 +103,7 @@ export default function PracticeServicesInsurancePage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
-      submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_insurance_services_change_request',
         payload: {
           insurance,

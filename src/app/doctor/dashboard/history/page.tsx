@@ -41,6 +41,7 @@ export default function DoctorHistoryPage() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [timeline, setTimeline] = useState<ReferralHistoryRecord[]>([]);
   const [activeTab, setActiveTab] = useState<'sent' | 'received'>('received');
+  const [allDoctors, setAllDoctors] = useState<any[]>([]);
 
   // Default filters: last 30 days
   const defaultDateRange: DateRange = useMemo(() => {
@@ -56,50 +57,68 @@ export default function DoctorHistoryPage() {
   });
 
   // Get current doctor's practice for practice filter
-  const currentDoctor = useMemo(() => {
-    try {
-      const actor = getActorFromSession();
-      if (actor.kind === 'doctor' && actor.doctorId) {
-        return getAllDoctors().find((d) => d.id === actor.doctorId);
+  const [currentDoctor, setCurrentDoctor] = useState<any>(null);
+  
+  useEffect(() => {
+    async function loadCurrentDoctor() {
+      try {
+        const actor = getActorFromSession();
+        if (actor.kind === 'doctor' && actor.doctorId) {
+          const allDoctors = await getAllDoctors();
+          const doctor = allDoctors.find((d) => d.id === actor.doctorId);
+          setCurrentDoctor(doctor || null);
+        }
+      } catch {
+        setCurrentDoctor(null);
       }
-    } catch {
-      return null;
     }
-    return null;
+    loadCurrentDoctor();
   }, []);
 
-  const practices = useMemo(() => {
-    const practiceSet = new Set<string>();
-    [...referralsSent, ...referralsReceived].forEach((ref) => {
-      if (ref.fromPracticeId) practiceSet.add(ref.fromPracticeId);
-      if (ref.toPracticeId) practiceSet.add(ref.toPracticeId);
-    });
-    return Array.from(practiceSet)
-      .map((id) => getPracticeById(id))
-      .filter((p) => p !== null) as any[];
+  const [practices, setPractices] = useState<any[]>([]);
+  
+  useEffect(() => {
+    async function loadPractices() {
+      const practiceSet = new Set<string>();
+      [...referralsSent, ...referralsReceived].forEach((ref) => {
+        if (ref.fromPracticeId) practiceSet.add(ref.fromPracticeId);
+        if (ref.toPracticeId) practiceSet.add(ref.toPracticeId);
+      });
+      const practicePromises = Array.from(practiceSet).map((id) => getPracticeById(id));
+      const practiceResults = await Promise.all(practicePromises);
+      setPractices(practiceResults.filter((p) => p !== null) as any[]);
+    }
+    loadPractices();
   }, [referralsSent, referralsReceived]);
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertDoctor(actor);
+    async function loadData() {
+      try {
+        const actor = getActorFromSession();
+        assertDoctor(actor);
 
-      if (actor.kind !== 'doctor' || !actor.doctorId) {
-        throw new PermissionDeniedError('Must be a doctor');
-      }
+        if (actor.kind !== 'doctor' || !actor.doctorId) {
+          throw new PermissionDeniedError('Must be a doctor');
+        }
 
-      const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
-      setReferralsSent(referralsSent);
-      setReferralsReceived(referralsReceived);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
+        // Load doctors first
+        const doctors = await getAllDoctors();
+        setAllDoctors(doctors);
+
+        const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
+        setReferralsSent(referralsSent);
+        setReferralsReceived(referralsReceived);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
+    loadData();
   }, [router]);
 
   // Filter referrals based on active tab and filters
@@ -171,7 +190,7 @@ export default function DoctorHistoryPage() {
   };
 
   const getDoctorName = (doctorId: string): string => {
-    const doctor = getAllDoctors().find((d) => d.id === doctorId);
+    const doctor = allDoctors.find((d) => d.id === doctorId);
     return doctor?.fullName || doctorId;
   };
 

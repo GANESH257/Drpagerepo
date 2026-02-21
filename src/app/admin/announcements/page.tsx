@@ -37,7 +37,15 @@ export default function AdminAnnouncementsPage() {
     }, [searchParams, router]);
 
     useEffect(() => {
-        setAllDoctors(getAllDoctors());
+        async function loadDoctors() {
+            try {
+                const doctors = await getAllDoctors();
+                setAllDoctors(doctors);
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+            }
+        }
+        loadDoctors();
     }, []);
 
     const specialties = useMemo(() => {
@@ -49,10 +57,12 @@ export default function AdminAnnouncementsPage() {
     }, [allDoctors]);
 
     const filteredDoctors = useMemo(() => {
-        return allDoctors.filter(d =>
-            d.fullName.toLowerCase().includes(search.toLowerCase()) ||
-            d.specialty.toLowerCase().includes(search.toLowerCase())
-        );
+        const q = search.toLowerCase();
+        return allDoctors.filter(d => {
+            const name = (d.fullName ?? (d as any).full_name ?? '').toString().toLowerCase();
+            const specialty = (d.specialty ?? (d as any).specialties?.[0] ?? '').toString().toLowerCase();
+            return name.includes(q) || specialty.includes(q);
+        });
     }, [allDoctors, search]);
 
     const handleSend = async () => {
@@ -218,11 +228,11 @@ export default function AdminAnnouncementsPage() {
                                                     "h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0",
                                                     (isSelected && announcementType === 'group') ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
                                                 )}>
-                                                    {isSelected && announcementType === 'group' ? <CheckCircle2 className="h-4 w-4" /> : doc.fullName.charAt(0)}
+                                                    {isSelected && announcementType === 'group' ? <CheckCircle2 className="h-4 w-4" /> : (doc.fullName ?? (doc as any).full_name ?? '?').charAt(0)}
                                                 </div>
                                                 <div className="text-left overflow-hidden flex-1">
-                                                    <div className="font-medium text-sm truncate">{doc.fullName}</div>
-                                                    <div className="text-[10px] opacity-50 truncate">{doc.specialty}</div>
+                                                    <div className="font-medium text-sm truncate">{doc.fullName ?? (doc as any).full_name ?? '—'}</div>
+                                                    <div className="text-[10px] opacity-50 truncate">{doc.specialty ?? (doc as any).specialties?.[0] ?? '—'}</div>
                                                 </div>
                                             </button>
                                         );

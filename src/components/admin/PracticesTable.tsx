@@ -24,6 +24,7 @@ import { getDoctorsByPractice } from '@/lib/adminHelpers';
 
 export function PracticesTable() {
   const [practices, setPractices] = useState<Practice[]>([]);
+  const [practiceDoctorsMap, setPracticeDoctorsMap] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPractice, setEditingPractice] = useState<Practice | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -36,9 +37,23 @@ export function PracticesTable() {
     loadPractices();
   }, []);
 
-  const loadPractices = () => {
-    const allPractices = getAllPracticesForAdmin();
-    setPractices(allPractices);
+  const loadPractices = async () => {
+    try {
+      const allPractices = await getAllPracticesForAdmin();
+      setPractices(allPractices);
+      
+      // Load doctors for all practices
+      const doctorsMap: Record<string, any[]> = {};
+      await Promise.all(
+        allPractices.map(async (practice) => {
+          const doctors = await getDoctorsByPractice(practice.id);
+          doctorsMap[practice.id] = doctors;
+        })
+      );
+      setPracticeDoctorsMap(doctorsMap);
+    } catch (error) {
+      console.error('Error loading practices:', error);
+    }
   };
 
   const deletedIds = useMemo(() => {
@@ -165,7 +180,7 @@ export function PracticesTable() {
                   </tr>
                 ) : (
                   filteredPractices.map((practice) => {
-                    const doctors = getDoctorsByPractice(practice.id);
+                    const doctors = practiceDoctorsMap[practice.id] || [];
                     const isDeleted = deletedIds.includes(practice.id);
                     
                     return (

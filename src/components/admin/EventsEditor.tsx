@@ -28,16 +28,24 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  getGlobalMedicalEvents,
-  saveGlobalMedicalEvents,
-  resetGlobalMedicalEvents,
   getBoardMeetings,
   saveBoardMeetings,
   resetBoardMeetings,
   BoardMeetingsData,
 } from '@/lib/adminStorage';
-import { GlobalMedicalEvent } from '@/data/globalMedicalEvents';
 import { BoardMeeting } from '@/types';
+
+// GlobalMedicalEvent type (matching API format)
+interface GlobalMedicalEvent {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  isOnline: boolean;
+  description?: string;
+  url?: string;
+}
+import { getEvents, createEvent, updateEvent, deleteEvent, Event as ApiEvent } from '@/lib/api/events';
 
 export function EventsEditor() {
   const [activeTab, setActiveTab] = useState('global');
@@ -56,14 +64,39 @@ export function EventsEditor() {
   const [resetType, setResetType] = useState<'global' | 'board' | null>(null);
   const [globalFormData, setGlobalFormData] = useState<Partial<GlobalMedicalEvent>>({});
   const [boardFormData, setBoardFormData] = useState<Partial<BoardMeeting>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadEvents();
   }, []);
 
-  const loadEvents = () => {
-    setGlobalEvents(getGlobalMedicalEvents());
-    setBoardMeetings(getBoardMeetings());
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Load global events from API
+      const apiEvents = await getEvents();
+      // Transform API format to frontend format
+      const transformedEvents: GlobalMedicalEvent[] = apiEvents.map(e => ({
+        id: e.id,
+        title: e.title,
+        date: e.date,
+        location: e.location,
+        isOnline: e.is_online,
+        description: e.description,
+        url: e.url,
+      }));
+      setGlobalEvents(transformedEvents);
+      // Board meetings still use localStorage for now
+      setBoardMeetings(getBoardMeetings());
+    } catch (err) {
+      console.error('Error loading events:', err);
+      setError('Failed to load events');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Global Medical Events handlers
@@ -87,32 +120,39 @@ export function EventsEditor() {
     setIsGlobalDialogOpen(true);
   };
 
-  const handleSaveGlobalEvent = () => {
+  const handleSaveGlobalEvent = async () => {
     if (!globalFormData.id || !globalFormData.title || !globalFormData.date) return;
 
-    const eventData: GlobalMedicalEvent = {
-      id: globalFormData.id,
-      title: globalFormData.title,
-      date: globalFormData.date,
-      location: globalFormData.location || '',
-      isOnline: globalFormData.isOnline || false,
-      description: globalFormData.description || '',
-      url: globalFormData.url,
-    };
+    try {
+      setSaving(true);
+      setError(null);
 
-    if (editingGlobalEvent) {
-      const updated = globalEvents.map((e) => (e.id === editingGlobalEvent.id ? eventData : e));
-      setGlobalEvents(updated);
-      saveGlobalMedicalEvents(updated);
-    } else {
-      const updated = [...globalEvents, eventData];
-      setGlobalEvents(updated);
-      saveGlobalMedicalEvents(updated);
+      const eventData: ApiEvent = {
+        id: globalFormData.id,
+        title: globalFormData.title!,
+        date: globalFormData.date!,
+        location: globalFormData.location || '',
+        is_online: globalFormData.isOnline || false,
+        description: globalFormData.description,
+        url: globalFormData.url,
+      };
+
+      if (editingGlobalEvent) {
+        await updateEvent(editingGlobalEvent.id, eventData);
+      } else {
+        await createEvent(eventData);
+      }
+
+      await loadEvents(); // Reload from API
+      setIsGlobalDialogOpen(false);
+      setEditingGlobalEvent(null);
+      setGlobalFormData({});
+    } catch (err) {
+      console.error('Error saving event:', err);
+      setError('Failed to save event. Please try again.');
+    } finally {
+      setSaving(false);
     }
-
-    setIsGlobalDialogOpen(false);
-    setEditingGlobalEvent(null);
-    setGlobalFormData({});
   };
 
   const handleDeleteGlobalEvent = (event: GlobalMedicalEvent) => {
@@ -185,33 +225,40 @@ export function EventsEditor() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!itemToDelete) return;
 
-    if (itemToDelete.type === 'global') {
-      const updated = globalEvents.filter((e) => e.id !== itemToDelete.id);
-      setGlobalEvents(updated);
-      saveGlobalMedicalEvents(updated);
-    } else {
-      const updated = {
-        ...boardMeetings,
-        upcomingMeetings: boardMeetings.upcomingMeetings.filter((m) => m.id !== itemToDelete.id),
-      };
-      setBoardMeetings(updated);
-      saveBoardMeetings(updated);
-    }
+    try {
+      setSaving(true);
+      if (itemToDelete.type === 'global') {
+        await deleteEvent(itemToDelete.id);
+        await loadEvents(); // Reload from API
+      } else {
+        const updated = {
+          ...boardMeetings,
+          upcomingMeetings: boardMeetings.upcomingMeetings.filter((m) => m.id !== itemToDelete.id),
+        };
+        setBoardMeetings(updated);
+        saveBoardMeetings(updated);
+      }
 
-    setIsDeleteDialogOpen(false);
-    setItemToDelete(null);
+      setIsDeleteDialogOpen(false);
+      setItemToDelete(null);
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      alert('Failed to delete. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (resetType === 'global') {
-      resetGlobalMedicalEvents();
-      loadEvents();
+      // For global events, reset means reloading from API (which has defaults)
+      await loadEvents();
     } else if (resetType === 'board') {
       resetBoardMeetings();
-      loadEvents();
+      await loadEvents();
     }
     setIsResetDialogOpen(false);
     setResetType(null);
@@ -265,15 +312,24 @@ export function EventsEditor() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button onClick={() => { setResetType('global'); setIsResetDialogOpen(true); }} variant="outline">
-                Reset to Defaults
-              </Button>
-              <Button onClick={handleAddGlobalEvent} variant="gradient">
+              <Button onClick={handleAddGlobalEvent} variant="gradient" disabled={loading}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Event
               </Button>
             </div>
           </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600">{error}</p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading events...
+            </div>
+          )}
 
           <div className="space-y-3">
             {globalEvents.map((event) => (
@@ -479,9 +535,9 @@ export function EventsEditor() {
             <Button
               onClick={handleSaveGlobalEvent}
               variant="gradient"
-              disabled={!globalFormData.title || !globalFormData.date}
+              disabled={!globalFormData.title || !globalFormData.date || saving}
             >
-              Save Event
+              {saving ? 'Saving...' : 'Save Event'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -636,8 +692,9 @@ export function EventsEditor() {
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={saving}
             >
-              Delete
+              {saving ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

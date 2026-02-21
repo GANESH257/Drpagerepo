@@ -37,10 +37,11 @@ import { Doctor, Location, Insurance } from '@/types';
 import { Practice } from '@/types/practice';
 import { saveDoctorOverride } from '@/lib/memberStorage';
 import { resetPassword, setPassword } from '@/lib/passwordUtils';
-import { departments } from '@/data/departments';
+import { getDepartments } from '@/lib/api/departments';
 import { getAllPracticesForAdmin, assignPracticeAdminRole, getDoctorsByPractice } from '@/lib/adminHelpers';
 import { loadMembership } from '@/lib/membershipStorage';
-import { membershipPlans } from '@/data/membershipPlans';
+import { getMembershipPlans as getMembershipPlansAPI } from '@/lib/api/membership-plans';
+import { transformMembershipPlansFromAPI } from '@/lib/api/membership-plans-transform';
 import { Badge } from '@/components/ui/badge';
 
 interface MemberEditDialogProps {
@@ -60,11 +61,27 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
   const [practices, setPractices] = useState<Practice[]>([]);
   const [showRoleWarning, setShowRoleWarning] = useState(false);
   const [membership, setMembership] = useState<any>(null);
+  const [departmentsList, setDepartmentsList] = useState<any[]>([]);
+  const [membershipPlansList, setMembershipPlansList] = useState<any[]>([]);
 
   useEffect(() => {
     if (open) {
-      const allPractices = getAllPracticesForAdmin();
-      setPractices(allPractices);
+      async function loadData() {
+        try {
+          const [allPractices, allDepartments, apiPlans] = await Promise.all([
+            getAllPracticesForAdmin(),
+            getDepartments(),
+            getMembershipPlansAPI(),
+          ]);
+          setPractices(allPractices);
+          setDepartmentsList(allDepartments);
+          const transformedPlans = transformMembershipPlansFromAPI(apiPlans);
+          setMembershipPlansList(transformedPlans);
+        } catch (error) {
+          console.error('Error loading data:', error);
+        }
+      }
+      loadData();
       
       if (doctor) {
         setFormData({
@@ -100,15 +117,15 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
       // Handle Practice Admin role transfer if needed
       if (formData.practiceId && formData.roleInPractice === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
         // Check if practice already has a Practice Admin
-        const practiceDoctors = getDoctorsByPractice(formData.practiceId);
+        const practiceDoctors = await getDoctorsByPractice(formData.practiceId);
         const currentAdmin = practiceDoctors.find(d => d.roleInPractice === 'practice_admin' && d.id !== doctor.id);
         
         if (currentAdmin) {
           // Transfer role: demote old admin, promote new admin
-          assignPracticeAdminRole(formData.practiceId, doctor.id, currentAdmin.id);
+          await assignPracticeAdminRole(formData.practiceId, doctor.id, currentAdmin.id);
         } else {
           // Just assign the role
-          assignPracticeAdminRole(formData.practiceId, doctor.id);
+          await assignPracticeAdminRole(formData.practiceId, doctor.id);
         }
       } else if (formData.practiceId && formData.roleInPractice !== 'practice_admin' && doctor.roleInPractice === 'practice_admin') {
         // Removing Practice Admin role - need to handle this
@@ -466,7 +483,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Plan:</span>
                     <Badge variant="outline">
-                      {membershipPlans.find(p => p.id === membership.planId)?.name || membership.planId}
+                      {membershipPlansList.find(p => p.id === membership.planId)?.name || membership.planId}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">

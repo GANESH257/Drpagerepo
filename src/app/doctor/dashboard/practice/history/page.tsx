@@ -113,7 +113,20 @@ export default function PracticeAdminHistoryPage() {
   }, [allowedTypes]);
 
   // Get all doctors for selector
-  const doctors = useMemo(() => getAllDoctors(), []);
+  const [doctors, setDoctors] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadDoctors() {
+      try {
+        const allDoctors = await getAllDoctors();
+        setDoctors(allDoctors);
+      } catch (error) {
+        console.error('Error loading doctors:', error);
+        setDoctors([]);
+      }
+    }
+    loadDoctors();
+  }, []);
 
   useEffect(() => {
     try {
@@ -151,8 +164,14 @@ export default function PracticeAdminHistoryPage() {
   }, [router, allowedTypes]);
 
   // Normalize history records
-  const normalizedHistory = useMemo(() => {
-    return normalizeApprovalHistoryRecords(history, requests);
+  const [normalizedHistory, setNormalizedHistory] = useState<NormalizedApprovalHistoryRecord[]>([]);
+  
+  useEffect(() => {
+    async function normalize() {
+      const normalized = await normalizeApprovalHistoryRecords(history, requests);
+      setNormalizedHistory(normalized);
+    }
+    normalize();
   }, [history, requests]);
 
   // Filter history records (apply filters in priority order)
@@ -198,10 +217,10 @@ export default function PracticeAdminHistoryPage() {
     );
   }, [normalizedHistory, filters]);
 
-  const handleRowClick = (record: NormalizedApprovalHistoryRecord) => {
+  const handleRowClick = async (record: NormalizedApprovalHistoryRecord) => {
     setSelectedRecord(record);
     // Load timeline for this request
-    const requestTimeline = getApprovalTimeline(record.requestId);
+    const requestTimeline = await getApprovalTimeline(record.requestId);
     setTimeline(requestTimeline);
     setShowDrawer(true);
   };

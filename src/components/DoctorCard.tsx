@@ -23,6 +23,17 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
   const { isAuthenticated } = useDoctorSession();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [practice, setPractice] = useState<any>(null);
+  
+  useEffect(() => {
+    async function loadPractice() {
+      if (doctor.practiceId) {
+        const p = await getPracticeById(doctor.practiceId);
+        setPractice(p);
+      }
+    }
+    loadPractice();
+  }, [doctor.practiceId]);
 
   useEffect(() => {
     setIsLoggedIn(isAuthenticated());
@@ -130,22 +141,19 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
           </div>
           {showInstitution && (() => {
             // Prefer practice link if practiceId exists
-            if (doctor.practiceId) {
-              const practice = getPracticeById(doctor.practiceId);
-              if (practice) {
-                return (
-                  <div className="flex items-center text-sm text-brand-teal">
-                    <Building className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <Link 
-                      href={`/practices/${practice.slug}`}
-                      className="hover:underline font-medium"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {practice.name}
-                    </Link>
-                  </div>
-                );
-              }
+            if (doctor.practiceId && practice) {
+              return (
+                <div className="flex items-center text-sm text-brand-teal">
+                  <Building className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <Link 
+                    href={`/practices/${practice.slug}`}
+                    className="hover:underline font-medium"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {practice.name}
+                  </Link>
+                </div>
+              );
             }
             // Fallback to institution if no practice
             if (doctor.institutionId) {

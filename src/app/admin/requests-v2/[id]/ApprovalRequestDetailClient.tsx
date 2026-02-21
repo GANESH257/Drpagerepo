@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
 import { Practice } from '@/types/practice';
 import { Doctor } from '@/types';
-import { getApprovalRequests } from '@/lib/storage/approvalStorage';
-import { getApprovalTimeline, markUnderReview, decideAsAdmin } from '@/lib/services/approvalEngine';
+import { getApprovalRequest as getApprovalRequestAPI, approveRequest, rejectRequest, updateApprovalRequest } from '@/lib/api/approval-requests';
+import { transformApprovalRequestFromAPI } from '@/lib/api/approval-requests-transform';
+import { getApprovalTimeline } from '@/lib/services/approvalEngine';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError, NotFoundError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -22,10 +23,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { practices } from '@/data/practices';
-import { getCreatedPractices } from '@/lib/storage/practiceStorage';
-import { doctors } from '@/data/doctors';
-import { loadDoctorProfile } from '@/lib/doctorStorage';
+import { getAllPractices } from '@/lib/services/practiceDirectoryService';
+import { getAllDoctors } from '@/lib/memberStorage';
 
 interface ApprovalRequestDetailClientProps {
     requestId: string;
@@ -45,38 +44,45 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
     const [rejectReason, setRejectReason] = useState('');
     const [rejectNotes, setRejectNotes] = useState('');
     const [underReviewNotes, setUnderReviewNotes] = useState('');
+    const [practices, setPractices] = useState<Practice[]>([]);
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
 
     useEffect(() => {
-        try {
-            const actor = getActorFromSession();
-            assertAdmin(actor);
+        async function loadRequest() {
+            try {
+                const actor = getActorFromSession();
+                assertAdmin(actor);
 
-            // Load request
-            const requests = getApprovalRequests();
-            const foundRequest = requests.find(r => r.id === requestId);
+                // Load all data from API
+                const [apiRequest, allPractices, allDoctors] = await Promise.all([
+                    getApprovalRequestAPI(requestId),
+                    getAllPractices(),
+                    getAllDoctors(),
+                ]);
 
-            if (!foundRequest) {
-                throw new NotFoundError('ApprovalRequest', requestId);
+                const transformedRequest = transformApprovalRequestFromAPI(apiRequest);
+                setRequest(transformedRequest);
+                setPractices(allPractices);
+                setDoctors(allDoctors);
+
+                // Load timeline from API
+                const history = await getApprovalTimeline(requestId);
+                setTimeline(history);
+
+                setIsLoading(false);
+            } catch (error) {
+                if (error instanceof AuthRequiredError) {
+                    router.push('/admin/login');
+                } else if (error instanceof PermissionDeniedError) {
+                    router.push('/admin');
+                } else {
+                    toast.error('Approval request not found');
+                    router.push('/admin/requests-v2');
+                }
+                setIsLoading(false);
             }
-
-            setRequest(foundRequest);
-
-            // Load timeline
-            const history = getApprovalTimeline(requestId);
-            setTimeline(history);
-
-            setIsLoading(false);
-        } catch (error) {
-            if (error instanceof AuthRequiredError) {
-                router.push('/admin/login');
-            } else if (error instanceof PermissionDeniedError) {
-                router.push('/admin');
-            } else if (error instanceof NotFoundError) {
-                toast.error('Approval request not found');
-                router.push('/admin/requests-v2');
-            }
-            setIsLoading(false);
         }
+        loadRequest();
     }, [requestId, router]);
 
     const handleMarkUnderReview = async () => {
@@ -84,18 +90,34 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
 
         try {
             setIsSubmitting(true);
-            const actor = getActorFromSession();
-            markUnderReview(actor, request.id, underReviewNotes || undefined);
+            // Update approval request with notes (marks as under review)
+            await updateApprovalRequest(request.id, {
+                payload: request.payload,
+            });
             toast.success('Request marked as under review');
             setShowUnderReviewDialog(false);
             // Reload request
-            const requests = getApprovalRequests();
-            const updated = requests.find(r => r.id === request.id);
-            if (updated) {
-                setRequest(updated);
-                const history = getApprovalTimeline(request.id);
-                setTimeline(history);
+            const apiRequest = await getApprovalRequestAPI(request.id);
+            const updated = transformApprovalRequestFromAPI(apiRequest);
+            setRequest(updated);
+            // Update timeline
+            const history = [];
+            if (updated.submittedAt) {
+                history.push({
+                    action: 'submitted',
+                    at: updated.submittedAt,
+                    by: updated.submittedBy,
+                });
             }
+            if (updated.approvals.admin.decidedAt) {
+                history.push({
+                    action: updated.approvals.admin.status === 'approved' ? 'admin_approved' : 'admin_rejected',
+                    at: updated.approvals.admin.decidedAt,
+                    by: { role: 'admin' },
+                    notes: updated.approvals.admin.notes,
+                });
+            }
+            setTimeline(history);
         } catch (error: any) {
             toast.error(error.message || 'Failed to mark as under review');
         } finally {
@@ -108,22 +130,40 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
 
         try {
             setIsSubmitting(true);
-            const actor = getActorFromSession();
-            decideAsAdmin(actor, request.id, 'approve', {
-                notes: approveNotes || undefined,
+            // Get the updated request from the approval response
+            const approvedRequest = await approveRequest(request.id, approveNotes || undefined);
+            console.log('Approval response:', {
+                id: approvedRequest.id,
+                admin_status: approvedRequest.admin_status,
+                practice_admin_status: approvedRequest.practice_admin_status,
+                admin_reviewed_at: approvedRequest.admin_reviewed_at
             });
-            toast.success('Request approved');
+            
+            toast.success('Request approved successfully!');
             setShowApproveDialog(false);
             setApproveNotes('');
-            // Reload request
-            const requests = getApprovalRequests();
-            const updated = requests.find(r => r.id === request.id);
-            if (updated) {
-                setRequest(updated);
-                const history = getApprovalTimeline(request.id);
+            
+            // Transform the response immediately
+            const updated = transformApprovalRequestFromAPI(approvedRequest);
+            console.log('Transformed from approval response:', {
+                status: updated.status,
+                adminStatus: updated.approvals.admin.status,
+                practiceAdminStatus: updated.approvals.practiceAdmin?.status
+            });
+            
+            // Update state immediately with the response (this is the source of truth)
+            setRequest(updated);
+            
+            // Update timeline
+            try {
+                const history = await getApprovalTimeline(request.id);
                 setTimeline(history);
+            } catch (timelineError) {
+                console.error('Error loading timeline:', timelineError);
             }
+            
         } catch (error: any) {
+            console.error('Approval error:', error);
             toast.error(error.message || 'Failed to approve request');
         } finally {
             setIsSubmitting(false);
@@ -138,23 +178,17 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
 
         try {
             setIsSubmitting(true);
-            const actor = getActorFromSession();
-            decideAsAdmin(actor, request.id, 'reject', {
-                reason: rejectReason,
-                notes: rejectNotes || undefined,
-            });
+            await rejectRequest(request.id, rejectReason);
             toast.success('Request rejected');
             setShowRejectDialog(false);
             setRejectReason('');
             setRejectNotes('');
             // Reload request
-            const requests = getApprovalRequests();
-            const updated = requests.find(r => r.id === request.id);
-            if (updated) {
-                setRequest(updated);
-                const history = getApprovalTimeline(request.id);
-                setTimeline(history);
-            }
+            const apiRequest = await getApprovalRequestAPI(request.id);
+            const updated = transformApprovalRequestFromAPI(apiRequest);
+            setRequest(updated);
+            const history = await getApprovalTimeline(request.id);
+            setTimeline(history);
         } catch (error: any) {
             toast.error(error.message || 'Failed to reject request');
         } finally {
@@ -165,7 +199,7 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
     const getTargetDisplay = (): { type: 'practice' | 'doctor'; data: Practice | Doctor } | null => {
         if (!request) return null;
 
-        const allPractices = [...practices, ...getCreatedPractices()];
+        const allPractices = practices;
 
         if (request.target?.practiceId) {
             const practice = allPractices.find(p => p.id === request.target.practiceId);
@@ -173,7 +207,7 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
         }
 
         if (request.target?.doctorId) {
-            const doctor = loadDoctorProfile(request.target.doctorId) || doctors.find(d => d.id === request.target.doctorId);
+            const doctor = doctors.find(d => d.id === request.target.doctorId);
             return doctor ? { type: 'doctor', data: doctor } : null;
         }
 

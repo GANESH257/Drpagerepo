@@ -44,14 +44,22 @@ export function MembersTable() {
     loadPractices();
   }, []);
 
-  const loadDoctors = () => {
-    const allDoctors = getAllDoctors();
-    setDoctors(allDoctors);
+  const loadDoctors = async () => {
+    try {
+      const allDoctors = await getAllDoctors();
+      setDoctors(allDoctors);
+    } catch (error) {
+      console.error('Error loading doctors:', error);
+    }
   };
 
-  const loadPractices = () => {
-    const allPractices = getAllPracticesForAdmin();
-    setPractices(allPractices);
+  const loadPractices = async () => {
+    try {
+      const allPractices = await getAllPracticesForAdmin();
+      setPractices(allPractices);
+    } catch (error) {
+      console.error('Error loading practices:', error);
+    }
   };
 
   // Extract unique filter options from doctors

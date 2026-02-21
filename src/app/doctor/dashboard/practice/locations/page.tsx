@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Practice, PracticeLocation } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { geocodeZip } from '@/lib/services/geocodingService';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -62,7 +62,8 @@ function checkDuplicateAddress(
   normalizedAddress: string,
   excludeLocationId?: string
 ): { hasDuplicate: boolean; warning?: string } {
-  const duplicateAddress = practice.locations.some(loc => {
+  const locs = practice.locations ?? [];
+  const duplicateAddress = locs.some(loc => {
     if (excludeLocationId && loc.id === excludeLocationId) return false;
     const locAddress = normalizeAddress(loc.address, loc.city, loc.state, loc.zip);
     return locAddress === normalizedAddress;
@@ -88,7 +89,8 @@ function checkDuplicateCoords(
     return { hasDuplicate: false };
   }
   
-  const duplicateCoords = practice.locations.some(loc => {
+  const locs = practice.locations ?? [];
+  const duplicateCoords = locs.some(loc => {
     if (excludeLocationId && loc.id === excludeLocationId) return false;
     return loc.lat === lat && loc.lng === lng;
   });
@@ -230,30 +232,34 @@ export default function PracticeLocationsPage() {
   });
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertPracticeAdmin(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Practice admin must have practiceId');
+    async function loadPractice() {
+      try {
+        const actor = getActorFromSession();
+        assertPracticeAdmin(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.practiceId) {
+          throw new PermissionDeniedError('Practice admin must have practiceId');
+        }
+        
+        const allPractices = await getAllPracticesForAdmin();
+        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
+        
+        if (!foundPractice) {
+          throw new Error('Practice not found');
+        }
+        
+        setPractice(foundPractice);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      
-      const foundPractice = getPracticeById(actor.practiceId);
-      
-      if (!foundPractice) {
-        throw new Error('Practice not found');
-      }
-      
-      setPractice(foundPractice);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
-      setIsLoading(false);
     }
+    loadPractice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount - router is stable, no need in deps
 
@@ -422,7 +428,7 @@ export default function PracticeLocationsPage() {
     if (!practice) return;
     
     // Check if last location
-    if (practice.locations.length <= 1) {
+    if ((practice.locations ?? []).length <= 1) {
       toast.error('Cannot remove the last remaining location. Practice must retain at least one location.');
       return;
     }
@@ -436,7 +442,7 @@ export default function PracticeLocationsPage() {
     if (!practice || !removingLocationId) return;
     
     // Find location being removed
-    const removingLocation = practice.locations.find(loc => loc.id === removingLocationId);
+    const removingLocation = (practice.locations ?? []).find(loc => loc.id === removingLocationId);
     
     if (!removingLocation) {
       toast.error('Location not found');
@@ -446,7 +452,7 @@ export default function PracticeLocationsPage() {
     }
     
     // Validate last location rule again (safety check)
-    if (practice.locations.length <= 1) {
+    if ((practice.locations ?? []).length <= 1) {
       toast.error('Cannot remove the last remaining location. Practice must retain at least one location.');
       setShowRemoveDialog(false);
       setRemovingLocationId(null);
@@ -461,7 +467,7 @@ export default function PracticeLocationsPage() {
       }
       
       // Submit approval request
-      const request = submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_location_remove_request',
         payload: {
           practiceId: practice.id,
@@ -525,7 +531,7 @@ export default function PracticeLocationsPage() {
       };
       
       // Submit approval request
-      const request = submitApprovalRequest(actor, {
+      await submitApprovalRequest(actor, {
         type: 'practice_location_edit_request',
         payload: {
           practiceId: practice.id,
@@ -590,8 +596,8 @@ export default function PracticeLocationsPage() {
         directionsUrl: formData.directionsUrl.trim() || undefined,
       };
       
-      // submitApprovalRequest is synchronous and throws on error
-      const request = submitApprovalRequest(actor, {
+      // Submit approval request (async)
+      await submitApprovalRequest(actor, {
         type: 'practice_location_add_request',
         payload: {
           practiceId: practice.id,
@@ -915,8 +921,10 @@ export default function PracticeLocationsPage() {
                 <div className="text-xs text-gray-500 mb-1">Location ID:</div>
                 <div className="font-mono text-sm text-gray-700">{editingLocationId}</div>
                 {practice && (() => {
-                  const editingLocation = practice.locations.find(loc => loc.id === editingLocationId);
-                  const editingName = editingLocation?.name || (practice.locations.findIndex(loc => loc.id === editingLocationId) === 0 ? 'Main Office' : `Location ${practice.locations.findIndex(loc => loc.id === editingLocationId) + 1}`);
+                  const plocs = practice.locations ?? [];
+                  const editingLocation = plocs.find(loc => loc.id === editingLocationId);
+                  const editingIdx = plocs.findIndex(loc => loc.id === editingLocationId);
+                  const editingName = editingLocation?.name || (editingIdx === 0 ? 'Main Office' : `Location ${editingIdx + 1}`);
                   return (
                     <div className="text-xs text-gray-600 mt-1">
                       Currently editing: <span className="font-semibold">{editingName}</span>
@@ -1176,10 +1184,11 @@ export default function PracticeLocationsPage() {
 
           {/* Location Summary */}
           {removingLocationId && practice && (() => {
-            const removingLocation = practice.locations.find(loc => loc.id === removingLocationId);
+            const plocs = practice.locations ?? [];
+            const removingLocation = plocs.find(loc => loc.id === removingLocationId);
             if (!removingLocation) return null;
             
-            const locationIndex = practice.locations.findIndex(loc => loc.id === removingLocationId);
+            const locationIndex = plocs.findIndex(loc => loc.id === removingLocationId);
             const locationName = removingLocation.name || (locationIndex === 0 ? 'Main Office' : `Location ${locationIndex + 1}`);
             
             return (

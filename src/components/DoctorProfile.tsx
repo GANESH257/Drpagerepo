@@ -123,16 +123,17 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
 
   // Load contact card with visibility rules
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    async function loadVisibility() {
+      if (typeof window === 'undefined') return;
 
-    try {
-      const actor = getActorFromSession();
+      try {
+        const actor = getActorFromSession();
 
-      // Get practice (v2) or institution (v1 backward compatibility)
-      let practice = null;
-      if (doctor.practiceId) {
-        practice = getPracticeById(doctor.practiceId);
-      }
+        // Get practice (v2) or institution (v1 backward compatibility)
+        let practice = null;
+        if (doctor.practiceId) {
+          practice = await getPracticeById(doctor.practiceId);
+        }
 
       // If no practice found, try to get institution for backward compatibility
       if (!practice && doctor.institutionId) {
@@ -157,13 +158,15 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
         }
       }
 
-      if (practice) {
-        const card = getContactCard(actor, doctor, practice);
-        setContactCard(card);
+        if (practice) {
+          const card = getContactCard(actor, doctor, practice);
+          setContactCard(card);
+        }
+      } catch (error) {
+        console.error('Error loading contact card:', error);
       }
-    } catch (error) {
-      console.error('Error loading contact card:', error);
     }
+    loadVisibility();
   }, [doctor]);
 
   // Generate realistic doctor image URL - use consistent seed based on name
@@ -211,8 +214,18 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
     .slice(0, 2);
 
   // Compute practice once (reused in Practice and Institution sections)
-  const practice = useMemo(() => {
-    return doctor.practiceId ? getPracticeById(doctor.practiceId) : null;
+  const [practice, setPractice] = useState<any>(null);
+  
+  useEffect(() => {
+    async function loadPractice() {
+      if (doctor.practiceId) {
+        const p = await getPracticeById(doctor.practiceId);
+        setPractice(p);
+      } else {
+        setPractice(null);
+      }
+    }
+    loadPractice();
   }, [doctor.practiceId]);
 
   return (

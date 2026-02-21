@@ -39,7 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { OrgPolicy, getOrgPolicies, saveOrgPolicies, resetOrgPolicies } from '@/lib/adminStorage';
+import { OrgPolicy } from '@/lib/adminStorage';
+import { getPolicies, createPolicy, updatePolicy, deletePolicy, Policy } from '@/lib/api/policies';
 
 const POLICY_CATEGORIES = [
   'Governance',
@@ -54,17 +55,35 @@ export function PoliciesEditor() {
   const [editingPolicy, setEditingPolicy] = useState<OrgPolicy | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState<OrgPolicy | null>(null);
   const [formData, setFormData] = useState<Partial<OrgPolicy>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPolicies();
   }, []);
 
-  const loadPolicies = () => {
-    const loadedPolicies = getOrgPolicies();
-    setPolicies(loadedPolicies);
+  const loadPolicies = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiPolicies = await getPolicies();
+      // Transform API format to frontend format (they're the same, but ensure type safety)
+      const transformedPolicies: OrgPolicy[] = apiPolicies.map(p => ({
+        id: p.id,
+        category: p.category,
+        title: p.title,
+        body: p.body,
+      }));
+      setPolicies(transformedPolicies);
+    } catch (err) {
+      console.error('Error loading policies:', err);
+      setError('Failed to load policies');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const policiesByCategory = policies.reduce((acc, policy) => {
@@ -102,44 +121,52 @@ export function PoliciesEditor() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!policyToDelete) return;
-    const updated = policies.filter((p) => p.id !== policyToDelete.id);
-    setPolicies(updated);
-    saveOrgPolicies(updated);
-    setIsDeleteDialogOpen(false);
-    setPolicyToDelete(null);
+    try {
+      setSaving(true);
+      await deletePolicy(policyToDelete.id);
+      await loadPolicies(); // Reload from API
+      setIsDeleteDialogOpen(false);
+      setPolicyToDelete(null);
+    } catch (err) {
+      console.error('Error deleting policy:', err);
+      alert('Failed to delete policy. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.id || !formData.title || !formData.category || !formData.body) return;
 
-    const policyData: OrgPolicy = {
-      id: formData.id,
-      category: formData.category,
-      title: formData.title,
-      body: formData.body,
-    };
+    try {
+      setSaving(true);
+      setError(null);
 
-    if (editingPolicy) {
-      const updated = policies.map((p) => (p.id === editingPolicy.id ? policyData : p));
-      setPolicies(updated);
-      saveOrgPolicies(updated);
-    } else {
-      const updated = [...policies, policyData];
-      setPolicies(updated);
-      saveOrgPolicies(updated);
+      const policyData: Policy = {
+        id: formData.id,
+        category: formData.category!,
+        title: formData.title!,
+        body: formData.body!,
+      };
+
+      if (editingPolicy) {
+        await updatePolicy(editingPolicy.id, policyData);
+      } else {
+        await createPolicy(policyData);
+      }
+
+      await loadPolicies(); // Reload from API
+      setIsDialogOpen(false);
+      setEditingPolicy(null);
+      setFormData({});
+    } catch (err) {
+      console.error('Error saving policy:', err);
+      setError('Failed to save policy. Please try again.');
+    } finally {
+      setSaving(false);
     }
-
-    setIsDialogOpen(false);
-    setEditingPolicy(null);
-    setFormData({});
-  };
-
-  const handleReset = () => {
-    resetOrgPolicies();
-    loadPolicies();
-    setIsResetDialogOpen(false);
   };
 
   return (
@@ -154,15 +181,28 @@ export function PoliciesEditor() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => setIsResetDialogOpen(true)} variant="outline">
-              Reset to Defaults
-            </Button>
-            <Button onClick={handleAdd} variant="gradient">
+            <Button onClick={handleAdd} variant="gradient" disabled={loading}>
               <Plus className="mr-2 h-4 w-4" />
               Add Policy
             </Button>
           </div>
         </div>
+
+        {error && (
+          <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-red-600">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {loading && (
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-gray-600">Loading policies...</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Policies by Category */}
         <Accordion type="multiple" defaultValue={POLICY_CATEGORIES} className="space-y-4">
@@ -287,9 +327,9 @@ export function PoliciesEditor() {
             <Button
               onClick={handleSave}
               variant="gradient"
-              disabled={!formData.title || !formData.category || !formData.body}
+              disabled={!formData.title || !formData.category || !formData.body || saving}
             >
-              Save Policy
+              {saving ? 'Saving...' : 'Save Policy'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -309,30 +349,14 @@ export function PoliciesEditor() {
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={saving}
             >
-              Delete
+              {saving ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reset Confirmation */}
-      <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset to Defaults?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will clear all custom policy changes and restore the default policies. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset} className="bg-brand-teal hover:bg-brand-teal/90">
-              Reset to Defaults
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

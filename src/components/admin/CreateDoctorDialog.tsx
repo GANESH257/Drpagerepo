@@ -50,8 +50,15 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
 
   useEffect(() => {
     if (open) {
-      const allPractices = getAllPracticesForAdmin();
-      setPractices(allPractices);
+      async function loadPractices() {
+        try {
+          const allPractices = await getAllPracticesForAdmin();
+          setPractices(allPractices);
+        } catch (error) {
+          console.error('Error loading practices:', error);
+        }
+      }
+      loadPractices();
     }
   }, [open]);
 
@@ -69,7 +76,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
 
     setIsSaving(true);
     try {
-      const doctorId = createNewDoctor({
+      const doctorId = await createNewDoctor({
         firstName: formData.firstName,
         lastName: formData.lastName,
         credentials: formData.credentials,

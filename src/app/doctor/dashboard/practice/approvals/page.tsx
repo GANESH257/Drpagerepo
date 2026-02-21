@@ -22,25 +22,28 @@ export default function PracticeAdminApprovalsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertPracticeAdmin(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Practice admin must have practiceId');
+    async function loadRequests() {
+      try {
+        const actor = getActorFromSession();
+        assertPracticeAdmin(actor);
+        
+        if (actor.kind !== 'doctor' || !actor.practiceId) {
+          throw new PermissionDeniedError('Practice admin must have practiceId');
+        }
+        
+        const pending = await getPendingApprovalsForPracticeAdmin(actor.practiceId);
+        setRequests(pending);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+        }
+        setIsLoading(false);
       }
-      
-      const pending = getPendingApprovalsForPracticeAdmin(actor.practiceId);
-      setRequests(pending);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
-      setIsLoading(false);
     }
+    loadRequests();
   }, [router]);
 
   if (isLoading) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
@@ -12,7 +12,22 @@ interface GrowthTrendChartProps {
 }
 
 export function GrowthTrendChart({ requests }: GrowthTrendChartProps) {
-  const chartData = useMemo(() => getGrowthTrendData(requests), [requests]);
+  const [chartData, setChartData] = useState<GrowthData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getGrowthTrendData(requests);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error loading growth trend data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [requests]);
 
   return (
     <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -21,7 +36,11 @@ export function GrowthTrendChart({ requests }: GrowthTrendChartProps) {
         <TrendingUp className="h-4 w-4 text-gray-500" />
       </CardHeader>
       <CardContent>
-        {chartData.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <p>Loading growth data...</p>
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
             <p>No growth data available</p>
           </div>

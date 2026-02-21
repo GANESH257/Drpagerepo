@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { validateAdminCredentials, setAdminSession } from '@/lib/adminSession';
+import { setAdminSession } from '@/lib/adminSession';
+import { login } from '@/lib/api/auth';
 import { useDarkMode } from '@/lib/useDarkMode';
 
 export default function AdminLoginPage() {
@@ -34,21 +35,29 @@ export default function AdminLoginPage() {
       return;
     }
 
-    if (!validateAdminCredentials(email, password)) {
-      setError('Invalid email or password');
-      return;
-    }
-
     setIsSubmitting(true);
 
-    // Set session first
-    setAdminSession(email);
+    try {
+      // Call API to authenticate and get JWT token
+      const response = await login(email, password);
+      
+      // Store JWT token for API calls
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aip_doctor_token', response.token);
+        localStorage.setItem('aip_doctor_user', JSON.stringify(response.user));
+      }
 
-    // Small delay to ensure localStorage is written
-    await new Promise((resolve) => setTimeout(resolve, 100));
+      // Set admin session for UI checks
+      setAdminSession(email);
 
-    // Redirect to admin dashboard (use replace to avoid back button issues)
-    router.replace('/admin');
+      // Redirect to admin dashboard (use replace to avoid back button issues)
+      router.replace('/admin');
+    } catch (err) {
+      console.error('Login error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Invalid email or password';
+      setError(errorMessage);
+      setIsSubmitting(false);
+    }
   };
 
   return (

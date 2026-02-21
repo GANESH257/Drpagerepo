@@ -3,9 +3,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApprovalHistoryRecord, ApprovalRequest, ApprovalType, ApprovalStatus } from '@/types/approvals';
-import { getApprovalHistory } from '@/lib/storage/approvalStorage';
-import { getApprovalRequests } from '@/lib/storage/approvalStorage';
-import { getApprovalTimeline } from '@/lib/services/approvalEngine';
+import { getApprovalHistory as getApprovalHistoryAPI } from '@/lib/api/approval-requests';
+import { getApprovalRequests as getApprovalRequestsAPI } from '@/lib/api/approval-requests';
+import { transformApprovalRequestsFromAPI } from '@/lib/api/approval-requests-transform';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -63,33 +63,74 @@ export default function AdminApprovalHistoryPage() {
     doctorId: 'all',
   });
 
-  // Get all practices and doctors for selectors
-  const practices = useMemo(() => getAllPractices(), []);
-  const doctors = useMemo(() => getAllDoctors(), []);
+  const [practices, setPractices] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertAdmin(actor);
-      
-      const allHistory = getApprovalHistory();
-      const allRequests = getApprovalRequests();
-      setHistory(allHistory);
-      setRequests(allRequests);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/admin/login');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/admin');
+    async function loadData() {
+      try {
+        const actor = getActorFromSession();
+        assertAdmin(actor);
+        
+        // Load all data from API
+        const [allHistory, apiRequests, allPractices, allDoctors] = await Promise.all([
+          getApprovalHistoryAPI(),
+          getApprovalRequestsAPI(),
+          getAllPractices(),
+          getAllDoctors(),
+        ]);
+
+        // Transform approval requests
+        const transformedRequests = transformApprovalRequestsFromAPI(apiRequests);
+        
+        // Transform history records to match frontend format
+        const transformedHistory: ApprovalHistoryRecord[] = allHistory.map((h: any) => ({
+          id: h.id,
+          requestId: h.approval_request_id,
+          type: h.request_type as ApprovalType,
+          practiceId: h.practice_id,
+          doctorId: h.target_doctor_id,
+          action: h.action as any,
+          at: h.created_at,
+          by: {
+            role: (h.actor_type || h.performed_by_type) as 'admin' | 'practice_admin' | 'doctor' | 'public',
+            email: undefined,
+            doctorId: (h.actor_type || h.performed_by_type) === 'doctor' ? (h.actor_id || h.performed_by) : undefined,
+            practiceId: (h.actor_type || h.performed_by_type) === 'practice_admin' ? (h.actor_id || h.performed_by) : undefined,
+          },
+          reason: h.notes || undefined,
+          notes: h.notes || undefined,
+          snapshot: h.payload ? (typeof h.payload === 'string' ? JSON.parse(h.payload) : h.payload) : undefined,
+        }));
+
+        setHistory(transformedHistory);
+        setRequests(transformedRequests);
+        setPractices(allPractices);
+        setDoctors(allDoctors);
+        setIsLoading(false);
+      } catch (error) {
+        if (error instanceof AuthRequiredError) {
+          router.push('/admin/login');
+        } else if (error instanceof PermissionDeniedError) {
+          router.push('/admin');
+        } else {
+          console.error('Error loading approval history:', error);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
+    loadData();
   }, [router]);
 
   // Normalize history records
-  const normalizedHistory = useMemo(() => {
-    return normalizeApprovalHistoryRecords(history, requests);
+  const [normalizedHistory, setNormalizedHistory] = useState<NormalizedApprovalHistoryRecord[]>([]);
+  
+  useEffect(() => {
+    async function normalize() {
+      const normalized = await normalizeApprovalHistoryRecords(history, requests);
+      setNormalizedHistory(normalized);
+    }
+    normalize();
   }, [history, requests]);
 
   // Filter history records
@@ -142,8 +183,22 @@ export default function AdminApprovalHistoryPage() {
 
   const handleRowClick = (record: NormalizedApprovalHistoryRecord) => {
     setSelectedRecord(record);
-    // Load timeline for this request
-    const requestTimeline = getApprovalTimeline(record.requestId);
+    // Load timeline for this request from history records
+    const requestTimeline = history
+      .filter(h => h.requestId === record.requestId)
+      .map(h => ({
+        id: h.id,
+        requestId: h.requestId,
+        type: h.type,
+        practiceId: h.practiceId,
+        doctorId: h.doctorId,
+        action: h.action,
+        at: h.at,
+        by: h.by,
+        reason: h.reason,
+        notes: h.notes,
+        snapshot: h.snapshot,
+      }));
     setTimeline(requestTimeline);
     setShowDrawer(true);
   };

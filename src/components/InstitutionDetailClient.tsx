@@ -24,17 +24,20 @@ export function InstitutionDetailClient({ slug }: InstitutionDetailClientProps) 
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
-    const allDocs = getAllDoctors();
-    setAllDoctors(allDocs);
-    
-    const inst = getInstitutionBySlug(slug);
-    if (!inst) {
-      return;
+    async function loadData() {
+      const allDocs = await getAllDoctors();
+      setAllDoctors(allDocs);
+      
+      const inst = getInstitutionBySlug(slug);
+      if (!inst) {
+        return;
+      }
+      
+      setInstitution(inst);
+      const institutionDoctors = getInstitutionDoctors(inst.id, allDocs);
+      setDoctors(institutionDoctors);
     }
-    
-    setInstitution(inst);
-    const institutionDoctors = getInstitutionDoctors(inst.id, allDocs);
-    setDoctors(institutionDoctors);
+    loadData();
   }, [slug]);
 
   // Get unique specialties from doctors

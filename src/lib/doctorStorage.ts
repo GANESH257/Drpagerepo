@@ -1,11 +1,17 @@
-import { Doctor, AppointmentRequest, Referral } from '@/types';
-import { doctors } from '@/data/doctors';
+import { Doctor, AppointmentRequest, Referral, LegacyReferral } from '@/types';
+import { getDoctor as apiGetDoctor, updateDoctor as apiUpdateDoctor } from '@/lib/api/doctors';
+import { getAppointments, createAppointment, updateAppointment, AppointmentRequest as ApiAppointmentRequest } from '@/lib/api/appointments';
+import { getReferrals, createReferral, updateReferral, Referral as ApiReferral } from '@/lib/api/referrals';
+import { getToken } from '@/lib/api/config';
 
 /**
  * Find a doctor by email address
+ * @deprecated Use API to search doctors instead
  */
 export function findDoctorByEmail(email: string): Doctor | null {
-  return doctors.find((doctor) => doctor.email?.toLowerCase() === email.toLowerCase()) || null;
+  // This function is deprecated - use API search instead
+  // Keeping for backward compatibility during migration
+  return null;
 }
 
 /**
@@ -30,67 +36,89 @@ function getReferralsKey(doctorId: string): string {
 }
 
 /**
- * Load doctor profile from localStorage or return seed data
+ * Load doctor profile from API
+ * @deprecated Use getDoctor from @/lib/api/doctors directly
  */
-export function loadDoctorProfile(doctorId: string): Doctor | null {
-  if (typeof window === 'undefined') return null;
-
+export async function loadDoctorProfile(doctorId: string): Promise<Doctor | null> {
   try {
-    // First check localStorage
-    const stored = localStorage.getItem(getProfileKey(doctorId));
-    if (stored) {
-      return JSON.parse(stored) as Doctor;
-    }
-
-    // Fallback to seed data
-    const seedDoctor = doctors.find((d) => d.id === doctorId);
-    return seedDoctor || null;
+    const token = getToken();
+    const doctor = await apiGetDoctor(doctorId, token || undefined);
+    return doctor;
   } catch (error) {
     console.error('Error loading doctor profile:', error);
-    // Fallback to seed data on error
-    return doctors.find((d) => d.id === doctorId) || null;
+    return null;
   }
 }
 
 /**
- * Save doctor profile to localStorage
+ * Save doctor profile to API
+ * @deprecated Use updateDoctor from @/lib/api/doctors directly
  */
-export function saveDoctorProfile(doctorId: string, profile: Partial<Doctor>): void {
-  if (typeof window === 'undefined') return;
-
+export async function saveDoctorProfile(
+  doctorId: string,
+  profile: Partial<Doctor>
+): Promise<Doctor | null> {
   try {
-    // Load existing profile (from localStorage or seed)
-    const existing = loadDoctorProfile(doctorId);
-    if (!existing) {
-      console.error('Cannot save profile: doctor not found');
-      return;
+    const token = getToken();
+    if (!token) {
+      throw new Error('Authentication required');
     }
 
-    // Merge changes
-    const updated: Doctor = {
-      ...existing,
-      ...profile,
-    };
-
-    // Save to localStorage
-    localStorage.setItem(getProfileKey(doctorId), JSON.stringify(updated));
+    const updated = await apiUpdateDoctor(doctorId, profile, token);
+    
+    // Cache in localStorage for offline access
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(getProfileKey(doctorId), JSON.stringify(updated));
+    }
+    
+    return updated;
   } catch (error) {
     console.error('Error saving doctor profile:', error);
+    throw error;
   }
 }
 
 /**
- * Load appointment requests from localStorage
+ * Save doctor profile to API (new method)
  */
-export function loadAppointmentRequests(doctorId: string): AppointmentRequest[] {
-  if (typeof window === 'undefined') return [];
+export async function saveDoctorProfileToAPI(
+  doctorId: string,
+  profile: Partial<Doctor>
+): Promise<Doctor | null> {
+  return saveDoctorProfile(doctorId, profile);
+}
 
+/**
+ * Load doctor profile from API (new method)
+ */
+export async function loadDoctorProfileFromAPI(doctorId: string): Promise<Doctor | null> {
+  return loadDoctorProfile(doctorId);
+}
+
+/**
+ * Transform API appointment request to frontend format
+ */
+function transformAppointmentRequest(apiAppointment: ApiAppointmentRequest): AppointmentRequest {
+  return {
+    id: apiAppointment.id,
+    patientName: apiAppointment.patient_name,
+    requestedDate: apiAppointment.requested_date,
+    requestedTime: apiAppointment.requested_time,
+    reason: apiAppointment.reason || '',
+    insurance: apiAppointment.insurance || '',
+    status: apiAppointment.status as 'New' | 'Confirmed' | 'Completed' | 'Declined',
+    declinedNote: apiAppointment.declined_note,
+    createdAt: apiAppointment.created_at,
+  };
+}
+
+/**
+ * Load appointment requests from API
+ */
+export async function loadAppointmentRequests(doctorId: string): Promise<AppointmentRequest[]> {
   try {
-    const stored = localStorage.getItem(getRequestsKey(doctorId));
-    if (stored) {
-      return JSON.parse(stored) as AppointmentRequest[];
-    }
-    return [];
+    const apiAppointments = await getAppointments(doctorId);
+    return apiAppointments.map(transformAppointmentRequest);
   } catch (error) {
     console.error('Error loading appointment requests:', error);
     return [];
@@ -98,30 +126,66 @@ export function loadAppointmentRequests(doctorId: string): AppointmentRequest[] 
 }
 
 /**
- * Save appointment requests to localStorage
+ * Save appointment requests to API
+ * Note: This creates a new appointment. For updates, use updateAppointment directly.
  */
-export function saveAppointmentRequests(doctorId: string, requests: AppointmentRequest[]): void {
-  if (typeof window === 'undefined') return;
-
+export async function saveAppointmentRequests(
+  doctorId: string,
+  requests: AppointmentRequest[]
+): Promise<void> {
+  // This function signature doesn't match API well - appointments are created individually
+  // Keeping for backward compatibility but implementation may need adjustment
   try {
-    localStorage.setItem(getRequestsKey(doctorId), JSON.stringify(requests));
+    // Create new appointments that don't have IDs
+    for (const request of requests) {
+      if (!request.id) {
+        await createAppointment({
+          doctor_id: doctorId,
+          patient_name: request.patientName,
+          requested_date: request.requestedDate,
+          requested_time: request.requestedTime,
+          reason: request.reason,
+          insurance: request.insurance,
+        });
+      }
+    }
   } catch (error) {
     console.error('Error saving appointment requests:', error);
+    throw error;
   }
 }
 
 /**
- * Load referrals from localStorage
+ * Transform API referral to LegacyReferral format
  */
-export function loadReferrals(doctorId: string): Referral[] {
-  if (typeof window === 'undefined') return [];
+function transformReferral(apiReferral: ApiReferral): LegacyReferral {
+  // Map API status to LegacyReferral status
+  let status: 'New' | 'In Progress' | 'Closed' = 'New';
+  if (apiReferral.status === 'In Progress' || apiReferral.status === 'in_progress') {
+    status = 'In Progress';
+  } else if (apiReferral.status === 'Closed' || apiReferral.status === 'closed') {
+    status = 'Closed';
+  }
 
+  return {
+    id: apiReferral.id,
+    referringPhysicianName: apiReferral.from_doctor_name || 'Unknown',
+    referringPhysicianSpecialty: '', // Not available in API response
+    date: apiReferral.created_at,
+    patientInitials: apiReferral.patient_name_or_initials,
+    referralReason: apiReferral.condition_summary,
+    status,
+    createdAt: apiReferral.created_at,
+  };
+}
+
+/**
+ * Load referrals from API
+ */
+export async function loadReferrals(doctorId: string): Promise<Referral[]> {
   try {
-    const stored = localStorage.getItem(getReferralsKey(doctorId));
-    if (stored) {
-      return JSON.parse(stored) as Referral[];
-    }
-    return [];
+    const apiReferrals = await getReferrals(doctorId);
+    return apiReferrals.map(transformReferral);
   } catch (error) {
     console.error('Error loading referrals:', error);
     return [];
@@ -129,14 +193,25 @@ export function loadReferrals(doctorId: string): Referral[] {
 }
 
 /**
- * Save referrals to localStorage
+ * Save referrals to API
+ * Note: This creates a new referral. For updates, use updateReferral directly.
+ * Note: LegacyReferral format doesn't have all fields needed for API, so this may need adjustment
  */
-export function saveReferrals(doctorId: string, referrals: Referral[]): void {
-  if (typeof window === 'undefined') return;
-
+export async function saveReferrals(doctorId: string, referrals: Referral[]): Promise<void> {
+  // This function signature doesn't match API well - referrals are created individually
+  // Keeping for backward compatibility but implementation may need adjustment
   try {
-    localStorage.setItem(getReferralsKey(doctorId), JSON.stringify(referrals));
+    // Create new referrals that don't have IDs
+    // Note: LegacyReferral format is limited, so we use available fields
+    for (const referral of referrals) {
+      if (!referral.id) {
+        // LegacyReferral doesn't have to_doctor_id, so we can't create referrals this way
+        // This function may need to be updated to accept additional parameters
+        console.warn('Cannot create referral from LegacyReferral format - missing required fields');
+      }
+    }
   } catch (error) {
     console.error('Error saving referrals:', error);
+    throw error;
   }
 }

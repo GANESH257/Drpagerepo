@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Doctor } from '@/types';
-import { saveDoctorProfile, loadDoctorProfile } from '@/lib/doctorStorage';
+import { saveDoctorProfile, loadDoctorProfile, saveDoctorProfileToAPI } from '@/lib/doctorStorage';
 import { departments } from '@/data/departments';
 import { TagInput } from './TagInput';
 import { EditableList } from './EditableList';
@@ -55,11 +55,14 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
   useEffect(() => {
     // Load from localStorage if available
-    const saved = loadDoctorProfile(doctor.id);
-    if (saved) {
-      setDoctor(saved);
-      setOriginalDoctor(saved);
+    async function load() {
+      const saved = await loadDoctorProfile(doctor.id);
+      if (saved) {
+        setDoctor(saved);
+        setOriginalDoctor(saved);
+      }
     }
+    load();
   }, [doctor.id]);
 
   const validate = (): boolean => {
@@ -79,7 +82,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) {
       return;
     }
@@ -87,16 +90,36 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // Save to localStorage
-    saveDoctorProfile(doctor.id, doctor);
-
-    // Update parent if callback provided
-    onProfileUpdate?.(doctor);
-    setOriginalDoctor(doctor);
-
-    setIsSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    try {
+      // Try to save to API first (function checks for token internally)
+      const updated = await saveDoctorProfileToAPI(doctor.id, doctor);
+      if (updated) {
+        setDoctor(updated);
+        setOriginalDoctor(updated);
+        onProfileUpdate?.(updated);
+        setIsSaving(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        return;
+      }
+      
+      // Fallback to localStorage if API fails or no token
+      saveDoctorProfile(doctor.id, doctor);
+      onProfileUpdate?.(doctor);
+      setOriginalDoctor(doctor);
+      setIsSaving(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      // Fallback to localStorage on error
+      saveDoctorProfile(doctor.id, doctor);
+      onProfileUpdate?.(doctor);
+      setOriginalDoctor(doctor);
+      setIsSaving(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    }
   };
 
   const handleReset = () => {
@@ -207,7 +230,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
-                        value={doctor.firstName}
+                        value={doctor.firstName ?? ''}
                         onChange={(e) => {
                           updateField('firstName', e.target.value);
                           // Auto-update fullName
@@ -219,7 +242,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
-                        value={doctor.lastName}
+                        value={doctor.lastName ?? ''}
                         onChange={(e) => {
                           updateField('lastName', e.target.value);
                           // Auto-update fullName
@@ -235,7 +258,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </Label>
                     <Input
                       id="fullName"
-                      value={doctor.fullName}
+                      value={doctor.fullName ?? ''}
                       onChange={(e) => updateField('fullName', e.target.value)}
                       aria-invalid={!!errors.fullName}
                       aria-describedby={errors.fullName ? 'fullName-error' : undefined}
@@ -251,7 +274,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <div className="space-y-2">
                     <Label htmlFor="credentials">Credentials</Label>
                     <Select
-                      value={doctor.credentials}
+                      value={doctor.credentials ?? ''}
                       onValueChange={(value) => {
                         updateField('credentials', value);
                         // Auto-update fullName
@@ -277,7 +300,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       Primary Specialty <span className="text-destructive">*</span>
                     </Label>
                     <Select
-                      value={doctor.specialty}
+                      value={doctor.specialty ?? ''}
                       onValueChange={(value) => updateField('specialty', value)}
                     >
                       <SelectTrigger aria-invalid={!!errors.specialty} className={errors.specialty ? 'border-destructive' : ''}>
@@ -315,9 +338,10 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     <Label htmlFor="primaryLocationHours">Primary Location Office Hours</Label>
                     <Input
                       id="primaryLocationHours"
-                      value={doctor.locations[0]?.hours || ''}
+                      value={doctor.locations?.[0]?.hours || ''}
                       onChange={(e) => {
-                        const updatedLocations = [...doctor.locations];
+                        const base = doctor.locations ?? [];
+                        const updatedLocations = [...base];
                         if (updatedLocations.length === 0) {
                           // Create a default primary location if none exists
                           updatedLocations.push({
@@ -360,7 +384,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </Label>
                     <Textarea
                       id="bio"
-                      value={doctor.bio}
+                      value={doctor.bio ?? ''}
                       onChange={(e) => updateField('bio', e.target.value)}
                       placeholder="A brief professional biography (2-3 sentences)"
                       rows={4}

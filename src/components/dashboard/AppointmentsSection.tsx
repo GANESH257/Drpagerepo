@@ -88,8 +88,11 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
   const [isDeclineDialogOpen, setIsDeclineDialogOpen] = useState(false);
 
   useEffect(() => {
-    const loaded = loadAppointmentRequests(doctorId);
-    setRequests(loaded);
+    async function load() {
+      const loaded = await loadAppointmentRequests(doctorId);
+      setRequests(loaded);
+    }
+    load();
   }, [doctorId]);
 
   useEffect(() => {

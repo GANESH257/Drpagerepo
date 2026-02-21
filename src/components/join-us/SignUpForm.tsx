@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { saveJoinEmail } from '@/lib/joinRequestStorage';
+import { signup } from '@/lib/api/auth';
 
 interface SignUpFormProps {
   onSuccess?: () => void;
@@ -27,6 +28,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [termsError, setTermsError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generalError, setGeneralError] = useState('');
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,18 +87,40 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
     }
 
     setTermsError('');
+    setGeneralError('');
 
     setIsSubmitting(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Store email for application flow (no auto-login)
-    saveJoinEmail(email);
-    
-    // Redirect to application form
-    onSuccess?.();
-    router.push('/join-us/application');
+    try {
+      // Extract full name from email (or use email as fallback)
+      // In a real scenario, you might want to add a fullName field to the form
+      const fullName = email.split('@')[0] || email;
+      
+      // Call API signup endpoint
+      await signup(email, password, fullName);
+      
+      // Store email and password temporarily for silent login during submission
+      // Password is cleared after approval request is submitted
+      saveJoinEmail(email);
+      if (typeof window !== 'undefined') {
+        // Store password temporarily (will be cleared after submission)
+        sessionStorage.setItem('aip_temp_password', password);
+      }
+      
+      // Redirect to application form
+      onSuccess?.();
+      router.push('/join-us/application');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
+      
+      // Handle specific error cases
+      if (errorMessage.includes('already registered') || errorMessage.includes('Email already')) {
+        setGeneralError('This email is already registered. Please sign in instead.');
+      } else {
+        setGeneralError(errorMessage || 'An error occurred during signup. Please try again.');
+      }
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -260,6 +284,17 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
           </p>
         )}
       </div>
+
+      {/* General Error */}
+      {generalError && (
+        <div
+          className="text-sm text-destructive bg-destructive/10 p-3 rounded-md"
+          role="alert"
+          aria-live="polite"
+        >
+          {generalError}
+        </div>
+      )}
 
       {/* Submit Button */}
       <Button

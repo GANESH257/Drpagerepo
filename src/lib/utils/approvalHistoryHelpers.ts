@@ -38,21 +38,21 @@ export interface NormalizedApprovalHistoryRecord {
  * @param record History record to normalize
  * @param request Optional approval request for additional context (payload snapshot)
  */
-export function normalizeApprovalHistoryRecord(
+export async function normalizeApprovalHistoryRecord(
   record: ApprovalHistoryRecord,
   request?: ApprovalRequest
-): NormalizedApprovalHistoryRecord {
+): Promise<NormalizedApprovalHistoryRecord> {
   // Derive status from action
   const status = deriveStatusFromAction(record.action);
 
   // Lookup practice name
-  const practiceName = record.practiceId
-    ? getPracticeById(record.practiceId)?.name
-    : undefined;
+  const practice = record.practiceId ? await getPracticeById(record.practiceId) : null;
+  const practiceName = practice?.name;
 
   // Lookup doctor name
+  const allDoctors = await getAllDoctors();
   const doctorName = record.doctorId
-    ? getAllDoctors().find((d: any) => d.id === record.doctorId)?.fullName
+    ? allDoctors.find((d: any) => d.id === record.doctorId)?.fullName
     : undefined;
 
   // Get actor info
@@ -92,16 +92,19 @@ export function normalizeApprovalHistoryRecord(
 /**
  * Normalize multiple approval history records
  */
-export function normalizeApprovalHistoryRecords(
+export async function normalizeApprovalHistoryRecords(
   records: ApprovalHistoryRecord[],
   requests?: ApprovalRequest[]
-): NormalizedApprovalHistoryRecord[] {
+): Promise<NormalizedApprovalHistoryRecord[]> {
   const requestMap = requests
     ? new Map(requests.map((r) => [r.id, r]))
     : undefined;
 
-  return records.map((record) => {
-    const request = requestMap?.get(record.requestId);
-    return normalizeApprovalHistoryRecord(record, request);
-  });
+  const normalized = await Promise.all(
+    records.map(async (record) => {
+      const request = requestMap?.get(record.requestId);
+      return await normalizeApprovalHistoryRecord(record, request);
+    })
+  );
+  return normalized;
 }

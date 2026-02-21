@@ -30,9 +30,9 @@ export interface SearchResults {
 /**
  * Search institutions by filters
  */
-export function searchInstitutions(filters: InstitutionSearchFilters): SearchResults {
+export async function searchInstitutions(filters: InstitutionSearchFilters): Promise<SearchResults> {
   const allInstitutions = getAllInstitutions();
-  const allDoctors = getAllDoctors();
+  const allDoctors = await getAllDoctors();
 
   let results: InstitutionSearchResult[] = [];
 
@@ -254,26 +254,27 @@ export function searchInstitutions(filters: InstitutionSearchFilters): SearchRes
 /**
  * Search institutions by radius
  */
-export function searchInstitutionsByRadius(
+export async function searchInstitutionsByRadius(
   zip: string | undefined,
   radiusMiles: number,
   userLat?: number,
   userLng?: number
-): InstitutionSearchResult[] {
-  return searchInstitutions({
+): Promise<InstitutionSearchResult[]> {
+  const results = await searchInstitutions({
     radiusMiles,
     zip,
     userLat,
     userLng,
     sort: 'distance',
-  }).institutions;
+  });
+  return results.institutions;
 }
 
 /**
  * Search institutions by name (also searches doctor names)
  */
-export function searchInstitutionsByName(query: string): SearchResults {
-  return searchInstitutions({
+export async function searchInstitutionsByName(query: string): Promise<SearchResults> {
+  return await searchInstitutions({
     name: query,
     sort: 'name',
   });
@@ -282,20 +283,20 @@ export function searchInstitutionsByName(query: string): SearchResults {
 /**
  * Get institutions within radius of a ZIP code
  */
-export function getInstitutionsWithinRadius(
+export async function getInstitutionsWithinRadius(
   zip: string,
   radiusMiles: number
-): InstitutionSearchResult[] {
-  return searchInstitutionsByRadius(zip, radiusMiles);
+): Promise<InstitutionSearchResult[]> {
+  return await searchInstitutionsByRadius(zip, radiusMiles);
 }
 
 /**
  * Get institutions within radius of user location
  */
-export function getInstitutionsNearUser(
+export async function getInstitutionsNearUser(
   userLat: number,
   userLng: number,
   radiusMiles: number
-): InstitutionSearchResult[] {
-  return searchInstitutionsByRadius(undefined, radiusMiles, userLat, userLng);
+): Promise<InstitutionSearchResult[]> {
+  return await searchInstitutionsByRadius(undefined, radiusMiles, userLat, userLng);
 }

@@ -23,10 +23,13 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
   const [referrals, setReferrals] = useState<Referral[]>([]);
 
   useEffect(() => {
-    const requests = loadAppointmentRequests(doctor.id);
-    const refs = loadReferrals(doctor.id);
-    setAppointmentRequests(requests);
-    setReferrals(refs);
+    async function load() {
+      const requests = await loadAppointmentRequests(doctor.id);
+      const refs = await loadReferrals(doctor.id);
+      setAppointmentRequests(requests);
+      setReferrals(refs);
+    }
+    load();
   }, [doctor.id]);
 
   // Calculate profile completion percentage
@@ -40,9 +43,9 @@ export function OverviewSection({ doctor }: OverviewSectionProps) {
       doctor.credentials,
       doctor.medicalSchool,
       doctor.residency,
-      doctor.locations.length > 0,
-      doctor.insurance.length > 0,
-      doctor.boardCertifications && doctor.boardCertifications.length > 0,
+      (doctor.locations?.length ?? 0) > 0,
+      (doctor.insurance?.length ?? 0) > 0,
+      doctor.boardCertifications && (doctor.boardCertifications?.length ?? 0) > 0,
     ];
     const filledFields = fields.filter(Boolean).length;
     return Math.round((filledFields / fields.length) * 100);

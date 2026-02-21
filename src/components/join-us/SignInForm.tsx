@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useDoctorSession } from '@/lib/useDoctorSession';
-import { findDoctorByEmail } from '@/lib/doctorStorage';
-import { checkPassword } from '@/lib/passwordUtils';
+import { login } from '@/lib/api/auth';
 import {
   Dialog,
   DialogContent,
@@ -26,7 +25,7 @@ interface SignInFormProps {
 
 export function SignInForm({ onSuccess }: SignInFormProps) {
   const router = useRouter();
-  const { setSession } = useDoctorSession();
+  const { setToken } = useDoctorSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -73,30 +72,35 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
     setIsSubmitting(true);
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Check if email matches a doctor record (for demo purposes)
-    const doctor = findDoctorByEmail(email);
-
-    if (!doctor) {
-      setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Check password (first check hashed passwords, then fallback to default)
-    const isValidPassword = await checkPassword(email, password);
-
-    if (isValidPassword) {
-      // Only allow sign-in for existing approved doctors (demo mode)
-      const emailToUse = doctor.email || email;
-      setSession(emailToUse, doctor.id);
-      onSuccess?.();
-      router.push('/doctor/dashboard');
-    } else {
-      // Show message about approval requirement
-      setGeneralError('Invalid email or password. Please check your credentials and try again.');
+    try {
+      // Call API login endpoint
+      const response = await login(email, password);
+      
+      // Store token and user info
+      setToken(response.token, response.user);
+      
+      // Redirect based on role
+      if (response.user.role === 'doctor' && response.user.doctorId) {
+        onSuccess?.();
+        router.push('/doctor/dashboard');
+      } else if (response.user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        // Applicant or other roles
+        setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      
+      // Handle specific error cases
+      if (errorMessage.includes('Invalid credentials')) {
+        setGeneralError('Invalid email or password. Please check your credentials and try again.');
+      } else if (errorMessage.includes('not active')) {
+        setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');
+      } else {
+        setGeneralError(errorMessage || 'An error occurred during login. Please try again.');
+      }
       setIsSubmitting(false);
     }
   };

@@ -28,7 +28,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { MembershipPlan } from '@/types';
-import { getMembershipPlans, saveMembershipPlans, resetMembershipPlans } from '@/lib/adminStorage';
+import { 
+  getMembershipPlans as getMembershipPlansAPI,
+  createMembershipPlan,
+  updateMembershipPlan,
+  deleteMembershipPlan,
+} from '@/lib/api/membership-plans';
+import { 
+  transformMembershipPlansFromAPI,
+  transformMembershipPlanToAPI,
+} from '@/lib/api/membership-plans-transform';
 import { Check, X } from 'lucide-react';
 
 export function PlansEditor() {
@@ -36,17 +45,29 @@ export function PlansEditor() {
   const [editingPlan, setEditingPlan] = useState<MembershipPlan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<MembershipPlan | null>(null);
   const [formData, setFormData] = useState<Partial<MembershipPlan>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPlans();
   }, []);
 
-  const loadPlans = () => {
-    const loadedPlans = getMembershipPlans();
-    setPlans(loadedPlans);
+  const loadPlans = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const apiPlans = await getMembershipPlansAPI();
+      const transformedPlans = transformMembershipPlansFromAPI(apiPlans);
+      setPlans(transformedPlans);
+    } catch (err) {
+      console.error('Error loading membership plans:', err);
+      setError('Failed to load membership plans');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (plan: MembershipPlan) => {
@@ -84,48 +105,72 @@ export function PlansEditor() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!planToDelete) return;
-    const updated = plans.filter((p) => p.id !== planToDelete.id);
-    setPlans(updated);
-    saveMembershipPlans(updated);
-    setIsDeleteDialogOpen(false);
-    setPlanToDelete(null);
+    try {
+      setSaving(true);
+      await deleteMembershipPlan(planToDelete.id);
+      await loadPlans(); // Reload from API
+      setIsDeleteDialogOpen(false);
+      setPlanToDelete(null);
+    } catch (err) {
+      console.error('Error deleting membership plan:', err);
+      alert('Failed to delete membership plan. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.id || !formData.name) return;
 
-    const planData: MembershipPlan = {
-      id: formData.id,
-      name: formData.name,
-      badge: formData.badge,
-      pricing: formData.pricing || { monthly: 0, annual: 0 },
-      description: formData.description,
-      features: formData.features || [],
-      ctaLabel: formData.ctaLabel || 'Choose Plan',
-      ctaHref: formData.ctaHref || '/join-us',
-    };
+    try {
+      setSaving(true);
+      setError(null);
 
-    if (editingPlan) {
-      const updated = plans.map((p) => (p.id === editingPlan.id ? planData : p));
-      setPlans(updated);
-      saveMembershipPlans(updated);
-    } else {
-      const updated = [...plans, planData];
-      setPlans(updated);
-      saveMembershipPlans(updated);
+      const planData: MembershipPlan = {
+        id: formData.id,
+        name: formData.name,
+        badge: formData.badge,
+        pricing: formData.pricing || { monthly: 0, annual: 0 },
+        description: formData.description,
+        features: formData.features || [],
+        ctaLabel: formData.ctaLabel || 'Choose Plan',
+        ctaHref: formData.ctaHref || '/join-us',
+      };
+
+      const apiData = transformMembershipPlanToAPI(planData);
+
+      // Ensure features is an array before sending
+      if (apiData.features && !Array.isArray(apiData.features)) {
+        apiData.features = [apiData.features];
+      }
+
+      if (editingPlan) {
+        await updateMembershipPlan(editingPlan.id, apiData);
+      } else {
+        // For create, ensure we have all required fields
+        if (!apiData.id || !apiData.name || apiData.monthly_price === undefined || apiData.annual_price === undefined) {
+          throw new Error('Please fill in all required fields (ID, Name, Monthly Price, Annual Price)');
+        }
+        await createMembershipPlan({
+          ...apiData,
+          active: true,
+        } as any);
+      }
+
+      await loadPlans(); // Reload from API
+      setIsDialogOpen(false);
+      setEditingPlan(null);
+      setFormData({});
+      setError(null);
+    } catch (err) {
+      console.error('Error saving membership plan:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save membership plan. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setSaving(false);
     }
-
-    setIsDialogOpen(false);
-    setEditingPlan(null);
-    setFormData({});
-  };
-
-  const handleReset = () => {
-    resetMembershipPlans();
-    loadPlans();
-    setIsResetDialogOpen(false);
   };
 
   const addFeature = () => {
@@ -158,15 +203,28 @@ export function PlansEditor() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => setIsResetDialogOpen(true)} variant="outline">
-              Reset to Defaults
-            </Button>
-            <Button onClick={handleAdd} variant="gradient">
+            <Button onClick={handleAdd} variant="gradient" disabled={loading}>
               <Plus className="mr-2 h-4 w-4" />
               Add New Plan
             </Button>
           </div>
         </div>
+
+        {error && (
+          <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-red-600">{error}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {loading && (
+          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <CardContent className="pt-6">
+              <p className="text-gray-600">Loading membership plans...</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Plans Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -203,18 +261,26 @@ export function PlansEditor() {
                     <div className="text-2xl font-bold">{annualPrice}/yr</div>
                   </div>
                   <div>
-                    <div className="text-sm font-medium mb-2">Features ({plan.features.length})</div>
+                    <div className="text-sm font-medium mb-2">
+                      Features ({Array.isArray(plan.features) ? plan.features.length : 0})
+                    </div>
                     <ul className="space-y-1 text-sm">
-                      {plan.features.slice(0, 3).map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <Check className="h-4 w-4 text-brand-teal shrink-0 mt-0.5" />
-                          <span className="text-gray-700">{feature}</span>
-                        </li>
-                      ))}
-                      {plan.features.length > 3 && (
-                        <li className="text-muted-foreground">
-                          +{plan.features.length - 3} more
-                        </li>
+                      {Array.isArray(plan.features) && plan.features.length > 0 ? (
+                        <>
+                          {plan.features.slice(0, 3).map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <Check className="h-4 w-4 text-brand-teal shrink-0 mt-0.5" />
+                              <span className="text-gray-700">{feature}</span>
+                            </li>
+                          ))}
+                          {plan.features.length > 3 && (
+                            <li className="text-muted-foreground">
+                              +{plan.features.length - 3} more
+                            </li>
+                          )}
+                        </>
+                      ) : (
+                        <li className="text-muted-foreground text-sm">No features listed</li>
                       )}
                     </ul>
                   </div>
@@ -395,30 +461,14 @@ export function PlansEditor() {
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={saving}
             >
-              Delete
+              {saving ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Reset Confirmation */}
-      <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reset to Defaults?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will clear all custom plan changes and restore the default plans. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset} className="bg-brand-teal hover:bg-brand-teal/90">
-              Reset to Defaults
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
