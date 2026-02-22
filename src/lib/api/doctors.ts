@@ -102,6 +102,22 @@ export async function getDoctor(id: string, token?: string): Promise<Doctor> {
 }
 
 /**
+ * Get single doctor by slug (public profile; no auth required)
+ */
+export async function getDoctorBySlug(slug: string, token?: string): Promise<Doctor> {
+  try {
+    const response = await apiClient.get<any>(`/api/doctors/slug/${encodeURIComponent(slug)}`, token);
+    return normalizeDoctorFromAPI(response);
+  } catch (error) {
+    const apiError = error as ApiError;
+    if (apiError.status === 404) {
+      throw new Error('Doctor not found');
+    }
+    throw new Error(apiError.error || 'Failed to fetch doctor');
+  }
+}
+
+/**
  * Update doctor profile (requires authentication)
  */
 export async function updateDoctor(

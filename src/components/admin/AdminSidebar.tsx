@@ -13,7 +13,8 @@ import {
   Send,
   MessageSquare,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquareText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -73,6 +74,12 @@ const navItems: NavItem[] = [
     href: '/admin/referrals',
     icon: Send,
     description: 'View all referrals system-wide',
+  },
+  {
+    label: 'Community',
+    href: '/admin/community',
+    icon: MessageSquareText,
+    description: 'Questions and discussion with the network',
   },
   {
     label: 'Messages',

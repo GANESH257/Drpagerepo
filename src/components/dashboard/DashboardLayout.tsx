@@ -33,6 +33,7 @@ import {
   FileCheck,
   Settings,
   History,
+  MessageSquare,
 } from 'lucide-react';
 
 // Base nav items for all doctors
@@ -78,6 +79,12 @@ const baseDoctorNavItems = [
     href: '/doctor/dashboard/referrals',
     icon: Users,
     description: 'Track referrals from other physicians in the network',
+  },
+  {
+    label: 'Community',
+    href: '/doctor/dashboard/community',
+    icon: MessageSquare,
+    description: 'Ask questions and discuss with the network',
   },
   {
     label: 'Announcements',

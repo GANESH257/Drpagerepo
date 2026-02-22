@@ -1,9 +1,7 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image';
 import { doctors } from '@/data/doctors';
 import { DoctorProfile } from '@/components/DoctorProfile';
-import { Doctor } from '@/types';
+import { getDoctorBySlug } from '@/lib/api/doctors';
 
 export function generateStaticParams() {
   return doctors.map((doctor) => ({
@@ -19,10 +17,14 @@ interface PageProps {
 
 export default async function DoctorProfilePage({ params }: PageProps) {
   const { slug } = await params;
-  const doctor = doctors.find((d) => d.slug === slug);
+  let doctor = doctors.find((d) => d.slug === slug);
 
   if (!doctor) {
-    notFound();
+    try {
+      doctor = await getDoctorBySlug(slug);
+    } catch {
+      notFound();
+    }
   }
 
   return <DoctorProfile doctor={doctor} />;

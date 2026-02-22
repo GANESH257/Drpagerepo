@@ -18,6 +18,7 @@ import messageRoutes from './routes/messages';
 import notificationRoutes from './routes/notifications';
 import policyRoutes from './routes/policies';
 import eventRoutes from './routes/events';
+import communityRoutes from './routes/community';
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/community', communityRoutes);
 
 // Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

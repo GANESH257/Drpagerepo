@@ -121,7 +121,29 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/doctors/:id - Get single doctor
+// GET /api/doctors/slug/:slug - Get single doctor by slug (must be before /:id)
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT d.*, p.name as practice_name
+       FROM doctors d
+       LEFT JOIN practices p ON d.practice_id = p.id
+       WHERE d.slug = $1`,
+      [req.params.slug]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching doctor by slug:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/doctors/:id - Get single doctor by id
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(

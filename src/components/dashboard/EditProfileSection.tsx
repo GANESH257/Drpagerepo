@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Save, RotateCcw, Info, Upload } from 'lucide-react';
+import { Save, RotateCcw, Info, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Doctor } from '@/types';
+import { cn } from '@/lib/utils';
 import { saveDoctorProfile, loadDoctorProfile, saveDoctorProfileToAPI } from '@/lib/doctorStorage';
 import { departments } from '@/data/departments';
 import { TagInput } from './TagInput';
@@ -52,6 +53,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [originalDoctor, setOriginalDoctor] = useState<Doctor>(initialDoctor);
+  const [tipsCollapsed, setTipsCollapsed] = useState(false);
 
   useEffect(() => {
     // Load from localStorage if available
@@ -176,17 +178,29 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <Accordion type="multiple" defaultValue={['basic', 'bio', 'credentials', 'status']} className="space-y-4">
-            {/* Basic Info */}
-            <AccordionItem value="basic" className="card-vibrant rounded-lg px-4">
-              <AccordionTrigger>
-                <CardTitle className="text-lg">Basic Information</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-4">
+      <div className={cn(
+        'grid gap-6 grid-cols-1 transition-all duration-200',
+        tipsCollapsed ? 'lg:grid-cols-[1fr_3rem]' : 'lg:grid-cols-3'
+      )}>
+        {/* Main Form - widens when tips collapsed */}
+        <div className={cn('space-y-6 min-w-0', !tipsCollapsed && 'lg:col-span-2')}>
+          <Tabs defaultValue="basic" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 bg-gray-100 p-1">
+              <TabsTrigger value="basic" className="data-[state=active]:bg-white">Basic Info</TabsTrigger>
+              <TabsTrigger value="bio" className="data-[state=active]:bg-white">Biography</TabsTrigger>
+              <TabsTrigger value="credentials" className="data-[state=active]:bg-white">Credentials</TabsTrigger>
+              <TabsTrigger value="status" className="data-[state=active]:bg-white">Status & Settings</TabsTrigger>
+            </TabsList>
+
+            {/* Tab 1: Basic Info */}
+            <TabsContent value="basic" className="mt-4">
+              <Card className="card-vibrant">
+                <CardHeader>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                  <CardDescription>Name, specialty, profile image, and primary office hours</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
                   {/* Profile Image */}
                   <div className="space-y-2">
                     <Label htmlFor="image">Profile Image</Label>
@@ -368,16 +382,19 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </p>
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {/* Bio & About */}
-            <AccordionItem value="bio" className="border rounded-lg px-4">
-              <AccordionTrigger>
-                <CardTitle className="text-lg">Biography</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-4">
+            {/* Tab 2: Biography */}
+            <TabsContent value="bio" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Biography</CardTitle>
+                  <CardDescription>Short bio, detailed about, and links</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="bio">
                       Short Bio <span className="text-destructive">*</span>
@@ -440,16 +457,19 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </p>
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {/* Credentials */}
-            <AccordionItem value="credentials" className="card-vibrant rounded-lg px-4">
-              <AccordionTrigger>
-                <CardTitle className="text-lg">Professional Credentials</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-4">
+            {/* Tab 3: Professional Credentials */}
+            <TabsContent value="credentials" className="mt-4">
+              <Card className="card-vibrant">
+                <CardHeader>
+                  <CardTitle className="text-lg">Professional Credentials</CardTitle>
+                  <CardDescription>Education, certifications, and privileges</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="medicalSchool">Medical School</Label>
                     <Input
@@ -512,16 +532,19 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     />
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {/* Status Flags */}
-            <AccordionItem value="status" className="border rounded-lg px-4">
-              <AccordionTrigger>
-                <CardTitle className="text-lg">Status & Settings</CardTitle>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-4">
+            {/* Tab 4: Status & Settings */}
+            <TabsContent value="status" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Status & Settings</CardTitle>
+                  <CardDescription>New patients and profile visibility</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="acceptsNewPatients">Accepts New Patients</Label>
@@ -570,49 +593,79 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     />
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
 
-        {/* Helper Panel */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24 card-vibrant">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Info className="h-5 w-5 text-brand-teal" />
-                <CardTitle className="text-lg">Profile Tips</CardTitle>
+        {/* Helper Panel - collapsible; minimizes to narrow strip on the right */}
+        <div className={cn('transition-all duration-200', tipsCollapsed ? 'w-12 shrink-0' : 'lg:col-span-1')}>
+          <Card className="sticky top-24 card-vibrant overflow-hidden w-full min-w-[3rem]">
+            <CardHeader className="p-3">
+              <div className="flex items-center justify-between gap-2">
+                {!tipsCollapsed && (
+                  <>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Info className="h-5 w-5 text-brand-teal shrink-0" />
+                      <CardTitle className="text-lg truncate">Profile Tips</CardTitle>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTipsCollapsed(true)}
+                      className="shrink-0 h-8 w-8"
+                      aria-label="Collapse tips"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+                {tipsCollapsed && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setTipsCollapsed(false)}
+                    className="h-8 w-8 mx-auto"
+                    aria-label="Expand tips"
+                    title="Profile Tips"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <h4 className="font-semibold mb-2">Writing Your Bio</h4>
-                <p className="text-muted-foreground">
-                  Keep your short bio concise (2-3 sentences) highlighting your expertise and approach to patient care.
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <h4 className="font-semibold mb-2">Board Certifications</h4>
-                <p className="text-muted-foreground">
-                  List all current board certifications. This helps patients verify your credentials.
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <h4 className="font-semibold mb-2">Specialties</h4>
-                <p className="text-muted-foreground">
-                  Your primary specialty is required. Additional specialties help patients find you when searching.
-                </p>
-              </div>
-              <Separator />
-              <div>
-                <h4 className="font-semibold mb-2">Profile Completion</h4>
-                <p className="text-muted-foreground">
-                  Complete profiles with all information filled out tend to receive more appointment requests.
-                </p>
-              </div>
-            </CardContent>
+            {!tipsCollapsed && (
+              <CardContent className="space-y-4 text-sm pt-0">
+                <div>
+                  <h4 className="font-semibold mb-2">Writing Your Bio</h4>
+                  <p className="text-muted-foreground">
+                    Keep your short bio concise (2-3 sentences) highlighting your expertise and approach to patient care.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Board Certifications</h4>
+                  <p className="text-muted-foreground">
+                    List all current board certifications. This helps patients verify your credentials.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Specialties</h4>
+                  <p className="text-muted-foreground">
+                    Your primary specialty is required. Additional specialties help patients find you when searching.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Profile Completion</h4>
+                  <p className="text-muted-foreground">
+                    Complete profiles with all information filled out tend to receive more appointment requests.
+                  </p>
+                </div>
+              </CardContent>
+            )}
           </Card>
         </div>
       </div>

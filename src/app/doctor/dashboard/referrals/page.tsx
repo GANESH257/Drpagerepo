@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Referral, ReferralStatus } from '@/types/referrals';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
 import { getReferralsForDoctor, setReferralStatus, getReferralTimeline } from '@/lib/services/referralEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { doctors } from '@/data/doctors';
+import { getAllDoctors } from '@/lib/memberStorage';
+import { Doctor } from '@/types';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Timeline } from '@/components/shared/approvals/Timeline';
 import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { Eye, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, ArrowRight, User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -38,34 +39,73 @@ export default function ReferralsV2Page() {
   const [activeTab, setActiveTab] = useState<'sent' | 'received' | 'search'>('received');
   const [searchQuery, setSearchQuery] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
+  const [networkDoctors, setNetworkDoctors] = useState<Doctor[]>([]);
+  const [networkDoctorsLoading, setNetworkDoctorsLoading] = useState(true);
+  const [networkDoctorsError, setNetworkDoctorsError] = useState<string | null>(null);
 
-  const filteredDoctors = (doctors || []).filter(d => {
-    const matchesSearch = d.fullName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSpecialty = specialtyFilter === 'all' || d.specialty === specialtyFilter;
-    return matchesSearch && matchesSpecialty;
-  });
+  const specialties = useMemo(() => {
+    const set = new Set<string>();
+    networkDoctors.forEach(d => {
+      const s = d.specialty ?? (d as any).specialties?.[0];
+      if (s) set.add(s);
+    });
+    return Array.from(set).sort();
+  }, [networkDoctors]);
+
+  const filteredDoctors = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return networkDoctors.filter(d => {
+      const name = (d.fullName ?? (d as any).full_name ?? '').toString().toLowerCase();
+      const specialty = (d.specialty ?? (d as any).specialties?.[0] ?? '').toString();
+      return name.includes(q) && (specialtyFilter === 'all' || specialty === specialtyFilter);
+    });
+  }, [networkDoctors, searchQuery, specialtyFilter]);
 
   useEffect(() => {
-    try {
-      const actor = getActorFromSession();
-      assertDoctor(actor);
+    let cancelled = false;
+    async function load() {
+      try {
+        const actor = getActorFromSession();
+        assertDoctor(actor);
 
-      if (actor.kind !== 'doctor' || !actor.doctorId) {
-        throw new PermissionDeniedError('Must be a doctor');
-      }
+        if (actor.kind !== 'doctor' || !actor.doctorId) {
+          throw new PermissionDeniedError('Must be a doctor');
+        }
 
-      const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
-      setReferralsSent(referralsSent);
-      setReferralsReceived(referralsReceived);
-      setIsLoading(false);
-    } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
+        const [referralsResult, doctorsList] = await Promise.all([
+          (async () => {
+            const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
+            return { referralsSent, referralsReceived };
+          })(),
+          getAllDoctors(),
+        ]);
+
+        if (cancelled) return;
+        setReferralsSent(referralsResult.referralsSent);
+        setReferralsReceived(referralsResult.referralsReceived);
+        setNetworkDoctors(doctorsList);
+        setNetworkDoctorsError(null);
+      } catch (error) {
+        if (cancelled) return;
+        if (error instanceof AuthRequiredError) {
+          router.push('/join-us');
+          return;
+        }
+        if (error instanceof PermissionDeniedError) {
+          router.push('/doctor/dashboard');
+          return;
+        }
+        setNetworkDoctorsError(error instanceof Error ? error.message : 'Failed to load physicians');
+        setNetworkDoctors([]);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+          setNetworkDoctorsLoading(false);
+        }
       }
-      setIsLoading(false);
     }
+    load();
+    return () => { cancelled = true; };
   }, [router]);
 
   // Deep linking: auto-open dialog if referralId is in URL
@@ -160,8 +200,8 @@ export default function ReferralsV2Page() {
   };
 
   const getDoctorName = (doctorId: string): string => {
-    const doctor = doctors.find(d => d.id === doctorId);
-    return doctor?.fullName || doctorId;
+    const doctor = networkDoctors.find(d => d.id === doctorId);
+    return (doctor?.fullName ?? (doctor as any)?.full_name) || doctorId;
   };
 
   if (isLoading) {
@@ -213,7 +253,7 @@ export default function ReferralsV2Page() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Specialties</SelectItem>
-                    {Array.from(new Set(doctors.map(d => d.specialty))).sort().map(s => (
+                    {specialties.map(s => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
                   </SelectContent>
@@ -221,34 +261,69 @@ export default function ReferralsV2Page() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredDoctors.length === 0 ? (
-                  <div className="col-span-full py-12 text-center text-gray-500">
-                    No physicians found matching your criteria.
-                  </div>
-                ) : (
-                  filteredDoctors.map((doc) => (
-                    <div key={doc.id} className="group relative flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-brand-teal/50 hover:bg-brand-teal/5">
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/10 text-brand-dark-blue text-lg font-bold">
-                        {doc.fullName.charAt(0)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-gray-900 truncate">{doc.fullName}</div>
-                        <div className="text-xs text-gray-500 truncate">{doc.specialty}</div>
-                        <ReferralDialog
-                          doctor={doc}
-                          trigger={
-                            <button className="mt-2 inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline">
-                              Send Referral
-                              <ArrowRight className="ml-1 h-3 w-3" />
-                            </button>
-                          }
-                        />
+              {networkDoctorsLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="flex items-center gap-3 rounded-xl border p-3 animate-pulse">
+                      <div className="h-12 w-12 rounded-full bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-20 bg-gray-200 rounded" />
+                        <div className="h-3 w-16 bg-gray-100 rounded" />
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : networkDoctorsError ? (
+                <div className="py-12 text-center">
+                  <p className="text-gray-600 mb-2">{networkDoctorsError}</p>
+                  <Button variant="outline" size="sm" onClick={() => { setNetworkDoctorsError(null); setNetworkDoctorsLoading(true); window.location.reload(); }}>
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredDoctors.length === 0 ? (
+                    <div className="col-span-full py-12 text-center text-gray-500">
+                      No physicians found matching your criteria.
+                    </div>
+                  ) : (
+                    filteredDoctors.map((doc) => {
+                      const displayName = doc.fullName ?? (doc as any).full_name ?? '—';
+                      const displaySpecialty = doc.specialty ?? (doc as any).specialties?.[0] ?? '—';
+                      const profileHref = `/doctors/${doc.slug || doc.id}`;
+                      return (
+                        <div key={doc.id} className="group relative flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-brand-teal/50 hover:bg-brand-teal/5">
+                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/10 text-brand-dark-blue text-lg font-bold">
+                            {displayName.charAt(0)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-semibold text-gray-900 truncate">{displayName}</div>
+                            <div className="text-xs text-gray-500 truncate">{displaySpecialty}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <Link
+                                href={profileHref}
+                                className="inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline"
+                              >
+                                <User className="mr-1 h-3 w-3" />
+                                View Profile
+                              </Link>
+                              <ReferralDialog
+                                doctor={doc}
+                                trigger={
+                                  <button className="inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline">
+                                    Send Referral
+                                    <ArrowRight className="ml-1 h-3 w-3" />
+                                  </button>
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

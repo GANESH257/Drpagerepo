@@ -17,6 +17,7 @@ import {
   Building2,
   Send,
   MessageCircle,
+  MessageSquare,
 } from 'lucide-react';
 import { MessageBell } from '@/components/dashboard/MessageBell';
 
@@ -78,6 +79,12 @@ const adminNavItems = [
     href: '/admin/announcements',
     icon: Megaphone,
     description: 'Broadcast and manage announcements',
+  },
+  {
+    label: 'Community',
+    href: '/admin/community',
+    icon: MessageSquare,
+    description: 'Questions and discussion with the network',
   },
   {
     label: 'Messages',
