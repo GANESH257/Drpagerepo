@@ -27,6 +27,10 @@ function normalizeDoctorFromAPI(raw: any): Doctor {
     verified: Boolean(raw.verified),
     availability: Array.isArray(raw.availability) ? raw.availability : (raw.availability ?? []),
     acceptsNewPatients: raw.accepts_new_patients ?? raw.acceptsNewPatients ?? true,
+    npi: raw.npi ?? undefined,
+    profileStatus: raw.profile_status ?? raw.profileStatus ?? 'active',
+    boardCertifications: raw.board_certifications ?? raw.boardCertifications ?? [],
+    badgesAwards: raw.badges_awards ?? raw.badgesAwards ?? [],
   };
 }
 

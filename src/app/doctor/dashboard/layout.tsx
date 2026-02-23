@@ -7,6 +7,7 @@ import { getDoctor } from '@/lib/api/doctors';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { CompleteProfileGate } from '@/components/dashboard/CompleteProfileGate';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
 
@@ -139,10 +140,20 @@ export default function DoctorDashboardLayout({
     return null;
   }
 
-  const handleProfileUpdate = (updatedDoctor: Doctor) => {
-    // Profile updates are handled by individual sections via localStorage
-    // This is just for layout-level updates if needed
-  };
+  const handleProfileUpdate = (_updatedDoctor: Doctor) => {};
+
+  const isPendingProfile =
+    doctor.profileStatus === 'pending_profile' || doctor.verified === false;
+  const isPendingProfilePA = isPendingProfile && doctor.roleInPractice === 'practice_admin';
+  const isPendingProfileDoctorOnly = isPendingProfile && doctor.roleInPractice !== 'practice_admin';
+
+  if (isPendingProfilePA || isPendingProfileDoctorOnly) {
+    return (
+      <CompleteProfileGate doctor={doctor}>
+        {children}
+      </CompleteProfileGate>
+    );
+  }
 
   return (
     <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>

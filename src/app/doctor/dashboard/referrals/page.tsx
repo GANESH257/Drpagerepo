@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Referral, ReferralStatus } from '@/types/referrals';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
-import { getReferralsForDoctor, setReferralStatus, getReferralTimeline } from '@/lib/services/referralEngine';
+import { getReferralTimeline } from '@/lib/services/referralEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getReferrals as getReferralsAPI, updateReferral as updateReferralAPI } from '@/lib/api/referrals';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getMyContacts } from '@/lib/api/contacts';
 import { Doctor } from '@/types';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +44,7 @@ export default function ReferralsV2Page() {
   const [networkDoctors, setNetworkDoctors] = useState<Doctor[]>([]);
   const [networkDoctorsLoading, setNetworkDoctorsLoading] = useState(true);
   const [networkDoctorsError, setNetworkDoctorsError] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<{ id: string; full_name: string; specialty?: string }[]>([]);
 
   const specialties = useMemo(() => {
     const set = new Set<string>();
@@ -61,52 +64,56 @@ export default function ReferralsV2Page() {
     });
   }, [networkDoctors, searchQuery, specialtyFilter]);
 
+  const mapApiToReferral = (r: any): Referral => ({
+    id: r.id,
+    createdAt: r.created_at ?? r.createdAt ?? '',
+    updatedAt: r.updated_at ?? r.updatedAt ?? '',
+    fromDoctorId: r.from_doctor_id ?? r.fromDoctorId ?? '',
+    toDoctorId: r.to_doctor_id ?? r.toDoctorId ?? '',
+    patient: { name: r.patient_name_or_initials ?? r.patient?.name },
+    condition: r.condition_summary ?? r.condition ?? '',
+    notes: r.notes,
+    status: (r.status?.toLowerCase() === 'attended' ? 'attended' : r.status?.toLowerCase() === 'removed' ? 'removed' : 'new') as ReferralStatus,
+  });
+
+  const loadReferralsAndDoctors = useCallback(async () => {
+    try {
+      const actor = getActorFromSession();
+      assertDoctor(actor);
+      if (actor.kind !== 'doctor' || !actor.doctorId) throw new PermissionDeniedError('Must be a doctor');
+      const [apiList, doctorsList, contactsList] = await Promise.all([
+        getReferralsAPI(actor.doctorId),
+        getAllDoctorsArray(),
+        getMyContacts().catch(() => []),
+      ]);
+      const all = (Array.isArray(apiList) ? apiList : []).map(mapApiToReferral);
+      setReferralsSent(all.filter((r) => r.fromDoctorId === actor.doctorId));
+      setReferralsReceived(all.filter((r) => r.toDoctorId === actor.doctorId));
+      setNetworkDoctors(Array.isArray(doctorsList) ? doctorsList : []);
+      setContacts(Array.isArray(contactsList) ? contactsList : []);
+      setNetworkDoctorsError(null);
+    } catch (error) {
+      if (error instanceof AuthRequiredError) {
+        router.push('/join-us');
+        return;
+      }
+      if (error instanceof PermissionDeniedError) {
+        router.push('/doctor/dashboard');
+        return;
+      }
+      setNetworkDoctorsError(error instanceof Error ? error.message : 'Failed to load physicians');
+      setNetworkDoctors([]);
+    } finally {
+      setIsLoading(false);
+      setNetworkDoctorsLoading(false);
+    }
+  }, [router]);
+
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      try {
-        const actor = getActorFromSession();
-        assertDoctor(actor);
-
-        if (actor.kind !== 'doctor' || !actor.doctorId) {
-          throw new PermissionDeniedError('Must be a doctor');
-        }
-
-        const [referralsResult, doctorsList] = await Promise.all([
-          (async () => {
-            const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
-            return { referralsSent, referralsReceived };
-          })(),
-          getAllDoctors(),
-        ]);
-
-        if (cancelled) return;
-        setReferralsSent(referralsResult.referralsSent);
-        setReferralsReceived(referralsResult.referralsReceived);
-        setNetworkDoctors(doctorsList);
-        setNetworkDoctorsError(null);
-      } catch (error) {
-        if (cancelled) return;
-        if (error instanceof AuthRequiredError) {
-          router.push('/join-us');
-          return;
-        }
-        if (error instanceof PermissionDeniedError) {
-          router.push('/doctor/dashboard');
-          return;
-        }
-        setNetworkDoctorsError(error instanceof Error ? error.message : 'Failed to load physicians');
-        setNetworkDoctors([]);
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-          setNetworkDoctorsLoading(false);
-        }
-      }
-    }
-    load();
+    loadReferralsAndDoctors().then(() => { if (cancelled) return; });
     return () => { cancelled = true; };
-  }, [router]);
+  }, [loadReferralsAndDoctors]);
 
   // Deep linking: auto-open dialog if referralId is in URL
   useEffect(() => {
@@ -154,13 +161,9 @@ export default function ReferralsV2Page() {
         throw new PermissionDeniedError('Must be a doctor');
       }
 
-      setReferralStatus(actor, referralId, newStatus);
+      await updateReferralAPI(referralId, { status: newStatus });
       toast.success(`Referral marked as ${newStatus}`);
-
-      // Reload referrals
-      const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
-      setReferralsSent(referralsSent);
-      setReferralsReceived(referralsReceived);
+      await loadReferralsAndDoctors();
 
       // Reload timeline if dialog is open for this referral
       if (selectedReferral?.id === referralId && showDetailDialog) {
@@ -236,6 +239,26 @@ export default function ReferralsV2Page() {
         </TabsList>
 
         <TabsContent value="search" className="space-y-4">
+          {contacts.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">My Contacts</CardTitle>
+                <CardDescription>Quick send a referral to a saved contact</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {contacts.map((c) => (
+                    <ReferralDialog
+                      key={c.id}
+                      doctor={{ id: c.id, fullName: c.full_name, specialty: c.specialty } as Doctor}
+                      trigger={<Button variant="outline" size="sm">{c.full_name} — Send referral</Button>}
+                      onSuccess={loadReferralsAndDoctors}
+                    />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Find & Refer Physicians</CardTitle>
@@ -315,6 +338,7 @@ export default function ReferralsV2Page() {
                                     <ArrowRight className="ml-1 h-3 w-3" />
                                   </button>
                                 }
+                                onSuccess={loadReferralsAndDoctors}
                               />
                             </div>
                           </div>

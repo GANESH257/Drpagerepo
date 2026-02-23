@@ -1,24 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { AppointmentsSection } from '@/components/dashboard/AppointmentsSection';
 import { useDoctorContext } from '@/components/dashboard/DoctorContext';
-import { Doctor } from '@/types';
 
 export default function AppointmentsPage() {
-  const [doctor, setDoctor] = useState<Doctor | null>(null);
-  
-  try {
-    const context = useDoctorContext();
-    useEffect(() => {
-      setDoctor(context.doctor);
-    }, [context.doctor]);
-  } catch {
-    // Context not available during static export
-  }
+  const { doctor } = useDoctorContext();
 
-  if (!doctor) {
-    return null; // Will be handled by layout
+  if (!doctor?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-teal" />
+      </div>
+    );
   }
 
   return <AppointmentsSection doctorId={doctor.id} />;

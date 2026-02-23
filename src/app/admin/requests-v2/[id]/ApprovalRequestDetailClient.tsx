@@ -28,9 +28,13 @@ import { getAllDoctors } from '@/lib/memberStorage';
 
 interface ApprovalRequestDetailClientProps {
     requestId: string;
+    /** Back link (e.g. /admin/approvals when used from Membership Approvals) */
+    backHref?: string;
 }
 
-export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetailClientProps) {
+const DEFAULT_BACK_HREF = '/admin/requests-v2';
+
+export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK_HREF }: ApprovalRequestDetailClientProps) {
     const router = useRouter();
 
     const [request, setRequest] = useState<ApprovalRequest | null>(null);
@@ -77,7 +81,7 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
                     router.push('/admin');
                 } else {
                     toast.error('Approval request not found');
-                    router.push('/admin/requests-v2');
+                    router.push(backHref);
                 }
                 setIsLoading(false);
             }
@@ -296,7 +300,7 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
         return (
             <div className="text-center py-12">
                 <p className="text-gray-600">Approval request not found</p>
-                <Button onClick={() => router.push('/admin/requests-v2')} className="mt-4">
+                <Button onClick={() => router.push(backHref)} className="mt-4">
                     Back to Queue
                 </Button>
             </div>
@@ -315,7 +319,7 @@ export function ApprovalRequestDetailClient({ requestId }: ApprovalRequestDetail
                     title="Approval Request Details"
                     description={`Request ID: ${request.id}`}
                 />
-                <Button variant="outline" onClick={() => router.push('/admin/requests-v2')}>
+                <Button variant="outline" onClick={() => router.push(backHref)}>
                     Back to Queue
                 </Button>
             </div>

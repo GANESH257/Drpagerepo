@@ -62,6 +62,8 @@ export interface PracticeRemoveDoctorPayload {
 export type ApprovalType =
   | 'doctor_join_practice'
   | 'new_practice_with_admin_doctor'
+  | 'practice_admin_profile_practice_completion'
+  | 'doctor_profile_completion'
   | 'practice_edit_request'
   | 'practice_doctor_add_request'
   | 'practice_doctor_remove_request'

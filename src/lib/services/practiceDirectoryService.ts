@@ -1,6 +1,7 @@
 import { Practice } from '@/types/practice';
 import { Doctor } from '@/types';
 import { getAllPracticesArray } from '@/lib/api/practices';
+import { getToken } from '@/lib/api/config';
 import { getAllDoctors } from '@/lib/memberStorage';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { haversineDistance } from '@/lib/distanceUtils';
@@ -43,6 +44,17 @@ function normalizeZip(zip: string): string {
   return digits.substring(0, 5);
 }
 
+/** Normalize API location (snake_case latitude/longitude) to frontend shape (lat/lng) */
+function normalizeLocation(loc: any): any {
+  if (!loc) return loc;
+  return {
+    ...loc,
+    lat: loc.lat ?? loc.latitude,
+    lng: loc.lng ?? loc.longitude,
+    address: loc.address ?? loc.address_line1 ?? '',
+  };
+}
+
 /**
  * Ensure practice has locations array (backward compatibility migration)
  * Migrates old practice.location to practice.locations[0]
@@ -51,9 +63,12 @@ function normalizeZip(zip: string): string {
  * @returns Practice with guaranteed locations array
  */
 function ensureLocationsArray(practice: any): Practice {
-  // Already has locations array with at least one location → return as-is
+  // Already has locations array with at least one location → normalize and return
   if (practice.locations && Array.isArray(practice.locations) && practice.locations.length > 0) {
-    return practice;
+    return {
+      ...practice,
+      locations: practice.locations.map(normalizeLocation),
+    };
   }
 
   // Has old location field → migrate to locations array
@@ -135,11 +150,14 @@ function getPrimaryPracticeCoords(practice: Practice): { lat: number; lng: numbe
 
 /**
  * Get all practices from API
+ * @param options.forAdmin - When true, passes includePending and token so admin sees pending_profile practices
  * @deprecated Use getAllPracticesArray from @/lib/api/practices directly
  */
-export async function getAllPractices(): Promise<Practice[]> {
+export async function getAllPractices(options?: { forAdmin?: boolean }): Promise<Practice[]> {
   try {
-    const practices = await getAllPracticesArray();
+    const practices = options?.forAdmin
+      ? await getAllPracticesArray({ includePending: true }, getToken())
+      : await getAllPracticesArray();
     // Apply migration helpers: locations array + API-safe shape (address, specialties, doctorIds)
     return practices.map((p) => ensurePracticeShape(ensureLocationsArray(p)));
   } catch (error) {

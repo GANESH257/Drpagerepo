@@ -37,6 +37,18 @@ const typeConfig: Record<ApprovalType, {
     variant: 'secondary',
     colorClass: 'bg-green-100 text-green-800 border-green-300',
   },
+  practice_admin_profile_practice_completion: {
+    label: 'PA Profile & Practice Completion',
+    icon: Building2,
+    variant: 'default',
+    colorClass: 'bg-sky-100 text-sky-800 border-sky-300',
+  },
+  doctor_profile_completion: {
+    label: 'Doctor Profile Completion',
+    icon: UserPlus,
+    variant: 'secondary',
+    colorClass: 'bg-teal-100 text-teal-800 border-teal-300',
+  },
   practice_edit_request: {
     label: 'Practice Edit Request',
     icon: Edit,

@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getNotifications } from '@/lib/storage/notificationStorage';
+import { getNotifications as getNotificationsAPI } from '@/lib/api/notifications';
 
 interface NotificationBellProps {
-    /** Doctor ID whose notifications should be counted */
+    /** Doctor ID (kept for API compatibility; count is for authenticated user) */
     doctorId?: string;
     /** Href to navigate to when bell is clicked */
     href?: string;
@@ -20,27 +20,19 @@ export function NotificationBell({
     const router = useRouter();
     const [unreadCount, setUnreadCount] = useState(0);
 
-    const refresh = useCallback(() => {
-        if (!doctorId) return;
-        const notifications = getNotifications(doctorId);
-        const unread = notifications.filter((n) => !n.readAt).length;
-        setUnreadCount(unread);
-    }, [doctorId]);
+    const refresh = useCallback(async () => {
+        try {
+            const list = await getNotificationsAPI(true);
+            setUnreadCount(Array.isArray(list) ? list.length : 0);
+        } catch {
+            setUnreadCount(0);
+        }
+    }, []);
 
     useEffect(() => {
         refresh();
-
-        // Re-check every 30 seconds (notifications can be added in other tabs)
         const interval = setInterval(refresh, 30_000);
-
-        // Also respond to localStorage changes (cross-tab)
-        const handleStorage = () => refresh();
-        window.addEventListener('storage', handleStorage);
-
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('storage', handleStorage);
-        };
+        return () => clearInterval(interval);
     }, [refresh]);
 
     return (

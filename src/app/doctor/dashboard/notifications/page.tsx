@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Notification, NotificationType } from '@/types/notifications';
+import { NotificationType } from '@/types/notifications';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
-import { getNotifications, markNotificationRead } from '@/lib/storage/notificationStorage';
+import { getNotifications as getNotificationsAPI, markAsRead as markNotificationReadAPI } from '@/lib/api/notifications';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,71 +15,87 @@ import { formatDateTime } from '@/lib/dateUtils';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 
+/** Normalize API notification (snake_case) to UI shape */
+interface NotificationRow {
+  id: string;
+  doctorId: string;
+  createdAt: string;
+  readAt?: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  href?: string;
+}
+
+function mapApiToNotification(api: any): NotificationRow {
+  return {
+    id: api.id,
+    doctorId: api.doctor_id,
+    createdAt: api.created_at ?? api.createdAt ?? '',
+    readAt: api.read_at ?? api.readAt,
+    type: (api.type || 'announcement') as NotificationType,
+    title: api.title ?? '',
+    message: api.message ?? '',
+    href: api.link ?? api.href,
+  };
+}
+
 /**
  * Get badge configuration for notification type
  */
 function getTypeBadge(type: NotificationType): { label: string; variant: 'default' | 'secondary' | 'outline' } {
-  const badges: Record<NotificationType, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  const badges: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
     referral_received: { label: 'Referral', variant: 'default' },
     referral_status_changed: { label: 'Referral Update', variant: 'secondary' },
     approval_update: { label: 'Approval', variant: 'outline' },
     practice_roster_update: { label: 'Roster', variant: 'secondary' },
     announcement: { label: 'Announcement', variant: 'outline' },
   };
-  return badges[type] || { label: type.replace('_', ' '), variant: 'outline' };
+  return badges[type] || { label: String(type).replace('_', ' '), variant: 'outline' };
 }
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     try {
       const actor = getActorFromSession();
       assertDoctor(actor);
-      
-      if (actor.kind !== 'doctor' || !actor.doctorId) {
-        throw new PermissionDeniedError('Must be a doctor');
-      }
-      
-      const allNotifications = getNotifications(actor.doctorId);
-      setNotifications(allNotifications);
-      setIsLoading(false);
+      if (actor.kind !== 'doctor' || !actor.doctorId) throw new PermissionDeniedError('Must be a doctor');
+      const list = await getNotificationsAPI(false);
+      setNotifications(Array.isArray(list) ? list.map(mapApiToNotification) : []);
     } catch (error) {
-      if (error instanceof AuthRequiredError) {
-        router.push('/join-us');
-      } else if (error instanceof PermissionDeniedError) {
-        router.push('/doctor/dashboard');
-      }
+      if (error instanceof AuthRequiredError) router.push('/join-us');
+      else if (error instanceof PermissionDeniedError) router.push('/doctor/dashboard');
+      setNotifications([]);
+    } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, []);
 
-  const handleMarkRead = (notificationId: string) => {
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleMarkRead = async (notificationId: string) => {
     try {
-      const actor = getActorFromSession();
-      if (actor.kind !== 'doctor' || !actor.doctorId) {
-        return;
-      }
-      
-      markNotificationRead(actor.doctorId, notificationId);
-      
-      // Update local state
-      setNotifications(notifications.map(n => 
-        n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n
-      ));
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      await markNotificationReadAPI(notificationId);
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n))
+      );
+    } catch (e) {
+      console.error('Failed to mark notification as read:', e);
     }
   };
 
-  const filteredNotifications = filter === 'unread' 
-    ? notifications.filter(n => !n.readAt)
+  const filteredNotifications = filter === 'unread'
+    ? notifications.filter((n) => !n.readAt)
     : notifications;
 
-  const unreadCount = notifications.filter(n => !n.readAt).length;
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   if (isLoading) {
     return (

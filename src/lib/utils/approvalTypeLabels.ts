@@ -11,6 +11,8 @@ import { ApprovalType } from '@/types/approvals';
  */
 export const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = {
   new_practice_with_admin_doctor: 'Practice Create',
+  practice_admin_profile_practice_completion: 'PA Profile & Practice Completion',
+  doctor_profile_completion: 'Doctor Profile Completion',
   practice_edit_request: 'Practice Edit',
   doctor_join_practice: 'Doctor Join Practice',
   practice_doctor_add_request: 'Roster Change',
@@ -47,6 +49,10 @@ export function getApprovalTypeCategory(type: ApprovalType): ApprovalTypeCategor
   switch (type) {
     case 'new_practice_with_admin_doctor':
       return 'practice_create';
+    case 'practice_admin_profile_practice_completion':
+      return 'practice_edit';
+    case 'doctor_profile_completion':
+      return 'doctor_edit';
     case 'practice_edit_request':
     case 'practice_location_change_request':
     case 'practice_insurance_services_change_request':
@@ -79,6 +85,8 @@ export interface ApprovalTypeOption {
 export function getApprovalTypeOptions(): ApprovalTypeOption[] {
   const types: ApprovalType[] = [
     'new_practice_with_admin_doctor',
+    'practice_admin_profile_practice_completion',
+    'doctor_profile_completion',
     'practice_edit_request',
     'doctor_join_practice',
     'practice_doctor_add_request',

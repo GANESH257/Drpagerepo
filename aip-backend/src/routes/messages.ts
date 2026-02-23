@@ -5,6 +5,34 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 const router = express.Router();
 
 /**
+ * GET /api/messages/unread-count
+ * Count unread messages for current user (messages in their threads sent by others, read = false)
+ */
+router.get('/unread-count', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const doctorResult = await pool.query(
+      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+      [req.userId]
+    );
+    if (doctorResult.rows.length === 0) {
+      return res.json({ count: 0 });
+    }
+    const doctorId = doctorResult.rows[0].id;
+    const result = await pool.query(
+      `SELECT COUNT(m.id)::int as count
+       FROM messages m
+       INNER JOIN thread_participants tp ON tp.thread_id = m.thread_id AND tp.participant_id = $1 AND tp.participant_type = 'doctor'
+       WHERE m.sender_id != $1 AND (m.read = false OR m.read IS NULL)`,
+      [doctorId]
+    );
+    res.json({ count: result.rows[0]?.count || 0 });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * GET /api/messages/threads
  * Get all message threads for authenticated user
  */

@@ -121,6 +121,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
             credentials: basicDetails.credentials,
             specialty: basicDetails.specialty,
             phone: basicDetails.phone,
+            npi: basicDetails.npi,
           },
           plan: {
             planId: selectedPlan.planId,
@@ -154,6 +155,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
             credentials: basicDetails.credentials,
             specialty: basicDetails.specialty,
             phone: basicDetails.phone,
+            npi: basicDetails.npi,
           },
           plan: {
             planId: selectedPlan.planId,
@@ -226,6 +228,12 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
                 <span className="text-muted-foreground">Location:</span>
                 <span className="font-medium">{basicDetails.city}, {basicDetails.state}</span>
               </div>
+              {basicDetails.npi && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">NPI:</span>
+                  <span className="font-medium">{basicDetails.npi}</span>
+                </div>
+              )}
               {basicDetails.practiceName && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Practice Name:</span>

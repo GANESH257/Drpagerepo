@@ -1,10 +1,10 @@
 'use client';
 
-import { OverviewSection } from '@/components/dashboard/OverviewSection';
+import { DashboardZones } from '@/components/dashboard/DashboardZones';
 import { useDoctorContext } from '@/components/dashboard/DoctorContext';
 
 export default function DoctorDashboardPage() {
   const { doctor } = useDoctorContext();
 
-  return <OverviewSection doctor={doctor} />;
+  return <DashboardZones doctor={doctor} />;
 }

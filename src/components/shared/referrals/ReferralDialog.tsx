@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Doctor } from '@/types';
 import { getActorFromSession } from '@/lib/services/permissionService';
-import { createReferral } from '@/lib/services/referralEngine';
+import { createReferral as createReferralAPI } from '@/lib/api/referrals';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,10 @@ interface ReferralDialogProps {
     trigger?: React.ReactNode;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    onSuccess?: () => void;
 }
 
-export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenChange: setControlledOpen }: ReferralDialogProps) {
+export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenChange: setControlledOpen, onSuccess }: ReferralDialogProps) {
     const [internalOpen, setInternalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,16 +44,12 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
 
         try {
             setIsSubmitting(true);
-            const actor = getActorFromSession();
-            createReferral(actor, {
-                toDoctorId: doctor.id,
-                patient: {
-                    name: form.patientName || undefined,
-                    dob: form.patientDob || undefined,
-                    sex: form.patientSex || undefined,
-                },
-                condition: form.condition,
-                notes: form.notes || undefined,
+            await createReferralAPI({
+                to_doctor_id: doctor.id,
+                patient_name_or_initials: form.patientName?.trim() || 'Patient',
+                patient_sex: form.patientSex || undefined,
+                condition_summary: form.condition.trim(),
+                notes: form.notes?.trim() || undefined,
             });
 
             toast.success('Referral sent successfully');
@@ -64,6 +61,7 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
                 condition: '',
                 notes: '',
             });
+            onSuccess?.();
         } catch (error: any) {
             toast.error(error.message || 'Failed to send referral');
         } finally {

@@ -15,11 +15,10 @@ import { readJSON, writeJSON } from '@/lib/storage/localStorage';
 import { makeId } from '@/lib/services/id';
 
 /**
- * Get all practices for admin (combines seed + created + overrides, filters deleted)
- * Alias for getAllPractices() for consistency
+ * Get all practices for admin (includes pending_profile practices for approval flows)
  */
 export async function getAllPracticesForAdmin(): Promise<Practice[]> {
-  return getAllPractices();
+  return getAllPractices({ forAdmin: true });
 }
 
 /**

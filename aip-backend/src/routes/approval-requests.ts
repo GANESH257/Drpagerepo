@@ -493,7 +493,7 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
             practiceData.address?.state || null,
             practiceData.address?.zip || null,
             (practiceData.address?.country || 'USA').substring(0, 2),
-            'active',
+            'pending_profile',
           ]
         );
 
@@ -543,11 +543,12 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'User';
       const doctorSlug = `${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${doctorId.slice(-8)}`;
       console.log('[Approval setup] Creating doctor:', doctorId, 'for user:', user.id);
+      const npiVal = doctorData.npi && /^\d{10}$/.test(String(doctorData.npi).trim()) ? String(doctorData.npi).trim() : null;
       await client.query(
         `INSERT INTO doctors (
           id, user_id, practice_id, slug, first_name, last_name, full_name, credentials, specialty, phone, email,
-          verified, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())`,
+          npi, verified, profile_status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
         [
           doctorId,
           user.id,
@@ -560,7 +561,9 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
           doctorData.specialty || 'General',
           doctorData.phone || null,
           user.email,
-          true,
+          npiVal,
+          false,
+          'pending_profile',
         ]
       );
 
@@ -607,6 +610,25 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
         ]
       );
 
+      // 5b) For doctor_join_practice: notify doctor to complete profile
+      if (request.type === 'doctor_join_practice') {
+        const practiceNameResult = await client.query('SELECT name FROM practices WHERE id = $1', [practiceId]);
+        const practiceName = practiceNameResult.rows[0]?.name || 'your practice';
+        const notifId = `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        await client.query(
+          `INSERT INTO notifications (id, doctor_id, type, title, message, link, read, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, false, NOW())`,
+          [
+            notifId,
+            doctorId,
+            'profile_completion',
+            'Complete your profile',
+            `You've been added to ${practiceName}. Please complete your profile to activate your listing.`,
+            '/doctor/dashboard/complete-profile',
+          ]
+        );
+      }
+
       // 6) Update user so they can log in as doctor
       console.log('[Approval setup] Updating user role/status:', user.id);
       await client.query(
@@ -624,6 +646,81 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
       console.error('[Approval setup] Failed:', msg);
       throw new Error(`Account setup failed: ${msg}`);
     }
+  } else if (request.type === 'practice_admin_profile_practice_completion') {
+    const doctorId = payload.doctorId || request.target_doctor_id;
+    const practiceId = payload.practiceId || request.practice_id;
+    if (!doctorId || !practiceId) throw new Error('doctorId and practiceId required for practice_admin_profile_practice_completion');
+    const doc = payload.doctor || {};
+    const prac = payload.practice || {};
+    const locs = Array.isArray(payload.locations) ? payload.locations : [];
+
+    await client.query(
+      `UPDATE doctors SET
+        bio = COALESCE($1, bio), about = COALESCE($2, about), phone = COALESCE($3, phone), website = COALESCE($4, website),
+        medical_school = COALESCE($5, medical_school), residency = COALESCE($6, residency), internship = COALESCE($7, internship),
+        board_certifications = COALESCE($8, board_certifications), hospital_privileges = COALESCE($9, hospital_privileges),
+        states_licensed_in = COALESCE($10, states_licensed_in), npi = COALESCE($11, npi),
+        badges_awards = COALESCE($12, badges_awards),
+        profile_status = 'active', verified = true, updated_at = NOW()
+       WHERE id = $13`,
+      [
+        doc.bio ?? null, doc.about ?? null, doc.phone ?? null, doc.website ?? null,
+        doc.medicalSchool ?? null, doc.residency ?? null, doc.internship ?? null,
+        JSON.stringify(doc.boardCertifications ?? []), JSON.stringify(doc.hospitalPrivileges ?? []), JSON.stringify(doc.statesLicensedIn ?? []),
+        doc.npi ?? null, JSON.stringify(doc.badgesAwards ?? []), doctorId,
+      ]
+    );
+
+    await client.query(
+      `UPDATE practices SET name = COALESCE($1, name), description = COALESCE($2, description), phone = COALESCE($3, phone),
+        website = COALESCE($4, website), address_line1 = COALESCE($5, address_line1), address_line2 = COALESCE($6, address_line2),
+        city = COALESCE($7, city), state = COALESCE($8, state), zip = COALESCE($9, zip),
+        status = 'active', updated_at = NOW()
+       WHERE id = $10`,
+      [
+        prac.name ?? null, prac.description ?? null, prac.phone ?? null, prac.website ?? null,
+        prac.address_line1 ?? prac.address?.line1 ?? null, prac.address_line2 ?? prac.address?.line2 ?? null,
+        prac.city ?? prac.address?.city ?? null, prac.state ?? prac.address?.state ?? null, prac.zip ?? prac.address?.zip ?? null,
+        practiceId,
+      ]
+    );
+
+    await client.query('DELETE FROM practice_locations WHERE practice_id = $1', [practiceId]);
+    for (const loc of locs) {
+      const locId = loc.id || `loc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const name = loc.name || 'Location';
+      const line1 = loc.address_line1 ?? loc.address ?? 'N/A';
+      const city = loc.city ?? 'N/A';
+      const state = (loc.state ?? 'NA').toString().substring(0, 2);
+      const zip = loc.zip ?? '';
+      const lat = loc.latitude ?? loc.lat;
+      const lng = loc.longitude ?? loc.lng;
+      await client.query(
+        `INSERT INTO practice_locations (id, practice_id, name, address_line1, address_line2, city, state, zip, phone, latitude, longitude, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+        [locId, practiceId, name, line1, loc.address_line2 ?? null, city, state, zip, loc.phone ?? null, lat ?? null, lng ?? null]
+      );
+    }
+  } else if (request.type === 'doctor_profile_completion') {
+    const doctorId = payload.doctorId || request.target_doctor_id;
+    if (!doctorId) throw new Error('doctorId required for doctor_profile_completion');
+    const doc = payload.doctor || {};
+    await client.query(
+      `UPDATE doctors SET
+        full_name = COALESCE($1, full_name), bio = COALESCE($2, bio), about = COALESCE($3, about), phone = COALESCE($4, phone), website = COALESCE($5, website),
+        medical_school = COALESCE($6, medical_school), residency = COALESCE($7, residency), internship = COALESCE($8, internship),
+        board_certifications = COALESCE($9, board_certifications), hospital_privileges = COALESCE($10, hospital_privileges),
+        states_licensed_in = COALESCE($11, states_licensed_in), npi = COALESCE($12, npi),
+        badges_awards = COALESCE($13, badges_awards),
+        profile_status = 'active', verified = true, updated_at = NOW()
+       WHERE id = $14`,
+      [
+        doc.fullName ?? null, doc.bio ?? null, doc.about ?? null, doc.phone ?? null, doc.website ?? null,
+        doc.medicalSchool ?? null, doc.residency ?? null, doc.internship ?? null,
+        JSON.stringify(doc.boardCertifications ?? []), JSON.stringify(doc.hospitalPrivileges ?? []), JSON.stringify(doc.statesLicensedIn ?? []),
+        doc.npi ?? null, JSON.stringify(doc.badgesAwards ?? []), doctorId,
+      ]
+    );
   } else if (request.type === 'practice_edit_request') {
         // Update practice details
         const practiceId = request.practice_id || payload.practiceId;
@@ -676,10 +773,12 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
         }
 
         const location = payload.location;
+        const lat = location.latitude ?? location.lat;
+        const lng = location.longitude ?? location.lng;
         await client.query(
           `INSERT INTO practice_locations (
-            id, practice_id, name, address, city, state, zip, phone
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            id, practice_id, name, address, city, state, zip, phone, latitude, longitude
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
           ON CONFLICT (id) DO NOTHING`,
           [
             location.id,
@@ -690,6 +789,8 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
             location.state || null,
             location.zip || null,
             location.phone || null,
+            lat ?? null,
+            lng ?? null,
           ]
         );
       } else if (request.type === 'practice_location_edit_request') {
@@ -700,10 +801,12 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
         }
 
         const location = payload.updatedLocation;
+        const lat = location.latitude ?? location.lat;
+        const lng = location.longitude ?? location.lng;
         await client.query(
           `UPDATE practice_locations 
-           SET name = $1, address = $2, city = $3, state = $4, zip = $5, phone = $6
-           WHERE id = $7 AND practice_id = $8`,
+           SET name = $1, address = $2, city = $3, state = $4, zip = $5, phone = $6, latitude = $7, longitude = $8
+           WHERE id = $9 AND practice_id = $10`,
           [
             location.name || 'Location',
             location.address || null,
@@ -711,6 +814,8 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
             location.state || null,
             location.zip || null,
             location.phone || null,
+            lat ?? null,
+            lng ?? null,
             payload.locationId,
             practiceId,
           ]
@@ -747,10 +852,12 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
 
         // Insert new locations
         for (const location of payload.locations) {
+          const lat = location.latitude ?? location.lat;
+          const lng = location.longitude ?? location.lng;
           await client.query(
             `INSERT INTO practice_locations (
-              id, practice_id, name, address, city, state, zip, phone
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+              id, practice_id, name, address, city, state, zip, phone, latitude, longitude
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
               location.id,
               practiceId,
@@ -760,6 +867,8 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
               location.state || null,
               location.zip || null,
               location.phone || null,
+              lat ?? null,
+              lng ?? null,
             ]
           );
         }

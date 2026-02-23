@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { subscribeToAnnouncements } from '@/lib/services/announcementService';
+import { getAnnouncements } from '@/lib/api/announcements';
 
 interface AnnouncementBellProps {
-    /** Doctor ID to filter announcements for */
+    /** Doctor ID (kept for compatibility) */
     doctorId?: string;
-    /** Practice ID to filter announcements for */
+    /** Practice ID (kept for compatibility) */
     practiceId?: string;
     /** Href to navigate to when icon is clicked */
     href?: string;
@@ -18,22 +18,26 @@ interface AnnouncementBellProps {
 export function AnnouncementBell({
     doctorId,
     practiceId,
-    href = '/doctor/dashboard/announcements',
+    href = '/doctor/dashboard/community/announcements',
 }: AnnouncementBellProps) {
     const router = useRouter();
     const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        if (!doctorId) return;
-
-        const unsubscribe = subscribeToAnnouncements(doctorId, practiceId, (announcements) => {
-            // Count actual unread announcements from persistent storage
-            const unread = announcements.filter(a => !a.isRead).length;
+    const refresh = useCallback(async () => {
+        try {
+            const list = await getAnnouncements();
+            const unread = Array.isArray(list) ? list.filter((a) => !a.read).length : 0;
             setUnreadCount(unread);
-        });
+        } catch {
+            setUnreadCount(0);
+        }
+    }, []);
 
-        return () => unsubscribe();
-    }, [doctorId, practiceId]);
+    useEffect(() => {
+        refresh();
+        const interval = setInterval(refresh, 60_000);
+        return () => clearInterval(interval);
+    }, [refresh]);
 
     return (
         <Button

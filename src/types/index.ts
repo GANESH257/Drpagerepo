@@ -29,6 +29,13 @@ export interface BookingSlot {
   available: boolean;
 }
 
+/** Single certification, badge, or award with optional image and year */
+export interface CertificationItem {
+  name: string;
+  imageUrl?: string;
+  year?: string;
+}
+
 export interface Doctor {
   id: string;
   slug: string;
@@ -57,13 +64,18 @@ export interface Doctor {
   medicalSchool?: string;
   residency?: string;
   internship?: string;
-  boardCertifications?: string[];
+  /** Board certifications: legacy string[] or new { name, imageUrl?, year? }[] */
+  boardCertifications?: (string | CertificationItem)[];
   statesLicensedIn?: string[];
+  /** Badges and awards with name, optional image, year */
+  badgesAwards?: CertificationItem[];
   website?: string; // Personal/practice website URL
   bookingUrl?: string; // Direct booking/contact page URL
   institutionId?: string; // FK to Institution (backward compatibility)
   practiceId?: string; // FK to Practice (V2)
   roleInPractice?: 'doctor' | 'practice_admin'; // Role within practice (V2)
+  npi?: string; // National Provider Identifier (10-digit)
+  profileStatus?: string; // 'active' | 'pending_profile'
 }
 
 /**
@@ -399,6 +411,7 @@ export interface ApplicationDraft {
     phone: string;
     city: string;
     state: string;
+    npi: string;
     practiceName?: string;
     website?: string;
     messageToAdmin?: string;

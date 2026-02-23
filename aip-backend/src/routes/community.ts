@@ -212,4 +212,64 @@ router.post('/posts/:id/comments', authenticateToken, async (req: AuthRequest, r
   }
 });
 
+/**
+ * POST /api/community/posts/:id/report
+ * Report a post (doctor, practice_admin). Admin can also report.
+ */
+router.post('/posts/:id/report', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userRole = req.userRole;
+    if (!userRole || !ALLOWED_POST_ROLES.includes(userRole)) {
+      return res.status(403).json({ error: 'Only doctors and admins can report posts' });
+    }
+    const postId = req.params.id;
+    const postCheck = await pool.query('SELECT id FROM community_posts WHERE id = $1', [postId]);
+    if (postCheck.rows.length === 0) return res.status(404).json({ error: 'Post not found' });
+    const doctorId = req.doctorId;
+    if (!doctorId) return res.status(400).json({ error: 'Only doctors can report posts' });
+    const { reason } = req.body || {};
+    const id = makeId('cprep');
+    await pool.query(
+      `INSERT INTO community_post_reports (id, post_id, reported_by_doctor_id, reason, status)
+       VALUES ($1, $2, $3, $4, 'pending')`,
+      [id, postId, doctorId, reason || null]
+    );
+    const row = await pool.query('SELECT * FROM community_post_reports WHERE id = $1', [id]);
+    res.status(201).json(row.rows[0]);
+  } catch (error) {
+    console.error('Error reporting post:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/community/posts/:id - Delete post (admin only)
+ */
+router.delete('/posts/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const result = await pool.query('DELETE FROM community_posts WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Post not found' });
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /api/community/comments/:id - Delete comment (admin only)
+ */
+router.delete('/comments/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const result = await pool.query('DELETE FROM community_comments WHERE id = $1 RETURNING id', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Comment not found' });
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

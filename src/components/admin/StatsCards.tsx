@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { Users, Crown, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJoinRequests } from '@/lib/api/join-requests';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getDoctors } from '@/lib/api/doctors';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
+import { getToken } from '@/lib/api/config';
 
 export function StatsCards() {
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
-  const [doctors, setDoctors] = useState<any[]>([]);
+  const [totalDoctorsFromApi, setTotalDoctorsFromApi] = useState(0);
   const [membershipPlans, setMembershipPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,13 +19,14 @@ export function StatsCards() {
     async function loadData() {
       try {
         setLoading(true);
-        const [requestsData, doctorsData, plansData] = await Promise.all([
+        const token = getToken();
+        const [requestsData, doctorsRes, plansData] = await Promise.all([
           getJoinRequests().catch(() => []),
-          getAllDoctors().catch(() => []),
+          token ? getDoctors({ limit: 1 }, token).catch(() => ({ doctors: [], pagination: { total: 0 } })) : Promise.resolve({ doctors: [], pagination: { total: 0 } }),
           getMembershipPlans().catch(() => []),
         ]);
         setJoinRequests(requestsData);
-        setDoctors(doctorsData);
+        setTotalDoctorsFromApi(doctorsRes.pagination?.total ?? 0);
         setMembershipPlans(plansData);
         setError(null);
       } catch (err) {
@@ -39,8 +41,7 @@ export function StatsCards() {
 
   const acceptedRequests = joinRequests.filter((r) => r.status === 'approved');
   const pendingRequests = joinRequests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
-  
-  const totalDoctors = doctors.length + acceptedRequests.length;
+  const totalDoctors = totalDoctorsFromApi + acceptedRequests.length;
   
   // Calculate doctors per plan (simplified - assume accepted requests are distributed)
   const planDistribution = {
@@ -53,7 +54,7 @@ export function StatsCards() {
     {
       title: 'Total Doctors',
       value: totalDoctors.toString(),
-      description: `${doctors.length} existing + ${acceptedRequests.length} accepted`,
+      description: `${totalDoctorsFromApi} in directory + ${acceptedRequests.length} accepted`,
       icon: Users,
       color: 'text-brand-teal',
     },

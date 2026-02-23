@@ -6,8 +6,7 @@ import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
-import { addPracticeInvitation, getPracticeInvitations } from '@/lib/storage/invitationStorage';
-import { makeId, nowISO } from '@/lib/services/id';
+import { getPracticeInvitations as getPracticeInvitationsAPI, createPracticeInvitation } from '@/lib/api/practices';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { getAllPracticesForAdmin, getDoctorsByPractice } from '@/lib/adminHelpers';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -62,9 +61,17 @@ export default function PracticeRosterPage() {
         const doctorsInPractice = await getDoctorsByPractice(foundPractice.id);
         setPracticeDoctors(doctorsInPractice);
         
-        // Load invitations for this practice
-        const allInvitations = getPracticeInvitations();
-        const practiceInvitations = allInvitations.filter(inv => inv.practiceId === foundPractice.id);
+        // Load invitations from API
+        const apiInvitations = await getPracticeInvitationsAPI(foundPractice.id);
+        const practiceInvitations = (Array.isArray(apiInvitations) ? apiInvitations : []).map((inv: any) => ({
+          id: inv.id,
+          practiceId: inv.practice_id ?? inv.practiceId,
+          email: inv.email,
+          invitedAt: inv.created_at ?? inv.invitedAt,
+          invitedByDoctorId: inv.invited_by ?? inv.invitedByDoctorId,
+          status: (inv.status ?? 'sent') as 'sent' | 'accepted' | 'expired' | 'revoked',
+          invitationLink: inv.invitation_link ?? (inv.token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join-us/application?invitation=${inv.token}` : undefined),
+        }));
         setInvitations(practiceInvitations);
         
         setIsLoading(false);
@@ -93,39 +100,24 @@ export default function PracticeRosterPage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
-      // Create invitation with link
-      const invitationId = makeId('inv');
-      const invitationLink = `${window.location.origin}/join-us/application?invitation=${invitationId}`;
-      const newInvitation: PracticeInvitation = {
-        id: invitationId,
-        practiceId: practice.id,
+      const created = await createPracticeInvitation(practice.id, {
         email: inviteEmail.trim(),
-        invitedAt: nowISO(),
-        invitedByDoctorId: actor.doctorId,
-        status: 'sent',
-        invitationLink,
-      };
-      addPracticeInvitation(newInvitation);
-      
-      // Create approval request
-      await submitApprovalRequest(actor, {
-        type: 'practice_doctor_add_request',
-        payload: {
-          invitationId,
-          email: inviteEmail.trim(),
-          message: inviteMessage || undefined,
-        },
-        target: {
-          practiceId: practice.id,
-          invitedDoctorEmail: inviteEmail.trim(),
-        },
+        message: inviteMessage.trim() || undefined,
       });
+      const newInvitation: PracticeInvitation = {
+        id: created.id,
+        practiceId: created.practice_id ?? practice.id,
+        email: created.email,
+        invitedAt: created.created_at ?? new Date().toISOString(),
+        invitedByDoctorId: created.invited_by ?? actor.doctorId,
+        status: (created.status ?? 'sent') as 'sent' | 'accepted' | 'expired' | 'revoked',
+        invitationLink: created.invitation_link ?? (created.token ? `${window.location.origin}/join-us/application?invitation=${created.token}` : undefined),
+      };
       
-      // Update local state
       setInvitations([newInvitation, ...invitations]);
       setLastCreatedInvitation(newInvitation);
       
-      toast.success('Invitation created and approval request submitted');
+      toast.success('Invitation created');
       // Don't close dialog yet - show invitation link
     } catch (error: any) {
       toast.error(error.message || 'Failed to invite doctor');

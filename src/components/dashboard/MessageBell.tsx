@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
+import { getUnreadCount } from '@/lib/api/messages';
 
 interface MessageBellProps {
-    /** User ID whose messages should be counted (e.g., doctor ID or 'admin') */
+    /** User ID (kept for compatibility; count is for authenticated user) */
     userId?: string;
     /** Href to navigate to when icon is clicked */
     href?: string;
@@ -20,15 +20,20 @@ export function MessageBell({
     const router = useRouter();
     const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        if (!userId) return;
-
-        const unsubscribe = subscribeToTotalUnreadCount(userId, (count) => {
+    const refresh = useCallback(async () => {
+        try {
+            const count = await getUnreadCount();
             setUnreadCount(count);
-        });
+        } catch {
+            setUnreadCount(0);
+        }
+    }, []);
 
-        return () => unsubscribe();
-    }, [userId]);
+    useEffect(() => {
+        refresh();
+        const interval = setInterval(refresh, 30_000);
+        return () => clearInterval(interval);
+    }, [refresh]);
 
     return (
         <Button

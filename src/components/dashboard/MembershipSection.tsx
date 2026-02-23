@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -41,8 +41,8 @@ import {
 } from 'lucide-react';
 import { membershipPlans } from '@/data/membershipPlans';
 import { PlanCard } from '@/components/membership/PlanCard';
+import { getMyMembership } from '@/lib/api/memberships';
 import {
-  loadMembership,
   initializeMembership,
   upgradeMembership,
   completeMembershipPayment,
@@ -57,10 +57,47 @@ interface MembershipSectionProps {
 }
 
 export function MembershipSection({ doctorId }: MembershipSectionProps) {
-  // Use lazy initializer to avoid infinite loops
-  const [membership, setMembership] = useState<MembershipData | null>(
-    () => loadMembership(doctorId) || null
-  );
+  const [membership, setMembership] = useState<MembershipData | null>(null);
+
+  useEffect(() => {
+    getMyMembership()
+      .then((api) => {
+        if (!api) {
+          setMembership(null);
+          return;
+        }
+        setMembership({
+          planId: api.plan_id ?? api.planId ?? 'basic',
+          billingCycle: (api.billing_cycle ?? api.billingCycle ?? 'annual') as 'monthly' | 'annual',
+          status: (api.status === 'active' ? 'active' : api.status === 'expired' ? 'expired' : 'pending_payment') as 'active' | 'pending_payment' | 'expired',
+          memberSince: api.start_date ?? api.created_at ?? new Date().toISOString(),
+          renewalDate: api.expiry_date ?? api.updated_at ?? new Date().toISOString(),
+          lastPaymentMethod: (api.payment_method === 'paypal' ? 'paypal' : api.payment_method === 'card' ? 'card' : null) as 'paypal' | 'card' | null,
+          history: [],
+        });
+      })
+      .catch(() => setMembership(null));
+  }, [doctorId]);
+
+  const refreshMembership = useCallback(() => {
+    getMyMembership()
+      .then((api) => {
+        if (!api) {
+          setMembership(null);
+          return;
+        }
+        setMembership({
+          planId: api.plan_id ?? 'basic',
+          billingCycle: (api.billing_cycle ?? 'annual') as 'monthly' | 'annual',
+          status: (api.status === 'active' ? 'active' : api.status === 'expired' ? 'expired' : 'pending_payment') as 'active' | 'pending_payment' | 'expired',
+          memberSince: api.start_date ?? new Date().toISOString(),
+          renewalDate: api.expiry_date ?? new Date().toISOString(),
+          lastPaymentMethod: (api.payment_method === 'paypal' ? 'paypal' : api.payment_method === 'card' ? 'card' : null) as 'paypal' | 'card' | null,
+          history: [],
+        });
+      })
+      .catch(() => setMembership(null));
+  }, []);
 
   const [planSelectorOpen, setPlanSelectorOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -72,10 +109,22 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Initialize membership if it doesn't exist
+  // Initialize membership if it doesn't exist (local fallback for onboarding)
   const handleInitializeMembership = useCallback(() => {
     initializeMembership(doctorId, 'basic', 'annual');
-    setMembership(loadMembership(doctorId));
+    getMyMembership().then((api) => {
+      if (api) {
+        setMembership({
+          planId: api.plan_id ?? 'basic',
+          billingCycle: (api.billing_cycle ?? 'annual') as 'monthly' | 'annual',
+          status: (api.status === 'active' ? 'active' : 'pending_payment') as 'active' | 'pending_payment' | 'expired',
+          memberSince: api.start_date ?? new Date().toISOString(),
+          renewalDate: api.expiry_date ?? new Date().toISOString(),
+          lastPaymentMethod: null,
+          history: [],
+        });
+      }
+    });
   }, [doctorId]);
 
   // Get current plan data
@@ -95,7 +144,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
 
     setIsProcessing(true);
     upgradeMembership(doctorId, selectedPlanId, selectedBillingCycle);
-    setMembership(loadMembership(doctorId));
+    refreshMembership();
     setPlanSelectorOpen(false);
     setConfirmDialogOpen(false);
     setSelectedPlanId(null);
@@ -109,9 +158,9 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
     setIsProcessing(true);
     const paymentMethod = membership.lastPaymentMethod || 'paypal';
     completeMembershipPayment(doctorId, paymentMethod);
-    setMembership(loadMembership(doctorId));
+    refreshMembership();
     setIsProcessing(false);
-  }, [doctorId, membership]);
+  }, [doctorId, membership, refreshMembership]);
 
   // Handle billing cycle change
   const handleBillingCycleChange = useCallback(
@@ -128,18 +177,18 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
     const newCycle =
       membership.billingCycle === 'annual' ? 'monthly' : 'annual';
     updateBillingCycle(doctorId, newCycle);
-    setMembership(loadMembership(doctorId));
-  }, [doctorId, membership]);
+    refreshMembership();
+  }, [doctorId, membership, refreshMembership]);
 
   // Handle payment method update
   const handleUpdatePaymentMethod = useCallback(
     (method: 'paypal' | 'card') => {
       updatePaymentMethod(doctorId, method);
-      setMembership(loadMembership(doctorId));
+      refreshMembership();
       setPaypalModalOpen(false);
       setCardModalOpen(false);
     },
-    [doctorId]
+    [doctorId, refreshMembership]
   );
 
   // Format date

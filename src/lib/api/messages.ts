@@ -33,6 +33,20 @@ export interface ThreadWithMessages extends MessageThread {
 }
 
 /**
+ * Get unread message count for authenticated user
+ */
+export async function getUnreadCount(): Promise<number> {
+  try {
+    const token = getToken();
+    if (!token) return 0;
+    const response = await apiClient.get<{ count: number }>('/api/messages/unread-count', token);
+    return response?.count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Get all message threads for authenticated user
  */
 export async function getThreads(): Promise<MessageThread[]> {

@@ -22,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { practices } from '@/data/practices';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { getUploadFullUrl } from '@/lib/api/upload';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -698,19 +699,44 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                                 Board Certifications
                               </p>
                               <div className="flex flex-wrap gap-2">
-                                {doctor.boardCertifications.map((cert, index) => (
+                                {(doctor.boardCertifications as Array<string | { name: string; imageUrl?: string; year?: string }>).map((cert, index) => (
                                   <Badge
                                     key={index}
                                     variant="secondary"
                                     className="text-xs"
                                   >
-                                    {cert}
+                                    {typeof cert === 'string' ? cert : cert.name}
                                   </Badge>
                                 ))}
                               </div>
                             </div>
                           </div>
                         )}
+
+                      {/* Badges & Awards */}
+                      {doctor.badgesAwards && doctor.badgesAwards.length > 0 && (
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 p-2 rounded-lg bg-brand-teal/10">
+                            <Award className="h-5 w-5 text-brand-teal" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-brand-dark-blue mb-2">
+                              Badges & Awards
+                            </p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {doctor.badgesAwards.map((item, index) => (
+                                <div key={index} className="flex flex-col items-center p-2 rounded border bg-muted/30">
+                                  {item.imageUrl ? (
+                                    <img src={getUploadFullUrl(item.imageUrl)} alt={item.name} className="w-10 h-10 object-contain rounded mb-1" />
+                                  ) : null}
+                                  <span className="text-xs font-medium text-center">{item.name}</span>
+                                  {item.year && <span className="text-xs text-muted-foreground">{item.year}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Hospital Privileges */}
                       {doctor.hospitalPrivileges &&
@@ -1032,6 +1058,14 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                     {doctor.credentials}
                   </p>
                 </div>
+                {doctor.npi && (
+                  <div>
+                    <p className="text-sm font-medium">NPI</p>
+                    <p className="text-sm text-muted-foreground">
+                      {doctor.npi}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-medium">Accepts New Patients</p>
                   <p className="text-sm text-muted-foreground">

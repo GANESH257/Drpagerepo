@@ -52,7 +52,12 @@ export default function PracticeInfoPage() {
             zip: r.zip ?? '',
             country: r.country ?? 'USA',
           },
-          locations: Array.isArray(raw.locations) ? raw.locations : [],
+          locations: (Array.isArray(raw.locations) ? raw.locations : []).map((loc: any) => ({
+            ...loc,
+            lat: loc.lat ?? loc.latitude,
+            lng: loc.lng ?? loc.longitude,
+            address: loc.address ?? loc.address_line1 ?? '',
+          })),
           specialties: Array.isArray(raw.specialties) ? raw.specialties : [],
           doctorIds: Array.isArray(r.doctors) ? r.doctors.map((d: { id: string }) => d.id) : [],
         };

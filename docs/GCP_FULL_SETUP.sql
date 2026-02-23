@@ -131,6 +131,9 @@ CREATE TABLE IF NOT EXISTS doctors (
     accepts_new_patients BOOLEAN DEFAULT TRUE,
     rating DECIMAL(3, 2) DEFAULT 0.00,
     review_count INT DEFAULT 0,
+    npi VARCHAR(10) UNIQUE,
+    profile_status VARCHAR(50) DEFAULT 'active',
+    badges_awards JSONB DEFAULT '[]',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -142,6 +145,8 @@ CREATE INDEX IF NOT EXISTS idx_doctors_email ON doctors(email);
 CREATE INDEX IF NOT EXISTS idx_doctors_specialty ON doctors(specialty);
 CREATE INDEX IF NOT EXISTS idx_doctors_verified ON doctors(verified);
 CREATE INDEX IF NOT EXISTS idx_doctors_user_id ON doctors(user_id);
+CREATE INDEX IF NOT EXISTS idx_doctors_npi ON doctors(npi) WHERE npi IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_doctors_profile_status ON doctors(profile_status);
 
 -- ----------------------------------------------------------------------------
 -- 6. ADMINS

@@ -625,6 +625,18 @@ function RosterView({ request }: { request: ApprovalRequest }) {
             )}
           </div>
 
+          {request.type === 'doctor_join_practice' && request.payload?.doctor && (
+            <div className="mt-4 pt-4 border-t space-y-2">
+              <h4 className="font-bold text-brand-dark-blue">Applicant (verify identity)</h4>
+              <div className="grid gap-2 text-sm">
+                <div><Label className="text-muted-foreground">Name</Label><div className="mt-0.5 font-medium">{request.payload.doctor.fullName} {request.payload.doctor.credentials}</div></div>
+                <div><Label className="text-muted-foreground">Email</Label><div className="mt-0.5">{request.payload.doctor.email}</div></div>
+                <div><Label className="text-muted-foreground">Specialty</Label><div className="mt-0.5">{request.payload.doctor.specialty}</div></div>
+                {request.payload.doctor.npi && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{request.payload.doctor.npi}</div></div>}
+              </div>
+            </div>
+          )}
+
           {request.payload?.message && (
             <div className="mt-4 p-3 bg-muted rounded-md text-sm">
               <Label className="text-muted-foreground block mb-1">Message from Practice</Label>
@@ -685,6 +697,12 @@ function NewPracticeView({ request }: { request: ApprovalRequest }) {
               <Label className="text-muted-foreground">Email</Label>
               <div className="mt-1">{doctor?.email}</div>
             </div>
+            {doctor?.npi && (
+              <div>
+                <Label className="text-muted-foreground">NPI (verify identity)</Label>
+                <div className="mt-1 font-medium">{doctor.npi}</div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -705,6 +723,77 @@ function NewPracticeView({ request }: { request: ApprovalRequest }) {
               <span className="text-muted-foreground">Payment Method:</span>
               <span className="ml-2 font-medium capitalize">{payload.paymentMethod}</span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * PA Profile & Practice Completion View - Profile + practice details submitted after first approval
+ */
+function PAProfilePracticeCompletionView({ request }: { request: ApprovalRequest }) {
+  const payload = request.payload || {};
+  const doc = payload.doctor || {};
+  const prac = payload.practice || {};
+  const locs = Array.isArray(payload.locations) ? payload.locations : [];
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h4 className="font-bold text-brand-dark-blue">Profile details</h4>
+          <div className="grid gap-2 text-sm">
+            <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{doc.fullName}</div></div>
+            {doc.npi && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{doc.npi}</div></div>}
+            {doc.bio && <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5">{doc.bio}</div></div>}
+            {doc.phone && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{doc.phone}</div></div>}
+            {doc.website && <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5">{doc.website}</div></div>}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h4 className="font-bold text-brand-dark-blue">Practice details</h4>
+          <div className="grid gap-2 text-sm">
+            <div><Label className="text-muted-foreground">Name</Label><div className="mt-0.5 font-medium">{prac.name}</div></div>
+            {prac.description && <div><Label className="text-muted-foreground">Description</Label><div className="mt-0.5">{prac.description}</div></div>}
+            {prac.phone && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{prac.phone}</div></div>}
+            {(prac.address_line1 || prac.address?.line1) && <div><Label className="text-muted-foreground">Address</Label><div className="mt-0.5">{prac.address_line1 || prac.address?.line1} {prac.city} {prac.state} {prac.zip}</div></div>}
+          </div>
+          {locs.length > 0 && (
+            <div className="mt-4">
+              <Label className="text-muted-foreground">Locations</Label>
+              <ul className="mt-1 list-disc pl-4 space-y-1">
+                {locs.map((loc: any) => <li key={loc.id || loc.name}>{loc.name} {loc.city && `${loc.city}, ${loc.state || ''} ${loc.zip || ''}`}</li>)}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * Doctor Profile Completion View - Profile details submitted by doctor joining a practice
+ */
+function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) {
+  const payload = request.payload || {};
+  const doc = payload.doctor || {};
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h4 className="font-bold text-brand-dark-blue">Profile details</h4>
+          <div className="grid gap-2 text-sm">
+            <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{doc.fullName}</div></div>
+            {doc.npi && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{doc.npi}</div></div>}
+            {doc.bio && <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5">{doc.bio}</div></div>}
+            {doc.phone && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{doc.phone}</div></div>}
+            {doc.website && <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5">{doc.website}</div></div>}
           </div>
         </CardContent>
       </Card>
@@ -740,6 +829,12 @@ export function RequestedChangesRenderer({ request }: { request: ApprovalRequest
       break;
     case 'new_practice_with_admin_doctor':
       content = <NewPracticeView request={request} />;
+      break;
+    case 'practice_admin_profile_practice_completion':
+      content = <PAProfilePracticeCompletionView request={request} />;
+      break;
+    case 'doctor_profile_completion':
+      content = <DoctorProfileCompletionView request={request} />;
       break;
     default:
       content = <RawJsonPayload payload={request.payload} />;

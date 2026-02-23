@@ -102,6 +102,19 @@ class ApiClient {
   }
 
   /**
+   * PATCH request
+   */
+  async patch<T>(endpoint: string, data: any, token?: string): Promise<T> {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'PATCH',
+      headers: this.getHeaders(token),
+      credentials: 'include',
+      body: JSON.stringify(data || {}),
+    });
+    return this.handleResponse<T>(response);
+  }
+
+  /**
    * PUT request
    */
   async put<T>(endpoint: string, data: any, token?: string): Promise<T> {

@@ -75,7 +75,7 @@ router.put('/:id/read', authenticateToken, async (req: AuthRequest, res) => {
     const result = await pool.query(
       `UPDATE notifications 
        SET read_at = NOW() 
-       WHERE id = $1 AND recipient_id = $2
+       WHERE id = $1 AND doctor_id = $2
        RETURNING *`,
       [req.params.id, doctorId]
     );

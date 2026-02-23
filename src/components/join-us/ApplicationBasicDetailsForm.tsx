@@ -33,6 +33,7 @@ export function ApplicationBasicDetailsForm({
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [city, setCity] = useState(initialData?.city || '');
   const [state, setState] = useState(initialData?.state || '');
+  const [npi, setNpi] = useState(initialData?.npi || '');
   const [practiceName, setPracticeName] = useState(initialData?.practiceName || '');
   const [website, setWebsite] = useState(initialData?.website || '');
   const [messageToAdmin, setMessageToAdmin] = useState(initialData?.messageToAdmin || '');
@@ -82,6 +83,8 @@ export function ApplicationBasicDetailsForm({
     if (!phone.trim()) newErrors.phone = 'Phone number is required';
     if (!city.trim()) newErrors.city = 'City is required';
     if (!state.trim()) newErrors.state = 'State is required';
+    if (!npi.trim()) newErrors.npi = 'NPI (National Provider Identifier) is required';
+    else if (!/^\d{10}$/.test(npi.replace(/\s/g, ''))) newErrors.npi = 'NPI must be exactly 10 digits';
     if (!practiceSelection) {
       newErrors.practiceSelection = 'Please select or create a practice';
     } else if (practiceSelection.type === 'new' && !practiceSelection.practiceName.trim()) {
@@ -104,6 +107,7 @@ export function ApplicationBasicDetailsForm({
       phone: phone.trim(),
       city: city.trim(),
       state: state.trim(),
+      npi: npi.replace(/\s/g, '').trim(),
       practiceName: practiceName.trim() || undefined,
       website: website.trim() || undefined,
       messageToAdmin: messageToAdmin.trim() || undefined,
@@ -301,6 +305,37 @@ export function ApplicationBasicDetailsForm({
             </p>
           )}
         </div>
+      </div>
+
+      {/* NPI - National Provider Identifier */}
+      <div className="space-y-2">
+        <Label htmlFor="npi">
+          NPI (National Provider Identifier) <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="npi"
+          type="text"
+          inputMode="numeric"
+          maxLength={14}
+          value={npi}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+            setNpi(v);
+            if (errors.npi) setErrors({ ...errors, npi: '' });
+          }}
+          placeholder="10-digit NPI number"
+          aria-invalid={!!errors.npi}
+          aria-describedby={errors.npi ? 'npi-error' : undefined}
+          className={errors.npi ? 'border-destructive' : ''}
+        />
+        <p className="text-xs text-muted-foreground">
+          Your unique 10-digit NPI issued by CMS. Used for identity verification.
+        </p>
+        {errors.npi && (
+          <p id="npi-error" className="text-sm text-destructive" role="alert">
+            {errors.npi}
+          </p>
+        )}
       </div>
 
       {/* Practice Selection */}

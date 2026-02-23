@@ -18,6 +18,9 @@ import { saveDoctorProfile, loadDoctorProfile, saveDoctorProfileToAPI } from '@/
 import { departments } from '@/data/departments';
 import { TagInput } from './TagInput';
 import { EditableList } from './EditableList';
+import { CredentialItemForm } from '@/components/shared/CredentialItemForm';
+import { toCertificationItems } from '@/lib/utils/credentialUtils';
+import { CertificationItem } from '@/types';
 
 interface EditProfileSectionProps {
   doctor: Doctor;
@@ -502,12 +505,20 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
                   <Separator />
 
-                  <EditableList
-                    items={doctor.boardCertifications || []}
-                    onItemsChange={(items) => updateField('boardCertifications', items)}
+                  <CredentialItemForm
+                    items={toCertificationItems(doctor.boardCertifications)}
+                    onChange={(items: CertificationItem[]) => updateField('boardCertifications', items)}
                     label="Board Certifications"
-                    placeholder="e.g., American Board of Internal Medicine"
                     addButtonLabel="Add Certification"
+                  />
+
+                  <Separator />
+
+                  <CredentialItemForm
+                    items={doctor.badgesAwards || []}
+                    onChange={(items: CertificationItem[]) => updateField('badgesAwards', items)}
+                    label="Badges & Awards"
+                    addButtonLabel="Add Badge or Award"
                   />
 
                   <Separator />

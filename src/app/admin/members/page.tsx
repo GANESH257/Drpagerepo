@@ -1,20 +1,16 @@
 'use client';
 
-import { MembersTable } from '@/components/admin/MembersTable';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function AdminMembersPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/admin/members/doctors');
+  }, [router]);
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Member Management</h2>
-        <p className="text-gray-600 mt-2">
-          Edit doctor profiles, manage passwords, and remove members
-        </p>
-      </div>
-
-      {/* Members Table */}
-      <MembersTable />
+    <div className="flex items-center justify-center min-h-[300px]">
+      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0F5FA8]" />
     </div>
   );
 }

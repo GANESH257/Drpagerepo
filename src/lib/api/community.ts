@@ -128,3 +128,29 @@ export async function createCommunityComment(
     throw new Error(apiError.error || 'Failed to add comment');
   }
 }
+
+/** Delete a post (admin only). */
+export async function deleteCommunityPost(postId: string): Promise<void> {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+  try {
+    await apiClient.delete<void>(`/api/community/posts/${postId}`, token);
+  } catch (error) {
+    const apiError = error as ApiError;
+    if (apiError.status === 404) throw new Error('Post not found');
+    throw new Error(apiError.error || 'Failed to delete post');
+  }
+}
+
+/** Delete a comment (admin only). */
+export async function deleteCommunityComment(commentId: string): Promise<void> {
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+  try {
+    await apiClient.delete<void>(`/api/community/comments/${commentId}`, token);
+  } catch (error) {
+    const apiError = error as ApiError;
+    if (apiError.status === 404) throw new Error('Comment not found');
+    throw new Error(apiError.error || 'Failed to delete comment');
+  }
+}

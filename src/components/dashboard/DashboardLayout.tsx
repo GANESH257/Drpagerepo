@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageBell } from './MessageBell';
 import { AnnouncementBell } from './AnnouncementBell';
 import { NotificationBell } from './NotificationBell';
+import type { PortalNavItem } from '@/components/portal/portalNavTypes';
 
 interface DashboardLayoutProps {
   doctor: Doctor;
@@ -24,7 +25,6 @@ import {
   User,
   MapPin,
   CreditCard,
-  Calendar,
   Users,
   MessageCircle,
   Crown,
@@ -34,122 +34,78 @@ import {
   Settings,
   History,
   MessageSquare,
+  Search,
+  BookUser,
+  ClipboardList,
+  Cog,
 } from 'lucide-react';
 
-// Base nav items for all doctors
-const baseDoctorNavItems = [
+const baseUrl = '/doctor/dashboard';
+
+// Core nav (1–8) — hierarchical per reference: ↳ = children
+const baseDoctorNavTree: PortalNavItem[] = [
+  { label: 'Dashboard', href: baseUrl, icon: LayoutDashboard, description: 'Your personal landing page with profile status and quick links' },
   {
-    label: 'Overview',
-    href: '/doctor/dashboard',
-    icon: LayoutDashboard,
-    description: 'Dashboard overview and quick actions',
+    label: 'Find a Physician',
+    href: `${baseUrl}/find-physician`,
+    icon: Search,
+    description: 'Search for any physician in the AIP network',
+    children: [
+      { label: 'My Contacts', href: `${baseUrl}/find-physician/contacts`, icon: BookUser, description: 'Your saved contacts for referrals and messages' },
+    ],
   },
   {
-    label: 'Edit Profile',
-    href: '/doctor/dashboard/profile',
-    icon: User,
-    description: 'Update your professional information and credentials',
-  },
-  {
-    label: 'View Practice',
-    href: '/doctor/dashboard/practice-info',
+    label: 'My Practice',
+    href: `${baseUrl}/my-practice`,
     icon: Building,
-    description: 'View your practice information',
+    description: 'View your practice profile',
+    children: [
+      { label: 'View Practice Profile', href: `${baseUrl}/my-practice`, icon: Building, description: 'Read-only practice profile' },
+      { label: 'View Practice Locations', href: `${baseUrl}/my-practice/locations`, icon: MapPin, description: 'Read-only list of office locations' },
+    ],
   },
   {
-    label: 'Manage Locations',
-    href: '/doctor/dashboard/locations',
-    icon: MapPin,
-    description: 'Add or update your practice locations',
+    label: 'My Profile',
+    href: `${baseUrl}/profile`,
+    icon: User,
+    description: 'Manage your professional information',
+    children: [
+      { label: 'Edit Profile', href: `${baseUrl}/profile`, icon: User, description: 'Update details, credentials, bio, awards' },
+      { label: 'Services & Insurance', href: `${baseUrl}/insurance`, icon: CreditCard, description: 'Conditions treated, procedures, accepted insurance' },
+      { label: 'View Public Profile', href: `${baseUrl}/profile/public`, icon: User, description: 'Preview as seen by the public' },
+    ],
   },
+  { label: 'Referrals', href: `${baseUrl}/referrals`, icon: Users, description: 'Incoming and outgoing referrals; create with My Contacts' },
   {
-    label: 'Insurance & Services',
-    href: '/doctor/dashboard/insurance',
-    icon: CreditCard,
-    description: 'View and manage accepted insurance plans and services offered',
-  },
-  {
-    label: 'Appointment Requests',
-    href: '/doctor/dashboard/appointments',
-    icon: Calendar,
-    description: 'View and manage patient appointment requests',
-  },
-  {
-    label: 'Referrals',
-    href: '/doctor/dashboard/referrals',
-    icon: Users,
-    description: 'Track referrals from other physicians in the network',
-  },
-  {
-    label: 'Community',
-    href: '/doctor/dashboard/community',
+    label: 'Community & News',
+    href: `${baseUrl}/community`,
     icon: MessageSquare,
-    description: 'Ask questions and discuss with the network',
+    description: 'Network information and engagement',
+    children: [
+      { label: 'Leadership & Committees', href: `${baseUrl}/community/leadership`, icon: ClipboardList, description: 'Board of Directors and committees' },
+      { label: 'Community Forum', href: `${baseUrl}/community`, icon: MessageSquare, description: 'Q&A discussion board' },
+      { label: 'Announcements & Events', href: `${baseUrl}/community/announcements`, icon: Megaphone, description: 'Official news and event calendar' },
+    ],
   },
-  {
-    label: 'Announcements',
-    href: '/doctor/dashboard/announcements',
-    icon: Megaphone,
-    description: 'View announcements',
-  },
-  {
-    label: 'Messages',
-    href: '/doctor/dashboard/messages',
-    icon: MessageCircle,
-    description: 'Message other physicians in the network',
-  },
-  {
-    label: 'Membership',
-    href: '/doctor/dashboard/membership',
-    icon: Crown,
-    description: 'Manage membership details, renewals, and upgrades',
-  },
+  { label: 'Messages', href: `${baseUrl}/messages`, icon: MessageCircle, description: 'Secure direct messaging' },
+  { label: 'Membership', href: `${baseUrl}/membership`, icon: Crown, description: 'Your membership details and renewals' },
+  { label: 'Account Settings', href: `${baseUrl}/settings`, icon: Cog, description: 'Login and notification preferences' },
 ];
 
-// Practice admin nav items (additional)
-const practiceAdminNavItems = [
+// Practice Admin only (9–10) — hierarchical
+const practiceAdminNavTree: PortalNavItem[] = [
   {
-    label: 'Practice',
-    href: '/doctor/dashboard/practice',
+    label: 'Practice Management',
+    href: `${baseUrl}/practice`,
     icon: Building,
-    description: 'Manage practice details',
+    description: 'Edit and manage your practice',
+    children: [
+      { label: 'Manage Doctors', href: `${baseUrl}/practice/doctors`, icon: Users, description: 'Invite, approve, view doctors in your practice' },
+      { label: 'Edit Practice Profile', href: `${baseUrl}/practice/profile`, icon: Building, description: 'Edit shared practice details' },
+      { label: 'Manage Practice Locations', href: `${baseUrl}/practice/locations`, icon: MapPin, description: 'Add, edit, or remove office locations' },
+    ],
   },
-  {
-    label: 'Practice Approvals',
-    href: '/doctor/dashboard/practice/approvals',
-    icon: FileCheck,
-    description: 'Review and approve practice requests',
-  },
-  {
-    label: 'Practice Doctors',
-    href: '/doctor/dashboard/practice/doctors',
-    icon: Users,
-    description: 'Manage practice roster',
-  },
-  {
-    label: 'Practice Locations',
-    href: '/doctor/dashboard/practice/locations',
-    icon: MapPin,
-    description: 'View practice locations',
-  },
-  {
-    label: 'Services & Insurance',
-    href: '/doctor/dashboard/practice/services-insurance',
-    icon: Settings,
-    description: 'Manage services and insurance',
-  },
-  {
-    label: 'Practice Membership',
-    href: '/doctor/dashboard/practice/membership',
-    icon: Crown,
-    description: 'View practice membership overview',
-  },
-  {
-    label: 'Practice History',
-    href: '/doctor/dashboard/practice/history',
-    icon: History,
-    description: 'View approval history for your practice',
-  },
+  { label: 'Membership & Billing', href: `${baseUrl}/practice/membership`, icon: Crown, description: 'Practice subscription, seats, and billing history' },
 ];
 
 export function DashboardLayout({ doctor, children, onProfileUpdate }: DashboardLayoutProps) {
@@ -157,7 +113,6 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   const { clearSession } = useDoctorSession();
   const [currentDoctor, setCurrentDoctor] = useState(doctor);
 
-  // Sync doctor prop with state when it changes
   useEffect(() => {
     setCurrentDoctor(doctor);
   }, [doctor]);
@@ -172,11 +127,8 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
     router.push('/join-us');
   };
 
-  // Determine nav items based on role
   const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
-  const navItems = isPracticeAdmin
-    ? [...baseDoctorNavItems, ...practiceAdminNavItems]
-    : baseDoctorNavItems;
+  const navTree = isPracticeAdmin ? [...baseDoctorNavTree, ...practiceAdminNavTree] : baseDoctorNavTree;
 
   const headerRight = (
     <>
@@ -217,7 +169,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   return (
     <DoctorProvider doctor={currentDoctor} onUpdate={handleProfileUpdate}>
       <PortalShell
-        sidebarItems={navItems}
+        sidebarItems={navTree}
         headerTitle="Doctor Dashboard"
         headerRight={headerRight}
       >

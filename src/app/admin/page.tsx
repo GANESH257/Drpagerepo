@@ -2,40 +2,33 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Building2, Users } from 'lucide-react';
+import { ArrowRight, Building2, Users, FileCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { StatsCards } from '@/components/admin/StatsCards';
 import { AdminJoinRequest } from '@/lib/adminStorage';
 import { getJoinRequests } from '@/lib/api/join-requests';
+import { getAdminStats } from '@/lib/api/admin-stats';
 import { DoctorsJoinedPerMonthChart } from '@/components/admin/DoctorsJoinedPerMonthChart';
 import { DoctorsPerDepartmentChart } from '@/components/admin/DoctorsPerDepartmentChart';
 import { DoctorsPerPlanChart } from '@/components/admin/DoctorsPerPlanChart';
 import { RequestStatusChart } from '@/components/admin/RequestStatusChart';
 import { GrowthTrendChart } from '@/components/admin/GrowthTrendChart';
-import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
-import { getAllDoctors } from '@/lib/memberStorage';
-import { Practice } from '@/types/practice';
-import { Doctor } from '@/types';
 
 export default function AdminDashboardPage() {
-  const [practices, setPractices] = useState<Practice[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [stats, setStats] = useState<{ totalPractices: number; totalDoctors: number; pendingApprovals: number } | null>(null);
   const [requests, setRequests] = useState<AdminJoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load all data
     async function loadStats() {
       try {
-        const [practicesData, doctorsData, requestsData] = await Promise.all([
-          getAllPracticesForAdmin(),
-          getAllDoctors(),
-          getJoinRequests().catch(() => []), // Handle errors gracefully
+        const [statsData, requestsData] = await Promise.all([
+          getAdminStats().catch(() => ({ totalPractices: 0, totalDoctors: 0, pendingApprovals: 0 })),
+          getJoinRequests().catch(() => []),
         ]);
-        setPractices(practicesData);
-        setDoctors(doctorsData);
+        setStats(statsData);
         setRequests(requestsData);
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -85,9 +78,8 @@ export default function AdminDashboardPage() {
       {/* Stats Cards */}
       <StatsCards />
 
-      {/* Quick Access Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Practice Management Card */}
+      {/* Quick Access Cards - API-backed metrics */}
+      <div className="grid gap-6 md:grid-cols-3">
         <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -96,39 +88,24 @@ export default function AdminDashboardPage() {
                   <Building2 className="h-6 w-6 text-brand-teal" />
                 </div>
                 <div>
-                  <CardTitle className="text-[#0F5FA8]">Practice Management</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    Manage practices, locations, and rosters
-                  </CardDescription>
+                  <CardTitle className="text-[#0F5FA8]">Total Practices</CardTitle>
+                  <CardDescription className="text-gray-600">Manage practices and rosters</CardDescription>
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-[#0F5FA8]">{practices.length}</div>
-                  <p className="text-sm text-gray-600">Total Practices</p>
-                </div>
-                <Button asChild className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
-                  <Link href="/admin/practices">
-                    Manage Practices
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-              <div className="pt-3 border-t">
-                <p className="text-xs text-gray-500">
-                  Edit practice details, manage locations, insurance, services, and doctor rosters. 
-                  Changes apply immediately (admin override).
-                </p>
-              </div>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.totalPractices ?? 0)}</div>
+              <Button asChild className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
+                <Link href="/admin/members/practices">
+                  Manage Practices
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Member Management Card */}
         <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -137,33 +114,47 @@ export default function AdminDashboardPage() {
                   <Users className="h-6 w-6 text-brand-teal" />
                 </div>
                 <div>
-                  <CardTitle className="text-[#0F5FA8]">Member Management</CardTitle>
-                  <CardDescription className="text-gray-600">
-                    Edit doctor profiles and manage members
-                  </CardDescription>
+                  <CardTitle className="text-[#0F5FA8]">Total Doctors</CardTitle>
+                  <CardDescription className="text-gray-600">Edit profiles and status</CardDescription>
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-2xl font-bold text-[#0F5FA8]">{doctors.length}</div>
-                  <p className="text-sm text-gray-600">Total Doctors</p>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.totalDoctors ?? 0)}</div>
+              <Button asChild variant="outline" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
+                <Link href="/admin/members/doctors">
+                  Manage Doctors
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <FileCheck className="h-6 w-6 text-amber-600" />
                 </div>
-                <Button asChild variant="outline" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-                  <Link href="/admin/members">
-                    Manage Members
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <div>
+                  <CardTitle className="text-[#0F5FA8]">Pending Approvals</CardTitle>
+                  <CardDescription className="text-gray-600">Membership and profile approvals</CardDescription>
+                </div>
               </div>
-              <div className="pt-3 border-t">
-                <p className="text-xs text-gray-500">
-                  Edit doctor profiles, manage passwords, assign practices, and remove members.
-                </p>
-              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.pendingApprovals ?? 0)}</div>
+              <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
+                <Link href="/admin/approvals">
+                  Review
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -199,7 +190,7 @@ export default function AdminDashboardPage() {
               </CardDescription>
             </div>
             <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-              <Link href="/admin/requests-v2">
+              <Link href="/admin/approvals">
                 View All
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -219,7 +210,7 @@ export default function AdminDashboardPage() {
               {recentRequests.map((request) => (
                 <Link
                   key={request.id}
-                  href={`/admin/requests-v2/${request.id}`}
+                  href={`/admin/approvals/${request.id}`}
                   className="block p-4 rounded-lg border border-gray-200 hover:border-[#0F5FA8]/30 hover:bg-[#0F5FA8]/5 transition-all"
                 >
                   <div className="flex items-center justify-between">
