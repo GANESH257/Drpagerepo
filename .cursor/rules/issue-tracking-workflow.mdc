@@ -1,0 +1,204 @@
+---
+alwaysApply: true
+description: Issue tracking and debugging workflow documentation
+---
+
+# Issue Tracking and Debugging Workflow
+
+## Purpose
+This rule documents the systematic approach to tracking, debugging, and fixing issues throughout the codebase. Every issue and fix should be documented following this workflow.
+
+## Main Documentation File
+All issues and fixes are continuously documented in [ISSUE_TRACKING_LOG.md](mdc:ISSUE_TRACKING_LOG.md). This file should be updated with every new issue reported and fix applied.
+
+## Documentation Structure
+
+When fixing an issue, document the following in a structured format:
+
+### 1. Issue Identification
+- **Issue Description**: Clear description of what's wrong
+- **User Report**: Exact user message/description
+- **Affected Component**: Which component/page is affected
+- **DOM Path/Element**: If provided, the exact DOM element path
+- **React Component**: The React component name if identified
+- **Visual Symptoms**: What the user sees (spinning, wrong size, wrong position, etc.)
+
+### 2. Investigation Trail
+Document each step taken to investigate:
+- **Initial Search**: What files/components were searched
+- **Code Locations Checked**: Specific files and line numbers examined
+- **Patterns Identified**: Common patterns or similar issues found
+- **Root Cause Analysis**: What's causing the issue (e.g., Locomotive Scroll transforms, missing attributes, CSS conflicts)
+
+### 3. Fix Implementation
+- **Files Modified**: List all files changed
+- **Changes Made**: Specific changes (added attributes, CSS rules, inline styles, etc.)
+- **Code Snippets**: Key code changes with context
+- **CSS Rules Added**: Any new CSS rules in `globals.css`
+- **Component Updates**: Changes to React components
+
+### 4. Fix Location
+- **Primary Fix Location**: Main file where fix was applied
+- **Supporting Changes**: Related files that needed updates
+- **CSS Location**: Specific line numbers in `globals.css` if applicable
+- **Component Location**: File path and component name
+
+### 5. Potential Issue Areas
+Document where similar issues might occur:
+- **Similar Components**: Other components that might have the same issue
+- **Pattern to Watch**: What pattern indicates this type of issue
+- **Prevention**: How to prevent this issue in the future
+
+### 6. Testing & Verification
+- **How to Verify**: Steps to confirm the fix works
+- **Edge Cases**: Any edge cases to test
+- **Related Issues**: Other issues that might be related
+
+## Common Issue Patterns
+
+### Locomotive Scroll Issues
+**Pattern**: Elements spinning, changing size, or being transformed unexpectedly
+**Common Causes**:
+- Missing `data-scroll-exclude` on containers
+- Missing `data-scroll-speed="0"` on interactive elements
+- CSS not preventing transforms
+- Inline styles needed for critical elements
+
+**Fix Locations**:
+- Component files: Add `data-scroll-exclude` and `data-scroll-speed="0"` attributes
+- `src/app/globals.css`: Add CSS rules with `!important` flags
+- Inline styles: For critical elements that need immediate protection
+
+### Size/Position Issues
+**Pattern**: Elements appearing wrong size or position
+**Common Causes**:
+- Locomotive Scroll transforms
+- Missing size constraints in CSS
+- Flex/Grid container issues
+
+**Fix Locations**:
+- Inline styles with fixed dimensions
+- CSS rules in `globals.css` for specific class patterns
+- Component-level style props
+
+### Dialog/Sheet Issues
+**Pattern**: Pop-ups not positioning correctly, close buttons wrong size
+**Common Causes**:
+- Missing `data-scroll-exclude` on overlay/content
+- Close button not having fixed size
+- Transform conflicts
+
+**Fix Locations**:
+- `src/components/ui/dialog.tsx`: Close button styling
+- `src/components/ui/sheet.tsx`: Close button styling
+- `src/app/globals.css`: Dialog/Sheet specific CSS rules
+
+## Documentation Process
+
+**IMPORTANT**: After fixing any issue, you MUST:
+1. Update [ISSUE_TRACKING_LOG.md](mdc:ISSUE_TRACKING_LOG.md) with the new issue entry
+2. Follow the template structure below
+3. Include all investigation steps, code locations, and fix details
+4. Update the "Last Updated" date at the top of the file
+5. Increment the issue number sequentially
+
+## Documentation Template
+
+When documenting a fix in ISSUE_TRACKING_LOG.md, use this structure:
+
+```markdown
+### Issue: [Brief Description]
+
+**Reported**: [User message/description]
+**Component**: [Component name]
+**Location**: [File path]
+
+**Investigation**:
+1. Searched for [what was searched]
+2. Found [what was found]
+3. Identified root cause: [cause]
+
+**Fix Applied**:
+- File: [file path]
+  - Change: [what was changed]
+  - Lines: [line numbers]
+- File: [file path]
+  - Change: [what was changed]
+
+**CSS Changes**:
+- File: `src/app/globals.css`
+  - Rule: [CSS rule added]
+  - Line: [line number]
+
+**Related Files**:
+- [List of files that might have similar issues]
+
+**Verification**:
+- [How to verify the fix works]
+```
+
+## Key Files to Check for Common Issues
+
+### Locomotive Scroll Fixes
+- `src/components/SmoothScrollWrapper.tsx` - Main scroll wrapper
+- `src/app/globals.css` - CSS overrides (lines 2100-2500+)
+- Component files with `data-scroll-exclude` attributes
+
+### Form/Input Fixes
+- `src/components/contact/ContactForm.tsx`
+- `src/components/dashboard/EditProfileSection.tsx`
+- `src/components/shared/CredentialItemForm.tsx`
+- Any component with `<Input>`, `<Select>`, `<Textarea>`
+
+### Dialog/Sheet Fixes
+- `src/components/ui/dialog.tsx`
+- `src/components/ui/sheet.tsx`
+- `src/app/globals.css` (dialog-close-button, sheet-close-button rules)
+
+### Sidebar Fixes
+- `src/components/portal/PortalSidebar.tsx`
+- `src/components/dashboard/DashboardSidebar.tsx`
+- `src/components/admin/AdminSidebar.tsx`
+- Mobile sidebars: `DashboardMobileSidebar.tsx`, `AdminMobileSidebar.tsx`
+
+## Best Practices
+
+1. **Always document the trail**: Record what you searched, what you found, and why you made each change
+2. **Check similar components**: When fixing one component, check for similar issues in related components
+3. **Use consistent patterns**: Apply the same fix pattern across similar components
+4. **Update CSS systematically**: Add CSS rules that cover patterns, not just individual elements
+5. **Test related areas**: After fixing one issue, check if similar issues exist elsewhere
+
+## Example Documentation
+
+### Issue: Input boxes spinning on focus
+
+**Reported**: "Form inputs spinning on focus"
+**Component**: ContactForm
+**Location**: `src/components/contact/ContactForm.tsx`
+
+**Investigation**:
+1. Searched for ContactForm component
+2. Found inputs without `data-scroll-speed="0"`
+3. Identified root cause: Locomotive Scroll applying transforms to form elements
+
+**Fix Applied**:
+- File: `src/components/contact/ContactForm.tsx`
+  - Added `data-scroll-exclude` to form container
+  - Added `data-scroll-speed="0"` to all Input, Select, Textarea elements
+  - Lines: 45-120
+
+**CSS Changes**:
+- File: `src/app/globals.css`
+  - Rule: Input/textarea/select transform prevention
+  - Line: 2167-2200
+
+**Related Files**:
+- All form components in `src/components/dashboard/`
+- All form components in `src/components/join-us/`
+- All form components in `src/components/onboarding/`
+
+**Verification**:
+- Open contact form
+- Click on any input field
+- Verify it doesn't spin or change size

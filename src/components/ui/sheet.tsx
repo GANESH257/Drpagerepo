@@ -56,15 +56,43 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(({ side = "right", className, children, ...props }, ref) => (
   <SheetPortal>
-    <SheetOverlay />
+    <SheetOverlay data-scroll-exclude data-scroll-speed="0" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      data-scroll-exclude
+      data-scroll-speed="0"
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
+      <DialogPrimitive.Close 
+        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary sheet-close-button z-50"
+        data-scroll-speed="0"
+        style={{
+          width: '1.5rem',
+          height: '1.5rem',
+          minWidth: '1.5rem',
+          maxWidth: '1.5rem',
+          minHeight: '1.5rem',
+          maxHeight: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: 'translate3d(0, 0, 0)',
+        }}
+      >
+        <X 
+          className="h-4 w-4 sheet-close-icon" 
+          data-scroll-speed="0"
+          style={{
+            width: '1rem',
+            height: '1rem',
+            minWidth: '1rem',
+            maxWidth: '1rem',
+            minHeight: '1rem',
+            maxHeight: '1rem',
+          }}
+        />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -81,6 +109,8 @@ const SheetHeader = ({
       "flex flex-col space-y-2 text-center sm:text-left",
       className
     )}
+    data-scroll-exclude
+    data-scroll-speed="0"
     {...props}
   />
 )
@@ -107,6 +137,7 @@ const SheetTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn("text-lg font-semibold text-foreground", className)}
+    data-scroll-speed="0"
     {...props}
   />
 ))

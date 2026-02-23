@@ -55,7 +55,7 @@ export function TagInput({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex flex-wrap gap-2 rounded-md border border-input bg-background p-2 min-h-[42px]">
+      <div className="flex flex-wrap gap-2 rounded-md border border-input bg-background p-2 min-h-[42px]" data-scroll-exclude>
         {tags.map((tag, index) => (
           <Badge
             key={index}
@@ -69,6 +69,7 @@ export function TagInput({
                 onClick={() => removeTag(index)}
                 className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
                 aria-label={`Remove ${tag}`}
+                data-scroll-speed="0"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -87,6 +88,7 @@ export function TagInput({
           placeholder={tags.length === 0 ? placeholder : ''}
           disabled={disabled}
           className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 min-w-[120px]"
+          data-scroll-speed="0"
         />
       </div>
       {showSuggestions && filteredSuggestions.length > 0 && (

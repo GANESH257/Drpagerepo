@@ -176,12 +176,13 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
               {isNewChatMode ? 'Back to Chats' : '+ New Chat'}
             </Button>
           </div>
-          <div>
+          <div data-scroll-exclude>
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={isNewChatMode ? "Search all physicians..." : "Search conversations..."}
               className="h-10 bg-white shadow-sm focus-ring"
+              data-scroll-speed="0"
             />
           </div>
         </CardHeader>
@@ -369,7 +370,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
             </CardContent>
 
             <div className="border-t bg-white p-4">
-              <div className="flex items-end gap-3 rounded-2xl bg-gray-50 p-2 shadow-inner focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-dark-blue/10 transition-all duration-200">
+              <div className="flex items-end gap-3 rounded-2xl bg-gray-50 p-2 shadow-inner focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-dark-blue/10 transition-all duration-200" data-scroll-exclude>
                 <Textarea
                   value={composer}
                   onChange={(e) => setComposer(e.target.value)}
@@ -381,12 +382,14 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                   }}
                   placeholder="Type a message..."
                   className="min-h-[44px] max-h-[120px] flex-1 resize-none border-0 bg-transparent py-3 focus-visible:ring-0 text-[14px]"
+                  data-scroll-speed="0"
                 />
                 <Button
                   onClick={handleSend}
                   disabled={!composer.trim()}
                   size="icon"
                   className="h-10 w-10 shrink-0 rounded-full bg-brand-dark-blue hover:bg-brand-dark-blue/90 shadow-md transition-transform active:scale-95"
+                  data-scroll-speed="0"
                 >
                   <Send className="h-5 w-5" />
                 </Button>

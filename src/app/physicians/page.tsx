@@ -4,6 +4,7 @@ import { BenefitsJumbledGrid } from '@/components/physicians/BenefitsJumbledGrid
 import { MissionStatementNewHome } from '@/components/newhome/MissionStatementNewHome';
 import { JoinSteps } from '@/components/physicians/JoinSteps';
 import { MemberBenefitsSection } from '@/components/shared/MemberBenefitsSection';
+import { WhoShouldJoin } from '@/components/physicians/WhoShouldJoin';
 import { QuickAccessCTA } from '@/components/physicians/QuickAccessCTA';
 import { DepartmentsMarquee } from '@/components/DepartmentsMarquee';
 import { ImpactStats } from '@/components/physicians/ImpactStats';
@@ -39,6 +40,7 @@ export default function PhysiciansPage() {
       <MissionStatementNewHome />
       <JoinSteps />
       <MemberBenefitsSection />
+      <WhoShouldJoin />
       <DepartmentsMarquee />
       <QuickAccessCTA />
       <ImpactStats />

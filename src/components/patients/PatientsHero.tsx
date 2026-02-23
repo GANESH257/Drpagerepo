@@ -80,7 +80,7 @@ export function PatientsHero() {
                 : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
             }}
           >
-            Direct Access to Elite Independent Physicians
+            Personalized Care from Doctors Who Answer to You
           </h1>
 
           <div

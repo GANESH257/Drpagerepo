@@ -264,54 +264,58 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-4" data-scroll-exclude>
             {/* Basic Information */}
-            <div className="space-y-4">
+            <div className="space-y-4" data-scroll-exclude>
               <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+                <div data-scroll-exclude>
                   <Label htmlFor="firstName">First Name *</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName || ''}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    data-scroll-speed="0"
                   />
                 </div>
-                <div>
+                <div data-scroll-exclude>
                   <Label htmlFor="lastName">Last Name *</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName || ''}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    data-scroll-speed="0"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+                <div data-scroll-exclude>
                   <Label htmlFor="credentials">Credentials *</Label>
                   <Input
                     id="credentials"
                     value={formData.credentials || ''}
                     onChange={(e) => setFormData({ ...formData, credentials: e.target.value })}
                     placeholder="M.D., D.O., etc."
+                    data-scroll-speed="0"
                   />
                 </div>
-                <div>
+                <div data-scroll-exclude>
                   <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    data-scroll-speed="0"
                   />
                 </div>
               </div>
             </div>
 
             {/* Practice Assignment (V2) */}
-            <div className="space-y-4">
+            <div className="space-y-4" data-scroll-exclude>
               <h3 className="font-semibold text-brand-dark-blue">Practice Assignment (V2)</h3>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="practiceId">Practice</Label>
                 <Select
                   value={formData.practiceId || 'none'}
@@ -327,8 +331,9 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                       setShowRoleWarning(false);
                     }
                   }}
+                  data-scroll-exclude
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-scroll-speed="0" data-scroll-exclude>
                     <SelectValue placeholder="Select a practice..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -343,7 +348,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                 </Select>
               </div>
               {formData.practiceId && (
-                <div>
+                <div data-scroll-exclude>
                   <Label htmlFor="roleInPractice">Role in Practice</Label>
                   <Select
                     value={formData.roleInPractice || 'doctor'}
@@ -355,8 +360,9 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                         setShowRoleWarning(false);
                       }
                     }}
+                    data-scroll-exclude
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-scroll-speed="0" data-scroll-exclude>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -377,37 +383,40 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             </div>
 
             {/* Professional Information */}
-            <div className="space-y-4">
+            <div className="space-y-4" data-scroll-exclude>
               <h3 className="font-semibold text-brand-dark-blue">Professional Information</h3>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="specialty">Primary Specialty *</Label>
                 <Input
                   id="specialty"
                   value={formData.specialty || ''}
                   onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                  data-scroll-speed="0"
                 />
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <div className="flex items-center justify-between mb-2">
                   <Label>Additional Specialties</Label>
-                  <Button type="button" onClick={addSpecialty} variant="outline" size="sm">
+                  <Button type="button" onClick={addSpecialty} variant="outline" size="sm" data-scroll-speed="0">
                     <Plus className="mr-2 h-4 w-4" />
                     Add
                   </Button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   {formData.specialties?.map((spec, index) => (
-                    <div key={index} className="flex gap-2">
+                    <div key={index} className="flex gap-2" data-scroll-exclude>
                       <Input
                         value={spec}
                         onChange={(e) => updateSpecialty(index, e.target.value)}
                         placeholder="Specialty name..."
+                        data-scroll-speed="0"
                       />
                       <Button
                         type="button"
                         onClick={() => removeSpecialty(index)}
                         variant="ghost"
                         size="icon"
+                        data-scroll-speed="0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -415,22 +424,24 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
                   ))}
                 </div>
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="bio">Bio *</Label>
                 <Textarea
                   id="bio"
                   value={formData.bio || ''}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                   rows={3}
+                  data-scroll-speed="0"
                 />
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="about">About (Extended)</Label>
                 <Textarea
                   id="about"
                   value={formData.about || ''}
                   onChange={(e) => setFormData({ ...formData, about: e.target.value })}
                   rows={5}
+                  data-scroll-speed="0"
                 />
               </div>
             </div>

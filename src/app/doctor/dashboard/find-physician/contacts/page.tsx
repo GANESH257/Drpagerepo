@@ -44,13 +44,17 @@ export default function MyContactsPage() {
         title="My Contacts"
         description="Your saved contacts for quick access when sending referrals or messages"
       />
-      <div className="flex gap-2">
-        <Link href="/doctor/dashboard/find-physician">
-          <Button variant="outline">Find a Physician</Button>
-        </Link>
-        <Link href="/doctor/dashboard/referrals">
-          <Button variant="outline">Send a Referral</Button>
-        </Link>
+      <div className="flex gap-2" data-scroll-exclude>
+        <div data-scroll-exclude>
+          <Link href="/doctor/dashboard/find-physician">
+            <Button variant="outline" data-scroll-speed="0">Find a Physician</Button>
+          </Link>
+        </div>
+        <div data-scroll-exclude>
+          <Link href="/doctor/dashboard/referrals">
+            <Button variant="outline" data-scroll-speed="0">Send a Referral</Button>
+          </Link>
+        </div>
       </div>
       {loading ? (
         <div className="py-12 text-center text-gray-600">Loading contacts...</div>
@@ -61,7 +65,7 @@ export default function MyContactsPage() {
             <p>No contacts yet.</p>
             <p className="text-sm mt-2">Add physicians from the Find a Physician directory.</p>
             <Link href="/doctor/dashboard/find-physician">
-              <Button className="mt-4">Find a Physician</Button>
+              <Button className="mt-4" data-scroll-speed="0">Find a Physician</Button>
             </Link>
           </CardContent>
         </Card>
@@ -74,15 +78,19 @@ export default function MyContactsPage() {
                   <h3 className="font-semibold">{c.full_name}</h3>
                   <p className="text-sm text-gray-600">{c.specialty}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Link href={`/doctors/${c.slug || c.id}`} target="_blank" rel="noopener noreferrer">
-                    <Button variant="ghost" size="icon" title="View profile">
-                      <ExternalLink className="h-4 w-4" />
+                <div className="flex gap-2" data-scroll-exclude>
+                  <div data-scroll-exclude>
+                    <Link href={`/doctors/${c.slug || c.id}`} target="_blank" rel="noopener noreferrer">
+                      <Button variant="ghost" size="icon" title="View profile" data-scroll-speed="0">
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div data-scroll-exclude>
+                    <Button variant="ghost" size="icon" onClick={() => handleRemove(c.id)} title="Remove from contacts" data-scroll-speed="0">
+                      <UserMinus className="h-4 w-4 text-red-500" />
                     </Button>
-                  </Link>
-                  <Button variant="ghost" size="icon" onClick={() => handleRemove(c.id)} title="Remove from contacts">
-                    <UserMinus className="h-4 w-4 text-red-500" />
-                  </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

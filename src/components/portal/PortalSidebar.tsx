@@ -71,6 +71,7 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse }: PortalSi
         isCollapsed ? 'w-20' : 'w-72',
         'hidden lg:block'
       )}
+      data-scroll-exclude
     >
       <div className="flex h-full flex-col">
         <div className="flex justify-end p-4">

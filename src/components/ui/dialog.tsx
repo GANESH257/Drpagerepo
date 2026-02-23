@@ -42,8 +42,22 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
+      <DialogPrimitive.Close 
+        className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground dialog-close-button z-50"
+        style={{ 
+          width: '1.5rem',
+          height: '1.5rem',
+          minWidth: '1.5rem',
+          minHeight: '1.5rem',
+          maxWidth: '1.5rem',
+          maxHeight: '1.5rem',
+          padding: '0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        } as React.CSSProperties}
+      >
+        <X className="h-4 w-4 dialog-close-icon" style={{ width: '1rem', height: '1rem', minWidth: '1rem', minHeight: '1rem' } as React.CSSProperties} />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>

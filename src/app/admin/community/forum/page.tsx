@@ -41,8 +41,12 @@ export default function AdminCommunityForumPage() {
       setSections(arr);
       if (arr.length) setSection((s) => s || arr[0].id || arr[0].name || 'general');
       else setSection((s) => s || 'general');
+      setError(null);
     } catch (e) {
+      console.warn('Failed to load community sections:', e);
       setError(e instanceof Error ? e.message : 'Failed to load sections');
+      // Set default section on error
+      setSections([{ id: 'general', name: 'General' }]);
     } finally {
       setLoading(false);
     }
@@ -63,7 +67,15 @@ export default function AdminCommunityForumPage() {
   }, [section]);
 
   useEffect(() => {
-    loadSections();
+    // Wrap in async IIFE to handle errors properly
+    (async () => {
+      try {
+        await loadSections();
+      } catch (error) {
+        // Error already handled in loadSections, but prevent unhandled rejection
+        console.warn('Error in loadSections effect:', error);
+      }
+    })();
   }, [loadSections]);
 
   useEffect(() => {

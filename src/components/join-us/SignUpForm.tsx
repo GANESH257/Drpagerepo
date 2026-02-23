@@ -124,9 +124,9 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" data-scroll-exclude>
       {/* Email Field */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="signup-email">Email</Label>
         <Input
           id="signup-email"
@@ -141,6 +141,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
           aria-invalid={!!emailError}
           aria-describedby={emailError ? 'signup-email-error' : undefined}
           className={emailError ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {emailError && (
           <p
@@ -155,9 +156,9 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       </div>
 
       {/* Password Field */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="signup-password">Password</Label>
-        <div className="relative">
+        <div className="relative" data-scroll-exclude>
           <Input
             id="signup-password"
             type={showPassword ? 'text' : 'password'}
@@ -174,6 +175,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
             aria-invalid={!!passwordError}
             aria-describedby={passwordError ? 'signup-password-error' : undefined}
             className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
+            data-scroll-speed="0"
           />
           <button
             type="button"
@@ -206,9 +208,9 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       </div>
 
       {/* Confirm Password Field */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-        <div className="relative">
+        <div className="relative" data-scroll-exclude>
           <Input
             id="signup-confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
@@ -226,6 +228,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
               confirmPasswordError ? 'signup-confirm-password-error' : undefined
             }
             className={confirmPasswordError ? 'border-destructive pr-10' : 'pr-10'}
+            data-scroll-speed="0"
           />
           <button
             type="button"
@@ -255,8 +258,8 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       </div>
 
       {/* Terms Checkbox */}
-      <div className="space-y-2">
-        <div className="flex items-start space-x-2">
+      <div className="space-y-2" data-scroll-exclude>
+        <div className="flex items-start space-x-2" data-scroll-exclude>
           <Checkbox
             id="agree-terms"
             checked={agreeToTerms}
@@ -266,6 +269,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
             }}
             className="mt-1"
             aria-invalid={!!termsError}
+            data-scroll-speed="0"
           />
           <Label
             htmlFor="agree-terms"

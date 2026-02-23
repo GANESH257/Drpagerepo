@@ -76,10 +76,28 @@ export function BenefitsJumbledGrid() {
                 : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
             }}
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue">
+            <h2 
+              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                transition: prefersReducedMotion
+                  ? 'opacity 0.3s ease 0.1s'
+                  : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+              }}
+            >
               Why Choose Independent Physicians?
             </h2>
-            <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto">
+            <p 
+              className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
+                transition: prefersReducedMotion
+                  ? 'opacity 0.3s ease 0.3s'
+                  : 'opacity 0.8s ease-out 0.6s, transform 0.8s ease-out 0.6s',
+              }}
+            >
               Experience healthcare the way it should be - personal, accessible, and transparent.
             </p>
           </div>
@@ -115,8 +133,9 @@ export function BenefitsJumbledGrid() {
                 <Card
                   key={benefit.id}
                   className={cn(
-                    'border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
+                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
                     !hasImageBackground && cardBgClass,
+                    !hasImageBackground && 'card-bg-animated card-bg-gradient card-bg-particles',
                     gridClass,
                     benefit.id === 'transparent-pricing' ? 'p-6' : (isLarge ? 'p-8' : 'p-6')
                   )}
@@ -146,49 +165,88 @@ export function BenefitsJumbledGrid() {
                   )}
                   
                   <CardContent className={cn(
-                    "p-0 flex flex-col h-full",
+                    "p-0 flex flex-col h-full items-center text-center",
                     hasImageBackground && "relative z-20"
                   )}>
                     {/* Top accent line */}
                     <div
                       className={cn(
-                        'h-1 w-16 mb-4 rounded-full',
+                        'h-1 w-16 mb-4 rounded-full mx-auto',
                         benefit.id === 'personal-connection'
                           ? 'bg-emerald-600'
                           : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
                       )}
                     />
 
-                    {/* Icon pill */}
-                    <div className={cn(
-                      'w-12 h-12 rounded-full flex items-center justify-center mb-4',
+                    {/* Icon pill with animations */}
+                    <div 
+                      className={cn(
+                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 relative z-10',
                       benefit.id === 'personal-connection'
                         ? 'bg-emerald-600/20 text-emerald-700'
                         : (hasImageBackground
                           ? 'bg-white/20 text-white'
                           : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                    )}>
-                      <IconComponent className="h-6 w-6" aria-hidden="true" />
+                      )}
+                      style={{
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
+                          : 'none',
+                        opacity: isVisible ? 1 : 0,
+                      }}
+                    >
+                      <IconComponent 
+                        className={cn(
+                          "h-6 w-6 transition-all duration-300 relative z-10",
+                          isVisible && !prefersReducedMotion && "icon-pulse-glow"
+                        )} 
+                        aria-hidden="true" 
+                      />
                     </div>
 
                     {/* Title */}
-                    <h3 className={cn(
-                      "text-xl md:text-2xl font-bold mb-3",
+                    <h3 
+                      className={cn(
+                        "text-xl md:text-2xl font-bold mb-3 relative z-10",
+                        isVisible && !prefersReducedMotion && "text-glow-animated",
                       (hasImageBackground || benefit.id === 'personal-connection')
                         ? (hasImageBackground ? "text-white" : "text-emerald-700")
                         : "text-brand-dark-blue"
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
+                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `textRevealGlow 0.8s ease-out ${cardDelay + 300}ms forwards`
+                          : 'none',
+                      }}
+                    >
                       {benefit.title}
                     </h3>
 
-                    {/* Description */}
-                    <p className={cn(
-                      'mb-4 flex-grow',
+                    {/* Description with fade in animation */}
+                    <p 
+                      className={cn(
+                        'mb-4 flex-grow relative z-10',
                       hasImageBackground
                         ? 'text-white/90'
                         : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700'),
                       isLarge ? 'text-base md:text-lg' : 'text-sm md:text-base'
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
+                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `textRevealGlow 1s ease-out ${cardDelay + 500}ms forwards`
+                          : 'none',
+                      }}
+                    >
                       {benefit.description}
                     </p>
 
@@ -242,8 +300,9 @@ export function BenefitsJumbledGrid() {
                 <Card
                   key={benefit.id}
                   className={cn(
-                    'border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
+                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
                     !hasImageBackground && cardBgClass,
+                    !hasImageBackground && 'card-bg-animated card-bg-gradient card-bg-particles',
                     benefit.size === 'large' ? 'md:col-span-2 p-8' : (benefit.id === 'transparent-pricing' ? 'p-6' : 'p-6')
                   )}
                   style={{
@@ -272,41 +331,80 @@ export function BenefitsJumbledGrid() {
                   )}
                   
                   <CardContent className={cn(
-                    "p-0 flex flex-col h-full",
+                    "p-0 flex flex-col h-full items-center text-center relative z-10",
                     hasImageBackground && "relative z-20"
                   )}>
                     <div
                       className={cn(
-                        'h-1 w-16 mb-4 rounded-full',
+                        'h-1 w-16 mb-4 rounded-full mx-auto',
                         benefit.id === 'personal-connection'
                           ? 'bg-emerald-600'
                           : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
                       )}
                     />
-                    <div className={cn(
-                      'w-12 h-12 rounded-full flex items-center justify-center mb-4',
+                    <div 
+                      className={cn(
+                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 relative z-10',
                       benefit.id === 'personal-connection'
                         ? 'bg-emerald-600/20 text-emerald-700'
                         : (hasImageBackground
                           ? 'bg-white/20 text-white'
                           : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                    )}>
-                      <IconComponent className="h-6 w-6" aria-hidden="true" />
+                      )}
+                      style={{
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
+                          : 'none',
+                        opacity: isVisible ? 1 : 0,
+                      }}
+                    >
+                      <IconComponent 
+                        className={cn(
+                          "h-6 w-6 transition-all duration-300 relative z-10",
+                          isVisible && !prefersReducedMotion && "icon-pulse-glow"
+                        )} 
+                        aria-hidden="true" 
+                      />
                     </div>
-                    <h3 className={cn(
-                      "text-xl font-bold mb-3",
+                    <h3 
+                      className={cn(
+                        "text-xl font-bold mb-3 relative z-10",
+                        isVisible && !prefersReducedMotion && "text-glow-animated",
                       (hasImageBackground || benefit.id === 'personal-connection')
                         ? (hasImageBackground ? "text-white" : "text-emerald-700")
                         : "text-brand-dark-blue"
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
+                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `textRevealGlow 0.8s ease-out ${cardDelay + 300}ms forwards`
+                          : 'none',
+                      }}
+                    >
                       {benefit.title}
                     </h3>
-                    <p className={cn(
-                      'mb-4 flex-grow text-base',
+                    <p 
+                      className={cn(
+                        'mb-4 flex-grow text-base relative z-10',
                       hasImageBackground
                         ? 'text-white/90'
                         : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700')
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
+                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `textRevealGlow 1s ease-out ${cardDelay + 500}ms forwards`
+                          : 'none',
+                      }}
+                    >
                       {benefit.description}
                     </p>
                     {benefit.link && benefit.linkText && (
@@ -358,7 +456,7 @@ export function BenefitsJumbledGrid() {
                 <Card
                   key={benefit.id}
                   className={cn(
-                    'border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
+                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
                     !hasImageBackground && cardBgClass,
                     benefit.id === 'transparent-pricing' ? 'p-5' : 'p-6'
                   )}
@@ -399,30 +497,59 @@ export function BenefitsJumbledGrid() {
                           : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
                       )}
                     />
-                    <div className={cn(
-                      'w-12 h-12 rounded-full flex items-center justify-center mb-4',
+                    <div 
+                      className={cn(
+                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110',
                       benefit.id === 'personal-connection'
                         ? 'bg-emerald-600/20 text-emerald-700'
                         : (hasImageBackground
                           ? 'bg-white/20 text-white'
                           : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                    )}>
-                      <IconComponent className="h-6 w-6" aria-hidden="true" />
+                      )}
+                      style={{
+                        animation: isVisible && !prefersReducedMotion 
+                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
+                          : 'none',
+                        opacity: isVisible ? 1 : 0,
+                      }}
+                    >
+                      <IconComponent 
+                        className="h-6 w-6 transition-all duration-300" 
+                        aria-hidden="true" 
+                      />
                     </div>
-                    <h3 className={cn(
+                    <h3 
+                      className={cn(
                       "text-xl font-bold mb-3",
                       (hasImageBackground || benefit.id === 'personal-connection')
                         ? (hasImageBackground ? "text-white" : "text-emerald-700")
                         : "text-brand-dark-blue"
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
+                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
+                      }}
+                    >
                       {benefit.title}
                     </h3>
-                    <p className={cn(
+                    <p 
+                      className={cn(
                       'mb-4 text-base',
                       hasImageBackground
                         ? 'text-white/90'
                         : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700')
-                    )}>
+                      )}
+                      style={{
+                        opacity: isVisible ? 1 : 0,
+                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
+                        transition: prefersReducedMotion
+                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
+                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
+                      }}
+                    >
                       {benefit.description}
                     </p>
                     {benefit.link && benefit.linkText && (

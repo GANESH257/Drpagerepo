@@ -63,7 +63,7 @@ export function PortalShell({
               {mobileSidebarTitle}
             </SheetTitle>
           </SheetHeader>
-          <nav className="flex-1 space-y-1 p-6 overflow-y-auto">
+          <nav className="flex-1 space-y-1 p-6 overflow-y-auto" data-scroll-exclude>
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const href = item.href ?? '#';

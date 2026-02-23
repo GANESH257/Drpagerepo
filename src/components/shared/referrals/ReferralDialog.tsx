@@ -79,8 +79,8 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
                         Send a referral to {doctor.fullName}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-2">
+                <div className="space-y-4 py-4" data-scroll-exclude>
+                    <div className="space-y-2" data-scroll-exclude>
                         <Label htmlFor="condition">Condition *</Label>
                         <Textarea
                             id="condition"
@@ -88,34 +88,38 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
                             onChange={(e) => setForm({ ...form, condition: e.target.value })}
                             placeholder="Describe the condition or reason for referral..."
                             className="min-h-[100px]"
+                            data-scroll-speed="0"
                         />
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-4" data-scroll-exclude>
+                        <div className="space-y-2" data-scroll-exclude>
                             <Label htmlFor="patient-name">Name</Label>
                             <Input
                                 id="patient-name"
                                 value={form.patientName}
                                 onChange={(e) => setForm({ ...form, patientName: e.target.value })}
                                 placeholder="Patient Name"
+                                data-scroll-speed="0"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-scroll-exclude>
                             <Label htmlFor="patient-dob">DOB</Label>
                             <Input
                                 id="patient-dob"
                                 value={form.patientDob}
                                 onChange={(e) => setForm({ ...form, patientDob: e.target.value })}
                                 placeholder="MM/DD/YYYY"
+                                data-scroll-speed="0"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2" data-scroll-exclude>
                             <Label htmlFor="patient-sex">Sex</Label>
                             <Select
                                 value={form.patientSex}
                                 onValueChange={(value) => setForm({ ...form, patientSex: value as any })}
+                                data-scroll-exclude
                             >
-                                <SelectTrigger id="patient-sex">
+                                <SelectTrigger id="patient-sex" data-scroll-speed="0" data-scroll-exclude>
                                     <SelectValue placeholder="Select" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -126,13 +130,14 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
                             </Select>
                         </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-scroll-exclude>
                         <Label htmlFor="referral-notes">Notes (optional)</Label>
                         <Textarea
                             id="referral-notes"
                             value={form.notes}
                             onChange={(e) => setForm({ ...form, notes: e.target.value })}
                             placeholder="Additional notes..."
+                            data-scroll-speed="0"
                         />
                     </div>
                 </div>

@@ -199,22 +199,27 @@ export default function PracticeServicesInsurancePage() {
                     Add or remove services. Changes require admin approval.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      value={newService}
-                      onChange={(e) => setNewService(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addService();
-                        }
-                      }}
-                      placeholder="Add service..."
-                    />
-                    <Button onClick={addService}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                <div className="space-y-4" data-scroll-exclude>
+                  <div className="flex gap-2" data-scroll-exclude>
+                    <div data-scroll-exclude className="flex-1">
+                      <Input
+                        value={newService}
+                        onChange={(e) => setNewService(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addService();
+                          }
+                        }}
+                        placeholder="Add service..."
+                        data-scroll-speed="0"
+                      />
+                    </div>
+                    <div data-scroll-exclude>
+                      <Button onClick={addService} data-scroll-speed="0">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {services.map((service) => (
@@ -226,6 +231,7 @@ export default function PracticeServicesInsurancePage() {
                         <button
                           onClick={() => removeService(service)}
                           className="hover:text-blue-600"
+                          data-scroll-speed="0"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -282,23 +288,31 @@ export default function PracticeServicesInsurancePage() {
                     Add or remove insurance providers. Changes require admin approval.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      value={newInsuranceName}
-                      onChange={(e) => setNewInsuranceName(e.target.value)}
-                      placeholder="Insurance name..."
-                    />
-                    <Input
-                      value={newInsuranceSlug}
-                      onChange={(e) => setNewInsuranceSlug(e.target.value)}
-                      placeholder="Slug..."
-                    />
+                <div className="space-y-4" data-scroll-exclude>
+                  <div className="grid grid-cols-2 gap-2" data-scroll-exclude>
+                    <div data-scroll-exclude>
+                      <Input
+                        value={newInsuranceName}
+                        onChange={(e) => setNewInsuranceName(e.target.value)}
+                        placeholder="Insurance name..."
+                        data-scroll-speed="0"
+                      />
+                    </div>
+                    <div data-scroll-exclude>
+                      <Input
+                        value={newInsuranceSlug}
+                        onChange={(e) => setNewInsuranceSlug(e.target.value)}
+                        placeholder="Slug..."
+                        data-scroll-speed="0"
+                      />
+                    </div>
                   </div>
-                  <Button onClick={addInsurance} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Insurance
-                  </Button>
+                  <div data-scroll-exclude>
+                    <Button onClick={addInsurance} className="w-full" data-scroll-speed="0">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Insurance
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     {insurance.map((ins) => (
                       <div
@@ -309,6 +323,7 @@ export default function PracticeServicesInsurancePage() {
                         <button
                           onClick={() => removeInsurance(ins.slug)}
                           className="text-red-600 hover:text-red-800"
+                          data-scroll-speed="0"
                         >
                           <X className="h-4 w-4" />
                         </button>

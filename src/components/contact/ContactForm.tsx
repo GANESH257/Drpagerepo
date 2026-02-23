@@ -18,6 +18,12 @@ import {
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ContactEnquiry } from '@/lib/contactStorage';
 
+const inquiryTypeOptions = [
+  'I am a Patient with a question',
+  'I am a Physician interested in joining',
+  'Other',
+];
+
 const subjectOptions = [
   'General Inquiry',
   'Membership Information',
@@ -33,6 +39,7 @@ export function ContactForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [inquiryType, setInquiryType] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [preferredContact, setPreferredContact] = useState<'email' | 'phone' | 'sms' | ''>('');
@@ -114,6 +121,10 @@ export function ContactForm() {
       }
     }
 
+    if (!inquiryType.trim()) {
+      newErrors.inquiryType = 'Please select an option';
+    }
+
     if (!subject.trim()) {
       newErrors.subject = 'Subject is required';
     }
@@ -152,13 +163,14 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      const enquiry: Omit<ContactEnquiry, 'id' | 'createdAt'> = {
+      const enquiry: Omit<ContactEnquiry, 'id' | 'createdAt'> & { inquiryType?: string } = {
         name: name.trim(),
         email: email.trim(),
         phone: phone.trim(),
         subject: subject.trim(),
         message: message.trim(),
         preferredContact: preferredContact || undefined,
+        inquiryType: inquiryType.trim() || undefined,
         consentPrivacy: true,
         consentSms: true,
       };
@@ -172,6 +184,7 @@ export function ContactForm() {
       
       // Reset form (keep name/email for convenience)
       setPhone('');
+      setInquiryType('');
       setSubject('');
       setMessage('');
       setPreferredContact('');
@@ -195,6 +208,7 @@ export function ContactForm() {
     setName('');
     setEmail('');
     setPhone('');
+    setInquiryType('');
     setSubject('');
     setMessage('');
     setPreferredContact('');
@@ -205,17 +219,17 @@ export function ContactForm() {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-white">
+    <section className="py-16 md:py-24 bg-white" data-scroll-exclude>
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          <Card className="bg-white border border-gray-200 shadow-lg">
+          <Card className="bg-white border border-gray-200 shadow-lg" data-scroll-exclude>
             <CardHeader className="pb-4">
               <CardTitle className="text-2xl md:text-3xl font-bold text-brand-dark-blue text-center">
                 Send us a Message
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 md:p-6">
-              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate data-scroll-exclude data-scroll-speed="0">
                 {/* Success Message */}
                 {isSuccess && (
                   <Alert
@@ -250,7 +264,7 @@ export function ContactForm() {
                 )}
 
                 {/* Full Name */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="contact-name">
                     Full Name <span className="text-destructive">*</span>
                   </Label>
@@ -277,6 +291,7 @@ export function ContactForm() {
                     aria-invalid={!!errors.name}
                     aria-describedby={errors.name ? 'contact-name-error' : undefined}
                     className={errors.name ? 'border-destructive' : ''}
+                    data-scroll-speed="0"
                     required
                   />
                   {errors.name && (
@@ -292,7 +307,7 @@ export function ContactForm() {
                 </div>
 
                 {/* Email */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="contact-email">
                     Email <span className="text-destructive">*</span>
                   </Label>
@@ -309,6 +324,7 @@ export function ContactForm() {
                     aria-invalid={!!errors.email}
                     aria-describedby={errors.email ? 'contact-email-error' : undefined}
                     className={errors.email ? 'border-destructive' : ''}
+                    data-scroll-speed="0"
                     required
                   />
                   {errors.email && (
@@ -324,7 +340,7 @@ export function ContactForm() {
                 </div>
 
                 {/* Phone */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="contact-phone">
                     Phone <span className="text-destructive">*</span>
                   </Label>
@@ -341,6 +357,7 @@ export function ContactForm() {
                     aria-invalid={!!errors.phone}
                     aria-describedby={errors.phone ? 'contact-phone-error' : undefined}
                     className={errors.phone ? 'border-destructive' : ''}
+                    data-scroll-speed="0"
                     required
                   />
                   {errors.phone && (
@@ -355,8 +372,55 @@ export function ContactForm() {
                   )}
                 </div>
 
+                {/* Inquiry Type */}
+                <div className="space-y-2" data-scroll-exclude>
+                  <Label htmlFor="contact-inquiry-type">
+                    I am... <span className="text-destructive">*</span>
+                  </Label>
+                  <Select
+                    value={inquiryType}
+                    onValueChange={(value) => {
+                      setInquiryType(value);
+                      if (errors.inquiryType) {
+                        setErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.inquiryType;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      id="contact-inquiry-type"
+                      className={errors.inquiryType ? 'border-destructive' : ''}
+                      aria-invalid={!!errors.inquiryType}
+                      aria-describedby={errors.inquiryType ? 'contact-inquiry-type-error' : undefined}
+                      data-scroll-speed="0"
+                    >
+                      <SelectValue placeholder="Select an option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {inquiryTypeOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.inquiryType && (
+                    <p
+                      id="contact-inquiry-type-error"
+                      className="text-sm text-destructive"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      {errors.inquiryType}
+                    </p>
+                  )}
+                </div>
+
                 {/* Subject */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="contact-subject">
                     Subject <span className="text-destructive">*</span>
                   </Label>
@@ -378,6 +442,7 @@ export function ContactForm() {
                       className={errors.subject ? 'border-destructive' : ''}
                       aria-invalid={!!errors.subject}
                       aria-describedby={errors.subject ? 'contact-subject-error' : undefined}
+                      data-scroll-speed="0"
                     >
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
@@ -402,7 +467,7 @@ export function ContactForm() {
                 </div>
 
                 {/* Message */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="contact-message">
                     Message <span className="text-destructive">*</span>
                   </Label>
@@ -434,6 +499,7 @@ export function ContactForm() {
                     aria-invalid={!!errors.message}
                     aria-describedby={errors.message ? 'contact-message-error' : undefined}
                     className={errors.message ? 'border-destructive' : ''}
+                    data-scroll-speed="0"
                     required
                   />
                   {errors.message && (
@@ -449,11 +515,11 @@ export function ContactForm() {
                 </div>
 
                 {/* Preferred Contact Method */}
-                <div className="space-y-3">
+                <div className="space-y-3" data-scroll-exclude data-scroll-speed="0">
                   <Label>Preferred Contact Method</Label>
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-3 w-full" data-scroll-exclude data-scroll-speed="0">
                     {(['email', 'phone', 'sms'] as const).map((method) => (
-                      <div key={method} className="flex items-center space-x-2">
+                      <div key={method} className="flex items-center space-x-2 w-full" data-scroll-exclude data-scroll-speed="0">
                         <input
                           type="radio"
                           id={`contact-method-${method}`}
@@ -461,7 +527,8 @@ export function ContactForm() {
                           value={method}
                           checked={preferredContact === method}
                           onChange={(e) => setPreferredContact(e.target.value as 'email' | 'phone' | 'sms')}
-                          className="h-4 w-4 text-brand-dark-blue focus:ring-brand-dark-blue border-gray-300"
+                          className="h-4 w-4 text-brand-dark-blue focus:ring-brand-dark-blue border-gray-300 flex-shrink-0"
+                          data-scroll-speed="0"
                         />
                         <Label
                           htmlFor={`contact-method-${method}`}
@@ -475,8 +542,8 @@ export function ContactForm() {
                 </div>
 
                 {/* Privacy Consent Checkbox */}
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
+                <div className="space-y-2" data-scroll-exclude>
+                  <div className="flex items-start space-x-3 w-full">
                     <Checkbox
                       id="contact-privacy-consent"
                       checked={consentPrivacy}
@@ -493,10 +560,11 @@ export function ContactForm() {
                       className={errors.consentPrivacy ? 'border-destructive' : ''}
                       aria-invalid={!!errors.consentPrivacy}
                       aria-describedby={errors.consentPrivacy ? 'contact-privacy-consent-error' : undefined}
+                      data-scroll-speed="0"
                     />
                     <Label
                       htmlFor="contact-privacy-consent"
-                      className="text-sm leading-relaxed cursor-pointer flex-1"
+                      className="text-sm leading-relaxed cursor-pointer flex-1 min-w-0"
                     >
                       {PRIVACY_CONSENT_TEXT}{' '}
                       <a
@@ -526,8 +594,8 @@ export function ContactForm() {
                 </div>
 
                 {/* SMS Consent Checkbox */}
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
+                <div className="space-y-2" data-scroll-exclude>
+                  <div className="flex items-start space-x-3 w-full">
                     <Checkbox
                       id="contact-sms-consent"
                       checked={consentSms}
@@ -544,10 +612,11 @@ export function ContactForm() {
                       className={errors.consentSms ? 'border-destructive' : ''}
                       aria-invalid={!!errors.consentSms}
                       aria-describedby={errors.consentSms ? 'contact-sms-consent-error' : undefined}
+                      data-scroll-speed="0"
                     />
                     <Label
                       htmlFor="contact-sms-consent"
-                      className="text-sm leading-relaxed cursor-pointer flex-1"
+                      className="text-sm leading-relaxed cursor-pointer flex-1 min-w-0"
                     >
                       {SMS_CONSENT_TEXT}
                     </Label>
@@ -570,20 +639,24 @@ export function ContactForm() {
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
-                    className="flex-1 bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white"
+                    className="flex-1 bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white transition-all duration-200 hover:shadow-lg hover:scale-105"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
                   </Button>
-                  <Button
+                  <button
                     type="button"
-                    variant="outline"
-                    size="lg"
+                    id="contact-clear-button"
                     onClick={handleClear}
                     disabled={isSubmitting}
-                    className="flex-1 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue/5"
+                    className="flex-1 h-11 rounded-md px-8 text-sm font-medium inline-flex items-center justify-center whitespace-nowrap ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white border-2 border-solid border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue/5 hover:text-brand-dark-blue hover:border-brand-dark-blue hover:shadow-md hover:scale-105 shadow-sm"
+                    style={{
+                      backgroundColor: 'white',
+                      borderColor: '#0F5FA8',
+                      color: '#0F5FA8',
+                    }}
                   >
                     Clear
-                  </Button>
+                  </button>
                 </div>
               </form>
             </CardContent>

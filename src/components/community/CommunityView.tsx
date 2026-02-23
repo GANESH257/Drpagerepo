@@ -49,7 +49,8 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
         setSection(list[0].id);
       }
     } catch (e) {
-      console.error(e);
+      // Silently handle errors and use default section
+      console.warn('Failed to load community sections, using default:', e);
       setSections([{ id: 'general', name: 'General' }]);
     }
   };
@@ -69,7 +70,15 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
   };
 
   useEffect(() => {
-    loadSections();
+    // Wrap in async IIFE to handle errors properly
+    (async () => {
+      try {
+        await loadSections();
+      } catch (error) {
+        // Error already handled in loadSections, but prevent unhandled rejection
+        console.warn('Error in loadSections effect:', error);
+      }
+    })();
   }, []);
 
   useEffect(() => {

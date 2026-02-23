@@ -123,41 +123,44 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4" data-scroll-exclude>
           {/* Basic Information */}
-          <div className="space-y-4">
+          <div className="space-y-4" data-scroll-exclude>
             <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+              <div data-scroll-exclude>
                 <Label htmlFor="create-firstName">First Name *</Label>
                 <Input
                   id="create-firstName"
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   placeholder="John"
+                  data-scroll-speed="0"
                 />
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="create-lastName">Last Name *</Label>
                 <Input
                   id="create-lastName"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   placeholder="Doe"
+                  data-scroll-speed="0"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+              <div data-scroll-exclude>
                 <Label htmlFor="create-credentials">Credentials *</Label>
                 <Input
                   id="create-credentials"
                   value={formData.credentials}
                   onChange={(e) => setFormData({ ...formData, credentials: e.target.value })}
                   placeholder="M.D."
+                  data-scroll-speed="0"
                 />
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="create-email">Email *</Label>
                 <Input
                   id="create-email"
@@ -165,10 +168,11 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="doctor@example.com"
+                  data-scroll-speed="0"
                 />
               </div>
             </div>
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="create-password">Password *</Label>
               <Input
                 id="create-password"
@@ -176,20 +180,22 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Set initial password"
+                data-scroll-speed="0"
               />
             </div>
           </div>
 
           {/* Practice Assignment */}
-          <div className="space-y-4">
+          <div className="space-y-4" data-scroll-exclude>
             <h3 className="font-semibold text-brand-dark-blue">Practice Assignment (V2)</h3>
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="create-practiceId">Practice</Label>
               <Select
                 value={formData.practiceId || 'none'}
                 onValueChange={(value) => setFormData({ ...formData, practiceId: value === 'none' ? undefined : (value as string) })}
+                data-scroll-exclude
               >
-                <SelectTrigger>
+                <SelectTrigger data-scroll-speed="0" data-scroll-exclude>
                   <SelectValue placeholder="Select a practice (optional)..." />
                 </SelectTrigger>
                   <SelectContent>
@@ -204,13 +210,14 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
               </Select>
             </div>
             {formData.practiceId && (
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="create-roleInPractice">Role in Practice</Label>
                 <Select
                   value={formData.roleInPractice}
                   onValueChange={(value: 'doctor' | 'practice_admin') => setFormData({ ...formData, roleInPractice: value })}
+                  data-scroll-exclude
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-scroll-speed="0" data-scroll-exclude>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -223,18 +230,19 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
           </div>
 
           {/* Professional Information */}
-          <div className="space-y-4">
+          <div className="space-y-4" data-scroll-exclude>
             <h3 className="font-semibold text-brand-dark-blue">Professional Information</h3>
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="create-specialty">Primary Specialty *</Label>
               <Input
                 id="create-specialty"
                 value={formData.specialty}
                 onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
                 placeholder="Cardiology"
+                data-scroll-speed="0"
               />
             </div>
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="create-bio">Bio *</Label>
               <Textarea
                 id="create-bio"
@@ -242,6 +250,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                 rows={4}
                 placeholder="Brief professional biography..."
+                data-scroll-speed="0"
               />
             </div>
           </div>

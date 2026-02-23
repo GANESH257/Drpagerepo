@@ -288,16 +288,16 @@ export function TopSearchBar() {
   }, [lat, lng, filters.radiusMiles, router]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0">
-      <div className="bg-white backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] border-2 border-brand-dark-blue/20 ring-2 ring-brand-teal/10 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(15,95,168,0.2)] hover:border-brand-dark-blue/30 hover:ring-brand-teal/20 group/bar">
+    <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0" data-scroll-exclude data-scroll-speed="0">
+      <div className="bg-white backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] border-2 border-brand-dark-blue/20 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(15,95,168,0.2)] hover:border-brand-dark-blue/30 group/bar" data-scroll-exclude data-scroll-speed="0">
         {/* Specialty Dropdown */}
         <div className={cn(
           "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500 rounded-t-lg lg:rounded-l-[1.5rem] lg:rounded-tr-none",
           isFocused === 'specialty' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <Filter className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'specialty' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'specialty' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Specialty</label>
@@ -306,8 +306,13 @@ export function TopSearchBar() {
               onValueChange={handleSpecialtyChange}
               onOpenChange={(open) => setIsFocused(open ? 'specialty' : null)}
               disabled={filterOptions.specialties.length === 0 && departments.length === 0}
+              data-scroll-exclude
             >
-              <SelectTrigger className="w-full bg-transparent border-none focus:ring-0 focus:ring-offset-0 p-0 h-auto font-bold text-sm lg:text-base text-gray-800 [&>span]:text-gray-800 [&>span]:placeholder:text-gray-400">
+              <SelectTrigger 
+                className="w-full bg-transparent border-none focus:ring-0 focus:ring-offset-0 p-0 h-auto font-bold text-sm lg:text-base text-gray-800 [&>span]:text-gray-800 [&>span]:placeholder:text-gray-400"
+                data-scroll-speed="0"
+                data-scroll-exclude
+              >
                 <SelectValue placeholder={filterOptions.specialties.length === 0 && departments.length === 0 ? "No specialties available" : "Select specialty"} />
               </SelectTrigger>
               <SelectContent>
@@ -332,8 +337,8 @@ export function TopSearchBar() {
           isFocused === 'name' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <UserSearch className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'name' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'name' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Practice or Doctor</label>
@@ -346,6 +351,7 @@ export function TopSearchBar() {
               onFocus={() => setIsFocused('name')}
               onBlur={() => setIsFocused(null)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              data-scroll-speed="0"
             />
           </div>
         </div>
@@ -356,8 +362,8 @@ export function TopSearchBar() {
           isFocused === 'location' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <MapPin className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'location' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'location' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">
@@ -372,15 +378,35 @@ export function TopSearchBar() {
               onFocus={() => setIsFocused('location')}
               onBlur={() => setIsFocused(null)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              data-scroll-speed="0"
             />
           </div>
         </div>
 
         {/* Search Button */}
-        <div className="lg:pl-2 flex items-center p-1">
+        <div 
+          className="lg:pl-2 flex items-center p-1"
+          data-scroll-exclude
+          data-scroll-speed="0"
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            willChange: 'auto',
+            width: 'fit-content',
+            minWidth: 'fit-content',
+            maxWidth: 'fit-content',
+            flexShrink: 0,
+            flexGrow: 0
+          } as React.CSSProperties}
+        >
           <button
             onClick={handleSearch}
-            className="relative overflow-hidden bg-brand-teal hover:bg-brand-dark-blue text-white font-black h-10 w-full lg:w-12 lg:h-12 rounded-lg lg:rounded-full transition-all duration-500 flex items-center justify-center group/btn shadow-[0_8px_15px_rgba(45,212,191,0.2)] hover:shadow-[0_12px_25px_rgba(45,212,191,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            className="relative overflow-hidden bg-brand-teal hover:bg-brand-dark-blue text-white font-black h-10 w-full lg:w-12 lg:h-12 rounded-lg lg:rounded-full transition-all duration-500 flex items-center justify-center group/btn shadow-[0_4px_12px_rgba(29,212,196,0.25)] hover:shadow-[0_6px_16px_rgba(29,212,196,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            data-scroll-exclude
+            data-scroll-speed="0"
+            style={{
+              transform: 'translate3d(0, 0, 0)',
+              willChange: 'auto'
+            } as React.CSSProperties}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] transition-transform" />
             <Search className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-300" />
@@ -552,16 +578,17 @@ export function SidebarFilters({ className }: { className?: string }) {
   };
 
   const FilterContent = (
-    <div className="space-y-6">
+    <div className="space-y-6" data-scroll-exclude data-scroll-speed="0">
       {/* Specialty */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Specialty</label>
         <Select
           value={filters.specialty || 'all'}
           onValueChange={(value) => updateFilter('specialty', value)}
           disabled={filterOptions.specialties.length === 0 && departments.length === 0}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger className="bg-white/50 border-gray-200" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue placeholder={filterOptions.specialties.length === 0 && departments.length === 0 ? "No specialties available" : "All Specialties"} />
           </SelectTrigger>
           <SelectContent>
@@ -603,14 +630,15 @@ export function SidebarFilters({ className }: { className?: string }) {
       )}
 
       {/* Radius Search */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Distance</label>
         <Select
           value={getSearchParam('distance', 'none')}
           onValueChange={handleRadiusChange}
           disabled={!hasOrigin}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger className="bg-white/50 border-gray-200" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue placeholder={hasOrigin ? "No radius limit" : "Set an origin to use distance filters"} />
           </SelectTrigger>
           <SelectContent>
@@ -659,14 +687,15 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Insurance */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Insurance</label>
         <Select
           value={filters.insurance || 'all'}
           onValueChange={(value) => updateFilter('insurance', value)}
           disabled={filterOptions.insurances.length === 0 && allInsurance.length === 0}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger className="bg-white/50 border-gray-200" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue placeholder={filterOptions.insurances.length === 0 && allInsurance.length === 0 ? "No insurance options available" : "All Insurance"} />
           </SelectTrigger>
           <SelectContent>
@@ -684,14 +713,15 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Services */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Services</label>
         <Select
           value={filters.service || 'all'}
           onValueChange={(value) => updateFilter('service', value === 'all' ? 'all' : value)}
           disabled={filterOptions.services.length === 0}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger className="bg-white/50 border-gray-200" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue placeholder={filterOptions.services.length === 0 ? "No services available" : "All Services"} />
           </SelectTrigger>
           <SelectContent>
@@ -709,13 +739,14 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Availability */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Availability</label>
         <Select
           value={filters.availability || 'all'}
           onValueChange={(value) => updateFilter('availability', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger className="bg-white/50 border-gray-200" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue placeholder="Any time" />
           </SelectTrigger>
           <SelectContent>
@@ -729,13 +760,14 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Sorting */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0">
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Sort Results</label>
         <Select
           value={getSearchParam('sort', 'relevance')}
           onValueChange={(value) => updateFilter('sort', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200 focus:ring-brand-teal">
+          <SelectTrigger className="bg-white/50 border-gray-200 focus:ring-brand-teal" data-scroll-speed="0" data-scroll-exclude>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -749,14 +781,18 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {hasActiveFilters && (
+        <div data-scroll-exclude>
         <Button
           variant="outline"
           onClick={clearFilters}
           className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-4"
+            data-scroll-speed="0"
+            data-scroll-exclude
         >
           <X className="h-4 w-4 mr-2" />
           Reset All Filters
         </Button>
+        </div>
       )}
     </div>
   );
@@ -764,8 +800,8 @@ export function SidebarFilters({ className }: { className?: string }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={cn('hidden md:block', className)}>
-        <div className="sticky top-24 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 shadow-sm">
+      <div className={cn('hidden md:block', className)} data-scroll-exclude data-scroll-speed="0">
+        <div className="sticky top-24 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 shadow-sm" data-scroll-exclude data-scroll-speed="0">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-brand-dark-blue flex items-center gap-2">
               <Filter className="h-5 w-5 text-brand-teal" />

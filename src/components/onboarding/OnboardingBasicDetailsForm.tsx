@@ -83,7 +83,7 @@ export function OnboardingBasicDetailsForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" data-scroll-exclude>
       {/* Name Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -99,6 +99,7 @@ export function OnboardingBasicDetailsForm({
             }}
             placeholder="John"
             className={errors.firstName ? 'border-destructive' : ''}
+            data-scroll-speed="0"
           />
           {errors.firstName && (
             <p className="text-sm text-destructive">{errors.firstName}</p>
@@ -118,6 +119,7 @@ export function OnboardingBasicDetailsForm({
             }}
             placeholder="Doe"
             className={errors.lastName ? 'border-destructive' : ''}
+            data-scroll-speed="0"
           />
           {errors.lastName && (
             <p className="text-sm text-destructive">{errors.lastName}</p>
@@ -126,8 +128,8 @@ export function OnboardingBasicDetailsForm({
       </div>
 
       {/* Credentials & Specialty */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-scroll-exclude>
+        <div className="space-y-2" data-scroll-exclude>
           <Label htmlFor="credentials">
             Credentials <span className="text-destructive">*</span>
           </Label>
@@ -137,10 +139,13 @@ export function OnboardingBasicDetailsForm({
               setSelectedCredentials(value);
               if (errors.credentials) setErrors({ ...errors, credentials: '' });
             }}
+            data-scroll-exclude
           >
             <SelectTrigger
               id="credentials"
               className={errors.credentials ? 'border-destructive' : ''}
+              data-scroll-speed="0"
+              data-scroll-exclude
             >
               <SelectValue placeholder="Select credentials" />
             </SelectTrigger>
@@ -157,7 +162,7 @@ export function OnboardingBasicDetailsForm({
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2" data-scroll-exclude>
           <Label htmlFor="specialty">
             Primary Specialty <span className="text-destructive">*</span>
           </Label>
@@ -167,10 +172,13 @@ export function OnboardingBasicDetailsForm({
               setSpecialty(value);
               if (errors.specialty) setErrors({ ...errors, specialty: '' });
             }}
+            data-scroll-exclude
           >
             <SelectTrigger
               id="specialty"
               className={errors.specialty ? 'border-destructive' : ''}
+              data-scroll-speed="0"
+              data-scroll-exclude
             >
               <SelectValue placeholder="Select specialty" />
             </SelectTrigger>
@@ -203,6 +211,7 @@ export function OnboardingBasicDetailsForm({
           }}
           placeholder="(555) 123-4567"
           className={errors.phone ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {errors.phone && (
           <p className="text-sm text-destructive">{errors.phone}</p>
@@ -226,6 +235,7 @@ export function OnboardingBasicDetailsForm({
               }}
               placeholder="Los Angeles"
               className={errors.city ? 'border-destructive' : ''}
+              data-scroll-speed="0"
             />
             {errors.city && (
               <p className="text-sm text-destructive">{errors.city}</p>
@@ -246,6 +256,7 @@ export function OnboardingBasicDetailsForm({
               placeholder="CA"
               maxLength={2}
               className={errors.state ? 'border-destructive' : ''}
+              data-scroll-speed="0"
             />
             {errors.state && (
               <p className="text-sm text-destructive">{errors.state}</p>
@@ -265,6 +276,7 @@ export function OnboardingBasicDetailsForm({
               }}
               placeholder="90001"
               className={errors.zip ? 'border-destructive' : ''}
+              data-scroll-speed="0"
             />
             {errors.zip && (
               <p className="text-sm text-destructive">{errors.zip}</p>
@@ -305,6 +317,7 @@ export function OnboardingBasicDetailsForm({
           placeholder="Brief professional biography (1-2 sentences)"
           rows={3}
           className={errors.bio ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {errors.bio && (
           <p className="text-sm text-destructive">{errors.bio}</p>
@@ -323,6 +336,7 @@ export function OnboardingBasicDetailsForm({
             value={medicalSchool}
             onChange={(e) => setMedicalSchool(e.target.value)}
             placeholder="University of California, Los Angeles School of Medicine"
+            data-scroll-speed="0"
           />
         </div>
 
@@ -333,6 +347,7 @@ export function OnboardingBasicDetailsForm({
             value={residency}
             onChange={(e) => setResidency(e.target.value)}
             placeholder="Cedars-Sinai Medical Center"
+            data-scroll-speed="0"
           />
         </div>
       </div>

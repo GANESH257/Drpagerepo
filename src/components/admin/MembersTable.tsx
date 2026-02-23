@@ -204,26 +204,27 @@ export function MembersTable() {
         {/* Filters */}
         <div className="space-y-4">
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative" data-scroll-exclude>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search by name, email, specialty, or credentials..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
+              data-scroll-speed="0"
             />
           </div>
 
           {/* Filter Row */}
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center" data-scroll-exclude>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Filter className="h-4 w-4" />
               <span>Filters:</span>
             </div>
 
             {/* State Filter */}
-            <Select value={stateFilter} onValueChange={setStateFilter}>
-              <SelectTrigger className="w-[140px]">
+            <Select value={stateFilter} onValueChange={setStateFilter} data-scroll-exclude>
+              <SelectTrigger className="w-[140px]" data-scroll-speed="0" data-scroll-exclude>
                 <SelectValue placeholder="State" />
               </SelectTrigger>
               <SelectContent>
@@ -237,8 +238,8 @@ export function MembersTable() {
             </Select>
 
             {/* Zip Filter */}
-            <Select value={zipFilter} onValueChange={setZipFilter}>
-              <SelectTrigger className="w-[140px]">
+            <Select value={zipFilter} onValueChange={setZipFilter} data-scroll-exclude>
+              <SelectTrigger className="w-[140px]" data-scroll-speed="0" data-scroll-exclude>
                 <SelectValue placeholder="Zip Code" />
               </SelectTrigger>
               <SelectContent>
@@ -252,8 +253,8 @@ export function MembersTable() {
             </Select>
 
             {/* Practice Filter */}
-            <Select value={practiceFilter} onValueChange={setPracticeFilter}>
-              <SelectTrigger className="w-[200px]">
+            <Select value={practiceFilter} onValueChange={setPracticeFilter} data-scroll-exclude>
+              <SelectTrigger className="w-[200px]" data-scroll-speed="0" data-scroll-exclude>
                 <SelectValue placeholder="Practice" />
               </SelectTrigger>
               <SelectContent>
@@ -267,8 +268,8 @@ export function MembersTable() {
             </Select>
 
             {/* Specialty Filter */}
-            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-              <SelectTrigger className="w-[180px]">
+            <Select value={specialtyFilter} onValueChange={setSpecialtyFilter} data-scroll-exclude>
+              <SelectTrigger className="w-[180px]" data-scroll-speed="0" data-scroll-exclude>
                 <SelectValue placeholder="Specialty" />
               </SelectTrigger>
               <SelectContent>
@@ -282,8 +283,8 @@ export function MembersTable() {
             </Select>
 
             {/* Credentials Filter */}
-            <Select value={credentialsFilter} onValueChange={setCredentialsFilter}>
-              <SelectTrigger className="w-[140px]">
+            <Select value={credentialsFilter} onValueChange={setCredentialsFilter} data-scroll-exclude>
+              <SelectTrigger className="w-[140px]" data-scroll-speed="0" data-scroll-exclude>
                 <SelectValue placeholder="Credentials" />
               </SelectTrigger>
               <SelectContent>
@@ -298,15 +299,18 @@ export function MembersTable() {
 
             {/* Clear Filters Button */}
             {hasActiveFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearFilters}
-                className="ml-auto"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Clear Filters
-              </Button>
+              <div data-scroll-exclude>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="ml-auto"
+                  data-scroll-speed="0"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear Filters
+                </Button>
+              </div>
             )}
           </div>
 

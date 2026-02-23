@@ -107,9 +107,9 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-scroll-exclude>
         {/* Email Field */}
-        <div className="space-y-2">
+        <div className="space-y-2" data-scroll-exclude>
           <Label htmlFor="signin-email">Email</Label>
           <Input
             id="signin-email"
@@ -124,6 +124,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
             aria-invalid={!!emailError}
             aria-describedby={emailError ? 'email-error' : undefined}
             className={emailError ? 'border-destructive' : ''}
+            data-scroll-speed="0"
           />
           {emailError && (
             <p
@@ -138,9 +139,9 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         </div>
 
         {/* Password Field */}
-        <div className="space-y-2">
+        <div className="space-y-2" data-scroll-exclude>
           <Label htmlFor="signin-password">Password</Label>
-          <div className="relative">
+          <div className="relative" data-scroll-exclude>
             <Input
               id="signin-password"
               type={showPassword ? 'text' : 'password'}
@@ -154,6 +155,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
               aria-invalid={!!passwordError}
               aria-describedby={passwordError ? 'password-error' : undefined}
               className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
+              data-scroll-speed="0"
             />
             <button
               type="button"
@@ -181,12 +183,13 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         </div>
 
         {/* Remember Me & Forgot Password */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-between" data-scroll-exclude>
+          <div className="flex items-center space-x-2" data-scroll-exclude>
             <Checkbox
               id="remember-me"
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked === true)}
+              data-scroll-speed="0"
             />
             <Label
               htmlFor="remember-me"

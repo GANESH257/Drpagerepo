@@ -137,6 +137,7 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
                       onClick={() => handleRemoveInsurance(ins)}
                       className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
                       aria-label={`Remove ${ins.name}`}
+                      data-scroll-speed="0"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -148,45 +149,53 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
             )}
 
             {/* Add Insurance */}
-            <div className="space-y-2 pt-2 border-t">
+            <div className="space-y-2 pt-2 border-t" data-scroll-exclude>
               <label className="text-sm font-medium">Add Insurance Plan</label>
-              <div className="flex gap-2">
-                <Select value={newInsuranceName} onValueChange={setNewInsuranceName}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select or type insurance name" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMMON_INSURANCE_PROVIDERS.filter(
-                      (provider) =>
-                        !insurance.some(
-                          (ins) => ins.name.toLowerCase() === provider.toLowerCase()
-                        )
-                    ).map((provider) => (
-                      <SelectItem key={provider} value={provider}>
-                        {provider}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={newInsuranceName}
-                  onChange={(e) => setNewInsuranceName(e.target.value)}
-                  placeholder="Or type custom name"
-                  className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddInsurance();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleAddInsurance}
-                  disabled={!newInsuranceName.trim()}
-                  className="bg-brand-teal hover:bg-brand-teal/90"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="flex gap-2" data-scroll-exclude>
+                <div data-scroll-exclude className="flex-1">
+                  <Select value={newInsuranceName} onValueChange={setNewInsuranceName} data-scroll-exclude>
+                    <SelectTrigger className="flex-1" data-scroll-speed="0" data-scroll-exclude>
+                      <SelectValue placeholder="Select or type insurance name" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMON_INSURANCE_PROVIDERS.filter(
+                        (provider) =>
+                          !insurance.some(
+                            (ins) => ins.name.toLowerCase() === provider.toLowerCase()
+                          )
+                      ).map((provider) => (
+                        <SelectItem key={provider} value={provider}>
+                          {provider}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div data-scroll-exclude className="flex-1">
+                  <Input
+                    value={newInsuranceName}
+                    onChange={(e) => setNewInsuranceName(e.target.value)}
+                    placeholder="Or type custom name"
+                    className="flex-1"
+                    data-scroll-speed="0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddInsurance();
+                      }
+                    }}
+                  />
+                </div>
+                <div data-scroll-exclude>
+                  <Button
+                    onClick={handleAddInsurance}
+                    disabled={!newInsuranceName.trim()}
+                    className="bg-brand-teal hover:bg-brand-teal/90"
+                    data-scroll-speed="0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -145,6 +145,7 @@ export function TopSearchBar() {
     loadDepartments();
   }, []);
 
+
   // Sync specialtyInput with filters.specialty when URL params change
   useEffect(() => {
     setSpecialtyInput(filters.specialty || 'all');
@@ -166,16 +167,20 @@ export function TopSearchBar() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0">
-      <div className="bg-white backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] border-2 border-brand-dark-blue/20 ring-2 ring-brand-teal/10 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(15,95,168,0.2)] hover:border-brand-dark-blue/30 hover:ring-brand-teal/20 group/bar">
+    <div className="w-full max-w-5xl mx-auto mb-10 px-2 lg:px-0" data-scroll-exclude data-scroll-speed="0">
+      <div 
+        className="bg-white backdrop-blur-xl rounded-xl lg:rounded-[2rem] shadow-[0_15px_40px_rgba(0,0,0,0.15)] border-2 border-brand-dark-blue/20 p-1 lg:p-1.5 flex flex-col lg:flex-row items-stretch gap-1 lg:gap-0 transition-all duration-500 hover:shadow-[0_25px_50px_rgba(15,95,168,0.2)] hover:border-brand-dark-blue/30 group/bar"
+        data-scroll-exclude
+        data-scroll-speed="0"
+      >
         {/* Specialty Dropdown */}
         <div className={cn(
           "flex-1 flex items-center px-4 py-2 lg:py-0 border-b lg:border-b-0 lg:border-r border-gray-100 transition-all duration-500 rounded-t-lg lg:rounded-l-[1.5rem] lg:rounded-tr-none",
           isFocused === 'specialty' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <Filter className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'specialty' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'specialty' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Specialty</label>
@@ -205,8 +210,8 @@ export function TopSearchBar() {
           isFocused === 'name' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <UserSearch className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'name' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'name' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Provider Name</label>
@@ -229,8 +234,8 @@ export function TopSearchBar() {
           isFocused === 'location' ? "bg-brand-teal/5 shadow-inner" : "hover:bg-gray-50/50"
         )}>
           <MapPin className={cn(
-            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-500",
-            isFocused === 'location' ? "text-brand-teal scale-110 animate-[floating_2s_ease-in-out_infinite]" : "text-gray-400"
+            "h-4 w-4 lg:h-5 lg:w-5 mr-3 lg:mr-4 transition-all duration-300",
+            isFocused === 'location' ? "text-brand-teal scale-110" : "text-gray-400"
           )} />
           <div className="flex-1 min-w-0">
             <label className="text-[7px] lg:text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 block mb-0">Location</label>
@@ -248,13 +253,32 @@ export function TopSearchBar() {
         </div>
 
         {/* Search Button - Compact Circle */}
-        <div className="lg:pl-2 flex items-center p-1">
+        <div 
+          className="lg:pl-2 flex items-center p-1"
+          data-scroll-exclude
+          data-scroll-speed="0"
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            willChange: 'auto',
+            width: 'fit-content',
+            minWidth: 'fit-content',
+            maxWidth: 'fit-content',
+            flexShrink: 0,
+            flexGrow: 0
+          } as React.CSSProperties}
+        >
           <button
             onClick={handleSearch}
-            className="relative overflow-hidden bg-brand-teal hover:bg-brand-dark-blue text-white font-black h-10 w-full lg:w-12 lg:h-12 rounded-lg lg:rounded-full transition-all duration-500 flex items-center justify-center group/btn shadow-[0_8px_15px_rgba(45,212,191,0.2)] hover:shadow-[0_12px_25px_rgba(45,212,191,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            className="relative overflow-hidden bg-brand-teal hover:bg-brand-dark-blue text-white font-black h-10 w-full lg:w-12 lg:h-12 rounded-lg lg:rounded-full transition-all duration-500 flex items-center justify-center group/btn shadow-[0_4px_12px_rgba(29,212,196,0.25)] hover:shadow-[0_6px_16px_rgba(29,212,196,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            data-scroll-exclude
+            data-scroll-speed="0"
+            style={{
+              transform: 'translate3d(0, 0, 0)',
+              willChange: 'auto'
+            } as React.CSSProperties}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] transition-transform" />
-            <Search className="h-5 w-5 group-hover/btn:rotate-12 transition-transform duration-300" />
+            <Search className="h-5 w-5 transition-transform duration-300 group-hover/btn:rotate-12" />
             <span className="lg:hidden ml-2 font-bold uppercase text-xs tracking-widest">Search Doctors</span>
           </button>
         </div>
@@ -267,6 +291,7 @@ export function SidebarFilters({ className }: { className?: string }) {
   const { filters, updateFilter, clearFilters } = useFilters();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Load departments from API
   useEffect(() => {
@@ -281,6 +306,53 @@ export function SidebarFilters({ className }: { className?: string }) {
     loadDepartments();
   }, []);
 
+  // Prevent Locomotive Scroll from affecting sidebar elements
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+
+    const observer = new MutationObserver(() => {
+      // Force reset transforms on all combobox buttons
+      const comboboxes = sidebarRef.current?.querySelectorAll('[role="combobox"]');
+      comboboxes?.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.setProperty('transform', 'translate3d(0, 0, 0)', 'important');
+        htmlEl.style.setProperty('scale', '1', 'important');
+        htmlEl.style.setProperty('rotate', '0deg', 'important');
+        htmlEl.style.setProperty('-webkit-transform', 'translate3d(0, 0, 0)', 'important');
+      });
+    });
+
+    observer.observe(sidebarRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'data-scroll']
+    });
+
+    // Also use requestAnimationFrame to continuously reset transforms
+    let rafId: number;
+    const resetTransforms = () => {
+      const comboboxes = sidebarRef.current?.querySelectorAll('[role="combobox"]');
+      comboboxes?.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        const computedStyle = window.getComputedStyle(htmlEl);
+        const transform = computedStyle.transform;
+        if (transform && transform !== 'none' && transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
+          htmlEl.style.setProperty('transform', 'translate3d(0, 0, 0)', 'important');
+          htmlEl.style.setProperty('scale', '1', 'important');
+          htmlEl.style.setProperty('rotate', '0deg', 'important');
+        }
+      });
+      rafId = requestAnimationFrame(resetTransforms);
+    };
+    rafId = requestAnimationFrame(resetTransforms);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   const hasActiveFilters =
     (filters.insurance && filters.insurance !== 'all') ||
     (filters.availability && filters.availability !== 'all') ||
@@ -288,15 +360,21 @@ export function SidebarFilters({ className }: { className?: string }) {
     (filters.specialty && filters.specialty !== 'all');
 
   const FilterContent = (
-    <div className="space-y-6">
+    <div className="space-y-6" data-scroll-exclude data-scroll-speed="0" style={{ transform: 'translate3d(0, 0, 0)', willChange: 'auto' } as React.CSSProperties}>
       {/* Specialty - Move to side if needed, or keep for specificity */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0" style={{ transform: 'translate3d(0, 0, 0)' } as React.CSSProperties}>
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Specialty</label>
         <Select
           value={filters.specialty || 'all'}
           onValueChange={(value) => updateFilter('specialty', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger 
+            className="bg-white/50 border-gray-200" 
+            data-scroll-speed="0" 
+            data-scroll-exclude
+            style={{ transform: 'translate3d(0, 0, 0)', scale: '1', rotate: '0deg' } as React.CSSProperties}
+          >
             <SelectValue placeholder="All Specialties" />
           </SelectTrigger>
           <SelectContent>
@@ -311,13 +389,19 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Insurance */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0" style={{ transform: 'translate3d(0, 0, 0)' } as React.CSSProperties}>
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Insurance</label>
         <Select
           value={filters.insurance || 'all'}
           onValueChange={(value) => updateFilter('insurance', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger 
+            className="bg-white/50 border-gray-200" 
+            data-scroll-speed="0" 
+            data-scroll-exclude
+            style={{ transform: 'translate3d(0, 0, 0)', scale: '1', rotate: '0deg' } as React.CSSProperties}
+          >
             <SelectValue placeholder="All Insurance" />
           </SelectTrigger>
           <SelectContent>
@@ -332,13 +416,19 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Availability */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0" style={{ transform: 'translate3d(0, 0, 0)' } as React.CSSProperties}>
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Availability</label>
         <Select
           value={filters.availability || 'all'}
           onValueChange={(value) => updateFilter('availability', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200">
+          <SelectTrigger 
+            className="bg-white/50 border-gray-200" 
+            data-scroll-speed="0" 
+            data-scroll-exclude
+            style={{ transform: 'translate3d(0, 0, 0)', scale: '1', rotate: '0deg' } as React.CSSProperties}
+          >
             <SelectValue placeholder="Any time" />
           </SelectTrigger>
           <SelectContent>
@@ -351,13 +441,19 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Sorting */}
-      <div>
+      <div data-scroll-exclude data-scroll-speed="0" style={{ transform: 'translate3d(0, 0, 0)' } as React.CSSProperties}>
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">Sort Results</label>
         <Select
           value={filters.sort}
           onValueChange={(value) => updateFilter('sort', value)}
+          data-scroll-exclude
         >
-          <SelectTrigger className="bg-white/50 border-gray-200 focus:ring-brand-teal">
+          <SelectTrigger 
+            className="bg-white/50 border-gray-200 focus:ring-brand-teal" 
+            data-scroll-speed="0" 
+            data-scroll-exclude
+            style={{ transform: 'translate3d(0, 0, 0)', scale: '1', rotate: '0deg' } as React.CSSProperties}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -371,11 +467,11 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {/* Last Name Prefix */}
-      <div>
+      <div data-scroll-exclude>
         <label className="text-sm font-semibold text-gray-700 mb-2 block uppercase tracking-wider">
           Last Name Starts With
         </label>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5" data-scroll-exclude>
           {alphabet.map((letter) => (
             <button
               key={letter}
@@ -399,14 +495,18 @@ export function SidebarFilters({ className }: { className?: string }) {
       </div>
 
       {hasActiveFilters && (
-        <Button
-          variant="outline"
-          onClick={clearFilters}
-          className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-4"
-        >
-          <X className="h-4 w-4 mr-2" />
-          Reset All Filters
-        </Button>
+        <div data-scroll-exclude>
+          <Button
+            variant="outline"
+            onClick={clearFilters}
+            className="w-full border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors mt-4"
+            data-scroll-speed="0"
+            data-scroll-exclude
+          >
+            <X className="h-4 w-4 mr-2" />
+            Reset All Filters
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -414,9 +514,9 @@ export function SidebarFilters({ className }: { className?: string }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={cn('hidden md:block', className)}>
-        <div className="sticky top-24 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+      <div className={cn('hidden md:block', className)} data-scroll-exclude data-scroll-speed="0" ref={sidebarRef}>
+        <div className="sticky top-24 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/50 p-6 shadow-sm" data-scroll-exclude data-scroll-speed="0">
+          <div className="flex items-center justify-between mb-6" data-scroll-exclude>
             <h3 className="text-lg font-bold text-brand-dark-blue flex items-center gap-2">
               <Filter className="h-5 w-5 text-brand-teal" />
               Refine Search

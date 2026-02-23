@@ -8,40 +8,50 @@ const DARK_MODE_KEY = 'aip_dark_mode';
 export function useDarkMode() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Check if we're on dark mode page
-    const isOnDarkPage = pathname === '/homedark';
-    
-    // Check localStorage preference
+  
+  // Initialize from localStorage if available, otherwise default to false
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(DARK_MODE_KEY);
-      // If on dark page, always set to dark mode
-      // Otherwise, use stored preference or default to false
-      if (isOnDarkPage) {
-        setIsDarkMode(true);
-        localStorage.setItem(DARK_MODE_KEY, 'true');
-      } else if (pathname === '/') {
-        setIsDarkMode(false);
-        localStorage.setItem(DARK_MODE_KEY, 'false');
-      } else if (stored === 'true') {
-        setIsDarkMode(true);
-      } else {
-        setIsDarkMode(false);
-      }
+      return stored === 'true';
+    }
+    return false;
+  });
+
+  // Update state from pathname and localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isOnDarkPage = pathname === '/homedark';
+    const stored = localStorage.getItem(DARK_MODE_KEY);
+    
+    // Priority: pathname > localStorage > default (false)
+    if (isOnDarkPage) {
+      setIsDarkMode(true);
+      localStorage.setItem(DARK_MODE_KEY, 'true');
+    } else if (pathname === '/') {
+      setIsDarkMode(false);
+      localStorage.setItem(DARK_MODE_KEY, 'false');
+    } else if (stored === 'true') {
+      setIsDarkMode(true);
+    } else {
+      setIsDarkMode(false);
     }
   }, [pathname]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
+    
+    // Update state immediately for responsive UI
     setIsDarkMode(newDarkMode);
     
+    // Save to localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem(DARK_MODE_KEY, newDarkMode.toString());
     }
     
-    // Navigate to appropriate page
+    // Navigate to appropriate home page
+    // This ensures the user sees the correct theme immediately
     if (newDarkMode) {
       router.push('/homedark');
     } else {

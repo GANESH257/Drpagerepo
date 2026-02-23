@@ -29,17 +29,20 @@ export function BoardMemberModal({
         <DialogHeader>
           <DialogTitle className="text-2xl">{member.name}</DialogTitle>
           <DialogDescription>
+            Board Member Information
+          </DialogDescription>
+          <div className="mt-2">
             <Badge
               variant={member.role === 'Chair' ? 'default' : 'secondary'}
               className={
                 member.role === 'Chair'
-                  ? 'bg-brand-teal text-white mt-2'
-                  : 'bg-brand-dark-blue/10 text-brand-dark-blue mt-2'
+                  ? 'bg-brand-teal text-white'
+                  : 'bg-brand-dark-blue/10 text-brand-dark-blue'
               }
             >
               {member.role}
             </Badge>
-          </DialogDescription>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

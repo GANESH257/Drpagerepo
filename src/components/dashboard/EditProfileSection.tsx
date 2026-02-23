@@ -197,17 +197,17 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
             {/* Tab 1: Basic Info */}
             <TabsContent value="basic" className="mt-4">
-              <Card className="card-vibrant">
+              <Card className="card-vibrant" data-scroll-exclude>
                 <CardHeader>
                   <CardTitle className="text-lg">Basic Information</CardTitle>
                   <CardDescription>Name, specialty, profile image, and primary office hours</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4" data-scroll-exclude>
                   {/* Profile Image */}
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="image">Profile Image</Label>
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4" data-scroll-exclude>
                       {doctor.image && (
                         <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200">
                           <Image
@@ -224,7 +224,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                           />
                         </div>
                       )}
-                      <div className="flex-1">
+                      <div className="flex-1" data-scroll-exclude>
                         <Input
                           id="image"
                           type="url"
@@ -232,6 +232,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                           onChange={(e) => updateField('image', e.target.value)}
                           placeholder="https://example.com/image.jpg or /path/to/image.jpg"
                           className="w-full"
+                          data-scroll-speed="0"
                         />
                         <p className="text-xs text-muted-foreground mt-1">
                           Enter a URL or path to your profile image. This will be displayed on your profile page and directory listings.
@@ -242,8 +243,8 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
                   <Separator />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+                    <div className="space-y-2" data-scroll-exclude>
                       <Label htmlFor="firstName">First Name</Label>
                       <Input
                         id="firstName"
@@ -253,9 +254,10 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                           // Auto-update fullName
                           updateField('fullName', `${e.target.value} ${doctor.lastName}, ${doctor.credentials}`);
                         }}
+                        data-scroll-speed="0"
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2" data-scroll-exclude>
                       <Label htmlFor="lastName">Last Name</Label>
                       <Input
                         id="lastName"
@@ -265,11 +267,12 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                           // Auto-update fullName
                           updateField('fullName', `${doctor.firstName} ${e.target.value}, ${doctor.credentials}`);
                         }}
+                        data-scroll-speed="0"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="fullName">
                       Full Name <span className="text-destructive">*</span>
                     </Label>
@@ -280,6 +283,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       aria-invalid={!!errors.fullName}
                       aria-describedby={errors.fullName ? 'fullName-error' : undefined}
                       className={errors.fullName ? 'border-destructive' : ''}
+                      data-scroll-speed="0"
                     />
                     {errors.fullName && (
                       <p id="fullName-error" className="text-sm text-destructive" role="alert">
@@ -288,7 +292,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="credentials">Credentials</Label>
                     <Select
                       value={doctor.credentials ?? ''}
@@ -298,8 +302,9 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                         const nameParts = doctor.fullName.split(',');
                         updateField('fullName', `${nameParts[0]}, ${value}`);
                       }}
+                      data-scroll-exclude
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-scroll-speed="0" data-scroll-exclude>
                         <SelectValue placeholder="Select credentials" />
                       </SelectTrigger>
                       <SelectContent>
@@ -312,15 +317,16 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="specialty">
                       Primary Specialty <span className="text-destructive">*</span>
                     </Label>
                     <Select
                       value={doctor.specialty ?? ''}
                       onValueChange={(value) => updateField('specialty', value)}
+                      data-scroll-exclude
                     >
-                      <SelectTrigger aria-invalid={!!errors.specialty} className={errors.specialty ? 'border-destructive' : ''}>
+                      <SelectTrigger aria-invalid={!!errors.specialty} className={errors.specialty ? 'border-destructive' : ''} data-scroll-speed="0" data-scroll-exclude>
                         <SelectValue placeholder="Select specialty" />
                       </SelectTrigger>
                       <SelectContent>
@@ -338,7 +344,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="specialties">Additional Specialties</Label>
                     <TagInput
                       tags={doctor.specialties || []}
@@ -351,7 +357,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <Separator />
 
                   {/* Primary Location Office Hours */}
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="primaryLocationHours">Primary Location Office Hours</Label>
                     <Input
                       id="primaryLocationHours"
@@ -379,6 +385,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                         setDoctor((prevDoctor) => ({ ...prevDoctor, locations: updatedLocations }));
                       }}
                       placeholder="e.g., Mon-Fri: 9:00 AM - 5:00 PM, Sat-Sun: Closed"
+                      data-scroll-speed="0"
                     />
                     <p className="text-xs text-muted-foreground">
                       Office hours for your primary practice location. This will be displayed on your profile page.
@@ -397,8 +404,8 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>Short bio, detailed about, and links</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
+                <div className="space-y-4" data-scroll-exclude>
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="bio">
                       Short Bio <span className="text-destructive">*</span>
                     </Label>
@@ -411,6 +418,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       aria-invalid={!!errors.bio}
                       aria-describedby={errors.bio ? 'bio-error' : undefined}
                       className={errors.bio ? 'border-destructive' : ''}
+                      data-scroll-speed="0"
                     />
                     {errors.bio && (
                       <p id="bio-error" className="text-sm text-destructive" role="alert">
@@ -419,7 +427,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="about">Detailed About (Optional)</Label>
                     <Textarea
                       id="about"
@@ -427,10 +435,11 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       onChange={(e) => updateField('about', e.target.value)}
                       placeholder="A longer, detailed biography for your profile page"
                       rows={8}
+                      data-scroll-speed="0"
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="website">Personal/Practice Website (Optional)</Label>
                     <Input
                       id="website"
@@ -439,13 +448,14 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       onChange={(e) => updateField('website', e.target.value)}
                       placeholder="https://example.com"
                       className="font-mono text-sm"
+                      data-scroll-speed="0"
                     />
                     <p className="text-xs text-muted-foreground">
                       Your personal or practice website URL. This will be displayed prominently on your public profile.
                     </p>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="bookingUrl">Direct Booking/Contact Page URL (Optional)</Label>
                     <Input
                       id="bookingUrl"
@@ -454,6 +464,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       onChange={(e) => updateField('bookingUrl', e.target.value)}
                       placeholder="https://example.com/contact"
                       className="font-mono text-sm"
+                      data-scroll-speed="0"
                     />
                     <p className="text-xs text-muted-foreground">
                       Direct link to your booking or contact page. A "Book Directly" button will appear below "Request Appointment" on your profile.
@@ -472,34 +483,37 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>Education, certifications, and privileges</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
+                <div className="space-y-4" data-scroll-exclude>
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="medicalSchool">Medical School</Label>
                     <Input
                       id="medicalSchool"
                       value={doctor.medicalSchool || ''}
                       onChange={(e) => updateField('medicalSchool', e.target.value)}
                       placeholder="e.g., Harvard Medical School"
+                      data-scroll-speed="0"
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="internship">Internship</Label>
                     <Input
                       id="internship"
                       value={doctor.internship || ''}
                       onChange={(e) => updateField('internship', e.target.value)}
                       placeholder="e.g., Massachusetts General Hospital"
+                      data-scroll-speed="0"
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="residency">Residency</Label>
                     <Input
                       id="residency"
                       value={doctor.residency || ''}
                       onChange={(e) => updateField('residency', e.target.value)}
                       placeholder="e.g., Cedars-Sinai Medical Center"
+                      data-scroll-speed="0"
                     />
                   </div>
 
@@ -533,7 +547,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
                   <Separator />
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" data-scroll-exclude>
                     <Label htmlFor="statesLicensedIn">States Licensed In</Label>
                     <TagInput
                       tags={doctor.statesLicensedIn || []}
@@ -612,7 +626,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
         {/* Helper Panel - collapsible; minimizes to narrow strip on the right */}
         <div className={cn('transition-all duration-200', tipsCollapsed ? 'w-12 shrink-0' : 'lg:col-span-1')}>
-          <Card className="sticky top-24 card-vibrant overflow-hidden w-full min-w-[3rem]">
+          <Card className="sticky top-24 card-vibrant overflow-hidden w-full min-w-[3rem]" data-scroll-exclude>
             <CardHeader className="p-3">
               <div className="flex items-center justify-between gap-2">
                 {!tipsCollapsed && (

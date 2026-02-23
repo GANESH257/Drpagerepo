@@ -15,6 +15,7 @@ const iconMap: Record<string, keyof typeof LucideIcons> = {
   TrendingDown: 'TrendingDown',
   Users: 'Users',
   ShieldCheck: 'ShieldCheck',
+  Briefcase: 'Briefcase',
 };
 
 export function BenefitsJumbledGrid() {

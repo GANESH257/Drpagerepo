@@ -259,28 +259,33 @@ export default function ReferralsV2Page() {
               </CardContent>
             </Card>
           )}
-          <Card>
-            <CardHeader className="pb-3">
+          <Card data-scroll-exclude>
+            <CardHeader className="pb-3" data-scroll-exclude>
               <CardTitle className="text-lg">Find & Refer Physicians</CardTitle>
               <CardDescription>Search our network to initiate a peer-to-peer referral</CardDescription>
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <Input
-                  placeholder="Search by name..."
-                  className="flex-1"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="All Specialties" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Specialties</SelectItem>
-                    {specialties.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="mt-4 flex flex-col sm:flex-row gap-3" data-scroll-exclude>
+                <div data-scroll-exclude className="flex-1">
+                  <Input
+                    placeholder="Search by name..."
+                    className="flex-1"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    data-scroll-speed="0"
+                  />
+                </div>
+                <div data-scroll-exclude>
+                  <Select value={specialtyFilter} onValueChange={setSpecialtyFilter} data-scroll-exclude>
+                    <SelectTrigger className="w-full sm:w-[200px]" data-scroll-speed="0" data-scroll-exclude>
+                      <SelectValue placeholder="All Specialties" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Specialties</SelectItem>
+                      {specialties.map(s => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardHeader>
             <CardContent>

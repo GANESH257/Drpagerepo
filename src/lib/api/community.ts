@@ -51,8 +51,16 @@ export async function getCommunitySections(): Promise<CommunitySection[]> {
     const data = await apiClient.get<CommunitySection[]>('/api/community/sections');
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    const apiError = error as ApiError;
-    throw new Error(apiError.error || 'Failed to fetch sections');
+    // Handle different error types gracefully
+    if (error && typeof error === 'object' && 'error' in error) {
+      const apiError = error as ApiError;
+      throw new Error(apiError.error || 'Failed to fetch sections');
+    }
+    // Handle network errors or other unexpected errors
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch sections: ${error.message}`);
+    }
+    throw new Error('Failed to fetch sections');
   }
 }
 

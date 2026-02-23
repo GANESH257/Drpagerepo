@@ -478,7 +478,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
           </DialogHeader>
 
           {/* Billing Cycle Toggle */}
-          <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg" data-scroll-exclude>
             <button
               type="button"
               onClick={() => setSelectedBillingCycle('monthly')}
@@ -486,12 +486,14 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
                 'text-sm font-medium transition-colors',
                 selectedBillingCycle === 'monthly' && 'text-brand-dark-blue'
               )}
+              data-scroll-speed="0"
             >
               Monthly
             </button>
             <Switch
               checked={selectedBillingCycle === 'annual'}
               onCheckedChange={handleBillingCycleChange}
+              data-scroll-speed="0"
             />
             <button
               type="button"
@@ -500,6 +502,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
                 'text-sm font-medium transition-colors',
                 selectedBillingCycle === 'annual' && 'text-brand-dark-blue'
               )}
+              data-scroll-speed="0"
             >
               Annual
               <span className="ml-2 text-xs text-brand-teal font-normal">
@@ -623,23 +626,25 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
                 use a secure payment processor.
               </p>
             </div>
-            <div className="space-y-4">
-              <div>
+            <div className="space-y-4" data-scroll-exclude>
+              <div data-scroll-exclude>
                 <Label htmlFor="card-name">Name on Card (Optional)</Label>
                 <Input
                   id="card-name"
                   placeholder="John Doe"
                   disabled
                   className="mt-1"
+                  data-scroll-speed="0"
                 />
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="card-number">Card Number (Optional)</Label>
                 <Input
                   id="card-number"
                   placeholder="1234 5678 9012 3456"
                   disabled
                   className="mt-1"
+                  data-scroll-speed="0"
                 />
               </div>
             </div>

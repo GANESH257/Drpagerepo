@@ -70,20 +70,21 @@ export function SearchAndFilterBar({
   const hasActiveFilters = statusFilter !== 'all' || typeFilter !== 'all' || searchQuery.trim() !== '';
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
+    <div className={`space-y-3 ${className}`} data-scroll-exclude>
+      <div className="flex flex-col sm:flex-row gap-4" data-scroll-exclude>
+        <div className="flex-1 relative" data-scroll-exclude>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search by practice name, doctor name, or email..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
+            data-scroll-speed="0"
           />
         </div>
         {showStatusFilter && (
-          <Select value={statusFilter} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+          <Select value={statusFilter} onValueChange={handleStatusChange} data-scroll-exclude>
+            <SelectTrigger className="w-full sm:w-[180px]" data-scroll-speed="0" data-scroll-exclude>
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -96,8 +97,8 @@ export function SearchAndFilterBar({
           </Select>
         )}
         {showTypeFilter && (
-          <Select value={typeFilter} onValueChange={handleTypeChange}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+          <Select value={typeFilter} onValueChange={handleTypeChange} data-scroll-exclude>
+            <SelectTrigger className="w-full sm:w-[180px]" data-scroll-speed="0" data-scroll-exclude>
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>

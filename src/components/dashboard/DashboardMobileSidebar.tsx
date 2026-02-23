@@ -107,7 +107,7 @@ export function DashboardMobileSidebar({ open, onOpenChange }: DashboardMobileSi
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white">
+      <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white" data-scroll-exclude>
         <SheetHeader className="border-b border-gray-200 p-4">
           <SheetTitle className="text-[#0F5FA8]">Navigation</SheetTitle>
         </SheetHeader>

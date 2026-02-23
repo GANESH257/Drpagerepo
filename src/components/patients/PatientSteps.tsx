@@ -14,27 +14,21 @@ interface PatientStep {
 const patientSteps: PatientStep[] = [
   {
     number: '01',
-    title: 'Search',
-    description: 'Find specialists by specialty and location',
+    title: 'Search Our Network',
+    description: 'Use our powerful search to filter by specialty, insurance, and location.',
     image: '/for_pt.png',
   },
   {
     number: '02',
-    title: 'Compare',
-    description: 'Review profiles, credentials, and reviews',
+    title: 'Compare with Confidence',
+    description: 'Review detailed profiles, including credentials, experience, and services offered.',
     image: '/for_dr.png',
   },
   {
     number: '03',
-    title: 'Onboarding',
-    description: 'Request appointments or contact practices',
+    title: 'Connect Directly',
+    description: 'Contact the practice of your choice to schedule your appointment.',
     image: '/for_dr2.png',
-  },
-  {
-    number: '04',
-    title: 'Care',
-    description: 'Receive personalized treatment',
-    image: '/for_pt2.png',
   },
 ];
 
@@ -76,7 +70,7 @@ export function PatientSteps() {
               <div className="w-12 h-px bg-brand-teal/30" />
             </div>
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-[#1a4b7f] leading-tight max-w-3xl mx-auto">
-              Your Path to Better Health
+              How It Works
             </h2>
             <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
               Simple steps to connect with the right care provider.
@@ -96,15 +90,13 @@ export function PatientSteps() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-8 relative z-10">
               {patientSteps.map((step, index) => (
                 <div
                   key={step.number}
                   className={cn(
                     "flex flex-col items-center group transition-all duration-500",
-                    index === 1 ? "lg:translate-y-16" : "",
-                    index === 2 ? "lg:translate-y-4" : "",
-                    index === 3 ? "lg:translate-y-24" : ""
+                    index === 1 ? "lg:translate-y-16" : ""
                   )}
                 >
                   {/* Step Image Box */}
@@ -133,7 +125,7 @@ export function PatientSteps() {
                     <h4 className="text-xl md:text-2xl font-bold text-[#112437] mb-3 leading-tight group-hover:text-brand-teal transition-colors">
                       {step.title}
                     </h4>
-                    <p className="text-slate-600 text-sm md:text-base leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed">
                       {step.description}
                     </p>
                   </div>

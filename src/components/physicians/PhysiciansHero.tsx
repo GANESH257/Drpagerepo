@@ -80,8 +80,21 @@ export function PhysiciansHero() {
                 : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
             }}
           >
-            Connect with peers. Lead with autonomy
+            Stop Competing. Start Thriving.
           </h1>
+
+          <p
+            className="text-lg md:text-xl lg:text-2xl text-white/90 mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 0.8s ease-out 0.4s, transform 0.8s ease-out 0.4s',
+            }}
+          >
+            The Alliance gives your independent practice the scale and resources of a major health system, without sacrificing your autonomy.
+          </p>
 
           <div
             className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6"

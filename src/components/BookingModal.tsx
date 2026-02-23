@@ -76,17 +76,18 @@ export function BookingModal({
             you to confirm.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+        <form onSubmit={handleSubmit} data-scroll-exclude>
+          <div className="space-y-4 py-4" data-scroll-exclude>
+            <div className="grid grid-cols-2 gap-4" data-scroll-exclude>
+              <div data-scroll-exclude>
                 <Label htmlFor="date">Date</Label>
                 <Select
                   value={selectedDate}
                   onValueChange={setSelectedDate}
                   required
+                  data-scroll-exclude
                 >
-                  <SelectTrigger id="date">
+                  <SelectTrigger id="date" data-scroll-speed="0" data-scroll-exclude>
                     <SelectValue placeholder="Select date" />
                   </SelectTrigger>
                   <SelectContent>
@@ -103,15 +104,16 @@ export function BookingModal({
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div data-scroll-exclude>
                 <Label htmlFor="time">Time</Label>
                 <Select
                   value={selectedTime}
                   onValueChange={setSelectedTime}
                   required
                   disabled={!selectedDate}
+                  data-scroll-exclude
                 >
-                  <SelectTrigger id="time">
+                  <SelectTrigger id="time" data-scroll-speed="0" data-scroll-exclude>
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -125,17 +127,18 @@ export function BookingModal({
               </div>
             </div>
 
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="name">Your Name</Label>
               <Input
                 id="name"
                 value={patientName}
                 onChange={(e) => setPatientName(e.target.value)}
                 required
+                data-scroll-speed="0"
               />
             </div>
 
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -143,10 +146,11 @@ export function BookingModal({
                 value={patientEmail}
                 onChange={(e) => setPatientEmail(e.target.value)}
                 required
+                data-scroll-speed="0"
               />
             </div>
 
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
@@ -154,16 +158,18 @@ export function BookingModal({
                 value={patientPhone}
                 onChange={(e) => setPatientPhone(e.target.value)}
                 required
+                data-scroll-speed="0"
               />
             </div>
 
-            <div>
+            <div data-scroll-exclude>
               <Label htmlFor="reason">Reason for Visit (Optional)</Label>
               <Input
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Brief description"
+                data-scroll-speed="0"
               />
             </div>
           </div>

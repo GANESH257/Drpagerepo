@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { PatientsHero } from '@/components/patients/PatientsHero';
 import { BenefitsJumbledGrid } from '@/components/patients/BenefitsJumbledGrid';
+import { MissionStatementNewHome } from '@/components/newhome/MissionStatementNewHome';
+import { BoardCertifiedBadge } from '@/components/patients/BoardCertifiedBadge';
 import { FindSpecialistBar } from '@/components/patients/FindSpecialistBar';
 import { PatientSteps } from '@/components/patients/PatientSteps';
 import { DepartmentsSection } from '@/components/DepartmentsSection';
@@ -29,6 +31,8 @@ export default function PatientsPage() {
     <>
       <PatientsHero />
       <BenefitsJumbledGrid />
+      <MissionStatementNewHome />
+      <BoardCertifiedBadge />
       <FindSpecialistBar />
       <PatientSteps />
       <DepartmentsSection />

@@ -102,9 +102,9 @@ export function LocationFormDialog({
               : 'Add a new practice location. All fields marked with * are required.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+        <form onSubmit={handleSubmit} data-scroll-exclude>
+          <div className="space-y-4 py-4" data-scroll-exclude>
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="name">
                 Location Name <span className="text-destructive">*</span>
               </Label>
@@ -116,6 +116,7 @@ export function LocationFormDialog({
                 aria-invalid={!!errors.name}
                 aria-describedby={errors.name ? 'name-error' : undefined}
                 className={errors.name ? 'border-destructive' : ''}
+                data-scroll-speed="0"
               />
               {errors.name && (
                 <p id="name-error" className="text-sm text-destructive" role="alert">
@@ -124,7 +125,7 @@ export function LocationFormDialog({
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="address">
                 Street Address <span className="text-destructive">*</span>
               </Label>
@@ -136,6 +137,7 @@ export function LocationFormDialog({
                 aria-invalid={!!errors.address}
                 aria-describedby={errors.address ? 'address-error' : undefined}
                 className={errors.address ? 'border-destructive' : ''}
+                data-scroll-speed="0"
               />
               {errors.address && (
                 <p id="address-error" className="text-sm text-destructive" role="alert">
@@ -187,7 +189,7 @@ export function LocationFormDialog({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="zip">
                 ZIP Code <span className="text-destructive">*</span>
               </Label>
@@ -199,6 +201,7 @@ export function LocationFormDialog({
                 aria-invalid={!!errors.zip}
                 aria-describedby={errors.zip ? 'zip-error' : undefined}
                 className={errors.zip ? 'border-destructive' : ''}
+                data-scroll-speed="0"
               />
               {errors.zip && (
                 <p id="zip-error" className="text-sm text-destructive" role="alert">
@@ -207,7 +210,7 @@ export function LocationFormDialog({
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="phone">
                 Phone Number <span className="text-destructive">*</span>
               </Label>
@@ -219,6 +222,7 @@ export function LocationFormDialog({
                 aria-invalid={!!errors.phone}
                 aria-describedby={errors.phone ? 'phone-error' : undefined}
                 className={errors.phone ? 'border-destructive' : ''}
+                data-scroll-speed="0"
               />
               {errors.phone && (
                 <p id="phone-error" className="text-sm text-destructive" role="alert">
@@ -227,7 +231,7 @@ export function LocationFormDialog({
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="directionsUrl">Directions URL (Optional)</Label>
               <Input
                 id="directionsUrl"
@@ -235,16 +239,18 @@ export function LocationFormDialog({
                 value={formData.directionsUrl || ''}
                 onChange={(e) => setFormData({ ...formData, directionsUrl: e.target.value })}
                 placeholder="https://maps.google.com/..."
+                data-scroll-speed="0"
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="hours">Practice Hours (Optional)</Label>
               <Input
                 id="hours"
                 value={formData.hours || ''}
                 onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                 placeholder="e.g., Mon-Fri: 9:00 AM - 5:00 PM, Sat-Sun: Closed"
+                data-scroll-speed="0"
               />
               <p className="text-xs text-muted-foreground">
                 Office hours for this location. This will be displayed on your profile page.

@@ -285,8 +285,8 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
               Please provide a reason for declining this appointment request (optional).
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="space-y-4 py-4" data-scroll-exclude>
+            <div className="space-y-2" data-scroll-exclude>
               <Label htmlFor="declineNote">Decline Note (Optional)</Label>
               <Textarea
                 id="declineNote"
@@ -294,6 +294,7 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
                 onChange={(e) => setDeclineNote(e.target.value)}
                 placeholder="e.g., Not accepting new patients at this time..."
                 rows={4}
+                data-scroll-speed="0"
               />
             </div>
           </div>

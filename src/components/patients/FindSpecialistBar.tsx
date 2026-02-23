@@ -44,24 +44,59 @@ export function FindSpecialistBar() {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (!sectionRef.current || !searchBarRef.current) return;
+    if (!sectionRef.current) return;
 
-      const sectionRect = sectionRef.current.getBoundingClientRect();
-      const searchBarRect = searchBarRef.current.getBoundingClientRect();
+    const checkSticky = () => {
+      if (!sectionRef.current) return;
+
+      const rect = sectionRef.current.getBoundingClientRect();
+      // Get the top offset of the header (approximately 84px on desktop, 80px on mobile)
+      const headerOffset = window.innerWidth >= 768 ? 84 : 80;
       
-      // When the section's bottom passes the top of the viewport, make search bar sticky
-      if (sectionRect.bottom < 0) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
+      // Make sticky when section top passes the header
+      // The section should become sticky when its top edge is at or above the header
+      setIsSticky(rect.top <= headerOffset);
+    };
+
+    // Use Intersection Observer with proper rootMargin to account for header
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // When section is not intersecting (scrolled past header), make sticky
+          setIsSticky(!entry.isIntersecting);
+        });
+      },
+      {
+        threshold: 0,
+        rootMargin: `-${window.innerWidth >= 768 ? 84 : 80}px 0px 0px 0px`, // Account for header height
+      }
+    );
+
+    observer.observe(sectionRef.current);
+
+    // Use throttled scroll listener for more reliable updates with Locomotive Scroll
+    let ticking = false;
+    const throttledHandleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          checkSticky();
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Check initial state
+    // Check initial state
+    const timer = setTimeout(checkSticky, 100);
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Listen to scroll events (works with both native scroll and Locomotive Scroll)
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', throttledHandleScroll);
+      clearTimeout(timer);
+    };
   }, []);
 
   const animationStyle = (delay: number) => {
@@ -83,7 +118,10 @@ export function FindSpecialistBar() {
       {/* Sticky Search Bar - appears when scrolling past original section (desktop/tablet only) */}
       {isSticky && (
         <div
-          className="hidden md:block fixed left-0 right-0 z-40 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue/90 py-3 md:py-4 shadow-lg transition-all duration-300 top-[5rem] md:top-[5.25rem]"
+          className="hidden md:block fixed left-0 right-0 z-40 bg-gradient-to-br from-brand-dark-blue/95 via-brand-dark-blue-alt/95 to-brand-dark-blue/95 backdrop-blur-xl border-b border-white/10 py-3 md:py-4 shadow-xl transition-all duration-300 top-[5rem] md:top-[5.25rem]"
+          style={{
+            boxShadow: '0 10px 40px -5px rgba(0, 0, 0, 0.3), 0 0 20px rgba(29, 212, 196, 0.1)',
+          }}
         >
           <div className="container mx-auto px-4 md:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">
@@ -99,6 +137,7 @@ export function FindSpecialistBar() {
       <section
         id="find-specialist"
         ref={sectionRef}
+        data-scroll-section
         className="relative w-full py-8 md:py-12 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue/90"
       >
         <div className="container mx-auto px-4 md:px-6 lg:px-8">

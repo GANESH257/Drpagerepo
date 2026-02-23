@@ -108,6 +108,7 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
       style={{
         background: 'linear-gradient(to bottom, white 0%, var(--skin-vibrant-teal) 100%)',
       }}
+      data-scroll-exclude
     >
       <div className="flex h-full flex-col">
         {/* Collapse toggle button */}

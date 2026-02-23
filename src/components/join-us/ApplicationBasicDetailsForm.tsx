@@ -116,9 +116,9 @@ export function ApplicationBasicDetailsForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" data-scroll-exclude>
       {/* Full Name */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="fullName">
           Full Name <span className="text-destructive">*</span>
         </Label>
@@ -133,6 +133,7 @@ export function ApplicationBasicDetailsForm({
           aria-invalid={!!errors.fullName}
           aria-describedby={errors.fullName ? 'fullName-error' : undefined}
           className={errors.fullName ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {errors.fullName && (
           <p id="fullName-error" className="text-sm text-destructive" role="alert">
@@ -142,7 +143,7 @@ export function ApplicationBasicDetailsForm({
       </div>
 
       {/* Credentials */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="credentials">
           Credentials <span className="text-destructive">*</span>
         </Label>
@@ -152,11 +153,14 @@ export function ApplicationBasicDetailsForm({
             setSelectedCredentials(value);
             if (errors.credentials) setErrors({ ...errors, credentials: '' });
           }}
+          data-scroll-exclude
         >
           <SelectTrigger
             id="credentials"
             aria-invalid={!!errors.credentials}
             className={errors.credentials ? 'border-destructive' : ''}
+            data-scroll-speed="0"
+            data-scroll-exclude
           >
             <SelectValue placeholder="Select credentials" />
           </SelectTrigger>
@@ -176,7 +180,7 @@ export function ApplicationBasicDetailsForm({
       </div>
 
       {/* Primary Specialty */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="specialty">
           Primary Specialty <span className="text-destructive">*</span>
         </Label>
@@ -186,11 +190,14 @@ export function ApplicationBasicDetailsForm({
             setSpecialty(value);
             if (errors.specialty) setErrors({ ...errors, specialty: '' });
           }}
+          data-scroll-exclude
         >
           <SelectTrigger
             id="specialty"
             aria-invalid={!!errors.specialty}
             className={errors.specialty ? 'border-destructive' : ''}
+            data-scroll-speed="0"
+            data-scroll-exclude
           >
             <SelectValue placeholder="Select specialty" />
           </SelectTrigger>
@@ -210,7 +217,7 @@ export function ApplicationBasicDetailsForm({
       </div>
 
       {/* Email */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="email">
           Email <span className="text-destructive">*</span>
         </Label>
@@ -226,6 +233,7 @@ export function ApplicationBasicDetailsForm({
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? 'email-error' : undefined}
           className={errors.email ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-destructive" role="alert">
@@ -235,7 +243,7 @@ export function ApplicationBasicDetailsForm({
       </div>
 
       {/* Phone */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="phone">
           Phone <span className="text-destructive">*</span>
         </Label>
@@ -251,6 +259,7 @@ export function ApplicationBasicDetailsForm({
           aria-invalid={!!errors.phone}
           aria-describedby={errors.phone ? 'phone-error' : undefined}
           className={errors.phone ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         {errors.phone && (
           <p id="phone-error" className="text-sm text-destructive" role="alert">
@@ -308,7 +317,7 @@ export function ApplicationBasicDetailsForm({
       </div>
 
       {/* NPI - National Provider Identifier */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="npi">
           NPI (National Provider Identifier) <span className="text-destructive">*</span>
         </Label>
@@ -327,6 +336,7 @@ export function ApplicationBasicDetailsForm({
           aria-invalid={!!errors.npi}
           aria-describedby={errors.npi ? 'npi-error' : undefined}
           className={errors.npi ? 'border-destructive' : ''}
+          data-scroll-speed="0"
         />
         <p className="text-xs text-muted-foreground">
           Your unique 10-digit NPI issued by CMS. Used for identity verification.
@@ -361,7 +371,7 @@ export function ApplicationBasicDetailsForm({
       )}
 
       {/* Message to Admin (Optional) */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="messageToAdmin">Message to Admin (Optional)</Label>
         <Textarea
           id="messageToAdmin"
@@ -370,6 +380,7 @@ export function ApplicationBasicDetailsForm({
           placeholder="Why do you want to join? (Optional)"
           rows={4}
           className="resize-none"
+          data-scroll-speed="0"
         />
         <p className="text-xs text-muted-foreground">
           Tell us about yourself and why you're interested in joining the network.

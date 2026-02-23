@@ -72,26 +72,39 @@ export default function FindPhysicianPage() {
           <button type="button" onClick={load} className="ml-2 underline">Retry</button>
         </div>
       )}
-      <div className="flex flex-wrap gap-2 items-center">
-        <Input
-          placeholder="Search by name or specialty..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
-        <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="max-w-[120px]" />
-        <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="max-w-[80px]" />
-        <Input placeholder="Specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="max-w-[140px]" />
-        <Button onClick={load} variant="outline">
-          <Search className="h-4 w-4 mr-2" />
-          Search
-        </Button>
-        <Link href="/doctor/dashboard/find-physician/contacts">
-          <Button variant="secondary">
-            <BookUser className="h-4 w-4 mr-2" />
-            My Contacts
+      <div className="flex flex-wrap gap-2 items-center" data-scroll-exclude>
+        <div data-scroll-exclude>
+          <Input
+            placeholder="Search by name or specialty..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs"
+            data-scroll-speed="0"
+          />
+        </div>
+        <div data-scroll-exclude>
+          <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="max-w-[120px]" data-scroll-speed="0" />
+        </div>
+        <div data-scroll-exclude>
+          <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="max-w-[80px]" data-scroll-speed="0" />
+        </div>
+        <div data-scroll-exclude>
+          <Input placeholder="Specialty" value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="max-w-[140px]" data-scroll-speed="0" />
+        </div>
+        <div data-scroll-exclude>
+          <Button onClick={load} variant="outline" data-scroll-speed="0">
+            <Search className="h-4 w-4 mr-2" />
+            Search
           </Button>
-        </Link>
+        </div>
+        <div data-scroll-exclude>
+          <Link href="/doctor/dashboard/find-physician/contacts">
+            <Button variant="secondary" data-scroll-speed="0">
+              <BookUser className="h-4 w-4 mr-2" />
+              My Contacts
+            </Button>
+          </Link>
+        </div>
       </div>
       {loading ? (
         <div className="flex items-center justify-center py-12">

@@ -6,6 +6,8 @@ import { Header } from '@/components/Header';
 import { ConditionalFooter } from '@/components/ConditionalFooter';
 import { FloatingCTA } from '@/components/FloatingCTA';
 import { FloatingMessageIcon } from '@/components/FloatingMessageIcon';
+import { HandCursor } from '@/components/HandCursor';
+import { LoadingScreenWrapper } from '@/components/LoadingScreenWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -35,12 +37,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <TopBar />
-        <Header />
-        <main>{children}</main>
-        <ConditionalFooter />
-        <FloatingCTA />
-        <FloatingMessageIcon />
+        <LoadingScreenWrapper>
+          <HandCursor />
+          <TopBar />
+          <Header />
+          <main>{children}</main>
+          <ConditionalFooter />
+          <FloatingCTA />
+          <FloatingMessageIcon />
+        </LoadingScreenWrapper>
       </body>
     </html>
   );

@@ -65,6 +65,7 @@ export function EditableList({
                     onClick={() => handleRemove(index)}
                     className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
                     aria-label={`Remove ${item}`}
+                    data-scroll-speed="0"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -74,24 +75,30 @@ export function EditableList({
           </div>
         )}
         {!disabled && (
-          <div className="flex gap-2">
-            <Input
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAdd}
-              disabled={!inputValue.trim()}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              {addButtonLabel}
-            </Button>
+          <div className="flex gap-2" data-scroll-exclude>
+            <div data-scroll-exclude className="flex-1">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder}
+                className="flex-1"
+                data-scroll-speed="0"
+              />
+            </div>
+            <div data-scroll-exclude>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAdd}
+                disabled={!inputValue.trim()}
+                data-scroll-speed="0"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {addButtonLabel}
+              </Button>
+            </div>
           </div>
         )}
       </div>
