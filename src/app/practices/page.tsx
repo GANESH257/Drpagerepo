@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { Playfair_Display } from 'next/font/google';
 import { PracticeCard } from '@/components/public/practices/PracticeCard';
+import { cn } from '@/lib/utils';
 import { PracticeResultsHeader } from '@/components/public/practices/PracticeResultsHeader';
 import { SidebarFilters, TopSearchBar } from '@/components/PracticeFilters';
 import { GenericCTASection } from '@/components/GenericCTASection';
@@ -18,6 +20,12 @@ const PracticeMap = dynamic(
   () => import('@/components/public/practices/PracticeMap').then((mod) => ({ default: mod.PracticeMap })),
   { ssr: false }
 );
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 /**
  * Derive specialties from doctors in a practice
@@ -224,19 +232,32 @@ function PracticesPageContent() {
     <div ref={sectionRef} className="min-h-screen bg-white">
       <div className="container mx-auto px-4 pt-32 pb-16">
         {/* Top Search Bar */}
-        <div
-          className="relative z-10"
-          style={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(-20px)',
-            transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.6s ease-out 0.1s, transform 0.6s ease-out 0.1s',
-          }}
-        >
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue tracking-tight">
-              Find a Practice
+        <div className="relative z-10">
+          <div
+            className="text-center mb-8 md:mb-10"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              Practices
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              Find a{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">
+                Practice
+              </span>
             </h1>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
               Discover independent medical practices and clinics with top-rated physicians in your area.
             </p>
           </div>

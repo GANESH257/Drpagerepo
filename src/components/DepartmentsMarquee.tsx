@@ -113,16 +113,17 @@ export function DepartmentsMarquee() {
           <div
             className={`flex gap-8 md:gap-12 items-center w-max ${prefersReducedMotion ? '' : 'animate-marquee'}`}
           >
-            {/* First set of department icons */}
+            {/* First set of department icons – standard card icon style */}
             {departmentItems.map((dept, index) => (
               <Link
                 key={`dept-1-${index}`}
                 href={`/practices?specialty=${dept.slug}`}
-                className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-300 hover:scale-110"
+                className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-500 ease-out hover:scale-110 data-scroll-exclude"
                 aria-label={`Browse ${dept.name} specialists`}
               >
-                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center bg-white rounded-full shadow-md group-hover:shadow-lg transition-all duration-300 mb-2">
-                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" aria-label={`${dept.name} icon`} />
+                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
+                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 relative z-10" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}
@@ -135,11 +136,12 @@ export function DepartmentsMarquee() {
               <Link
                 key={`dept-2-${index}`}
                 href={`/practices?specialty=${dept.slug}`}
-                className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-300 hover:scale-110"
+                className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-500 ease-out hover:scale-110 data-scroll-exclude"
                 aria-label={`Browse ${dept.name} specialists`}
               >
-                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center bg-white rounded-full shadow-md group-hover:shadow-lg transition-all duration-300 mb-2">
-                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-brand-teal" aria-label={`${dept.name} icon`} />
+                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
+                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 relative z-10" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}

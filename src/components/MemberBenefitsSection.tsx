@@ -2,11 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { Playfair_Display } from 'next/font/google';
 import { memberBenefits } from '@/data/memberBenefits';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import * as LucideIcons from 'lucide-react';
 import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function MemberBenefitsSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -56,16 +64,36 @@ export function MemberBenefitsSection() {
     <section
       ref={sectionRef}
       id="member-benefits"
-      className="py-16 md:py-24 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/90 to-brand-teal/20 relative overflow-hidden"
+      className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]"
     >
-      <div className="container mx-auto px-4 md:px-6">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-teal tracking-tight">Member Benefits</h2>
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed font-medium">
-Join the Alliance network to access resources, referrals, visibility, and community. Connect with independent physicians and grow your practice.
-          </p>
-        </div>
+      <div className="container mx-auto px-4 md:px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Header – same style as JoinSteps (Mission-style, light background) */}
+          <div
+            className="text-center mb-8 md:mb-10"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              Benefits
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              Member <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">Benefits</span>
+            </h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Join the Alliance network to access resources, referrals, visibility, and community. Connect with independent physicians and grow your practice.
+            </p>
+          </div>
 
         {/* Slider */}
         <div className="flex flex-col items-center justify-center">
@@ -77,20 +105,39 @@ Join the Alliance network to access resources, referrals, visibility, and commun
                 return (
                   <div
                     key={benefit.id}
-                    className={
-                      `bg-card rounded-2xl border border-brand-teal/30 shadow-[0_8px_32px_0_rgba(46,196,182,0.12),0_1.5px_6px_0_rgba(26,75,127,0.10)] p-6 flex flex-col gap-2 transition-all duration-700 animate-in fade-in slide-in-up h-full cursor-pointer group hover:scale-[1.04] hover:shadow-[0_16px_48px_0_rgba(46,196,182,0.22),0_3px_12px_0_rgba(26,75,127,0.18)] hover:border-brand-teal hover:bg-brand-teal/5`
-                    }
                     style={{
                       opacity: isVisible ? 1 : 0,
                       transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
                       transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     }}
+                    className="h-full"
                   >
-                    <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-brand-teal/10 mb-2 group-hover:bg-brand-teal/20 transition-all duration-300">
-                      <IconComponent className="h-8 w-8 text-brand-dark-blue group-hover:text-brand-teal transition-all duration-300" aria-hidden="true" />
+                    <div
+                      className="group relative overflow-hidden h-full cursor-pointer rounded-2xl p-6 flex flex-col gap-2 transition-all duration-500 ease-out data-scroll-exclude bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02] hover:bg-white/75"
+                    >
+                      {/* Standard card layers (same as Contact/Benefits) */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-brand-teal/10 pointer-events-none group-hover:opacity-80 transition-opacity duration-500 z-0" aria-hidden />
+                      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/5 via-transparent to-brand-teal/5 pointer-events-none z-0" aria-hidden />
+                      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/15 via-brand-teal/10 to-brand-dark-blue/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" aria-hidden />
+                      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden>
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/10 via-brand-teal/5 to-transparent animate-gradient-shift" />
+                        <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-brand-teal/5 to-brand-dark-blue/10 animate-gradient-shift-reverse" />
+                      </div>
+                      <div className="absolute inset-0 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity duration-500 z-0" aria-hidden>
+                        <div className="absolute inset-0 floating" style={{ backgroundImage: 'radial-gradient(circle, rgba(15, 95, 168, 0.15) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                      </div>
+                      <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-teal/15 group-hover:bg-brand-teal/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
+                      <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-dark-blue/15 group-hover:bg-brand-dark-blue/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
+
+                      <div className="relative z-10 flex flex-col items-center text-center gap-2">
+                        <div className={cn('w-24 h-24 rounded-3xl flex items-center justify-center mb-2 shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal', isVisible && !prefersReducedMotion && 'pulsate-bck-normal')}>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
+                          <IconComponent className="h-12 w-12 relative z-10" aria-hidden="true" />
+                        </div>
+                        <h3 className="text-lg md:text-xl font-semibold text-brand-dark-blue mb-1 transition-colors duration-300">{benefit.title}</h3>
+                        <p className="text-sm md:text-base text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors duration-300">{benefit.description}</p>
+                      </div>
                     </div>
-                    <h3 className="text-lg md:text-xl font-semibold text-brand-teal mb-1 group-hover:text-white transition-all duration-300">{benefit.title}</h3>
-                    <p className="text-sm md:text-base text-brand-dark-blue-alt/80 leading-relaxed group-hover:text-white transition-all duration-300">{benefit.description}</p>
                   </div>
                 );
               })}
@@ -127,8 +174,8 @@ Join the Alliance network to access resources, referrals, visibility, and commun
           </div>
         </div>
 
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
           <Button
             asChild
             size="lg"
@@ -148,6 +195,7 @@ Join the Alliance network to access resources, referrals, visibility, and commun
           >
             <Link href="/membership">Learn More</Link>
           </Button>
+          </div>
         </div>
       </div>
     </section>

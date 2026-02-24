@@ -180,36 +180,83 @@ export function ImpactStats() {
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {impactStats.map((stat, index) => {
               const IconComponent = getIcon(stat.icon);
-              const cardDelay = prefersReducedMotion ? 0 : index * 100;
+              const cardDelay = prefersReducedMotion ? 0 : index * 80;
 
               return (
                 <div
                   key={stat.id}
-                  className="flex flex-col items-center text-center"
-                  style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)'
-                      : 'translateY(30px) scale(0.95)',
-                    transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
-                  }}
+                  style={
+                    prefersReducedMotion
+                      ? {
+                          opacity: isVisible ? 1 : 0,
+                          transition: `opacity 0.3s ease ${cardDelay}ms`,
+                        }
+                      : {
+                          opacity: 0,
+                          animation: isVisible
+                            ? `slideInUpBounce 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay}ms forwards`
+                            : 'none',
+                        }
+                  }
+                  className="h-full"
                 >
-                  <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white/20 text-white">
-                    <IconComponent className="h-8 w-8" aria-hidden="true" />
-                  </div>
-                  <div className="text-3xl md:text-4xl font-bold text-white mb-2">
-                    {animatedStats[stat.id] !== undefined 
-                      ? formatStatValue(stat, animatedStats[stat.id])
-                      : stat.value
-                    }
-                  </div>
-                  <div className="text-sm md:text-base text-white/90 font-medium">
-                    {stat.label}
+                  <div
+                    className={cn(
+                      'group flex flex-col items-center text-center rounded-2xl px-6 py-8 md:px-8 md:py-10 relative overflow-hidden h-full transition-all duration-500 ease-out data-scroll-exclude',
+                      'bg-white/10 backdrop-blur-xl border border-white/20 -translate-y-3 shadow-2xl shadow-black/20',
+                      'hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.4),0_0_0_1px_rgba(45,212,191,0.3)] hover:border-brand-teal/60 hover:scale-[1.02] hover:bg-white/20'
+                    )}
+                  >
+                    {/* Standard card layers (same as Contact/Benefits) – adapted for dark section */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-brand-teal/10 pointer-events-none group-hover:opacity-80 transition-opacity duration-500" aria-hidden />
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/5 via-transparent to-brand-dark-blue/5 pointer-events-none" aria-hidden />
+                    <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/15 via-white/5 to-brand-teal/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" aria-hidden />
+                    <div className="absolute inset-0 pointer-events-none" aria-hidden>
+                      <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/10 via-white/5 to-transparent animate-gradient-shift" />
+                      <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-brand-teal/5 to-white/10 animate-gradient-shift-reverse" />
+                    </div>
+                    <div className="absolute inset-0 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity duration-500" aria-hidden>
+                      <div className="absolute inset-0 floating" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                    </div>
+                    <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-teal/15 group-hover:bg-brand-teal/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500" aria-hidden />
+                    <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-teal/10 group-hover:bg-brand-teal/25 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500" aria-hidden />
+
+                    <div
+                      className="relative z-10 flex flex-col items-center text-center w-full"
+                      style={
+                        prefersReducedMotion
+                          ? undefined
+                          : {
+                              opacity: isVisible ? 1 : 0,
+                              transform: isVisible ? 'translateY(0)' : 'translateY(16px)',
+                              transition: `opacity 0.5s ease ${cardDelay + 180}ms, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 180}ms`,
+                            }
+                      }
+                    >
+                      {/* Standard icon – same as Contact: large gradient box, pulsate, hover scale/glow */}
+                      <div
+                        className={cn(
+                          'w-24 h-24 rounded-3xl flex items-center justify-center mb-6 shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.45)]',
+                          'bg-gradient-to-br from-brand-dark-blue to-brand-teal',
+                          isVisible && !prefersReducedMotion && 'pulsate-bck-normal'
+                        )}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
+                        <IconComponent className="h-12 w-12 relative z-10" aria-hidden="true" />
+                      </div>
+                      <div className="text-3xl md:text-4xl lg:text-[2.5rem] font-bold text-white mb-2 tabular-nums tracking-tight transition-colors duration-300 group-hover:text-white">
+                        {animatedStats[stat.id] !== undefined
+                          ? formatStatValue(stat, animatedStats[stat.id])
+                          : stat.value
+                        }
+                      </div>
+                      <div className="text-sm md:text-base text-white/90 font-medium leading-snug transition-colors duration-300 group-hover:text-white">
+                        {stat.label}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );

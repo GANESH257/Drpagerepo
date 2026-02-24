@@ -5,16 +5,17 @@ import Image from 'next/image';
 
 interface LoadingScreenProps {
   onComplete?: () => void;
+  onExitStart?: () => void; // Called when exit animation starts (for crossfade)
   minDisplayTime?: number; // Minimum time to show loader (ms)
 }
 
-export function LoadingScreen({ onComplete, minDisplayTime = 2000 }: LoadingScreenProps) {
+export function LoadingScreen({ onComplete, onExitStart, minDisplayTime = 2000 }: LoadingScreenProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [isExiting, setIsExiting] = useState(false);
   const [logoScale, setLogoScale] = useState(0);
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; delay: number; rotation: number }>>([]);
   const [cubes, setCubes] = useState<Array<{ id: number; x: number; y: number; rotationX: number; rotationY: number; rotationZ: number }>>([]);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const startTimeRef = useRef<number>(Date.now());
 
   // Initialize particles and 3D cubes
   useEffect(() => {
@@ -41,36 +42,26 @@ export function LoadingScreen({ onComplete, minDisplayTime = 2000 }: LoadingScre
     setCubes(newCubes);
   }, []);
 
-  // Animate logo entrance
+  // Staggered entrance: screen fades in, then logo/circle pop in
   useEffect(() => {
     if (!isVisible) return;
-    
-    const timer = setTimeout(() => {
-      setLogoScale(1);
-    }, 300);
-
-    return () => clearTimeout(timer);
+    const t1 = setTimeout(() => setLogoScale(1), 180);
+    return () => clearTimeout(t1);
   }, [isVisible]);
 
-  // Auto-complete after minimum display time (no progress bar)
+  // Auto-complete after minimum display time; run exit animation then callback
   useEffect(() => {
     if (!isVisible) return;
-
     const timer = setTimeout(() => {
-      if (loaderRef.current) {
-        // Start exit animation
-        loaderRef.current.style.opacity = '0';
-        loaderRef.current.style.transform = 'scale(1.1)';
-        
-        setTimeout(() => {
-          setIsVisible(false);
-          if (onComplete) onComplete();
-        }, 800);
-      }
+      onExitStart?.(); // Start content fade-in now for crossfade (no bright white)
+      setIsExiting(true);
+      setTimeout(() => {
+        setIsVisible(false);
+        onComplete?.();
+      }, 380);
     }, minDisplayTime);
-
     return () => clearTimeout(timer);
-  }, [isVisible, minDisplayTime, onComplete]);
+  }, [isVisible, minDisplayTime, onComplete, onExitStart]);
 
 
   if (!isVisible) return null;
@@ -78,10 +69,7 @@ export function LoadingScreen({ onComplete, minDisplayTime = 2000 }: LoadingScre
   return (
     <div
       ref={loaderRef}
-      className="loading-screen fixed inset-0 z-[1000000] overflow-hidden"
-      style={{
-        transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
-      }}
+      className={`loading-screen fixed inset-0 z-[1000000] overflow-hidden ${isExiting ? 'exiting' : ''}`}
     >
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue">
@@ -188,101 +176,93 @@ export function LoadingScreen({ onComplete, minDisplayTime = 2000 }: LoadingScre
         <div className="loading-orb orb-3 absolute"></div>
       </div>
 
-      {/* Main content - Centered */}
-      <div className="relative z-10 h-full flex flex-col items-center" style={{ justifyContent: 'flex-start', paddingTop: '15vh' }}>
-        {/* Circular background container */}
+      {/* Main content - Centered (wrapped for exit animation) */}
+      <div className="loading-screen-content relative z-10 h-full flex flex-col items-center" style={{ justifyContent: 'flex-start', paddingTop: '15vh' }}>
+        {/* Circular background container - spring-like entrance */}
         <div
           className="relative flex flex-col items-center justify-center"
           style={{
-            width: '600px',
-            height: '600px',
+            width: 'min(720px, 90vw)',
+            height: 'min(720px, 90vw)',
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(15, 95, 168, 0.3) 0%, rgba(15, 95, 168, 0.1) 50%, transparent 100%)',
             border: '2px solid rgba(29, 212, 196, 0.2)',
             boxShadow: '0 0 100px rgba(29, 212, 196, 0.3), inset 0 0 100px rgba(29, 212, 196, 0.1)',
             transform: `scale(${logoScale})`,
-            transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transition: 'transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease-out',
             opacity: logoScale,
           }}
         >
-          {/* Logo container with 3D animation */}
+          {/* Logo container - perpendicular to view (no 3D tilt) */}
           <div
             className="logo-container relative flex items-center justify-center"
             style={{
-              transform: `perspective(1000px) rotateY(${logoScale * 10}deg)`,
-              transformStyle: 'preserve-3d',
+              transform: 'none',
+              transformStyle: 'flat',
             }}
           >
-            <div className="relative flex items-center justify-center" style={{ transformStyle: 'preserve-3d' }}>
-              {/* 3D Glow effect behind logo */}
-              <div className="absolute inset-0 blur-3xl bg-brand-teal/30 animate-pulse-glow" style={{
-                transform: 'translateZ(-50px)',
-              }}></div>
+            <div className="relative flex items-center justify-center">
+              {/* Glow effect behind logo */}
+              <div className="absolute inset-0 blur-3xl bg-brand-teal/30 animate-pulse-glow" />
               
-              {/* Logo with 3D effect - Centered */}
-              <div className="relative flex items-center justify-center" style={{
-                transform: 'perspective(1000px) translateZ(30px)',
-                animation: 'logo3DFloat 4s ease-in-out infinite',
-              }}>
-                <Image
-                  src="/logodrpnew.png"
-                  alt="Alliance of Independent Physicians"
-                  width={400}
-                  height={400}
-                  className="w-auto object-contain drop-shadow-2xl"
-                  style={{ 
-                    height: '350px',
-                    filter: 'drop-shadow(0 0 30px rgba(29, 212, 196, 0.5)) drop-shadow(0 0 60px rgba(29, 212, 196, 0.3))',
-                  }}
-                  priority
-                />
+              {/* Logo - facing viewer, subtle scale/glow pulse only */}
+              <div className="relative flex items-center justify-center logo-float-perpendicular">
+                <div className="relative inline-flex items-center justify-center">
+                  <Image
+                    src="/logodrpnew.png"
+                    alt="Alliance of Independent Physicians"
+                    width={400}
+                    height={400}
+                    className="w-auto object-contain drop-shadow-2xl"
+                    style={{ 
+                      height: '350px',
+                      filter: 'drop-shadow(0 0 30px rgba(29, 212, 196, 0.5)) drop-shadow(0 0 60px rgba(29, 212, 196, 0.3))',
+                    }}
+                    priority
+                  />
+                  {/* Spark cluster to cover broken spot from AI background removal */}
+                  <div className="logo-spark-fill absolute pointer-events-none" aria-hidden />
+                  <div className="logo-spark-fill logo-spark-outer absolute pointer-events-none" aria-hidden />
+                  <div className="logo-spark-fill logo-spark-dot absolute pointer-events-none" aria-hidden />
+                  <div className="logo-spark-fill logo-spark-accent absolute pointer-events-none" aria-hidden />
+                </div>
               </div>
 
-              {/* 3D Rotating rings around logo */}
-              <div className="absolute inset-0 -m-8 border-2 border-brand-teal/30 rounded-full animate-spin-slow" style={{
-                transform: 'perspective(1000px) rotateX(60deg) translateZ(20px)',
-              }}></div>
-              <div className="absolute inset-0 -m-12 border border-brand-teal/20 rounded-full animate-spin-reverse" style={{
-                transform: 'perspective(1000px) rotateY(60deg) translateZ(10px)',
-              }}></div>
-              {/* 3D Pulsing outer ring */}
-              <div className="absolute inset-0 -m-16 border border-brand-teal/10 rounded-full animate-pulse-ring" style={{
-                transform: 'perspective(1000px) rotateZ(45deg) translateZ(-10px)',
-              }}></div>
+              {/* Rings around logo - expand in then spin */}
+              <div className="absolute inset-0 -m-8 border-2 border-brand-teal/30 rounded-full animate-spin-slow loading-ring-reveal loading-ring-reveal-delay-1" />
+              <div className="absolute inset-0 -m-12 border border-brand-teal/20 rounded-full animate-spin-reverse loading-ring-reveal loading-ring-reveal-delay-2" />
+              <div className="absolute inset-0 -m-16 border border-brand-teal/10 rounded-full animate-pulse-ring loading-ring-reveal loading-ring-reveal-delay-3" />
             </div>
           </div>
 
-          {/* Loading text with 3D effect - Inside circle, below logo */}
+          {/* Loading text - perpendicular, staggered fade-up; wider max width */}
           <div
-            className="text-center mt-8"
+            className={`text-center -mt-2 w-full max-w-4xl mx-auto px-4 ${logoScale >= 1 ? 'loading-text-reveal' : ''}`}
             style={{
-              opacity: logoScale,
-              transition: 'opacity 0.6s ease-out 0.4s',
-              transform: `perspective(1000px) rotateX(${logoScale * 5}deg)`,
+              opacity: logoScale < 1 ? logoScale : undefined,
+              transition: logoScale < 1 ? 'opacity 0.5s ease-out' : undefined,
+              transform: logoScale < 1 ? 'none' : undefined,
             }}
           >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 animate-text-shimmer" style={{
+            <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-2 animate-text-shimmer" style={{
               textShadow: '0 0 30px rgba(29, 212, 196, 0.5), 0 0 60px rgba(29, 212, 196, 0.3)',
-              transform: 'perspective(1000px) translateZ(20px)',
             }}>
               Alliance of Independent Physicians
             </h2>
-            <p className="text-brand-teal/80 text-sm md:text-base font-medium" style={{
-              transform: 'perspective(1000px) translateZ(10px)',
-            }}>
+            <p className="text-brand-teal/80 text-lg md:text-xl lg:text-2xl font-medium">
               Connecting physicians. Empowering care.
             </p>
           </div>
         </div>
 
-        {/* 3D Loading animation - Enhanced rotating rings */}
+        {/* 3D Loading animation - rings scale in then rotate (moved up) */}
         <div
-          className="relative"
+          className={`relative loading-rings-entrance -mt-10 md:-mt-14 ${logoScale >= 1 ? '' : 'opacity-0'}`}
           style={{
-            opacity: logoScale,
-            transition: 'opacity 0.6s ease-out 0.6s',
-            transform: 'perspective(2000px)',
+            opacity: logoScale < 1 ? 0 : undefined,
+            transition: logoScale < 1 ? 'opacity 0.3s ease-out' : undefined,
             transformStyle: 'preserve-3d',
+            perspective: '2000px',
           }}
         >
           <div className="loading-3d-rings relative w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80">

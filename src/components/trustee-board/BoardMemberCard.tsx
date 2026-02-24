@@ -55,24 +55,28 @@ export function BoardMemberCard({ member }: BoardMemberCardProps) {
             {member.bio}
           </p>
 
-          {/* Optional Fields */}
+          {/* Optional Fields – specialty in a box (distinct from role badge) */}
           <div className="space-y-2 text-xs text-gray-600 text-center">
             {member.specialty && (
-              <p className="font-medium">{member.specialty}</p>
+              <div className="flex justify-center">
+                <span className="inline-flex items-center rounded-md border border-brand-dark-blue/25 bg-brand-dark-blue/5 px-3 py-1.5 text-xs font-semibold text-brand-dark-blue">
+                  {member.specialty}
+                </span>
+              </div>
             )}
             {member.location && <p>{member.location}</p>}
             {member.term && <p className="text-gray-500">Term: {member.term}</p>}
           </div>
 
-          {/* Email Link (if available) */}
+          {/* Email Link (if available) – centered */}
           {member.email && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
               <a
                 href={`mailto:${member.email}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center gap-2 text-sm text-brand-teal hover:text-brand-dark-blue transition-colors"
+                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-brand-teal hover:text-brand-dark-blue transition-colors"
               >
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 shrink-0" />
                 <span>Contact</span>
               </a>
             </div>

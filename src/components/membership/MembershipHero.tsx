@@ -2,9 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { Playfair_Display } from 'next/font/google';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Users, Eye, Users2, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function MembershipHero() {
   const [isVisible, setIsVisible] = useState(false);
@@ -75,32 +83,40 @@ export function MembershipHero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 h-full flex items-center py-8 md:py-0">
-        <div className="max-w-3xl">
-          <h1 
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-brand-dark-blue"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.8s ease-out 0.4s, transform 1.8s ease-out 0.4s',
-            }}
-          >
-            Membership
-          </h1>
-          <p 
-            className="text-xl md:text-2xl mb-8 text-gray-700 leading-relaxed"
+      <div className="relative z-10 container mx-auto px-4 h-full flex items-center justify-center py-8 md:py-0">
+        <div className="max-w-3xl w-full text-center">
+          {/* Header – same text design as ContactUsPage */}
+          <div
+            className="text-center mb-8 md:mb-10"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            Join the Alliance network to access resources, referrals, visibility, and community. Connect with independent physicians and grow your practice.
-          </p>
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              Membership
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">
+                Membership
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Join the Alliance network to access resources, referrals, visibility, and community. Connect with independent physicians and grow your practice.
+            </p>
+          </div>
 
           {/* Primary CTAs */}
           <div 
-            className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8"
+            className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8 justify-center"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
@@ -137,7 +153,7 @@ export function MembershipHero() {
           </div>
 
           {/* Trust Strip */}
-          <div className="flex flex-wrap gap-6 md:gap-8 mt-8">
+          <div className="flex flex-wrap gap-6 md:gap-8 mt-8 justify-center">
             {trustItems.map((item, index) => {
               const Icon = item.icon;
               const delay = prefersReducedMotion ? 0 : index * 100;

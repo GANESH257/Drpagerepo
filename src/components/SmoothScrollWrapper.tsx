@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import LocomotiveScroll from 'locomotive-scroll';
 import 'locomotive-scroll/dist/locomotive-scroll.css';
+import { initGSAPScrollTrigger } from '@/lib/animations/gsapLocomotive';
+import { init3DScrollReveals } from '@/lib/animations/scrollReveal3D';
 
 interface SmoothScrollWrapperProps {
   children: React.ReactNode;
@@ -33,6 +35,7 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
     let handleResize: (() => void) | null = null;
     let handleWheel: ((e: WheelEvent) => void) | null = null;
     let handleTouchMove: ((e: TouchEvent) => void) | null = null;
+    let revealTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Prevent Locomotive Scroll from capturing scroll events on excluded elements
     handleWheel = (e: WheelEvent) => {
@@ -114,6 +117,18 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
 
       locomotiveScrollRef.current = locomotiveScroll;
 
+      // Connect GSAP ScrollTrigger to Locomotive so 3D scroll animations work
+      const el = containerRef.current as HTMLElement;
+      const teardown = initGSAPScrollTrigger(el, locomotiveScroll as any);
+      if (typeof teardown === 'function') {
+        (locomotiveScroll as any)._gsapTeardown = teardown;
+      }
+      // 3D scroll reveals for [data-3d-reveal] (run after a tick so DOM is ready)
+      revealTimeout = setTimeout(() => {
+        const revTeardown = init3DScrollReveals(el);
+        if (typeof revTeardown === 'function') (locomotiveScroll as any)._revealTeardown = revTeardown;
+      }, 300);
+
       // Add event listeners to prevent Locomotive Scroll from capturing scroll on excluded elements
       // Use capture phase to intercept before Locomotive Scroll processes the event
       if (handleWheel) {
@@ -138,6 +153,7 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
 
     return () => {
       clearTimeout(timer);
+      if (revealTimeout) clearTimeout(revealTimeout);
       if (handleResize) {
         window.removeEventListener('resize', handleResize);
       }
@@ -148,6 +164,10 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
       if (handleTouchMove) {
         document.removeEventListener('touchmove', handleTouchMove, { capture: true } as any);
       }
+      const revTeardown = (locomotiveScroll as any)?._revealTeardown;
+      if (typeof revTeardown === 'function') revTeardown();
+      const gsapTeardown = (locomotiveScroll as any)?._gsapTeardown;
+      if (typeof gsapTeardown === 'function') gsapTeardown();
       if (locomotiveScroll) {
         locomotiveScroll.destroy();
       }

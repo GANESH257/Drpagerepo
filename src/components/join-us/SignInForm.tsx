@@ -141,7 +141,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
         {/* Password Field */}
         <div className="space-y-2" data-scroll-exclude>
           <Label htmlFor="signin-password">Password</Label>
-          <div className="relative" data-scroll-exclude>
+          <div className="relative flex items-center" data-scroll-exclude>
             <Input
               id="signin-password"
               type={showPassword ? 'text' : 'password'}
@@ -160,7 +160,7 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-0 top-0 bottom-0 flex items-center justify-end pr-2 w-10 text-muted-foreground hover:text-foreground"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? (

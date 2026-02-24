@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { Playfair_Display } from 'next/font/google';
 
 const playfairDisplay = Playfair_Display({ 
@@ -63,53 +62,31 @@ export function MissionStatementNewHome() {
 
   return (
     <section ref={sectionRef} className="pt-32 md:pt-40 pb-12 md:pb-16 relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/network-bg2.jpeg"
-          alt="Network Background"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-      
-      {/* Dark Blue Overlay - Reduced opacity for more image visibility */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/60 via-brand-dark-blue/55 to-brand-dark-blue/65 z-10" />
+      {/* Background: white */}
+      <div className="absolute inset-0 z-0 bg-white" aria-hidden />
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-7xl mx-auto">
           {/* Title - Full Width */}
           <div className="text-center mb-8 md:mb-10" style={animationStyle(0)}>
-            {/* Logo */}
-            <div className="mb-6 flex justify-center">
-              <Image
-                src="/logodrpnew.png"
-                alt="Alliance of Independent Physicians"
-                width={180}
-                height={180}
-                className="h-16 md:h-20 lg:h-24 w-auto object-contain brightness-0 invert"
-                priority
-              />
-            </div>
-            <span className={`inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 backdrop-blur-sm ${playfairDisplay.className}`}>
+            <span className={`inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20 ${playfairDisplay.className}`}>
               Our Mission
             </span>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
-              Driving the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-300">Future of Medicine</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              Driving the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">Future of Medicine</span>
             </h2>
           </div>
 
           {/* Mission Statement */}
           <div className="max-w-5xl mx-auto">
             <div
-              className="p-8 md:p-10 lg:p-12 bg-black/50 backdrop-blur-md rounded-2xl border border-white/30 shadow-[0_25px_50px_rgba(0,0,0,0.4)]"
+              className="p-8 md:p-10 lg:p-12 bg-gray-50 rounded-2xl border border-gray-200 shadow-lg shadow-gray-200/50"
               style={animationStyle(200)}
             >
-              <p className="text-lg md:text-xl lg:text-2xl text-white font-normal leading-relaxed text-center tracking-normal relative">
-                <span className="absolute -left-4 md:-left-6 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/40 font-serif leading-none" aria-hidden="true">&ldquo;</span>
+              <p className="text-lg md:text-xl lg:text-2xl text-gray-800 font-normal leading-relaxed text-center tracking-normal relative">
+                <span className="absolute -left-4 md:-left-6 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&ldquo;</span>
                 <span className="relative z-10">Our mission is to empower the community by connecting patients with Independent Physicians who provide <span className="text-brand-teal font-medium">accessible, affordable, and high-quality healthcare</span> through patient empowerment and education.</span>
-                <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/40 font-serif leading-none" aria-hidden="true">&rdquo;</span>
+                <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&rdquo;</span>
               </p>
             </div>
           </div>

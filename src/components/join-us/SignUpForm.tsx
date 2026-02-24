@@ -158,7 +158,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       {/* Password Field */}
       <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="signup-password">Password</Label>
-        <div className="relative" data-scroll-exclude>
+        <div className="relative flex items-center" data-scroll-exclude>
           <Input
             id="signup-password"
             type={showPassword ? 'text' : 'password'}
@@ -180,7 +180,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-0 top-0 bottom-0 flex items-center justify-end pr-2 w-10 text-muted-foreground hover:text-foreground"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
@@ -210,7 +210,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       {/* Confirm Password Field */}
       <div className="space-y-2" data-scroll-exclude>
         <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-        <div className="relative" data-scroll-exclude>
+        <div className="relative flex items-center" data-scroll-exclude>
           <Input
             id="signup-confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
@@ -233,7 +233,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-0 top-0 bottom-0 flex items-center justify-end pr-2 w-10 text-muted-foreground hover:text-foreground"
             aria-label={
               showConfirmPassword ? 'Hide password' : 'Show password'
             }

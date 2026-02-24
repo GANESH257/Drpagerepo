@@ -1,10 +1,18 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { Playfair_Display } from 'next/font/google';
 import { membershipPlans } from '@/data/membershipPlans';
 import { PlanCard } from './PlanCard';
 import { Switch } from '@/components/ui/switch';
 import { PlanComparisonTable } from './PlanComparisonTable';
+import { cn } from '@/lib/utils';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function PlansSection() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
@@ -52,26 +60,35 @@ export function PlansSection() {
     <section ref={sectionRef} id="plans" className="py-16 md:py-24 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center mb-12">
-          <h2 
-            className="text-3xl md:text-4xl lg:text-3xl font-bold text-brand-dark-blue mb-4"
+          {/* Header – same text design as Mission-style */}
+          <div
+            className="mb-8 md:mb-10"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s ease-out 0.4s, transform 1.5s ease-out 0.4s',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            Membership Plans
-          </h2>
-          <p 
-            className="text-lg text-gray-700 mb-8"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s ease-out 0.8s, transform 1.5s ease-out 0.8s',
-            }}
-          >
-            Choose the plan that best fits your practice needs. All plans include core features with additional benefits at higher tiers.
-          </p>
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              Plans
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              Membership{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">
+                Plans
+              </span>
+            </h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              Choose the plan that best fits your practice needs. All plans include core features with additional benefits at higher tiers.
+            </p>
+          </div>
 
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-8">

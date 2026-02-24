@@ -110,7 +110,7 @@ export function DoctorBenefitsPanel() {
         style={{
           opacity: isVisible ? 1 : 0,
           transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.3s, transform 0.7s ease-out 0.3s',
+          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         Join the Alliance of Independent Physicians
@@ -122,7 +122,7 @@ export function DoctorBenefitsPanel() {
         style={{
           opacity: isVisible ? 1 : 0,
           transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.8s ease-out 0.8s, transform 1.8s ease-out 0.8s',
+          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
         }}
       >
         Connect with a trusted network of independent physicians.
@@ -132,7 +132,7 @@ export function DoctorBenefitsPanel() {
       <div className="space-y-3 mb-8">
         {benefits.map((benefit, index) => {
           const Icon = benefit.icon;
-          const delay = prefersReducedMotion ? 0 : index * 300;
+          const delay = prefersReducedMotion ? 0 : index * 50;
           return (
             <div 
               key={index} 
@@ -142,7 +142,7 @@ export function DoctorBenefitsPanel() {
                 transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(-30px)',
                 transition: prefersReducedMotion
                   ? `opacity 0.3s ease ${delay}ms`
-                  : `opacity 1.5s ease-out ${800 + delay}ms, transform 1.5s ease-out ${800 + delay}ms`,
+                  : `opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + delay}ms, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${400 + delay}ms`,
               }}
             >
               <div className="flex-shrink-0 mt-1 transition-all duration-300">
@@ -160,7 +160,7 @@ export function DoctorBenefitsPanel() {
         style={{
           opacity: isVisible ? 1 : 0,
           transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
-          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.8s ease-out 1.4s, transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.4s',
+          transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s',
         }}
       >
         <h2 className="text-lg font-semibold text-[#0F5FA8] mb-3">
@@ -169,7 +169,7 @@ export function DoctorBenefitsPanel() {
         <div className="space-y-3">
           {steps.map((step, index) => {
             const Icon = step.icon;
-            const delay = prefersReducedMotion ? 0 : index * 100;
+            const delay = prefersReducedMotion ? 0 : index * 50;
             return (
               <div 
                 key={index} 
@@ -179,7 +179,7 @@ export function DoctorBenefitsPanel() {
                   transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(-20px)',
                   transition: prefersReducedMotion
                     ? `opacity 0.3s ease ${delay}ms`
-                    : `opacity 1.5s ease-out ${1400 + delay}ms, transform 1.5s ease-out ${1400 + delay}ms`,
+                    : `opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${600 + delay}ms, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) ${600 + delay}ms`,
                 }}
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#0F5FA8]/10 flex items-center justify-center transition-all duration-300 hover:bg-[#0F5FA8]/20">

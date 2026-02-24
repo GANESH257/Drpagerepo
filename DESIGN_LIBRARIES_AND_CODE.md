@@ -18,6 +18,7 @@ This document lists **all design-related libraries** and **copy-paste-ready code
 10. [Animated icons & SVG draw](#10-animated-icons--svg-draw)
 11. [CSS Keyframes for Scrolling & Animations](#11-css-keyframes-for-scrolling--animations)
 12. [Other libraries (Swiper, Three, etc.)](#12-other-libraries-swiper-three-etc)
+13. [3D animations (GSAP + Framer Motion)](#13-3d-animations-gsap--framer-motion--implemented)
 
 ---
 
@@ -29,6 +30,7 @@ Install these for the features below:
 {
   "dependencies": {
     "gsap": "^3.12.5",
+    "framer-motion": "^11.x",
     "locomotive-scroll": "^5.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -37,8 +39,9 @@ Install these for the features below:
 }
 ```
 
-- **GSAP** – timeline, tweens, ScrollTrigger (scroll-based animations).
-- **Locomotive Scroll** – smooth scroll (v5 uses Lenis under the hood). No Framer Motion used in this project.
+- **GSAP** – timeline, tweens, ScrollTrigger (scroll-based and 3D scroll reveal). Wired to Locomotive in `src/lib/animations/gsapLocomotive.ts`.
+- **Framer Motion** – component 3D (hero tilt, staggered entrances). Used in hero and anywhere declarative 3D is needed.
+- **Locomotive Scroll** – smooth scroll (v5 uses Lenis under the hood).
 
 ---
 
@@ -1633,6 +1636,110 @@ Used elsewhere in the project (carousels, 3D), not required for the “design re
 | `three`        | 3D scenes          |
 | `@theatre/core`| Animation editing  |
 | `pixi.js`      | 2D canvas / WebGL   |
+
+---
+
+## 13. 3D animations (GSAP + Framer Motion) – **IMPLEMENTED**
+
+**Libraries:** `gsap` (with ScrollTrigger), `framer-motion`.
+
+This project uses **GSAP + Locomotive Scroll** for scroll-driven 3D and **Framer Motion** for component-level 3D (hero tilt, staggered entrances).
+
+### 13.1 GSAP + Locomotive integration
+
+- **Location:** `src/lib/animations/gsapLocomotive.ts`
+- **Setup:** `initGSAPScrollTrigger(scrollContainer, locomotiveInstance)` is called from `SmoothScrollWrapper` after Locomotive is created. ScrollTrigger uses the Lenis scroll position so all scroll-based animations stay in sync with smooth scroll.
+- **Usage:** Use `gsap` and `ScrollTrigger` anywhere; default scroller is already the smooth-scroll container.
+
+### 13.2 3D scroll reveal (data attributes)
+
+- **Location:** `src/lib/animations/scrollReveal3D.ts`
+- **Init:** `init3DScrollReveals(scrollContainer)` runs after GSAP is wired (from SmoothScrollWrapper).
+- **Usage:** Add `data-3d-reveal` to any section or block. Optional attributes:
+  - `data-3d-reveal-delay` – delay in seconds (default `0`)
+  - `data-3d-reveal-duration` – animation duration (default `0.9`)
+  - `data-3d-reveal-y` – starting Y offset in px (default `48`)
+  - `data-3d-reveal-rotate-x` – starting rotateX in deg (default `12`)
+  - `data-3d-reveal-stagger=".child-selector"` – stagger children (e.g. `.card`, `[data-reveal-item]`)
+- **Example:**
+
+```html
+<section data-3d-reveal data-3d-reveal-y="40" data-3d-reveal-rotate-x="8">
+  ...
+</section>
+```
+
+### 13.3 Hero 3D mouse-follow tilt (Framer Motion)
+
+- **Location:** `src/components/newhome/NewHomeHeroDocumented.tsx`
+- **Pattern:** `useMotionValue` + `useSpring` for smooth 3D rotateX/rotateY from mouse position; applied to the video wrapper with `motion.div` and `style={{ rotateX, rotateY }}`. Respects `prefersReducedMotion`.
+- **Reuse:** Wrap any “card” or media block in a ref + mouse handlers and a `motion.div` with `rotateX`/`rotateY` from spring MotionValues.
+
+### 13.4 Staggered 3D entrance (Framer Motion)
+
+- **Pattern:** Parent `motion.div` with `variants` and `staggerChildren`; children with `variants` that set `opacity`, `x`/`y`, `rotateX`/`rotateY`, and optional `filter: 'blur(0px)'` for a premium reveal.
+- **Example:** Hero content blocks in `NewHomeHeroDocumented` use `staggerChildren: 0.12` and per-block `rotateY`/`rotateX` for a 3D slide-in.
+
+### 13.5 NPM (already in package.json)
+
+```json
+"gsap": "^3.x",
+"framer-motion": "^11.x",
+"locomotive-scroll": "^5.0.1"
+```
+
+---
+
+## 14. Awwwards-style design ideas – roadmap
+
+Reference: [Awwwards – Website Awards & Best Web Design Trends](https://www.awwwards.com/). Use as many of these patterns as possible for award-level polish.
+
+### 14.1 Already in this project
+
+| Awwwards trend / element | Where we have it | Doc section |
+|--------------------------|------------------|-------------|
+| **Smooth scrolling** | Locomotive Scroll (desktop) | §2 |
+| **Scroll-triggered animations** | GSAP ScrollTrigger + data-scroll-section | §3 |
+| **3D scroll reveal** | `data-3d-reveal` + stagger | §13.2 |
+| **3D hero / mouse tilt** | Hero video tilt (Framer Motion) | §13.3 |
+| **Staggered entrances** | Hero, Benefits cards (Framer Motion) | §13.4 |
+| **Page transition** | PageTransition (slide + direction) | §4, `PageTransition.tsx` |
+| **Loading screen** | LoadingScreen + exit crossfade | §5 |
+| **Glassmorphism** | TopBar, nav bar, cards (backdrop-blur) | §7 |
+| **Cursor / interaction** | HandCursor, cursor-follow | §6 |
+| **Directional nav** | Route order + slide left/right | `PageTransition.tsx` |
+| **Floating pill nav** | Header (gradient, rounded, shadow) | §14 (design lib) |
+| **Gradients & depth** | Body band, section gradients, blobs | `globals.css`, BenefitsJumbledGrid |
+
+### 14.2 Add next (high impact, low effort)
+
+- **Parallax on scroll:** ScrollTrigger `scrub` on hero or section backgrounds (§8).
+- **Magnetic / hover buttons:** Slight move toward cursor on CTA buttons (Framer Motion or GSAP).
+- **Text reveal (split line / word):** Stagger words or lines on scroll (GSAP SplitText pattern or Framer Motion).
+- **Horizontal scroll section:** One section that scrolls horizontally (GSAP + ScrollTrigger horizontal).
+- **Scroll progress indicator:** Thin bar or line that fills on scroll (ScrollTrigger progress).
+- **Hover scale + shadow on cards:** Already on Benefits; extend to all cards site-wide.
+- **Accent bars / numbers on cards:** Already on Benefits; reuse on other list/card sections.
+
+### 14.3 Add later (more effort)
+
+- **Full-page or section transitions:** Animate out current section, then animate in next (GSAP timeline).
+- **Custom cursor that changes per section:** Different cursor style over hero vs content vs CTAs.
+- **Scroll-linked color/theme:** Change nav or background tint based on scroll position.
+- **3D cards (tilt on hover):** Reuse hero tilt pattern on feature cards.
+- **Noise/grain overlay:** Subtle texture on hero or full page for depth.
+- **Bold typography scale:** Larger display headlines, variable font or distinct type for headings.
+
+### 14.4 Where to apply (by page/section)
+
+- **Hero:** 3D tilt ✅, parallax, text reveal, scroll cue (arrow or “scroll”).
+- **Nav / TopBar:** Glass ✅, maybe hide on scroll down / show on scroll up.
+- **Sections:** 3D reveal ✅ on some, parallax backgrounds, horizontal scroll for one “showcase” section.
+- **Cards / lists:** Stagger ✅, hover lift ✅, accent bars ✅; add magnetic CTA on primary buttons.
+- **Footer:** Parallax or simple fade-in on scroll (§8).
+- **Loading:** Already strong; optional: loader morphs into cursor or first section.
+
+See **`AWWWARDS_DESIGN_IDEAS.md`** for a full checklist of design ideas and elements to pull from Awwwards into this project.
 
 ---
 

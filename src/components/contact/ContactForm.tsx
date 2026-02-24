@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Playfair_Display } from 'next/font/google';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +19,12 @@ import {
 } from '@/components/ui/select';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import type { ContactEnquiry } from '@/lib/contactStorage';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 const inquiryTypeOptions = [
   'I am a Patient with a question',
@@ -50,14 +58,33 @@ export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
       setPrefersReducedMotion(mediaQuery.matches);
+      const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
     }
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    if (headerRef.current) observer.observe(headerRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const validateEmail = (emailValue: string): boolean => {
@@ -224,9 +251,32 @@ export function ContactForm() {
         <div className="max-w-3xl mx-auto">
           <Card className="bg-white border border-gray-200 shadow-lg" data-scroll-exclude>
             <CardHeader className="pb-4">
-              <CardTitle className="text-2xl md:text-3xl font-bold text-brand-dark-blue text-center">
-                Send us a Message
-              </CardTitle>
+              <div
+                ref={headerRef}
+                className="flex flex-col items-center text-center space-y-1.5"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                  transition: prefersReducedMotion
+                    ? 'opacity 0.3s ease'
+                    : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+              >
+                <span
+                  className={cn(
+                    'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full border border-brand-dark-blue/20',
+                    playfairDisplay.className
+                  )}
+                >
+                  Contact
+                </span>
+                <h3 className="tracking-tight text-2xl md:text-3xl font-bold text-brand-dark-blue">
+                  Send us a{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">
+                    Message
+                  </span>
+                </h3>
+              </div>
             </CardHeader>
             <CardContent className="p-5 md:p-6">
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6" noValidate data-scroll-exclude data-scroll-speed="0">

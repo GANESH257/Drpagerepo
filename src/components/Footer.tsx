@@ -44,8 +44,14 @@ export function Footer() {
   }, []);
 
   return (
-    <footer ref={footerRef} className="skin-footer">
-      <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
+    <footer ref={footerRef} className="skin-footer relative overflow-hidden">
+      {/* Subtle decorative orbs – same design language as card sections */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-teal/15 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-dark-blue/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-teal/5 rounded-full blur-3xl" />
+      </div>
+      <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
@@ -63,7 +69,7 @@ export function Footer() {
                 alt="Alliance of Independent Physicians"
                 width={200}
                 height={200}
-                className="h-16 md:h-20 lg:h-24 w-auto drop-shadow-lg brightness-0 invert object-contain"
+                className="h-16 md:h-20 lg:h-24 w-auto object-contain brightness-0 invert opacity-95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
               />
             </Link>
             <p className="text-sm md:text-base text-white/80 max-w-md leading-relaxed mb-6">
@@ -107,7 +113,7 @@ export function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={social.ariaLabel}
-                      className="w-10 h-10 rounded-full bg-white/10 hover:bg-brand-teal flex items-center justify-center text-white/80 hover:text-white transition-all duration-300 focus-ring hover:scale-110 hover:shadow-lg"
+                      className="w-11 h-11 rounded-full flex items-center justify-center text-white transition-all duration-500 ease-out focus-ring bg-gradient-to-br from-brand-dark-blue to-brand-teal shadow-lg hover:scale-125 hover:shadow-[0_0_24px_rgba(15,95,168,0.4)]"
                       style={{
                         opacity: isVisible ? 1 : 0,
                         transform: isVisible ? 'scale(1)' : 'scale(0)',

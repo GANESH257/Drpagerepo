@@ -3,13 +3,15 @@ import { PhysiciansHero } from '@/components/physicians/PhysiciansHero';
 import { BenefitsJumbledGrid } from '@/components/physicians/BenefitsJumbledGrid';
 import { MissionStatementNewHome } from '@/components/newhome/MissionStatementNewHome';
 import { JoinSteps } from '@/components/physicians/JoinSteps';
+import { GenericCTASection } from '@/components/GenericCTASection';
 import { MemberBenefitsSection } from '@/components/shared/MemberBenefitsSection';
 import { WhoShouldJoin } from '@/components/physicians/WhoShouldJoin';
 import { QuickAccessCTA } from '@/components/physicians/QuickAccessCTA';
 import { DepartmentsMarquee } from '@/components/DepartmentsMarquee';
 import { ImpactStats } from '@/components/physicians/ImpactStats';
-import { MemberStories } from '@/components/physicians/MemberStories';
-import { PracticeResources } from '@/components/physicians/PracticeResources';
+// MemberStories and PracticeResources hidden for now – content not ready yet
+// import { MemberStories } from '@/components/physicians/MemberStories';
+// import { PracticeResources } from '@/components/physicians/PracticeResources';
 import { FAQSection } from '@/components/FAQSection';
 import { membershipFAQ } from '@/data/membershipFAQ';
 import Link from 'next/link';
@@ -38,18 +40,19 @@ export default function PhysiciansPage() {
       <PhysiciansHero />
       <BenefitsJumbledGrid />
       <MissionStatementNewHome />
+      <ImpactStats />
       <JoinSteps />
+      <GenericCTASection />
       <MemberBenefitsSection />
       <WhoShouldJoin />
       <DepartmentsMarquee />
       <QuickAccessCTA />
-      <ImpactStats />
-      <MemberStories />
-      <PracticeResources />
-      <FAQSection 
+      {/* MemberStories and PracticeResources hidden until content is ready */}
+      <FAQSection
         faqData={membershipFAQ}
         title="Membership Questions"
         description="Find answers to common questions about membership, plans, and benefits."
+        pillLabel="Membership"
       />
     </>
   );

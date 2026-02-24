@@ -5,65 +5,52 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
 
+const TOPBAR_LINK =
+  'flex items-center gap-2 text-xs md:text-sm text-white/90 hover:text-brand-teal transition-colors duration-200 flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-1 focus-visible:ring-offset-brand-dark-blue rounded px-1.5 py-0.5 -my-0.5';
+
 export function TopBar() {
   const pathname = usePathname();
 
-  // Hide on dashboard / admin portal pages
   if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/admin')) {
     return null;
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] h-6 md:h-7 bg-brand-dark-blue border-b border-brand-teal/20" data-scroll-exclude>
-      <div className="container mx-auto px-4 h-full" data-scroll-exclude>
-        <div className="flex items-center justify-between h-full gap-3 md:gap-4" data-scroll-exclude>
-          <div className="flex items-center gap-3 md:gap-4" data-scroll-exclude style={{ transform: 'translate3d(0, 0, 0)', willChange: 'auto' } as React.CSSProperties}>
-            {/* Phone and Email */}
+    <div
+      className="fixed top-0 left-0 right-0 z-[60] h-9 md:h-10 bg-brand-dark-blue/95 backdrop-blur-sm border-b border-white/10 shadow-sm"
+      data-scroll-exclude
+      data-scroll-speed="0"
+    >
+      <div className="container mx-auto px-4 md:px-6 h-full" data-scroll-exclude>
+        <div className="flex items-center justify-between h-full gap-4" data-scroll-exclude>
+          <nav className="flex items-center gap-3 md:gap-4 flex-shrink-0 min-w-0" aria-label="Contact">
             <Link
               href="tel:+15551234567"
-              className="flex items-center gap-1 text-[10px] md:text-xs text-white/90 hover:text-brand-teal transition-colors flex-shrink-0"
+              className={TOPBAR_LINK}
               data-scroll-exclude
               data-scroll-speed="0"
-              style={{
-                transform: 'translate3d(0, 0, 0)',
-                willChange: 'auto',
-                position: 'relative',
-                width: 'fit-content',
-                minWidth: 'fit-content',
-                maxWidth: 'fit-content',
-                flexShrink: 0,
-                flexGrow: 0,
-                display: 'inline-flex'
-              } as React.CSSProperties}
+              aria-label="Call (555) 123-4567"
             >
-              <Phone className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" data-scroll-speed="0" />
-              <span data-scroll-speed="0" className="whitespace-nowrap">(555) 123-4567</span>
+              <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 opacity-90 flex-shrink-0" aria-hidden />
+              <span className="whitespace-nowrap">(555) 123-4567</span>
             </Link>
+            <span className="text-white/40 text-xs md:text-sm flex-shrink-0" aria-hidden>
+              |
+            </span>
             <Link
               href="mailto:info@alliancephysicians.com"
-              className="flex items-center gap-1 text-[10px] md:text-xs text-white/90 hover:text-brand-teal transition-colors flex-shrink-0"
+              className={TOPBAR_LINK}
               data-scroll-exclude
               data-scroll-speed="0"
-              style={{
-                transform: 'translate3d(0, 0, 0)',
-                willChange: 'auto',
-                position: 'relative',
-                width: 'fit-content',
-                minWidth: 'fit-content',
-                maxWidth: 'fit-content',
-                flexShrink: 0,
-                flexGrow: 0,
-                display: 'inline-flex'
-              } as React.CSSProperties}
+              aria-label="Email info@alliancephysicians.com"
             >
-              <Mail className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" data-scroll-speed="0" />
-              <span className="hidden sm:inline whitespace-nowrap" data-scroll-speed="0">info@alliancephysicians.com</span>
-              <span className="sm:hidden whitespace-nowrap" data-scroll-speed="0">info@alliance...</span>
+              <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 opacity-90 flex-shrink-0" aria-hidden />
+              <span className="hidden sm:inline whitespace-nowrap">info@alliancephysicians.com</span>
+              <span className="sm:hidden whitespace-nowrap">Email</span>
             </Link>
-          </div>
+          </nav>
 
-          {/* Dark Mode Toggle */}
-          <div data-scroll-exclude>
+          <div className="flex-shrink-0" data-scroll-exclude data-scroll-speed="0">
             <DarkModeToggle />
           </div>
         </div>

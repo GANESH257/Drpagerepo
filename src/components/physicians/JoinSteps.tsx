@@ -3,20 +3,54 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Playfair_Display } from 'next/font/google';
 import { Button } from '@/components/ui/button';
 import { joinSteps } from '@/data/physiciansPage';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
+
 export function JoinSteps() {
   const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setPrefersReducedMotion(mq.matches);
+      const handler = () => setPrefersReducedMotion(mq.matches);
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    }
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
+    <section ref={sectionRef} className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
       {/* Background Shapes (Matching PatientSteps) */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[10%] left-[5%] w-64 h-64 opacity-60">
@@ -36,19 +70,29 @@ export function JoinSteps() {
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
 
-          {/* Section Header */}
-          <div className="text-center mb-20 md:mb-24">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="w-12 h-px bg-brand-teal/30" />
-              <span className="text-brand-teal font-bold text-xs tracking-[0.3em] uppercase">
-                Membership Process
-              </span>
-              <div className="w-12 h-px bg-brand-teal/30" />
-            </div>
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-[#1a4b7f] leading-tight max-w-3xl mx-auto">
-              Join the Alliance
+          {/* Section Header – same text design as MissionStatementNewHome */}
+          <div
+            className="text-center mb-8 md:mb-10"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              Membership Process
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+              Join the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">Alliance</span>
             </h2>
-            <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
               A streamlined process to become a member and grow your practice.
             </p>
           </div>

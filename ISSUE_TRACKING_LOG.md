@@ -2,7 +2,42 @@
 
 This document tracks all issues reported, investigations performed, and fixes applied throughout the project.
 
-**Last Updated**: 2024-12-19
+**Last Updated**: 2026-02-23
+
+---
+
+### Issue: Logo spark effect broken spot at curve apex
+
+**Reported**: Broken spot in the sparking/glow effect on the logo image (curved silvery band with gap at apex).  
+**Component**: LoadingScreen (logo with 3D glow).  
+**Location**: `src/components/LoadingScreen.tsx`, `src/app/globals.css`
+
+**Investigation**:
+1. Searched for logo usage and spark/glow effects.
+2. Found logo in LoadingScreen with `drop-shadow` teal glow and rotating rings; logo asset has a curved element with a visible gap at the top-center (apex) where the spark effect appears discontinuous.
+3. Identified root cause: the logo image or its glow leaves a visible “broken” spot at the curve apex.
+
+**Fix Applied**:
+- File: `src/components/LoadingScreen.tsx`
+  - Wrapped the logo `Image` in a `relative` container and added a spark-fill overlay div positioned at top ~12%, center.
+  - Overlay uses a radial gradient (white → teal) and blur so it blends with the existing spark and fills the gap.
+  - Lines: ~222–256 (logo container + overlay).
+- File: `src/app/globals.css`
+  - Added `.logo-spark-fill` utility with same positioning, size, gradient, blur, and box-shadow for reuse on other logo instances if needed.
+  - Line: after `.animate-pulse-glow` block (~1748).
+
+**CSS Changes**:
+- File: `src/app/globals.css`
+  - Rule: `.logo-spark-fill` (position, size, radial-gradient, filter blur, box-shadow).
+  - Use on any logo wrapper where the same broken-spot fix is needed (e.g. MissionStatement, admin login).
+
+**Related Files**:
+- `src/app/admin/login/page.tsx` (AIP logo with invert)
+- `src/components/newhome/MissionStatementNewHome.tsx`, `MissionStatementDark.tsx` (logo usage)
+
+**Verification**:
+- Load the app to trigger LoadingScreen; confirm the logo’s curve apex shows a continuous spark/glow with no visible gap.
+- If the broken spot appears in other pages using the same logo + glow, wrap that logo in a relative container and add a child with class `logo-spark-fill`.
 
 ---
 

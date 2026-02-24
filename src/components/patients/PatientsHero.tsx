@@ -1,10 +1,17 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { Playfair_Display } from 'next/font/google';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function PatientsHero() {
   const [isVisible, setIsVisible] = useState(false);
@@ -66,31 +73,42 @@ export function PatientsHero() {
       </div>
 
       {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/60 via-brand-dark-blue/50 to-brand-dark-blue/60 z-10 mt" />
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/60 via-brand-dark-blue/50 to-brand-dark-blue/60 z-10" />
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-4xl mx-auto text-center">
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 md:mb-8 text-white leading-tight"
+          {/* Header – same text design as AboutHeroSection / PhysiciansHero (dark variant) */}
+          <div
+            className="mb-8 md:mb-10"
             style={{
               opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion
                 ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            Personalized Care from Doctors Who Answer to You
-          </h1>
+            <span
+              className={`inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 backdrop-blur-sm ${playfairDisplay.className}`}
+            >
+              Patients
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
+              Personalized Care from Doctors Who Answer to{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-300">
+                You
+              </span>
+            </h1>
+          </div>
 
           <div
             className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6"
             style={{
               opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion
                 ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.6s, transform 0.8s ease-out 0.6s',
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s',
             }}
           >
             <Button

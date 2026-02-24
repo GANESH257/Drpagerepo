@@ -8,6 +8,7 @@ import { FloatingCTA } from '@/components/FloatingCTA';
 import { FloatingMessageIcon } from '@/components/FloatingMessageIcon';
 import { HandCursor } from '@/components/HandCursor';
 import { LoadingScreenWrapper } from '@/components/LoadingScreenWrapper';
+import { PageTransition } from '@/components/PageTransition';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -41,7 +42,9 @@ export default function RootLayout({
           <HandCursor />
           <TopBar />
           <Header />
-          <main>{children}</main>
+          <main>
+            <PageTransition>{children}</PageTransition>
+          </main>
           <ConditionalFooter />
           <FloatingCTA />
           <FloatingMessageIcon />

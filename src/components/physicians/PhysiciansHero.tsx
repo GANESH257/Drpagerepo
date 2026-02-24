@@ -1,10 +1,17 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { Playfair_Display } from 'next/font/google';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Users } from 'lucide-react';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function PhysiciansHero() {
   const [isVisible, setIsVisible] = useState(false);
@@ -70,27 +77,38 @@ export function PhysiciansHero() {
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-4xl mx-auto text-center">
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 md:mb-8 text-white leading-tight"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
-              transition: prefersReducedMotion
-                ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
-            }}
-          >
-            Stop Competing. Start Thriving.
-          </h1>
-
-          <p
-            className="text-lg md:text-xl lg:text-2xl text-white/90 mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed"
+          {/* Header – same text design as AboutHeroSection (dark variant) */}
+          <div
+            className="mb-8 md:mb-10"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion
                 ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.4s, transform 0.8s ease-out 0.4s',
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <span
+              className={`inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 backdrop-blur-sm ${playfairDisplay.className}`}
+            >
+              Physicians
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
+              Stop Competing. Start{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-300">
+                Thriving.
+              </span>
+            </h1>
+          </div>
+
+          <p
+            className="text-lg md:text-xl text-white/90 mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed"
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+              transition: prefersReducedMotion
+                ? 'opacity 0.3s ease'
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
             }}
           >
             The Alliance gives your independent practice the scale and resources of a major health system, without sacrificing your autonomy.
@@ -100,10 +118,10 @@ export function PhysiciansHero() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6"
             style={{
               opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(30px)',
+              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion
                 ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.6s, transform 0.8s ease-out 0.6s',
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
             }}
           >
             <Button

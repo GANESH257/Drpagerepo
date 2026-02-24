@@ -2,12 +2,19 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { Playfair_Display } from 'next/font/google';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { practiceResources } from '@/data/physiciansPage';
 import { FileText, ShieldCheck, Megaphone, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 const iconMap: Record<string, keyof typeof LucideIcons> = {
   FileText: 'FileText',
@@ -63,18 +70,27 @@ export function PracticeResources() {
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
+          {/* Header – same text design as MissionStatementNewHome */}
           <div
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-8 md:mb-10"
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
               transition: prefersReducedMotion
                 ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+                : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue">
-              Practice Resources
+            <span
+              className={cn(
+                'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+                playfairDisplay.className
+              )}
+            >
+              For Your Practice
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-brand-dark-blue leading-[1.1] tracking-tight">
+              Practice <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">Resources</span>
             </h2>
           </div>
 

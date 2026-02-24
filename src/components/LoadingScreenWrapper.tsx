@@ -8,25 +8,18 @@ export function LoadingScreenWrapper({ children }: { children: React.ReactNode }
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  const handleLoadingComplete = () => {
-    setIsLoading(false);
-    // Small delay before showing content for smooth transition
-    setTimeout(() => {
-      setHasLoaded(true);
-    }, 300);
-  };
+  const handleLoadingComplete = () => setIsLoading(false);
 
   return (
     <>
-      {isLoading && <LoadingScreen onComplete={handleLoadingComplete} />}
-      <div 
-        className={`transition-opacity duration-700 ease-out ${
-          isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ 
-          visibility: isLoading ? 'hidden' : 'visible',
-          transition: 'opacity 0.7s ease-out, visibility 0.7s ease-out'
-        }}
+      {isLoading && (
+        <LoadingScreen
+          onExitStart={() => setHasLoaded(true)}
+          onComplete={handleLoadingComplete}
+        />
+      )}
+      <div
+        className={`loading-page-content ${hasLoaded ? 'loading-page-content-ready' : 'loading-page-content-pending'} ${isLoading ? 'pointer-events-none' : ''}`}
       >
         <SmoothScrollWrapper>
           {children}

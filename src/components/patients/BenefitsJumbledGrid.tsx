@@ -3,580 +3,388 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
+import { Playfair_Display } from 'next/font/google';
+import { motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { patientBenefits } from '@/data/patientsPage';
-import { Award, Clock, Heart, DollarSign, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import * as LucideIcons from 'lucide-react';
 
-const iconMap: Record<string, keyof typeof LucideIcons> = {
-  Award: 'Award',
-  Clock: 'Clock',
-  Heart: 'Heart',
-  DollarSign: 'DollarSign',
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
+
+const benefitCards: Array<{
+  id: string;
+  title: string;
+  description: string;
+  accentColor: 'teal' | 'blue';
+  number: string;
+  image: string;
+  imageAlt: string;
+  link?: string;
+  linkText?: string;
+}> = [
+  {
+    ...patientBenefits[0],
+    number: '01',
+    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Doctor and patient in consultation',
+    link: '/practices',
+    linkText: 'Find a Practice',
+  },
+  {
+    ...patientBenefits[1],
+    number: '02',
+    image: 'https://images.unsplash.com/photo-1504813184591-01572f98c85f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Physician spending time with patient',
+  },
+  {
+    ...patientBenefits[2],
+    number: '03',
+    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Affordable healthcare',
+  },
+];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
+  },
+};
+
+const rowVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 export function BenefitsJumbledGrid() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSmallMobile, setIsSmallMobile] = useState(false);
+  const [prefersReducedMotion, setPreferReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
+  const currentFeatures = benefitCards;
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      setPrefersReducedMotion(mediaQuery.matches);
-
-      const handleChange = (e: MediaQueryListEvent) => {
-        setPrefersReducedMotion(e.matches);
-      };
-
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 900);
+      setIsSmallMobile(window.innerWidth < 640);
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
+      ([entry]) => entry.isIntersecting && setIsVisible(true),
       { threshold: 0.15 }
     );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
+    if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  const getIcon = (iconName: string) => {
-    const IconComponent = LucideIcons[iconMap[iconName] || 'Award'] as React.ComponentType<{ className?: string }>;
-    return IconComponent || Award;
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setPreferReducedMotion(mq.matches);
+      const handler = () => setPreferReducedMotion(mq.matches);
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible || isPaused) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev === currentFeatures.length - 1 ? 0 : prev + 1));
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isVisible, isPaused, currentFeatures.length]);
+
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev === 0 ? currentFeatures.length - 1 : prev - 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 6000);
+  };
+
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev === currentFeatures.length - 1 ? 0 : prev + 1));
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 6000);
+  };
+
+  const handleDotClick = (index: number) => {
+    setActiveIndex(index);
+    setIsPaused(true);
+    setTimeout(() => setIsPaused(false), 6000);
+  };
+
+  const getCardState = (index: number) => {
+    const isActive = index === activeIndex;
+    const isPrev = index === (activeIndex === 0 ? currentFeatures.length - 1 : activeIndex - 1);
+    const isNext = index === (activeIndex === currentFeatures.length - 1 ? 0 : activeIndex + 1);
+    if (isActive) return 'active';
+    if (isPrev) return 'prev';
+    if (isNext) return 'next';
+    return 'hidden';
+  };
+
+  const getCardTransform = (state: string) => {
+    if (isMobile) {
+      return state === 'active' ? 'translateX(0) scale(1) rotateY(0deg)' : 'scale(0.8) rotateY(0deg)';
+    }
+    switch (state) {
+      case 'active':
+        return 'translateX(0) scale(1) rotateY(0deg)';
+      case 'prev':
+        return 'translateX(-85%) scale(0.9) rotateY(25deg)';
+      case 'next':
+        return 'translateX(85%) scale(0.9) rotateY(-25deg)';
+      default:
+        return 'scale(0.8) rotateY(0deg)';
+    }
+  };
+
+  const getCardOpacity = (state: string) => {
+    if (isMobile) return state === 'active' ? 1 : 0;
+    switch (state) {
+      case 'active':
+        return 1;
+      case 'prev':
+      case 'next':
+        return 0.6;
+      default:
+        return 0;
+    }
+  };
+
+  const getCardZIndex = (state: string) => {
+    switch (state) {
+      case 'active':
+        return 3;
+      case 'prev':
+      case 'next':
+        return 2;
+      default:
+        return 1;
+    }
   };
 
   return (
     <section
       ref={sectionRef}
-      className="py-16 md:py-24 relative overflow-hidden bg-white"
+      className="relative py-20 md:py-28 overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #f8fafc 0%, #f0f9ff 50%, #ecfeff 100%)',
+      }}
     >
-      <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Section Title */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand-teal via-brand-dark-blue to-brand-teal shadow-sm" />
+      <div
+        className="absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-30 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(29, 212, 196, 0.25) 0%, transparent 70%)' }}
+      />
+      <div
+        className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-25 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(15, 95, 168, 0.2) 0%, transparent 70%)' }}
+      />
+
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl relative z-10">
+        {/* Header – same text design as MissionStatementNewHome */}
+        <div
+          className="text-center mb-8 md:mb-10"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+            transition: prefersReducedMotion
+              ? 'opacity 0.3s ease'
+              : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        >
+          <span
+            className={cn(
+              'inline-block px-4 py-1.5 bg-brand-dark-blue/10 text-brand-dark-blue font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-brand-dark-blue/20',
+              playfairDisplay.className
+            )}
+          >
+            For patients
+          </span>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-brand-dark-blue leading-[1.1] tracking-tight">
+            Why choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-600">independent physicians?</span>
+          </h2>
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Care that's personal, accessible, and transparent.
+          </p>
+        </div>
+
+        {/* 3D Carousel – 3 cards */}
+        <div className="relative flex flex-col items-center" data-scroll-speed="0">
           <div
-            className="text-center mb-12 md:mb-16"
+            className="relative w-full flex justify-center items-center"
             style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-              transition: prefersReducedMotion
-                ? 'opacity 0.3s ease'
-                : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+              height: isSmallMobile ? '520px' : isMobile ? '560px' : '380px',
+              perspective: '1200px',
+              perspectiveOrigin: 'center center',
             }}
           >
-            <h2 
-              className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-brand-dark-blue"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-                transition: prefersReducedMotion
-                  ? 'opacity 0.3s ease 0.1s'
-                  : 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
-              }}
-            >
-              Why Choose Independent Physicians?
-            </h2>
-            <p 
-              className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto"
-              style={{
-                opacity: isVisible ? 1 : 0,
-                transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-                transition: prefersReducedMotion
-                  ? 'opacity 0.3s ease 0.3s'
-                  : 'opacity 0.8s ease-out 0.6s, transform 0.8s ease-out 0.6s',
-              }}
-            >
-              Experience healthcare the way it should be - personal, accessible, and transparent.
-            </p>
-          </div>
-
-          {/* Desktop: Asymmetric 3-column grid */}
-          <div className="hidden lg:grid lg:grid-cols-3 gap-6 auto-rows-fr">
-            {patientBenefits.map((benefit, index) => {
-              const IconComponent = getIcon(benefit.icon);
-              const cardDelay = prefersReducedMotion ? 0 : index * 150;
-              const isLarge = benefit.size === 'large';
-              const accentColor = benefit.accentColor === 'teal' ? 'brand-teal' : 'brand-dark-blue';
-
-              // Grid placement for asymmetric layout
-              let gridClass = '';
-              if (benefit.id === 'top-rated') {
-                gridClass = 'lg:col-span-2'; // Spans 2 columns
-              } else if (benefit.id === 'transparent-pricing') {
-                gridClass = 'lg:col-span-2'; // Spans 2 columns (removed row-span-2 to make it smaller)
-              }
-
-              // Add colored backgrounds to specific cards
-              let cardBgClass = 'bg-white';
-              let hasImageBackground = false;
-              if (benefit.id === 'top-rated') {
-                cardBgClass = 'bg-gradient-to-br from-brand-dark-blue/10 via-brand-dark-blue/5 to-brand-dark-blue/10';
-              } else if (benefit.id === 'personal-connection') {
-                cardBgClass = 'bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-emerald-500/20';
-              } else if (benefit.id === 'transparent-pricing') {
-                hasImageBackground = true;
-              }
+            {currentFeatures.map((card, index) => {
+              const state = getCardState(index);
+              const transform = getCardTransform(state);
+              const opacity = getCardOpacity(state);
+              const zIndex = getCardZIndex(state);
+              const pointerEvents = state === 'active' ? 'auto' : 'none';
+              const isTeal = card.accentColor === 'teal';
 
               return (
-                <Card
-                  key={benefit.id}
+                <div
+                  key={card.id}
                   className={cn(
-                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
-                    !hasImageBackground && cardBgClass,
-                    !hasImageBackground && 'card-bg-animated card-bg-gradient card-bg-particles',
-                    gridClass,
-                    benefit.id === 'transparent-pricing' ? 'p-6' : (isLarge ? 'p-8' : 'p-6')
+                    'absolute flex bg-white rounded-xl md:rounded-2xl overflow-hidden transition-all duration-500 border-2',
+                    state === 'active' ? 'border-brand-teal/50 shadow-xl' : 'border-transparent shadow-lg',
+                    'hover:border-brand-teal/70 hover:shadow-xl',
+                    prefersReducedMotion ? '' : 'hover:-translate-y-2',
+                    isMobile
+                      ? 'flex-col max-w-[500px] w-[92%] h-[520px]'
+                      : 'flex-row w-[94%] max-w-[1100px] h-[380px]'
                   )}
                   style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)'
-                      : 'translateY(30px) scale(0.95)',
+                    ...(state === 'active' && {
+                      background:
+                        'linear-gradient(white, white) padding-box, linear-gradient(135deg, rgba(29, 212, 196, 0.4), rgba(15, 95, 168, 0.3)) border-box',
+                    }),
+                    transform:
+                      prefersReducedMotion && state !== 'active'
+                        ? 'none'
+                        : `perspective(1200px) ${transform}`,
+                    transformStyle: 'preserve-3d',
+                    opacity,
+                    zIndex,
+                    pointerEvents,
                     transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
+                      ? 'opacity 0.3s ease, box-shadow 0.3s ease'
+                      : 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    boxShadow:
+                      state === 'active'
+                        ? 'var(--shadow-colorful), 0px 20px 60px 0px rgba(0, 0, 0, 0.15), 0px 0px 40px rgba(46, 196, 182, 0.1)'
+                        : '0px 4px 12px 0px rgba(0, 0, 0, 0.08)',
                   }}
+                  onMouseEnter={() => setIsPaused(true)}
+                  onMouseLeave={() => setTimeout(() => setIsPaused(false), 4000)}
                 >
-                  {/* Background Image for Transparent Pricing */}
-                  {hasImageBackground && (
-                    <>
-                      <div className="absolute inset-0 z-0">
-                        <Image
-                          src="/for_pt2.png"
-                          alt="Transparent Pricing"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/70 via-brand-dark-blue/60 to-brand-dark-blue/70 z-10" />
-                    </>
-                  )}
-                  
-                  <CardContent className={cn(
-                    "p-0 flex flex-col h-full items-center text-center",
-                    hasImageBackground && "relative z-20"
-                  )}>
-                    {/* Top accent line */}
+                  {/* Left: text content */}
+                  <div
+                    className={cn(
+                      'flex flex-1 flex-col justify-center overflow-hidden min-w-0',
+                      isMobile ? 'p-6 order-2' : 'p-8 lg:p-10 flex-[0.45]'
+                    )}
+                  >
                     <div
                       className={cn(
-                        'h-1 w-16 mb-4 rounded-full mx-auto',
-                        benefit.id === 'personal-connection'
-                          ? 'bg-emerald-600'
-                          : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
+                        'inline-flex w-12 h-12 items-center justify-center rounded-xl text-xl font-bold text-white shadow-md mb-4',
+                        isTeal ? 'bg-brand-teal' : 'bg-brand-dark-blue'
                       )}
-                    />
-
-                    {/* Icon pill with animations */}
-                    <div 
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 relative z-10',
-                      benefit.id === 'personal-connection'
-                        ? 'bg-emerald-600/20 text-emerald-700'
-                        : (hasImageBackground
-                          ? 'bg-white/20 text-white'
-                          : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                      )}
-                      style={{
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
-                          : 'none',
-                        opacity: isVisible ? 1 : 0,
-                      }}
                     >
-                      <IconComponent 
+                      {card.number}
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold text-brand-dark-blue tracking-tight mb-3">
+                      {card.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed text-sm md:text-base mb-5 max-w-md">
+                      {card.description}
+                    </p>
+                    {card.link && card.linkText ? (
+                      <Button
+                        asChild
                         className={cn(
-                          "h-6 w-6 transition-all duration-300 relative z-10",
-                          isVisible && !prefersReducedMotion && "icon-pulse-glow"
-                        )} 
-                        aria-hidden="true" 
-                      />
-                    </div>
-
-                    {/* Title */}
-                    <h3 
-                      className={cn(
-                        "text-xl md:text-2xl font-bold mb-3 relative z-10",
-                        isVisible && !prefersReducedMotion && "text-glow-animated",
-                      (hasImageBackground || benefit.id === 'personal-connection')
-                        ? (hasImageBackground ? "text-white" : "text-emerald-700")
-                        : "text-brand-dark-blue"
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
-                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `textRevealGlow 0.8s ease-out ${cardDelay + 300}ms forwards`
-                          : 'none',
-                      }}
-                    >
-                      {benefit.title}
-                    </h3>
-
-                    {/* Description with fade in animation */}
-                    <p 
-                      className={cn(
-                        'mb-4 flex-grow relative z-10',
-                      hasImageBackground
-                        ? 'text-white/90'
-                        : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700'),
-                      isLarge ? 'text-base md:text-lg' : 'text-sm md:text-base'
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
-                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `textRevealGlow 1s ease-out ${cardDelay + 500}ms forwards`
-                          : 'none',
-                      }}
-                    >
-                      {benefit.description}
-                    </p>
-
-                    {/* Link button */}
-                    {benefit.link && benefit.linkText && (
-                      <div className="mt-auto">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className={cn(
-                            'p-0 h-auto text-sm font-semibold hover:underline',
-                            hasImageBackground
-                              ? 'text-white hover:text-white/80'
-                              : (benefit.id === 'personal-connection'
-                                ? 'text-emerald-700 hover:text-emerald-700/80'
-                                : (accentColor === 'brand-teal' ? 'text-brand-teal hover:text-brand-teal/80' : 'text-brand-dark-blue hover:text-brand-dark-blue/80'))
-                          )}
-                        >
-                          <Link href={benefit.link}>
-                            {benefit.linkText}
-                            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Tablet: 2-column staggered grid */}
-          <div className="hidden md:grid md:grid-cols-2 lg:hidden gap-6">
-            {patientBenefits.map((benefit, index) => {
-              const IconComponent = getIcon(benefit.icon);
-              const cardDelay = prefersReducedMotion ? 0 : index * 150;
-              const accentColor = benefit.accentColor === 'teal' ? 'brand-teal' : 'brand-dark-blue';
-
-              // Add colored backgrounds to specific cards
-              let cardBgClass = 'bg-white';
-              let hasImageBackground = false;
-              if (benefit.id === 'top-rated') {
-                cardBgClass = 'bg-gradient-to-br from-brand-dark-blue/10 via-brand-dark-blue/5 to-brand-dark-blue/10';
-              } else if (benefit.id === 'personal-connection') {
-                cardBgClass = 'bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-emerald-500/20';
-              } else if (benefit.id === 'transparent-pricing') {
-                hasImageBackground = true;
-              }
-
-              return (
-                <Card
-                  key={benefit.id}
-                  className={cn(
-                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
-                    !hasImageBackground && cardBgClass,
-                    !hasImageBackground && 'card-bg-animated card-bg-gradient card-bg-particles',
-                    benefit.size === 'large' ? 'md:col-span-2 p-8' : (benefit.id === 'transparent-pricing' ? 'p-6' : 'p-6')
-                  )}
-                  style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)'
-                      : 'translateY(30px) scale(0.95)',
-                    transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
-                  }}
-                >
-                  {/* Background Image for Transparent Pricing */}
-                  {hasImageBackground && (
-                    <>
-                      <div className="absolute inset-0 z-0">
-                        <Image
-                          src="/for_pt2.png"
-                          alt="Transparent Pricing"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/70 via-brand-dark-blue/60 to-brand-dark-blue/70 z-10" />
-                    </>
-                  )}
-                  
-                  <CardContent className={cn(
-                    "p-0 flex flex-col h-full items-center text-center relative z-10",
-                    hasImageBackground && "relative z-20"
-                  )}>
-                    <div
-                      className={cn(
-                        'h-1 w-16 mb-4 rounded-full mx-auto',
-                        benefit.id === 'personal-connection'
-                          ? 'bg-emerald-600'
-                          : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
-                      )}
-                    />
-                    <div 
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 relative z-10',
-                      benefit.id === 'personal-connection'
-                        ? 'bg-emerald-600/20 text-emerald-700'
-                        : (hasImageBackground
-                          ? 'bg-white/20 text-white'
-                          : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                      )}
-                      style={{
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
-                          : 'none',
-                        opacity: isVisible ? 1 : 0,
-                      }}
-                    >
-                      <IconComponent 
+                          'w-fit rounded-md px-6 py-2.5 text-sm font-medium transition-all duration-200 focus-ring hover:scale-105 shadow-md',
+                          isTeal
+                            ? 'bg-brand-teal hover:bg-brand-teal/90 text-white'
+                            : 'bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white'
+                        )}
+                      >
+                        <Link href={card.link}>
+                          {card.linkText}
+                          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      </Button>
+                    ) : (
+                      <span
                         className={cn(
-                          "h-6 w-6 transition-all duration-300 relative z-10",
-                          isVisible && !prefersReducedMotion && "icon-pulse-glow"
-                        )} 
-                        aria-hidden="true" 
-                      />
-                    </div>
-                    <h3 
-                      className={cn(
-                        "text-xl font-bold mb-3 relative z-10",
-                        isVisible && !prefersReducedMotion && "text-glow-animated",
-                      (hasImageBackground || benefit.id === 'personal-connection')
-                        ? (hasImageBackground ? "text-white" : "text-emerald-700")
-                        : "text-brand-dark-blue"
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
-                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `textRevealGlow 0.8s ease-out ${cardDelay + 300}ms forwards`
-                          : 'none',
-                      }}
-                    >
-                      {benefit.title}
-                    </h3>
-                    <p 
-                      className={cn(
-                        'mb-4 flex-grow text-base relative z-10',
-                      hasImageBackground
-                        ? 'text-white/90'
-                        : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700')
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
-                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `textRevealGlow 1s ease-out ${cardDelay + 500}ms forwards`
-                          : 'none',
-                      }}
-                    >
-                      {benefit.description}
-                    </p>
-                    {benefit.link && benefit.linkText && (
-                      <div className="mt-auto">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className={cn(
-                            'p-0 h-auto text-sm font-semibold hover:underline',
-                            hasImageBackground
-                              ? 'text-white hover:text-white/80'
-                              : (benefit.id === 'personal-connection'
-                                ? 'text-emerald-700 hover:text-emerald-700/80'
-                                : (accentColor === 'brand-teal' ? 'text-brand-teal hover:text-brand-teal/80' : 'text-brand-dark-blue hover:text-brand-dark-blue/80'))
-                          )}
-                        >
-                          <Link href={benefit.link}>
-                            {benefit.linkText}
-                            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                          </Link>
-                        </Button>
-                      </div>
+                          'inline-flex items-center gap-2 text-sm font-semibold w-fit',
+                          isTeal ? 'text-brand-teal' : 'text-brand-dark-blue'
+                        )}
+                      >
+                        Learn more
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                  {/* Right: image */}
+                  <div
+                    className={cn(
+                      'relative overflow-hidden bg-gray-100',
+                      isMobile ? 'h-[240px] flex-none order-1' : 'flex-1 min-h-0'
+                    )}
+                  >
+                    <Image
+                      src={card.image}
+                      alt={card.imageAlt}
+                      fill
+                      className="object-cover transition-transform duration-500 hover:scale-105"
+                      sizes="(max-width: 900px) 92vw, 55vw"
+                      unoptimized
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>
 
-          {/* Mobile: Single column stack */}
-          <div className="grid grid-cols-1 md:hidden gap-6">
-            {patientBenefits.map((benefit, index) => {
-              const IconComponent = getIcon(benefit.icon);
-              const cardDelay = prefersReducedMotion ? 0 : index * 100;
-              const accentColor = benefit.accentColor === 'teal' ? 'brand-teal' : 'brand-dark-blue';
-
-              // Add colored backgrounds to specific cards
-              let cardBgClass = 'bg-white';
-              let hasImageBackground = false;
-              if (benefit.id === 'top-rated') {
-                cardBgClass = 'bg-gradient-to-br from-brand-dark-blue/10 via-brand-dark-blue/5 to-brand-dark-blue/10';
-              } else if (benefit.id === 'personal-connection') {
-                cardBgClass = 'bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-emerald-500/20';
-              } else if (benefit.id === 'transparent-pricing') {
-                hasImageBackground = true;
-              }
-
-              return (
-                <Card
-                  key={benefit.id}
+          {/* Carousel controls */}
+          <div className="flex items-center gap-6 mt-10 md:mt-12">
+            <button
+              onClick={handlePrev}
+              className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex gap-2.5" role="tablist" aria-label="Benefit carousel">
+              {currentFeatures.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleDotClick(index)}
+                  role="tab"
+                  aria-selected={index === activeIndex}
+                  aria-label={`Go to benefit ${index + 1}`}
                   className={cn(
-                    'group border border-gray-200 hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden',
-                    !hasImageBackground && cardBgClass,
-                    benefit.id === 'transparent-pricing' ? 'p-5' : 'p-6'
+                    'w-2.5 h-2.5 rounded-full cursor-pointer transition-all duration-200 focus-ring',
+                    index === activeIndex
+                      ? 'bg-brand-teal scale-125 animate-pulse-subtle'
+                      : 'bg-gray-300 hover:bg-gray-400'
                   )}
-                  style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)'
-                      : 'translateY(30px) scale(0.95)',
-                    transition: prefersReducedMotion
-                      ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
-                  }}
-                >
-                  {/* Background Image for Transparent Pricing */}
-                  {hasImageBackground && (
-                    <>
-                      <div className="absolute inset-0 z-0">
-                        <Image
-                          src="/for_pt2.png"
-                          alt="Transparent Pricing"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/70 via-brand-dark-blue/60 to-brand-dark-blue/70 z-10" />
-                    </>
-                  )}
-                  
-                  <CardContent className={cn(
-                    "p-0 flex flex-col",
-                    hasImageBackground && "relative z-20"
-                  )}>
-                    <div
-                      className={cn(
-                        'h-1 w-16 mb-4 rounded-full',
-                        benefit.id === 'personal-connection'
-                          ? 'bg-emerald-600'
-                          : (hasImageBackground ? 'bg-white' : (accentColor === 'brand-teal' ? 'bg-brand-teal' : 'bg-brand-dark-blue'))
-                      )}
-                    />
-                    <div 
-                      className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110',
-                      benefit.id === 'personal-connection'
-                        ? 'bg-emerald-600/20 text-emerald-700'
-                        : (hasImageBackground
-                          ? 'bg-white/20 text-white'
-                          : (accentColor === 'brand-teal' ? 'bg-brand-teal/10 text-brand-teal' : 'bg-brand-dark-blue/10 text-brand-dark-blue'))
-                      )}
-                      style={{
-                        animation: isVisible && !prefersReducedMotion 
-                          ? `iconScaleIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${cardDelay + 200}ms forwards, iconFloat 4s ease-in-out ${cardDelay + 1200}ms infinite`
-                          : 'none',
-                        opacity: isVisible ? 1 : 0,
-                      }}
-                    >
-                      <IconComponent 
-                        className="h-6 w-6 transition-all duration-300" 
-                        aria-hidden="true" 
-                      />
-                    </div>
-                    <h3 
-                      className={cn(
-                      "text-xl font-bold mb-3",
-                      (hasImageBackground || benefit.id === 'personal-connection')
-                        ? (hasImageBackground ? "text-white" : "text-emerald-700")
-                        : "text-brand-dark-blue"
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(15px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 300}ms`
-                          : `opacity 0.6s ease-out ${cardDelay + 300}ms, transform 0.6s ease-out ${cardDelay + 300}ms`,
-                      }}
-                    >
-                      {benefit.title}
-                    </h3>
-                    <p 
-                      className={cn(
-                      'mb-4 text-base',
-                      hasImageBackground
-                        ? 'text-white/90'
-                        : (benefit.id === 'personal-connection' ? 'text-emerald-800' : 'text-gray-700')
-                      )}
-                      style={{
-                        opacity: isVisible ? 1 : 0,
-                        transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(10px)',
-                        transition: prefersReducedMotion
-                          ? `opacity 0.3s ease ${cardDelay + 500}ms`
-                          : `opacity 0.8s ease-out ${cardDelay + 500}ms, transform 0.8s ease-out ${cardDelay + 500}ms`,
-                      }}
-                    >
-                      {benefit.description}
-                    </p>
-                    {benefit.link && benefit.linkText && (
-                      <div className="mt-auto">
-                        <Button
-                          asChild
-                          variant="ghost"
-                          className={cn(
-                            'p-0 h-auto text-sm font-semibold hover:underline',
-                            hasImageBackground
-                              ? 'text-white hover:text-white/80'
-                              : (benefit.id === 'personal-connection'
-                                ? 'text-emerald-700 hover:text-emerald-700/80'
-                                : (accentColor === 'brand-teal' ? 'text-brand-teal hover:text-brand-teal/80' : 'text-brand-dark-blue hover:text-brand-dark-blue/80'))
-                          )}
-                        >
-                          <Link href={benefit.link}>
-                            {benefit.linkText}
-                            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                          </Link>
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                />
+              ))}
+            </div>
+            <button
+              onClick={handleNext}
+              className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>

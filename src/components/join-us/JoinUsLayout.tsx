@@ -54,7 +54,7 @@ export function JoinUsLayout() {
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(-50px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.8s ease-out 0.4s, transform 1.8s ease-out 0.4s',
+              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1), transform 1.5s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <DoctorBenefitsPanel />
@@ -66,7 +66,7 @@ export function JoinUsLayout() {
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(50px)',
-              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.8s ease-out 0.8s, transform 1.8s ease-out 0.8s',
+              transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s',
             }}
           >
             <div className="w-full">

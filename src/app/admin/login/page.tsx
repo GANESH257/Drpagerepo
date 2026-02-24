@@ -133,7 +133,7 @@ export default function AdminLoginPage() {
                 alt="Alliance of Independent Physicians"
                 width={300}
                 height={100}
-                className="h-16 md:h-20 lg:h-24 w-auto object-contain drop-shadow-2xl brightness-0 invert"
+                className="h-16 md:h-20 lg:h-24 w-auto object-contain drop-shadow-2xl"
                 priority
               />
             </div>
@@ -257,7 +257,7 @@ export default function AdminLoginPage() {
 
                 <div className="space-y-2" data-scroll-exclude>
                   <Label htmlFor="password" className="text-gray-700 font-semibold">Password</Label>
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -273,7 +273,7 @@ export default function AdminLoginPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-500 hover:text-brand-dark-blue hover:bg-brand-dark-blue/10 rounded-lg transition-all"
+                      className="absolute right-0 top-0 bottom-0 flex items-center justify-end pr-2 w-12 h-full text-gray-500 hover:text-brand-dark-blue hover:bg-brand-dark-blue/10 rounded-lg transition-all"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                       data-scroll-speed="0"

@@ -71,6 +71,9 @@ export function AudienceSwitchFloating() {
       className="relative z-20 overflow-hidden"
       role="group"
       aria-label="Choose your portal"
+      data-3d-reveal
+      data-3d-reveal-y="40"
+      data-3d-reveal-rotate-x="8"
     >
       <div className="flex flex-col md:flex-row min-h-[400px] md:min-h-[500px]">
         {/* Left: For Patients - Background covers whole half */}

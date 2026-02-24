@@ -133,8 +133,15 @@ body {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: #f8fafc;
+  }
+
+  /* Slight warmth so the page doesn’t feel stark white */
+  main {
+    background: linear-gradient(180deg, #f8fafc 0%, #f0f9ff 30%, #fafafa 100%);
+    min-height: 100%;
   }
 
   /* Typography Scale */
@@ -1730,6 +1737,22 @@ body {
     }
   }
 
+  /* Logo float perpendicular to view - no 3D tilt, subtle scale + glow only */
+  @keyframes logoFloatPerpendicular {
+    0%, 100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 30px rgba(29, 212, 196, 0.5)) drop-shadow(0 0 60px rgba(29, 212, 196, 0.3));
+    }
+    50% {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 40px rgba(29, 212, 196, 0.6)) drop-shadow(0 0 70px rgba(29, 212, 196, 0.35));
+    }
+  }
+
+  .logo-float-perpendicular {
+    animation: logoFloatPerpendicular 3s ease-in-out infinite;
+  }
+
   /* Pulse glow animation */
   @keyframes pulse-glow {
     0%, 100% {
@@ -1744,6 +1767,55 @@ body {
 
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Logo spark-fill: overlays the broken spot at the curve apex of the logo spark effect */
+  .logo-spark-fill {
+    top: 16%;
+    left: 58%;
+    transform: translate(-50%, -50%);
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(29, 212, 196, 0.7) 35%, rgba(29, 212, 196, 0.25) 60%, transparent 85%);
+    filter: blur(10px);
+    box-shadow: 0 0 32px rgba(29, 212, 196, 0.6), 0 0 64px rgba(255,255,255,0.35), inset 0 0 20px rgba(255,255,255,0.2);
+    pointer-events: none;
+    animation: logo-spark-pulse 2.5s ease-in-out infinite;
+  }
+  .logo-spark-outer {
+    width: 100px;
+    height: 100px;
+    top: 14%;
+    left: 58%;
+    filter: blur(14px);
+    background: radial-gradient(circle, transparent 20%, rgba(29, 212, 196, 0.25) 50%, transparent 75%);
+    box-shadow: 0 0 40px rgba(29, 212, 196, 0.4);
+    animation-delay: 0.4s;
+  }
+  .logo-spark-dot {
+    width: 28px;
+    height: 28px;
+    top: 18%;
+    left: 58%;
+    filter: blur(4px);
+    background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(29, 212, 196, 0.5) 60%, transparent 100%);
+    box-shadow: 0 0 16px rgba(255,255,255,0.8), 0 0 24px rgba(29, 212, 196, 0.6);
+    animation-delay: 0.2s;
+  }
+  .logo-spark-accent {
+    width: 48px;
+    height: 48px;
+    top: 15%;
+    left: 60%;
+    filter: blur(6px);
+    background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(29, 212, 196, 0.4) 50%, transparent 100%);
+    box-shadow: 0 0 20px rgba(29, 212, 196, 0.5);
+    animation-delay: 0.6s;
+  }
+  @keyframes logo-spark-pulse {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.08); }
   }
 
   /* Slow spin animations */
@@ -1811,9 +1883,93 @@ body {
     animation: shimmer 2s linear infinite;
   }
 
+  /* Page content - direct fade to page (no dark overlay); classes avoid hydration mismatch */
+  .loading-page-content {
+    transition: opacity 0.45s ease-out, visibility 0.2s ease-out;
+  }
+  .loading-page-content.loading-page-content-pending {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .loading-page-content.loading-page-content-ready {
+    opacity: 1;
+    visibility: visible;
+  }
+
   /* Loading screen base styles */
   .loading-screen {
     background: linear-gradient(135deg, var(--brand-dark-blue) 0%, var(--brand-dark-blue-alt) 50%, var(--brand-dark-blue) 100%);
+    animation: loadingScreenFadeIn 0.6s ease-out forwards;
+  }
+
+  .loading-screen.exiting {
+    animation: loadingScreenExit 0.35s ease-out forwards;
+  }
+
+  .loading-screen.exiting .loading-screen-content {
+    animation: loadingContentExit 0.28s ease-out forwards;
+  }
+
+  @keyframes loadingScreenFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Exit: direct fade to page (no slide, no scale) */
+  @keyframes loadingScreenExit {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes loadingContentExit {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  /* Staggered entrance: rings around logo expand in */
+  .loading-ring-reveal {
+    opacity: 0;
+    transform: scale(0.4);
+    animation: loadingRingReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .loading-ring-reveal-delay-1 { animation-delay: 0.25s; }
+  .loading-ring-reveal-delay-2 { animation-delay: 0.4s; }
+  .loading-ring-reveal-delay-3 { animation-delay: 0.55s; }
+
+  @keyframes loadingRingReveal {
+    from {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Text block entrance - fade-up (no opacity flash) */
+  .loading-text-reveal {
+    transform: translateY(16px);
+    animation: loadingTextReveal 0.6s ease-out 0.5s forwards;
+  }
+
+  @keyframes loadingTextReveal {
+    to { transform: translateY(0); }
+  }
+
+  /* Bottom 3D rings entrance */
+  .loading-rings-entrance {
+    opacity: 0;
+    transform: scale(0.7);
+    animation: loadingRingsEntrance 0.7s cubic-bezier(0.34, 1.2, 0.64, 1) 0.6s forwards;
+  }
+
+  @keyframes loadingRingsEntrance {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   /* Pulse slow animation */
@@ -2101,11 +2257,32 @@ body {
 
   /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .loading-screen * {
+    .loading-screen *,
+    .loading-screen.exiting,
+    .loading-screen .loading-screen-content,
+    .loading-ring-reveal,
+    .loading-text-reveal,
+    .loading-rings-entrance,
+    .logo-spark-fill,
+    .logo-spark-outer,
+    .logo-spark-dot,
+    .logo-spark-accent {
       animation: none !important;
       transition: opacity 0.3s ease !important;
     }
-    
+
+    .loading-screen.exiting {
+      opacity: 0;
+      transition: opacity 0.4s ease !important;
+    }
+
+    .loading-ring-reveal,
+    .loading-text-reveal,
+    .loading-rings-entrance {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
     .loading-orb,
     .loading-particle {
       display: none;
@@ -2142,6 +2319,11 @@ body {
   /* Exclude search bar from Locomotive Scroll transforms entirely */
   [data-scroll-exclude] {
     transform: translate3d(0, 0, 0) !important;
+  }
+
+  /* Dialogs must keep center transform so they stay in the middle of the viewport */
+  [data-scroll-exclude][role="dialog"] {
+    transform: translate(-50%, -50%) !important;
   }
   
   /* Ensure scrollable containers with data-scroll-exclude can scroll normally */
@@ -2417,7 +2599,6 @@ body {
   [data-radix-dialog-content]:not([data-scroll]) {
     /* Only prevent if not explicitly marked for scroll */
   }
-  
   
   /* Specific rules for radio buttons and checkboxes - prevent size changes */
   [data-scroll-exclude] input[type="radio"],
@@ -2706,6 +2887,16 @@ body {
   /* Smooth scroll container */
   [data-scroll-container] {
     min-height: 100vh;
+  }
+
+  /* Hero video wrapper: keep pinned to section so scroll/transition don’t break the effect */
+  #main-content > div[data-scroll-exclude][data-scroll-speed="0"] {
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   /* Parallax elements */

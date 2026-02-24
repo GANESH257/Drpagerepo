@@ -2,14 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Suspense } from 'react';
+import { Playfair_Display } from 'next/font/google';
 import { TopSearchBar } from '@/components/DoctorFilters';
+import { cn } from '@/lib/utils';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 export function FindSpecialistBar() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isSticky, setIsSticky] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-  const searchBarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -43,62 +49,6 @@ export function FindSpecialistBar() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!sectionRef.current) return;
-
-    const checkSticky = () => {
-      if (!sectionRef.current) return;
-
-      const rect = sectionRef.current.getBoundingClientRect();
-      // Get the top offset of the header (approximately 84px on desktop, 80px on mobile)
-      const headerOffset = window.innerWidth >= 768 ? 84 : 80;
-      
-      // Make sticky when section top passes the header
-      // The section should become sticky when its top edge is at or above the header
-      setIsSticky(rect.top <= headerOffset);
-    };
-
-    // Use Intersection Observer with proper rootMargin to account for header
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          // When section is not intersecting (scrolled past header), make sticky
-          setIsSticky(!entry.isIntersecting);
-        });
-      },
-      {
-        threshold: 0,
-        rootMargin: `-${window.innerWidth >= 768 ? 84 : 80}px 0px 0px 0px`, // Account for header height
-      }
-    );
-
-    observer.observe(sectionRef.current);
-
-    // Use throttled scroll listener for more reliable updates with Locomotive Scroll
-    let ticking = false;
-    const throttledHandleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          checkSticky();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    // Check initial state
-    const timer = setTimeout(checkSticky, 100);
-
-    // Listen to scroll events (works with both native scroll and Locomotive Scroll)
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', throttledHandleScroll);
-      clearTimeout(timer);
-    };
-  }, []);
-
   const animationStyle = (delay: number) => {
     if (prefersReducedMotion) {
       return {
@@ -108,33 +58,13 @@ export function FindSpecialistBar() {
     }
     return {
       opacity: isVisible ? 1 : 0,
-      transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+      transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
       transition: `opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms, transform 1.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
     };
   };
 
   return (
-    <>
-      {/* Sticky Search Bar - appears when scrolling past original section (desktop/tablet only) */}
-      {isSticky && (
-        <div
-          className="hidden md:block fixed left-0 right-0 z-40 bg-gradient-to-br from-brand-dark-blue/95 via-brand-dark-blue-alt/95 to-brand-dark-blue/95 backdrop-blur-xl border-b border-white/10 py-3 md:py-4 shadow-xl transition-all duration-300 top-[5rem] md:top-[5.25rem]"
-          style={{
-            boxShadow: '0 10px 40px -5px rgba(0, 0, 0, 0.3), 0 0 20px rgba(29, 212, 196, 0.1)',
-          }}
-        >
-          <div className="container mx-auto px-4 md:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-              <Suspense fallback={<div className="h-16 w-full bg-white/10 rounded-xl animate-pulse" />}>
-                <TopSearchBar />
-              </Suspense>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Original Section */}
-      <section
+    <section
         id="find-specialist"
         ref={sectionRef}
         data-scroll-section
@@ -142,20 +72,27 @@ export function FindSpecialistBar() {
       >
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <h2
-              className="text-xl md:text-2xl font-semibold text-white mb-4 md:mb-6 text-center"
-              style={animationStyle(0)}
-            >
-              Quick Access to Quality Care
-            </h2>
-            <p
-              className="text-sm md:text-base text-gray-300 mb-6 md:mb-8 text-center max-w-2xl mx-auto"
-              style={animationStyle(200)}
-            >
-              Find the right specialist quickly with our easy-to-use search tool. Filter by conditions, doctors, insurance, and location.
-            </p>
+            {/* Header – same text design as MissionStatementNewHome / BenefitsJumbledGrid (adapted for dark bg) */}
+            <div className="text-center mb-8 md:mb-10" style={animationStyle(0)}>
+              <span
+                className={cn(
+                  'inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-white/30 backdrop-blur-sm',
+                  playfairDisplay.className
+                )}
+              >
+                Find a specialist
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
+                Quick Access to <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-400">Quality Care</span>
+              </h2>
+              <p
+                className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed"
+                style={animationStyle(100)}
+              >
+                Find the right specialist quickly with our easy-to-use search tool. Filter by conditions, doctors, insurance, and location.
+              </p>
+            </div>
             <div
-              ref={searchBarRef}
               className="w-full"
               style={animationStyle(400)}
             >
@@ -166,6 +103,5 @@ export function FindSpecialistBar() {
           </div>
         </div>
       </section>
-    </>
   );
 }

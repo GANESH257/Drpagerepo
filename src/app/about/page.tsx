@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AboutHeroSection } from '@/components/about/AboutHeroSection';
 import { MissionStatementNewHome } from '@/components/newhome/MissionStatementNewHome';
-import { LeadershipSection } from '@/components/about/LeadershipSection';
 import { BoardMemberGrid } from '@/components/trustee-board/BoardMemberGrid';
 import { DepartmentsMarquee } from '@/components/DepartmentsMarquee';
 import { GenericCTASection } from '@/components/GenericCTASection';
@@ -29,7 +29,9 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      {/* Mission section MUST be first */}
+      {/* About Us hero – founding story */}
+      <AboutHeroSection />
+      {/* Our Mission section */}
       <MissionStatementNewHome />
       
       {/* ByLaw Link Section */}
@@ -49,7 +51,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <LeadershipSection />
       <BoardMemberGrid />
       <DepartmentsMarquee />
       <GenericCTASection />
