@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from '@/lib/toast';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -246,19 +247,23 @@ export function EventsEditor() {
       setItemToDelete(null);
     } catch (err) {
       console.error('Error deleting item:', err);
-      alert('Failed to delete. Please try again.');
+      toast.error('Failed to delete. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = async () => {
-    if (resetType === 'global') {
-      // For global events, reset means reloading from API (which has defaults)
-      await loadEvents();
-    } else if (resetType === 'board') {
-      resetBoardMeetings();
-      await loadEvents();
+    try {
+      if (resetType === 'global') {
+        await loadEvents();
+      } else if (resetType === 'board') {
+        resetBoardMeetings();
+        await loadEvents();
+      }
+    } catch (err) {
+      console.error('Error resetting events:', err);
+      setError('Failed to reset. Please try again.');
     }
     setIsResetDialogOpen(false);
     setResetType(null);

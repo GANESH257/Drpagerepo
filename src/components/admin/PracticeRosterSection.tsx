@@ -94,7 +94,7 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
       }
       toast.success(`Added ${doctor.fullName} to practice`);
       setSelectedDoctorToAdd('');
-      loadData();
+      void loadData();
     } catch (e) {
       console.error(e);
       toast.error('Failed to add doctor');
@@ -121,7 +121,7 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
       toast.success(`Removed ${doctorToRemove.fullName} from practice`);
       setIsRemoveDialogOpen(false);
       setDoctorToRemove(null);
-      loadData();
+      void loadData();
     } catch (e) {
       console.error(e);
       toast.error('Failed to remove doctor');
@@ -142,7 +142,7 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
       toast.success(`${doctorToPromote.fullName} is now Practice Admin`);
       setIsPromoteDialogOpen(false);
       setDoctorToPromote(null);
-      loadData();
+      void loadData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to assign Practice Admin');
     }
