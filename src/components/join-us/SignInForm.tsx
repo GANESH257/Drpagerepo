@@ -17,8 +17,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-const DUMMY_PASSWORD = 'AIP@12345';
-
 interface SignInFormProps {
   onSuccess?: () => void;
 }

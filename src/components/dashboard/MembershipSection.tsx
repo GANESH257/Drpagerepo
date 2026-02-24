@@ -159,7 +159,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
           history: [],
         });
       }
-    });
+    }).catch(() => {});
   }, [doctorId]);
 
   // Get current plan data (from API plans or fallback)

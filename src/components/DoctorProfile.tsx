@@ -14,12 +14,9 @@ import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
 import { getInstitutionById } from '@/lib/institutionStorage';
 import { getActorFromSession, canSendReferral } from '@/lib/services/permissionService';
 import { getContactCard } from '@/lib/services/visibilityService';
-import { createReferral } from '@/lib/services/referralEngine';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getAdminSession } from '@/lib/adminSession';
 import { useRouter } from 'next/navigation';
-import { practices } from '@/data/practices';
-import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { getPractice } from '@/lib/api/practices';
 import type { Location } from '@/types';
@@ -82,7 +79,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
       setIsAdminLoggedIn(getAdminSession() !== null);
     };
 
-    const interval = setInterval(checkAdminSession, 1000);
+    const interval = setInterval(checkAdminSession, 5000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);

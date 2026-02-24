@@ -105,7 +105,7 @@ function SpecialtiesTab() {
         await createSpecialty({ name, slug: slug || undefined, sort_order: sortOrder });
       }
       setOpen(false);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
     }
@@ -114,7 +114,7 @@ function SpecialtiesTab() {
     if (!confirm('Delete this specialty?')) return;
     try {
       await deleteSpecialty(id);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete');
     }
@@ -228,7 +228,7 @@ function InsuranceTab() {
         await createInsuranceProvider({ name, slug: slug || undefined, sort_order: sortOrder });
       }
       setOpen(false);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
     }
@@ -237,7 +237,7 @@ function InsuranceTab() {
     if (!confirm('Delete this insurance provider?')) return;
     try {
       await deleteInsuranceProvider(id);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete');
     }
@@ -346,7 +346,7 @@ function ConditionsTreatmentsTab() {
       setLinkOpen(false);
       setCondId('');
       setTreatId('');
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to link');
     }
@@ -355,7 +355,7 @@ function ConditionsTreatmentsTab() {
     if (!confirm('Remove this link?')) return;
     try {
       await unlinkConditionTreatment(conditionId, treatmentId);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to unlink');
     }
@@ -366,7 +366,7 @@ function ConditionsTreatmentsTab() {
       await createCondition({ name: condName.trim() });
       setAddCondOpen(false);
       setCondName('');
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add condition');
     }
@@ -377,7 +377,7 @@ function ConditionsTreatmentsTab() {
       await createTreatment({ name: treatName.trim() });
       setAddTreatOpen(false);
       setTreatName('');
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to add treatment');
     }
