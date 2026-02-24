@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/lib/toast';
-import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone } from 'lucide-react';
+import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone, ArrowRight } from 'lucide-react';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { PracticeInvitation } from '@/types/invitations';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
@@ -171,7 +171,7 @@ export default function PracticeRosterPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading roster...</p>
         </div>
       </div>
@@ -194,12 +194,14 @@ export default function PracticeRosterPage() {
       <SectionHeader
         title="Practice Roster"
         description={`Manage doctors in ${practice.name}`}
+        variant="practice"
         actions={
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
             <DialogTrigger asChild>
-              <Button>
+              <Button variant="dashboard">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Invite Doctor
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -232,7 +234,7 @@ export default function PracticeRosterPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => {
+                    <Button variant="dashboard" onClick={() => {
                       setShowInviteDialog(false);
                       setLastCreatedInvitation(null);
                       setInviteEmail('');
@@ -270,8 +272,9 @@ export default function PracticeRosterPage() {
                     <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
+                    <Button variant="dashboard" onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
                       {isSubmitting ? 'Submitting...' : 'Create Invitation'}
+                      <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </DialogFooter>
                 </>
@@ -283,10 +286,10 @@ export default function PracticeRosterPage() {
 
       {/* Pending Invitations */}
       {invitations.filter(inv => inv.status === 'sent').length > 0 && (
-        <Card>
+        <Card className="card-practice-accent">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Mail className="h-5 w-5" />
+              <Mail className="h-5 w-5 text-[var(--aip-teal)]" />
               Pending Invitations
             </CardTitle>
           </CardHeader>
@@ -333,7 +336,7 @@ export default function PracticeRosterPage() {
 
       {/* Doctors List */}
       {practiceDoctors.length === 0 ? (
-        <Card>
+        <Card className="card-practice-accent">
           <CardContent className="py-12 text-center">
             <p className="text-gray-600">No doctors in this practice yet.</p>
           </CardContent>
@@ -346,7 +349,7 @@ export default function PracticeRosterPage() {
             const planName = planId ? membershipPlans.find((p) => p.id === planId)?.name ?? planId : null;
 
             return (
-              <Card key={doctor.id}>
+              <Card key={doctor.id} className="card-practice-accent">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

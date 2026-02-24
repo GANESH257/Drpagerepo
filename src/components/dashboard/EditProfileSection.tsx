@@ -378,7 +378,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} variant="gradient">
+          <Button onClick={handleSave} disabled={isSaving} variant="dashboard">
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
@@ -401,7 +401,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
             {/* Tab 1: Basic Info */}
             <TabsContent value="basic" className="mt-4">
-              <Card className="card-vibrant">
+              <Card className="glass-card card-vibrant">
                 <CardHeader>
                   <CardTitle className="text-lg">Basic Information</CardTitle>
                   <CardDescription>Name, specialty, profile image, and primary office hours</CardDescription>
@@ -562,7 +562,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
             {/* Tab 2: Biography */}
             <TabsContent value="bio" className="mt-4">
-              <Card>
+              <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="text-lg">Biography</CardTitle>
                   <CardDescription>Short bio, detailed about, and links</CardDescription>
@@ -637,7 +637,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
             {/* Tab 3: Professional Credentials */}
             <TabsContent value="credentials" className="mt-4">
-              <Card className="card-vibrant">
+              <Card className="glass-card card-vibrant">
                 <CardHeader>
                   <CardTitle className="text-lg">Professional Credentials</CardTitle>
                   <CardDescription>Education, certifications, and privileges</CardDescription>
@@ -720,7 +720,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
             {/* Tab 4: Status & Settings */}
             <TabsContent value="status" className="mt-4">
-              <Card>
+              <Card className="glass-card">
                 <CardHeader>
                   <CardTitle className="text-lg">Status & Settings</CardTitle>
                   <CardDescription>New patients and profile visibility</CardDescription>
@@ -783,7 +783,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
         {/* Helper Panel - collapsible; minimizes to narrow strip on the right */}
         <div className={cn('transition-all duration-200', tipsCollapsed ? 'w-12 shrink-0' : 'lg:col-span-1')}>
-          <Card className="sticky top-24 card-vibrant overflow-hidden w-full min-w-[3rem]">
+          <Card className="glass-card sticky top-24 card-vibrant overflow-hidden w-full min-w-[3rem]">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between gap-2">
                 {!tipsCollapsed && (

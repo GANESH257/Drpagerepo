@@ -51,7 +51,7 @@ export function MessageBell({
             size="icon"
             onClick={() => router.push(href)}
             aria-label={`Messages${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            className="relative text-gray-600 hover:text-[#0F5FA8] hover:bg-[#0F5FA8]/10"
+            className="relative text-gray-600 hover:text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10 rounded-xl"
         >
             <MessageCircle className="h-5 w-5" />
             {unreadCount > 0 && (

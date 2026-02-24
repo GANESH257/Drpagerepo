@@ -61,7 +61,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4" />
           <p className="text-gray-600">Loading announcements...</p>
         </div>
       </div>
@@ -91,7 +91,7 @@ export default function AnnouncementsPage() {
                 className={cn(
                   'transition-all duration-200',
                   !isRead
-                    ? 'border-l-4 border-l-[#0F5FA8] shadow-md'
+                    ? 'border-l-4 border-l-[var(--aip-teal)] shadow-md'
                     : 'border-gray-200 shadow-sm'
                 )}
               >
@@ -101,7 +101,7 @@ export default function AnnouncementsPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <CardTitle className="text-lg">{announcement.title}</CardTitle>
                         {!isRead && (
-                          <Badge className="bg-[#0F5FA8] hover:bg-[#0F5FA8]/90 animate-pulse">
+                          <Badge className="animate-pulse text-white" style={{ background: 'var(--aip-teal)' }}>
                             NEW
                           </Badge>
                         )}
@@ -120,7 +120,8 @@ export default function AnnouncementsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleMarkAsRead(announcement.id)}
-                        className="text-xs h-8 border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8]/10"
+                        className="text-xs h-8 rounded-lg"
+                        style={{ borderColor: 'var(--aip-teal)', color: 'var(--aip-teal)' }}
                       >
                         Mark as read
                       </Button>

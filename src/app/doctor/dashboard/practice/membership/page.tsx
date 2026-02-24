@@ -125,7 +125,7 @@ export default function PracticeMembershipOverviewPage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[#0F5FA8] border-t-transparent" />
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-2 border-[var(--aip-teal)] border-t-transparent" />
           <p className="text-gray-600">Loading membership overview...</p>
         </div>
       </div>

@@ -264,7 +264,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
           </p>
         </div>
 
-        <Card>
+        <Card className="glass-card">
           <CardContent className="p-12 text-center">
             <Crown className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">
@@ -295,7 +295,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
       </div>
 
       {/* Current Plan Summary */}
-      <Card className="card-vibrant">
+      <Card className="glass-card card-vibrant">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
@@ -310,7 +310,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
               <Button
                 onClick={handleMarkAsPaid}
                 disabled={isProcessing}
-                variant="gradient"
+                variant="dashboard"
               >
                 {isProcessing ? 'Processing...' : 'Mark as Paid (Demo)'}
               </Button>
@@ -361,7 +361,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Plan Benefits */}
-        <Card className="card-vibrant">
+        <Card className="glass-card card-vibrant">
           <CardHeader>
             <CardTitle>Plan Benefits</CardTitle>
             <CardDescription>
@@ -387,7 +387,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
         </Card>
 
         {/* Payment Method */}
-        <Card className="card-vibrant">
+        <Card className="glass-card card-vibrant">
           <CardHeader>
             <CardTitle>Payment Method</CardTitle>
             <CardDescription>
@@ -440,7 +440,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
       </div>
 
       {/* Membership History */}
-      <Card className="card-vibrant">
+      <Card className="glass-card card-vibrant">
         <CardHeader>
           <CardTitle>Membership History</CardTitle>
           <CardDescription>

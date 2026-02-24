@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
-import { Edit, Upload, Loader2, X } from 'lucide-react';
+import { Edit, Upload, Loader2, X, ArrowRight } from 'lucide-react';
 
 const PRACTICE_PROFILE_EDIT_TYPE = 'practice_admin_practice_profile_edit';
 
@@ -224,7 +224,7 @@ export default function PracticeDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading practice details...</p>
         </div>
       </div>
@@ -243,9 +243,9 @@ export default function PracticeDetailsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {hasPendingProfileEdit && (
-        <div className="flex items-center gap-2 flex-wrap text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <div className="flex items-center gap-2 flex-wrap text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
           <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
             Pending approval
           </Badge>
@@ -255,12 +255,14 @@ export default function PracticeDetailsPage() {
       <SectionHeader
         title="Practice Details"
         description={practice.name}
+        variant="practice"
         actions={
           <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
             <DialogTrigger asChild>
-              <Button>
+              <Button variant="dashboard">
                 <Edit className="h-4 w-4 mr-2" />
                 Request Edit
+                <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -442,8 +444,9 @@ export default function PracticeDetailsPage() {
                 <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmitEdit} disabled={isSubmitting}>
+                <Button variant="dashboard" onClick={handleSubmitEdit} disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -452,42 +455,42 @@ export default function PracticeDetailsPage() {
       />
 
       {/* Practice Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Practice Information</CardTitle>
+      <Card className="card-practice-accent">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-bold text-gray-900">Practice Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5 pt-0">
           <div>
-            <Label className="text-gray-600">Name</Label>
-            <p className="font-medium">{practice.name}</p>
+            <Label className="text-sm font-medium text-gray-500">Name</Label>
+            <p className="mt-1 text-base font-medium text-gray-900">{practice.name}</p>
           </div>
           <div>
-            <Label className="text-gray-600">Description</Label>
-            <p className="text-gray-700">{practice.description || 'No description provided'}</p>
+            <Label className="text-sm font-medium text-gray-500">Description</Label>
+            <p className="mt-1 text-base text-gray-700">{practice.description || 'No description provided'}</p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <Label className="text-gray-600">Phone</Label>
-              <p className="font-medium">{practice.phone}</p>
+              <Label className="text-sm font-medium text-gray-500">Phone</Label>
+              <p className="mt-1 text-base font-medium text-gray-900">{practice.phone}</p>
             </div>
             <div>
-              <Label className="text-gray-600">Email</Label>
-              <p className="font-medium">{practice.email || 'N/A'}</p>
+              <Label className="text-sm font-medium text-gray-500">Email</Label>
+              <p className="mt-1 text-base font-medium text-gray-900">{practice.email || 'N/A'}</p>
             </div>
           </div>
           {practice.website && (
             <div>
-              <Label className="text-gray-600">Website</Label>
-              <p className="font-medium">
-                <a href={practice.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              <Label className="text-sm font-medium text-gray-500">Website</Label>
+              <p className="mt-1 text-base">
+                <a href={practice.website} target="_blank" rel="noopener noreferrer" className="font-medium text-[var(--aip-teal)] hover:underline">
                   {practice.website}
                 </a>
               </p>
             </div>
           )}
           <div>
-            <Label className="text-gray-600">Address</Label>
-            <p className="font-medium">
+            <Label className="text-sm font-medium text-gray-500">Address</Label>
+            <p className="mt-1 text-base font-medium text-gray-900 leading-relaxed">
               {practice.address.line1}
               {practice.address.line2 && `, ${practice.address.line2}`}
               <br />
@@ -498,39 +501,39 @@ export default function PracticeDetailsPage() {
       </Card>
 
       {/* Practice Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{practiceDoctors.length}</div>
-            <div className="text-sm text-gray-600">Doctors</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Card className="card-practice-accent">
+          <CardContent className="pt-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900">{practiceDoctors.length}</div>
+            <div className="text-sm font-medium text-gray-500 mt-1">Doctors</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{practice.specialties.length}</div>
-            <div className="text-sm text-gray-600">Specialties</div>
+        <Card className="card-practice-accent">
+          <CardContent className="pt-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900">{practice.specialties.length}</div>
+            <div className="text-sm font-medium text-gray-500 mt-1">Specialties</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{practice.locations?.length || 1}</div>
-            <div className="text-sm text-gray-600">Locations</div>
+        <Card className="card-practice-accent">
+          <CardContent className="pt-6 pb-6">
+            <div className="text-3xl font-bold text-gray-900">{practice.locations?.length || 1}</div>
+            <div className="text-sm font-medium text-gray-500 mt-1">Locations</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Specialties */}
       {practice.specialties.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Specialties</CardTitle>
+        <Card className="card-practice-accent">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-gray-900">Specialties</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="flex flex-wrap gap-2">
               {practice.specialties.map((specialty) => (
                 <span
                   key={specialty}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="px-3 py-1.5 text-sm font-medium rounded-full bg-[var(--aip-teal)]/10 text-[var(--aip-teal)]"
                 >
                   {specialty}
                 </span>

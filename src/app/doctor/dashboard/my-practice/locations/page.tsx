@@ -5,11 +5,9 @@ import { useRouter } from 'next/navigation';
 import { getPractice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { useDoctorContext } from '@/components/dashboard/DoctorContext';
-import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MapPin } from 'lucide-react';
+import { MapPin, Phone, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 function getPracticeId(doctor: any): string | null {
   const fromDoctor = (doctor as any)?.practice_id ?? doctor?.practiceId;
@@ -25,6 +23,17 @@ function getPracticeId(doctor: any): string | null {
     // ignore
   }
   return null;
+}
+
+function formatAddress(loc: any): string {
+  const parts: string[] = [];
+  const line1 = loc.address ?? loc.address_line1;
+  if (line1) parts.push(line1);
+  if (loc.address_line2) parts.push(loc.address_line2);
+  if (loc.city || loc.state || loc.zip) {
+    parts.push([loc.city, loc.state, loc.zip].filter(Boolean).join(', '));
+  }
+  return parts.join(', ');
 }
 
 export default function MyPracticeLocationsPage() {
@@ -48,7 +57,7 @@ export default function MyPracticeLocationsPage() {
         const locs = Array.isArray(p.locations) ? p.locations : [];
         setLocations(locs.map((loc: any) => ({
           ...loc,
-          address: loc.address ?? loc.address_line1 ?? [loc.address_line1, loc.city, loc.state, loc.zip].filter(Boolean).join(', '),
+          address: formatAddress(loc),
         })));
       })
       .catch(() => setLocations([]))
@@ -58,44 +67,69 @@ export default function MyPracticeLocationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-teal" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--aip-teal)]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        title="View Practice Locations"
-        description={practiceName ? `Office locations for ${practiceName}` : 'Office locations for your practice'}
-      />
-      <Link href="/doctor/dashboard/my-practice">
-        <Button variant="outline">Back to Practice Profile</Button>
-      </Link>
+    <div className="space-y-5 relative z-10 max-w-4xl">
+      <header>
+        <h1 className="text-xl font-bold tracking-tight text-gray-900">Practice Locations</h1>
+        <p className="mt-0.5 text-xs text-gray-600">
+          All office locations associated with your practice.
+        </p>
+      </header>
+
+      <div className="flex justify-end">
+        <Link href="/doctor/dashboard/my-practice">
+          <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs border-gray-200 text-gray-700 hover:bg-gray-50">
+            Back to Practice Profile
+          </Button>
+        </Link>
+      </div>
+
       {locations.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-gray-600">
-            No locations on file for this practice.
-          </CardContent>
-        </Card>
+        <div className="glass-card rounded-2xl py-12 text-center">
+          <p className="text-sm text-gray-600">No locations on file for this practice.</p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {locations.map((loc) => (
-            <Card key={loc.id}>
-              <CardContent className="p-4 flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-brand-teal mt-0.5 shrink-0" />
-                <div>
-                  <h3 className="font-semibold">{loc.name || 'Office'}</h3>
-                  <p className="text-sm text-gray-600">{loc.address}</p>
-                  {(loc.city || loc.state || loc.zip) && (
-                    <p className="text-sm text-gray-500">
-                      {loc.city}{loc.city && loc.state ? ', ' : ''}{loc.state} {loc.zip}
-                    </p>
+          {locations.map((loc, index) => (
+            <div key={loc.id || index} className="glass-card rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-base font-bold text-gray-900">
+                    {loc.name || 'Office'}
+                  </h2>
+                  {index === 0 && (
+                    <span className="shrink-0 rounded-lg bg-emerald-100 text-emerald-800 px-2 py-0.5 text-xs font-medium">
+                      Primary Location
+                    </span>
                   )}
-                  {loc.phone && <p className="text-sm mt-1">Phone: {loc.phone}</p>}
                 </div>
-              </CardContent>
-            </Card>
+                <div className="mt-4 space-y-3">
+                  {loc.address && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-gray-700">{loc.address}</p>
+                    </div>
+                  )}
+                  {loc.phone && (
+                    <div className="flex items-start gap-2">
+                      <Phone className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-gray-700">{loc.phone}</p>
+                    </div>
+                  )}
+                  {loc.hours && (
+                    <div className="flex items-start gap-2">
+                      <Clock className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                      <p className="text-sm text-gray-700">{loc.hours}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}

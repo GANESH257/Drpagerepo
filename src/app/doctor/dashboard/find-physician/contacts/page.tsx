@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { getMyContacts, removeContact, ContactDoctor } from '@/lib/api/contacts';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookUser, UserMinus, ExternalLink, Loader2 } from 'lucide-react';
@@ -42,7 +41,7 @@ export default function MyContactsPage() {
     (c.full_name && c.full_name.trim()) || c.specialty || 'Physician';
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-8 max-w-6xl relative z-10">
       {/* Page header */}
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
@@ -56,7 +55,8 @@ export default function MyContactsPage() {
         <div className="flex flex-wrap gap-2 shrink-0">
           <Link href="/doctor/dashboard/find-physician">
             <Button
-              className="rounded-lg bg-[var(--brand-dark-blue)] hover:bg-[#0d5496] text-white shadow-sm"
+              className="rounded-lg text-white shadow-sm"
+              style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
             >
               Find a Physician
             </Button>
@@ -64,7 +64,8 @@ export default function MyContactsPage() {
           <Link href="/doctor/dashboard/referrals">
             <Button
               variant="outline"
-              className="rounded-lg border-[var(--brand-dark-blue)] text-[var(--brand-dark-blue)] hover:bg-[var(--brand-dark-blue)]/5"
+              className="rounded-lg"
+              style={{ borderColor: 'var(--aip-teal)', color: 'var(--aip-teal)' }}
             >
               Send a Referral
             </Button>
@@ -74,13 +75,13 @@ export default function MyContactsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 rounded-2xl bg-gray-50/80 border border-gray-100">
-          <Loader2 className="h-10 w-10 animate-spin text-[var(--brand-dark-blue)]" aria-hidden />
+        <div className="flex flex-col items-center justify-center py-24 rounded-2xl bg-gray-50/80 border border-gray-100 glass-card">
+          <Loader2 className="h-10 w-10 animate-spin text-[var(--aip-teal)]" aria-hidden />
           <p className="mt-4 text-sm text-gray-500">Loading contacts...</p>
         </div>
       ) : contacts.length === 0 ? (
-        <Card className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 overflow-hidden">
-          <CardContent className="py-20 text-center">
+        <div className="glass-card rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 overflow-hidden">
+          <div className="py-20 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto">
               <BookUser className="h-8 w-8 text-gray-400" aria-hidden />
             </div>
@@ -89,12 +90,12 @@ export default function MyContactsPage() {
               Add physicians from the Find a Physician directory to quickly send referrals and messages.
             </p>
             <Link href="/doctor/dashboard/find-physician">
-              <Button className="mt-6 rounded-lg bg-[var(--brand-dark-blue)] hover:bg-[#0d5496] text-white">
+              <Button className="mt-6 rounded-lg text-white" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>
                 Find a Physician
               </Button>
             </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <>
           <p className="text-sm text-gray-500">
@@ -103,11 +104,12 @@ export default function MyContactsPage() {
           <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">
             {contacts.map((c) => (
               <li key={c.id}>
-                <Card className="rounded-xl border border-gray-200/90 bg-white shadow-sm hover:shadow-[var(--shadow-md)] hover:border-[var(--brand-dark-blue)]/20 transition-all duration-200 overflow-hidden h-full flex flex-col">
-                  <CardContent className="p-0 flex flex-col flex-1">
+                <div className="glass-card rounded-xl overflow-hidden h-full flex flex-col hover:shadow-md transition-all duration-200">
+                  <div className="p-0 flex flex-col flex-1">
                     <div className="p-5 flex gap-4 flex-1">
                       <div
-                        className="flex-shrink-0 w-14 h-14 rounded-xl bg-[var(--brand-dark-blue)]/10 flex items-center justify-center text-[var(--brand-dark-blue)] font-bold text-xl"
+                        className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl text-white"
+                        style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
                         aria-hidden
                       >
                         {(displayName(c).charAt(0) || '?').toUpperCase()}
@@ -116,7 +118,7 @@ export default function MyContactsPage() {
                         <h3 className="font-semibold text-gray-900 leading-tight">
                           {displayName(c)}
                         </h3>
-                        <p className="text-sm font-medium text-[var(--brand-dark-blue)] mt-1.5">
+                        <p className="text-sm font-medium mt-1.5" style={{ color: 'var(--aip-teal)' }}>
                           {c.specialty}
                         </p>
                       </div>
@@ -147,8 +149,8 @@ export default function MyContactsPage() {
                         <UserMinus className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

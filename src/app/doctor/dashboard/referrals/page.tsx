@@ -11,16 +11,11 @@ import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
 import { getMyContacts } from '@/lib/api/contacts';
 import { Doctor } from '@/types';
-import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Timeline } from '@/components/shared/approvals/Timeline';
-import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { Eye, CheckCircle, XCircle, ArrowRight, User } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, ArrowRight, User, Plus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -40,8 +35,9 @@ export default function ReferralsV2Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReferral, setSelectedReferral] = useState<Referral | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showNewReferralDialog, setShowNewReferralDialog] = useState(false);
   const [timeline, setTimeline] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'sent' | 'received' | 'search'>('received');
+  const [filterTab, setFilterTab] = useState<'all' | 'sent' | 'received' | 'pending'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
   const [networkDoctors, setNetworkDoctors] = useState<Doctor[]>([]);
@@ -129,16 +125,9 @@ export default function ReferralsV2Page() {
       const referral = allReferrals.find(r => r.id === referralIdParam);
 
       if (referral) {
-        // Determine correct tab
         const isReceived = referralsReceived.some(r => r.id === referralIdParam);
         const correctTab = isReceived ? 'received' : 'sent';
-
-        // Switch tab if needed
-        if (tabParam && tabParam !== correctTab) {
-          setActiveTab(correctTab);
-        } else if (!tabParam) {
-          setActiveTab(correctTab);
-        }
+        setFilterTab(correctTab);
 
         // Open dialog (inline logic to avoid dependency issue)
         setSelectedReferral(referral);
@@ -159,7 +148,7 @@ export default function ReferralsV2Page() {
         router.replace('/doctor/dashboard/referrals');
       }
     }
-  }, [referralIdParam, isLoading, referralsSent, referralsReceived, tabParam, router]);
+  }, [referralIdParam, isLoading, referralsSent, referralsReceived, router]);
 
   const handleStatusChange = async (referralId: string, newStatus: ReferralStatus) => {
     try {
@@ -211,16 +200,57 @@ export default function ReferralsV2Page() {
     return variants[status];
   };
 
+  const statusPillClass = (status: ReferralStatus) => {
+    switch (status) {
+      case 'accepted': return 'bg-emerald-100 text-emerald-800';
+      case 'considering': return 'bg-amber-100 text-amber-800';
+      case 'no_show': return 'bg-gray-100 text-gray-700';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const getDoctorName = (doctorId: string): string => {
     const doctor = networkDoctors.find(d => d.id === doctorId);
     return (doctor?.fullName ?? (doctor as any)?.full_name) || doctorId;
   };
 
+  const getDoctorSpecialty = (doctorId: string): string => {
+    const doctor = networkDoctors.find(d => d.id === doctorId);
+    return (doctor?.specialty ?? (doctor as any)?.specialties?.[0]) || '—';
+  };
+
+  type TableRow = Referral & { type: 'sent' | 'received'; physicianName: string; physicianSpecialty: string };
+  const tableRows = useMemo((): TableRow[] => {
+    const sent: TableRow[] = referralsSent.map(r => ({
+      ...r,
+      type: 'sent' as const,
+      physicianName: getDoctorName(r.toDoctorId),
+      physicianSpecialty: getDoctorSpecialty(r.toDoctorId),
+    }));
+    const received: TableRow[] = referralsReceived.map(r => ({
+      ...r,
+      type: 'received' as const,
+      physicianName: getDoctorName(r.fromDoctorId),
+      physicianSpecialty: getDoctorSpecialty(r.fromDoctorId),
+    }));
+    const all = [...sent, ...received].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    if (filterTab === 'sent') return all.filter(r => r.type === 'sent');
+    if (filterTab === 'received') return all.filter(r => r.type === 'received');
+    if (filterTab === 'pending') return all.filter(r => r.status === 'considering');
+    return all;
+  }, [referralsSent, referralsReceived, filterTab, networkDoctors]);
+
+  const formatShortDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading referrals...</p>
         </div>
       </div>
@@ -228,275 +258,101 @@ export default function ReferralsV2Page() {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        title="Referrals"
-        description="Manage your referrals sent and received"
-      />
+    <div className="space-y-5 relative z-10 max-w-6xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">Referrals</h1>
+          <p className="mt-0.5 text-xs text-gray-600">Manage all incoming and outgoing patient referrals</p>
+        </div>
+        <Button
+          onClick={() => setShowNewReferralDialog(true)}
+          className="rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white h-9 text-sm shrink-0"
+        >
+          <Plus className="h-4 w-4 mr-1.5" />
+          New Referral
+        </Button>
+      </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'sent' | 'received' | 'search')} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="received">
-            Received ({referralsReceived.length})
-          </TabsTrigger>
-          <TabsTrigger value="sent">
-            Sent ({referralsSent.length})
-          </TabsTrigger>
-          <TabsTrigger value="search">
-            Find Physicians
-          </TabsTrigger>
-        </TabsList>
+      {/* Filter pills */}
+      <div className="flex flex-wrap gap-1">
+        {(['all', 'sent', 'received', 'pending'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setFilterTab(tab)}
+            className={cn(
+              'rounded-full px-4 py-2 text-sm font-medium transition-colors',
+              filterTab === tab
+                ? 'bg-[var(--aip-teal)] text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            )}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value="search" className="space-y-4">
-          {contacts.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">My Contacts</CardTitle>
-                <CardDescription>Quick send a referral to a saved contact</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {contacts.map((c) => (
-                    <ReferralDialog
-                      key={c.id}
-                      doctor={{ id: c.id, fullName: c.full_name, specialty: c.specialty } as Doctor}
-                      trigger={<Button variant="outline" size="sm">{c.full_name} — Send referral</Button>}
-                      onSuccess={loadReferralsAndDoctors}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Find & Refer Physicians</CardTitle>
-              <CardDescription>Search our network to initiate a peer-to-peer referral</CardDescription>
-              <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <Input
-                  placeholder="Search by name..."
-                  className="flex-1"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="All Specialties" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Specialties</SelectItem>
-                    {specialties.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {networkDoctorsLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="flex items-center gap-3 rounded-xl border p-3 animate-pulse">
-                      <div className="h-12 w-12 rounded-full bg-gray-200" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-20 bg-gray-200 rounded" />
-                        <div className="h-3 w-16 bg-gray-100 rounded" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : networkDoctorsError ? (
-                <div className="py-12 text-center">
-                  <p className="text-gray-600 mb-2">{networkDoctorsError}</p>
-                  <Button variant="outline" size="sm" onClick={() => { setNetworkDoctorsError(null); setNetworkDoctorsLoading(true); window.location.reload(); }}>
-                    Retry
-                  </Button>
-                </div>
+      {/* Table */}
+      <div className="glass-card rounded-xl overflow-hidden border border-gray-200">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50/80">
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">PATIENT</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">PHYSICIAN</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">SPECIALTY</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">TYPE</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">STATUS</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">DATE</th>
+                <th className="text-left font-semibold text-gray-900 py-3 px-4">VIEW</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tableRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-gray-500">
+                    No referrals match this filter.
+                  </td>
+                </tr>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredDoctors.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-gray-500">
-                      No physicians found matching your criteria.
-                    </div>
-                  ) : (
-                    filteredDoctors.map((doc) => {
-                      const displayName = doc.fullName ?? (doc as any).full_name ?? '—';
-                      const displaySpecialty = doc.specialty ?? (doc as any).specialties?.[0] ?? '—';
-                      const profileHref = getDoctorProfileUrl(doc);
-                      return (
-                        <div key={doc.id} className="group relative flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-brand-teal/50 hover:bg-brand-teal/5">
-                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/10 text-brand-dark-blue text-lg font-bold">
-                            {displayName.charAt(0)}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-gray-900 truncate">{displayName}</div>
-                            <div className="text-xs text-gray-500 truncate">{displaySpecialty}</div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <Link
-                                href={profileHref}
-                                className="inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline"
-                              >
-                                <User className="mr-1 h-3 w-3" />
-                                View Profile
-                              </Link>
-                              <ReferralDialog
-                                doctor={doc}
-                                trigger={
-                                  <button className="inline-flex items-center text-[11px] font-bold text-brand-dark-blue hover:underline">
-                                    Send Referral
-                                    <ArrowRight className="ml-1 h-3 w-3" />
-                                  </button>
-                                }
-                                onSuccess={loadReferralsAndDoctors}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                tableRows.map((row) => (
+                  <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/50">
+                    <td className="py-3 px-4 text-gray-900">{row.patient?.name || '—'}</td>
+                    <td className="py-3 px-4 text-gray-900">{row.physicianName}</td>
+                    <td className="py-3 px-4 text-gray-600">{row.physicianSpecialty}</td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={cn(
+                          'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
+                          row.type === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-violet-100 text-violet-800'
+                        )}
+                      >
+                        {row.type === 'sent' ? 'Sent' : 'Received'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', statusPillClass(row.status))}>
+                        {getReferralStatusLabel(row.status)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-600">{formatShortDate(row.createdAt)}</td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={() => handleViewDetail(row)}
+                        className="text-[var(--aip-teal)] font-medium hover:underline"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="received" className="space-y-4">
-          {referralsReceived.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-gray-600">No referrals received</p>
-              </CardContent>
-            </Card>
-          ) : (
-            referralsReceived.map((referral) => (
-              <Card key={referral.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">From: {getDoctorName(referral.fromDoctorId)}</h3>
-                        <Badge variant={getStatusBadge(referral.status)}>
-                          {getReferralStatusLabel(referral.status)}
-                        </Badge>
-                      </div>
-                      <p className="text-gray-700 mb-1">
-                        <strong>Condition:</strong> {referral.condition}
-                      </p>
-                      {referral.patient.name && (
-                        <p className="text-sm text-gray-600 mb-1">
-                          Patient: {referral.patient.name}
-                          {referral.patient.dob && `, DOB: ${referral.patient.dob}`}
-                          {referral.patient.sex && `, ${referral.patient.sex}`}
-                        </p>
-                      )}
-                      {referral.notes && (
-                        <p className="text-sm text-gray-600 mb-2">{referral.notes}</p>
-                      )}
-                      <p className="text-xs text-gray-500">
-                        {formatDateTime(referral.createdAt)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetail(referral)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      {referral.status === 'considering' && (
-                        <Select
-                          value={referral.status}
-                          onValueChange={(value) => handleStatusChange(referral.id, value as ReferralStatus)}
-                        >
-                          <SelectTrigger className="w-[140px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="accepted">
-                              <div className="flex items-center">
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Accepted
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="no_show">
-                              <div className="flex items-center">
-                                <XCircle className="h-4 w-4 mr-2" />
-                                No Show
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="cancelled">
-                              <div className="flex items-center">
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Cancelled
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-
-        <TabsContent value="sent" className="space-y-4">
-          {referralsSent.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-gray-600">No referrals sent</p>
-              </CardContent>
-            </Card>
-          ) : (
-            referralsSent.map((referral) => (
-              <Card key={referral.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">To: {getDoctorName(referral.toDoctorId)}</h3>
-                        <Badge variant={getStatusBadge(referral.status)}>
-                          {getReferralStatusLabel(referral.status)}
-                        </Badge>
-                      </div>
-                      <p className="text-gray-700 mb-1">
-                        <strong>Condition:</strong> {referral.condition}
-                      </p>
-                      {referral.patient.name && (
-                        <p className="text-sm text-gray-600 mb-1">
-                          Patient: {referral.patient.name}
-                          {referral.patient.dob && `, DOB: ${referral.patient.dob}`}
-                          {referral.patient.sex && `, ${referral.patient.sex}`}
-                        </p>
-                      )}
-                      {referral.notes && (
-                        <p className="text-sm text-gray-600 mb-2">{referral.notes}</p>
-                      )}
-                      <p className="text-xs text-gray-500">
-                        {formatDateTime(referral.createdAt)}
-                      </p>
-                    </div>
-                    <div className="ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetail(referral)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </TabsContent>
-      </Tabs>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Detail Dialog */}
       {selectedReferral && (
@@ -504,19 +360,15 @@ export default function ReferralsV2Page() {
           open={showDetailDialog}
           onOpenChange={(open) => {
             setShowDetailDialog(open);
-            // Remove both referralId and tab params from URL when dialog closes
-            // This ensures notifications always land users in the right view without leaving "stuck params"
-            if (!open && (referralIdParam || tabParam)) {
-              router.replace('/doctor/dashboard/referrals');
-            }
+            if (!open && (referralIdParam || tabParam)) router.replace('/doctor/dashboard/referrals');
           }}
         >
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Referral Details</DialogTitle>
-              <DialogDescription>
+              <p className="text-sm text-gray-600">
                 Referral from {getDoctorName(selectedReferral.fromDoctorId)} to {getDoctorName(selectedReferral.toDoctorId)}
-              </DialogDescription>
+              </p>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -541,10 +393,43 @@ export default function ReferralsV2Page() {
               )}
               <div>
                 <h4 className="font-semibold mb-2">Status</h4>
-                <Badge variant={getStatusBadge(selectedReferral.status)}>
+                <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', statusPillClass(selectedReferral.status))}>
                   {getReferralStatusLabel(selectedReferral.status)}
-                </Badge>
+                </span>
               </div>
+              {selectedReferral.status === 'considering' && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Update status</label>
+                  <Select
+                    value={selectedReferral.status}
+                    onValueChange={(value) => handleStatusChange(selectedReferral.id, value as ReferralStatus)}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="accepted">
+                        <div className="flex items-center">
+                          <CheckCircle className="h-4 w-4 mr-2 text-emerald-600" />
+                          Accepted
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="no_show">
+                        <div className="flex items-center">
+                          <XCircle className="h-4 w-4 mr-2" />
+                          No Show
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="cancelled">
+                        <div className="flex items-center">
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Cancelled
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <h4 className="font-semibold mb-2">Timeline</h4>
                 <Timeline records={timeline} />
@@ -553,6 +438,101 @@ export default function ReferralsV2Page() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* New Referral dialog — Find Physicians */}
+      <Dialog open={showNewReferralDialog} onOpenChange={setShowNewReferralDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Find & Refer Physicians</DialogTitle>
+            <p className="text-sm text-gray-600">Search the network to send a peer-to-peer referral</p>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder="Search by name..."
+                className="flex-1"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="All Specialties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Specialties</SelectItem>
+                  {specialties.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </DialogHeader>
+          <div className="mt-4">
+            {networkDoctorsLoading ? (
+              <div className="grid gap-4 sm:grid-cols-2 py-8">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-xl border p-3 animate-pulse">
+                    <div className="h-12 w-12 rounded-full bg-gray-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-20 bg-gray-200 rounded" />
+                      <div className="h-3 w-16 bg-gray-100 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : networkDoctorsError ? (
+              <div className="py-12 text-center">
+                <p className="text-gray-600 mb-2">{networkDoctorsError}</p>
+                <Button variant="outline" size="sm" onClick={() => { setNetworkDoctorsError(null); setNetworkDoctorsLoading(true); loadReferralsAndDoctors(); }}>
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 max-h-[50vh] overflow-y-auto">
+                {filteredDoctors.length === 0 ? (
+                  <div className="col-span-full py-8 text-center text-gray-500">
+                    No physicians found matching your criteria.
+                  </div>
+                ) : (
+                  filteredDoctors.map((doc) => {
+                    const displayName = doc.fullName ?? (doc as any).full_name ?? '—';
+                    const displaySpecialty = doc.specialty ?? (doc as any).specialties?.[0] ?? '—';
+                    const profileHref = getDoctorProfileUrl(doc);
+                    return (
+                      <div key={doc.id} className="flex items-center gap-3 rounded-xl border p-3 hover:border-[var(--aip-teal)]/50 hover:bg-[var(--aip-teal)]/5">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--aip-teal)]/20 text-[var(--aip-teal)] text-sm font-bold">
+                          {displayName.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-gray-900 truncate">{displayName}</div>
+                          <div className="text-xs text-gray-500 truncate">{displaySpecialty}</div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <Link href={profileHref} className="text-xs font-medium text-[var(--aip-teal)] hover:underline">
+                              <User className="mr-1 h-3 w-3 inline" />
+                              View Profile
+                            </Link>
+                            <ReferralDialog
+                              doctor={doc}
+                              trigger={
+                                <button className="text-xs font-medium text-[var(--aip-teal)] hover:underline">
+                                  Send Referral
+                                  <ArrowRight className="ml-1 h-3 w-3 inline" />
+                                </button>
+                              }
+                              onSuccess={() => {
+                                loadReferralsAndDoctors();
+                                setShowNewReferralDialog(false);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

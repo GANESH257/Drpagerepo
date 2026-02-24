@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTime } from '@/lib/dateUtils';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 /** Normalize API notification (snake_case) to UI shape */
 interface NotificationRow {
@@ -112,7 +113,7 @@ export default function NotificationsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading notifications...</p>
         </div>
       </div>
@@ -143,7 +144,7 @@ export default function NotificationsPage() {
 
         <TabsContent value={filter} className="space-y-4">
           {filteredNotifications.length === 0 ? (
-            <Card>
+            <Card className="glass-card">
               <CardContent className="py-12 text-center">
                 <p className="text-gray-600">
                   {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
@@ -152,7 +153,7 @@ export default function NotificationsPage() {
             </Card>
           ) : (
             filteredNotifications.map((notification) => (
-              <Card key={notification.id} className={!notification.readAt ? 'border-blue-500' : ''}>
+              <Card key={notification.id} className={cn('glass-card', !notification.readAt && 'border-l-4')} style={!notification.readAt ? { borderLeftColor: 'var(--aip-teal)' } : undefined}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

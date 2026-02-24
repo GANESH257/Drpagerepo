@@ -13,11 +13,9 @@ interface PortalHeaderProps {
 
 export function PortalHeader({ title, rightContent, onMenuClick, isCollapsed }: PortalHeaderProps) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-[var(--dashboard-main-bg)]/95 backdrop-blur-md shadow-sm border-t-2 border-t-[var(--aip-teal)]">
       <div className={cn(
-        "mx-auto flex h-16 items-center justify-between px-3 md:px-6 w-full max-w-7xl transition-all duration-300",
-        "lg:pl-72",
-        isCollapsed && "lg:pl-20"
+        "mx-auto flex h-16 items-center justify-between px-3 md:px-6 w-full transition-all duration-300",
       )}>
         {/* Left: Menu button (mobile) + Title */}
         <div className="flex items-center gap-4">

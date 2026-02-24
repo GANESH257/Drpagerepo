@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { formatMessageTime } from '@/lib/dateUtils';
 import { Doctor, DoctorMessage } from '@/types';
 import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
@@ -23,6 +24,26 @@ interface MessagesSectionProps {
   doctor: Doctor;
   otherDoctorId?: string;
   basePath?: string;
+}
+
+const AVATAR_COLORS = [
+  'bg-sky-100 text-sky-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-gray-200 text-gray-700',
+  'bg-violet-100 text-violet-700',
+  'bg-amber-100 text-amber-700',
+];
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = ((hash << 5) - hash) + name.charCodeAt(i);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (name.slice(0, 2) || '?').toUpperCase();
 }
 
 export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSectionProps) {
@@ -152,11 +173,23 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
   };
 
   const selectedDoctor = selectedOtherId ? doctorsById.get(selectedOtherId) : null;
+  const lastMessage = threadMessages.length > 0 ? threadMessages[threadMessages.length - 1] : null;
+  const lastMessageSenderName = lastMessage
+    ? (lastMessage.senderId === doctor.id ? 'You' : (doctorsById.get(lastMessage.senderId)?.fullName ?? 'Unknown'))
+    : null;
 
   return (
-    <div className="flex h-[calc(100vh-140px)] flex-col gap-4 overflow-hidden md:flex-row">
+    <div className="flex flex-col gap-5 overflow-hidden">
+      <header>
+        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Secure direct messaging with AIP colleagues and administration.
+        </p>
+      </header>
+
+      <div className="flex h-[calc(100vh-200px)] flex-col gap-4 overflow-hidden md:flex-row">
       {/* Sidebar - Conversation list */}
-      <Card className="flex w-full flex-col overflow-hidden border-gray-200 bg-white md:w-80 lg:w-96">
+      <Card className="flex w-full flex-col overflow-hidden border-gray-200 bg-white md:w-80 lg:w-96 glass-card">
         <CardHeader className="border-b bg-gray-50/50 pb-4 space-y-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -182,7 +215,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={isNewChatMode ? "Search all physicians..." : "Search conversations..."}
+              placeholder={isNewChatMode ? "Search all physicians..." : "Search messages..."}
               className="h-10 bg-white shadow-sm focus-ring"
             />
           </div>
@@ -228,7 +261,9 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                 ) : (
                   (filteredItems as ConversationSummary[]).map((c) => {
                     const d = doctorsById.get(c.otherDoctorId);
+                    const name = d?.fullName || (c.otherDoctorId === 'admin' ? 'Alliance Admin' : 'Unknown');
                     const active = selectedOtherId === c.otherDoctorId;
+                    const avatarColor = getAvatarColor(name);
                     return (
                       <button
                         key={c.otherDoctorId}
@@ -236,42 +271,33 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                         onClick={() => openConversation(c.otherDoctorId)}
                         className={cn(
                           'group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all duration-200',
-                          active
-                            ? 'bg-brand-dark-blue text-white shadow-lg'
-                            : 'hover:bg-gray-100'
+                          active ? 'bg-gray-100' : 'hover:bg-gray-50'
                         )}
                       >
                         <div className={cn(
-                          "flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-lg font-bold shadow-sm",
-                          active ? "bg-white/20" : "bg-brand-dark-blue/10 text-brand-dark-blue"
+                          'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                          avatarColor
                         )}>
-                          {d?.fullName?.charAt(0) || '?'}
+                          {getInitials(name)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={cn("truncate font-semibold", active ? "text-white" : "text-gray-900")}>
-                              {d?.fullName || 'Unknown'}
-                            </span>
-                            {c.lastMessage?.sentAt && (
-                              <span className={cn("text-[10px] whitespace-nowrap", active ? "text-white/70" : "text-gray-400")}>
-                                {new Date(c.lastMessage.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            )}
-                          </div>
                           <div className="flex items-center justify-between gap-2">
-                            <p className={cn("truncate text-xs", active ? "text-white/80" : "text-gray-500")}>
-                              {c.lastMessage?.senderId === doctor.id ? 'You: ' : ''}
-                              {c.lastMessage?.content || d?.specialty}
-                            </p>
-                            {c.unreadCount > 0 && (
-                              <div className={cn(
-                                "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold shadow-sm",
-                                active ? "bg-white text-brand-dark-blue" : "bg-brand-teal text-white"
-                              )}>
-                                {c.unreadCount}
-                              </div>
-                            )}
+                            <span className="truncate font-semibold text-gray-900">{name}</span>
+                            <span className="flex flex-shrink-0 items-center gap-1.5">
+                              {c.lastMessage?.sentAt && (
+                                <span className="text-xs text-gray-400">
+                                  {formatMessageTime(c.lastMessage.sentAt)}
+                                </span>
+                              )}
+                              {c.unreadCount > 0 && (
+                                <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                              )}
+                            </span>
                           </div>
+                          <p className="truncate text-xs text-gray-500">
+                            {c.lastMessage?.senderId === doctor.id ? 'You: ' : ''}
+                            {c.lastMessage?.content || d?.specialty}
+                          </p>
                         </div>
                       </button>
                     );
@@ -284,7 +310,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
       </Card>
 
       {/* Chat Thread */}
-      <Card className="flex flex-1 flex-col overflow-hidden border-gray-200 bg-white">
+      <Card className="flex flex-1 flex-col overflow-hidden border-gray-200 bg-white glass-card">
         {!selectedOtherId ? (
           <div className="flex flex-1 flex-col items-center justify-center bg-gray-50/30 p-10 text-center">
             <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl">
@@ -297,70 +323,39 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
           </div>
         ) : (
           <>
-            <CardHeader className="flex flex-row items-center gap-3 border-b bg-white px-6 py-4">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue text-sm font-bold text-white shadow-sm">
-                {selectedDoctor?.fullName?.charAt(0) || '?'}
-              </div>
-              <div className="min-w-0 flex-1">
-                <CardTitle className="truncate text-lg font-bold text-gray-900">
-                  {selectedDoctor?.fullName}
-                </CardTitle>
-                <CardDescription className="truncate text-xs text-brand-teal font-medium">
-                  {selectedDoctor?.specialty}
+            <CardHeader className="border-b bg-white px-6 py-4">
+              <CardTitle className="text-lg font-bold text-gray-900">
+                Conversation with {selectedDoctor?.fullName}
+              </CardTitle>
+              {lastMessageSenderName != null && lastMessage && (
+                <CardDescription className="mt-1 text-sm text-gray-500">
+                  From: {lastMessageSenderName} – {formatMessageTime(lastMessage.sentAt)}
                 </CardDescription>
-              </div>
+              )}
             </CardHeader>
-            <CardContent className="relative flex-1 overflow-y-auto p-0" style={{
-              backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")',
-              backgroundColor: '#f0f2f5'
-            }}>
+            <CardContent className="relative flex-1 overflow-y-auto bg-white p-0">
               <div className="flex min-h-full flex-col justify-end p-4 md:p-6">
                 {threadMessages.length === 0 ? (
                   <div className="mb-auto flex h-full flex-col items-center justify-center p-12 text-center">
-                    <div className="mb-4 rounded-xl bg-white/80 px-4 py-2 text-xs font-medium text-gray-500 shadow-sm backdrop-blur-sm">
-                      Messages are private and secure.
-                    </div>
-                    <p className="mt-4 text-sm text-gray-400">No messages yet. Send a greeting!</p>
+                    <p className="text-sm text-gray-400">No messages yet. Send a greeting!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {threadMessages.map((m, idx) => {
+                    {threadMessages.map((m) => {
                       const mine = m.senderId === doctor.id;
-                      const prev = threadMessages[idx - 1];
-                      const showDate = !prev || new Date(prev.sentAt).toDateString() !== new Date(m.sentAt).toDateString();
-
+                      const senderName = mine ? 'You' : (doctorsById.get(m.senderId)?.fullName ?? 'Unknown');
                       return (
-                        <div key={m.id} className="space-y-4">
-                          {showDate && (
-                            <div className="flex justify-center my-4">
-                              <span className="rounded-lg bg-white/60 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500 shadow-sm backdrop-blur-sm">
-                                {new Date(m.sentAt).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-                              </span>
-                            </div>
+                        <div
+                          key={m.id}
+                          className={cn(
+                            'rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm',
+                            mine && 'bg-gray-50'
                           )}
-                          <div className={cn('flex items-end gap-2', mine ? 'justify-end' : 'justify-start')}>
-                            {!mine && (
-                              <div className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/20 text-[10px] font-bold text-brand-dark-blue shadow-sm">
-                                {selectedDoctor?.fullName?.charAt(0)}
-                              </div>
-                            )}
-                            <div
-                              className={cn(
-                                'relative max-w-[85%] px-4 py-2.5 shadow-sm md:max-w-[70%]',
-                                mine
-                                  ? 'rounded-t-2xl rounded-bl-2xl bg-brand-dark-blue text-white'
-                                  : 'rounded-t-2xl rounded-br-2xl bg-white text-gray-900'
-                              )}
-                            >
-                              <div className="whitespace-pre-wrap text-[13px] leading-relaxed">{m.content}</div>
-                              <div className={cn(
-                                'mt-1 flex items-center justify-end gap-1 text-[9px] font-medium opacity-70',
-                                mine ? 'text-white' : 'text-gray-500'
-                              )}>
-                                {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </div>
-                            </div>
+                        >
+                          <div className="mb-1 text-xs font-medium text-gray-500">
+                            {senderName} – {formatMessageTime(m.sentAt)}
                           </div>
+                          <div className="whitespace-pre-wrap text-sm text-gray-900">{m.content}</div>
                         </div>
                       );
                     })}
@@ -371,7 +366,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
             </CardContent>
 
             <div className="border-t bg-white p-4">
-              <div className="flex items-end gap-3 rounded-2xl bg-gray-50 p-2 shadow-inner focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-dark-blue/10 transition-all duration-200">
+              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 p-2 focus-within:border-green-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20">
                 <Textarea
                   value={composer}
                   onChange={(e) => setComposer(e.target.value)}
@@ -381,22 +376,24 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                       handleSend();
                     }
                   }}
-                  placeholder="Type a message..."
-                  className="min-h-[44px] max-h-[120px] flex-1 resize-none border-0 bg-transparent py-3 focus-visible:ring-0 text-[14px]"
+                  placeholder="Type your reply..."
+                  className="min-h-[44px] max-h-[120px] flex-1 resize-none border-0 bg-transparent py-3 focus-visible:ring-0 text-sm"
                 />
                 <Button
+                  variant="dashboard"
                   onClick={handleSend}
                   disabled={!composer.trim()}
-                  size="icon"
-                  className="h-10 w-10 shrink-0 rounded-full bg-brand-dark-blue hover:bg-brand-dark-blue/90 shadow-md transition-transform active:scale-95"
+                  className="shrink-0 gap-2"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-4 w-4" aria-hidden />
+                  Send
                 </Button>
               </div>
             </div>
           </>
         )}
       </Card>
+    </div>
     </div>
   );
 }

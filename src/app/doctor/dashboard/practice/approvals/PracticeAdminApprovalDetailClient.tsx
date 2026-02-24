@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
+import { ArrowRight } from 'lucide-react';
 
 interface PracticeAdminApprovalDetailClientProps {
     requestId: string;
@@ -154,7 +155,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading approval request...</p>
                 </div>
             </div>
@@ -275,7 +276,10 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                         <div className="flex gap-2">
                             {canApprove && (
                                 <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-                                    <Button onClick={() => setShowApproveDialog(true)}>Approve</Button>
+                                    <Button variant="dashboard" onClick={() => setShowApproveDialog(true)}>
+                                        Approve
+                                        <ArrowRight className="h-4 w-4 ml-2" />
+                                    </Button>
                                     <DialogContent>
                                         <DialogHeader>
                                             <DialogTitle>Approve Request</DialogTitle>
@@ -298,7 +302,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                                             <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
                                                 Cancel
                                             </Button>
-                                            <Button onClick={handleApprove} disabled={isSubmitting}>
+                                            <Button variant="dashboard" onClick={handleApprove} disabled={isSubmitting}>
                                                 {isSubmitting ? 'Processing...' : 'Approve'}
                                             </Button>
                                         </DialogFooter>

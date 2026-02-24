@@ -20,6 +20,8 @@ interface PortalShellProps {
   headerTitle: string;
   headerRight: ReactNode;
   mobileSidebarTitle?: string;
+  /** Optional footer block for sidebar (e.g. user avatar + logout) */
+  sidebarFooter?: ReactNode;
 }
 
 function isActive(href: string | undefined, pathname: string, basePaths: string[]) {
@@ -36,6 +38,7 @@ export function PortalShell({
   headerTitle,
   headerRight,
   mobileSidebarTitle = 'Navigation',
+  sidebarFooter,
 }: PortalShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -43,18 +46,26 @@ export function PortalShell({
   const basePaths = ['/admin', '/doctor/dashboard'];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <PortalHeader
-        title={headerTitle}
-        rightContent={headerRight}
-        onMenuClick={() => setMobileSidebarOpen(true)}
-        isCollapsed={sidebarCollapsed}
-      />
+    <div className="flex h-screen overflow-hidden bg-[var(--dashboard-main-bg)]">
       <PortalSidebar
         items={sidebarItems}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        sidebarFooter={sidebarFooter}
       />
+      <div className="flex flex-1 flex-col min-w-0">
+        <PortalHeader
+          title={headerTitle}
+          rightContent={headerRight}
+          onMenuClick={() => setMobileSidebarOpen(true)}
+          isCollapsed={sidebarCollapsed}
+        />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden dashboard-main-bg px-4 py-6 md:py-8">
+          <div className="mx-auto w-full max-w-7xl">
+            {children}
+          </div>
+        </main>
+      </div>
       {/* Mobile Sidebar — same tree with groups and children */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white">
@@ -140,17 +151,6 @@ export function PortalShell({
           </nav>
         </SheetContent>
       </Sheet>
-      <main
-        className={cn(
-          'transition-all duration-300 flex-1 bg-white pt-16 overflow-x-hidden',
-          'lg:ml-72',
-          sidebarCollapsed && 'lg:ml-20'
-        )}
-      >
-        <div className="mx-auto px-4 py-6 md:py-8 w-full max-w-7xl">
-          {children}
-        </div>
-      </main>
     </div>
   );
 }

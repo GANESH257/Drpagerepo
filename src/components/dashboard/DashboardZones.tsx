@@ -10,16 +10,16 @@ import {
   BookUser,
   AlertCircle,
   CheckCircle2,
-  Calendar,
-  Megaphone,
   MessageCircle,
-  Award,
-  TrendingUp,
+  Send,
+  Inbox,
+  Stethoscope,
   ArrowRight,
+  Clock,
+  MapPin,
+  TrendingUp,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Doctor } from '@/types';
 import { loadAppointmentRequests } from '@/lib/doctorStorage';
 import { getReferrals } from '@/lib/api/referrals';
@@ -38,7 +38,23 @@ interface DashboardZonesProps {
   doctor: Doctor;
 }
 
-const ONBOARDING_STEPS = ['Basic Info', 'Credentials', 'Services', 'Insurance'];
+const ONBOARDING_STEPS = [
+  { label: 'Basic Info', doneKey: 0 },
+  { label: 'Credentials', doneKey: 1 },
+  { label: 'Services & Insurance', doneKey: 2 },
+  { label: 'Submit for Approval', doneKey: 3 },
+];
+
+function getStatusBadgeClass(status: string): string {
+  const s = (status || '').toLowerCase();
+  if (s.includes('accept') || s === 'accepted') return 'badge-accepted';
+  if (s.includes('sent')) return 'badge-sent';
+  if (s.includes('pending')) return 'badge-pending';
+  if (s.includes('complete') || s === 'completed') return 'badge-completed';
+  if (s.includes('live') || s === 'active') return 'badge-live';
+  if (s.includes('review')) return 'badge-review';
+  return 'badge-pending';
+}
 
 export function DashboardZones({ doctor }: DashboardZonesProps) {
   const router = useRouter();
@@ -115,17 +131,18 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
 
   const now = new Date();
   const thisMonth = referrals.filter((r) => {
-    const d = new Date((r as any).date ?? (r as any).created_at);
+    const d = new Date((r as any).created_at ?? (r as any).date);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
   const lastMonth = referrals.filter((r) => {
-    const d = new Date((r as any).date ?? (r as any).created_at);
+    const d = new Date((r as any).created_at ?? (r as any).date);
     const lm = new Date(now.getFullYear(), now.getMonth() - 1);
     return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
   });
   const receivedThisMonth = thisMonth.filter((r) => (r as any).to_doctor_id === doctor.id || (r as any).toDoctorId === doctor.id);
   const sentThisMonth = thisMonth.filter((r) => (r as any).from_doctor_id === doctor.id || (r as any).fromDoctorId === doctor.id);
-  const referralTrend = lastMonth.length > 0 ? (thisMonth.length - lastMonth.length) : 0;
+  const sentLastMonth = lastMonth.filter((r) => (r as any).from_doctor_id === doctor.id || (r as any).fromDoctorId === doctor.id);
+  const referralTrend = sentLastMonth.length > 0 || sentThisMonth.length > 0 ? sentThisMonth.length - sentLastMonth.length : 0;
 
   const isIncomplete = doctor.profileStatus === 'pending_profile' || !doctor.verified;
   const isSubmitted = doctor.profileStatus === 'submitted' || (doctor.verified === false && !changesRequestedRequest);
@@ -142,72 +159,113 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
     (doctor.insurance?.length ?? 0) > 0,
   ];
   const stepsDone = onboardingStepsComplete.filter(Boolean).length;
+  const onboardingPct = Math.round((stepsDone / ONBOARDING_STEPS.length) * 100);
+
+  const shortName = doctor.fullName?.startsWith('Dr.') ? doctor.fullName : `Dr. ${doctor.lastName || doctor.fullName || 'User'}`;
+  const greeting = (() => {
+    const h = now.getHours();
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  })();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const practiceName = (doctor as any).practiceName || doctor.practiceName || 'AIP Member';
+
+  const statusLabel = (() => {
+    if (isLive) return 'Live';
+    if (changesRequestedRequest) return 'Changes Requested';
+    if (isSubmitted) return 'Pending AIP Review';
+    if (isIncomplete) return 'Pending Profile';
+    return 'Member';
+  })();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-teal" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 relative z-10">
       {loadError && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertCircle className="h-6 w-6 text-amber-600 shrink-0" />
-            <p className="text-sm text-amber-900">{loadError}</p>
-            <Button variant="outline" size="sm" onClick={() => load()}>Retry</Button>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-4 flex items-center gap-3 border-amber-200 bg-amber-50/50">
+          <AlertCircle className="h-6 w-6 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-900">{loadError}</p>
+          <Button variant="outline" size="sm" onClick={() => load()}>Retry</Button>
+        </div>
       )}
-      {/* Zone 1: Status Banner */}
-      <div className="space-y-3">
-        {isIncomplete && (
-          <Card className="border-amber-200 bg-amber-50/50">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="h-8 w-8 text-amber-600 shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-bold text-amber-900">Complete your profile</h3>
-                  <p className="text-sm text-amber-800 mt-1">
-                    {stepsDone} of {ONBOARDING_STEPS.length} steps complete
-                  </p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-amber-200">
-                    <div
-                      className="h-full rounded-full bg-amber-500"
-                      style={{ width: `${(stepsDone / ONBOARDING_STEPS.length) * 100}%` }}
-                    />
-                  </div>
-                  <ul className="mt-3 text-sm text-amber-800 space-y-1">
-                    {ONBOARDING_STEPS.map((step, i) => (
-                      <li key={step} className={onboardingStepsComplete[i] ? 'line-through opacity-70' : ''}>
-                        {step}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="mt-4" onClick={() => router.push('/doctor/dashboard/complete-profile')}>
-                    Continue Setup
-                  </Button>
+
+      {/* Welcome + status */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {greeting}, {shortName} 👋
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            {dateStr}
+            &nbsp;·&nbsp;{doctor.specialty || 'Physician'}
+            &nbsp;·&nbsp;{practiceName}
+          </p>
+        </div>
+        <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusBadgeClass(statusLabel))}>
+          {statusLabel}
+        </span>
+      </div>
+
+      {/* Onboarding / status card — single card in reference style */}
+      {(isIncomplete || isSubmitted || changesRequestedRequest || isLive || expiresSoon) && (
+        <div className="glass-card p-5">
+          {isIncomplete && (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Onboarding Progress</p>
+                  <h2 className="text-lg font-bold text-gray-900 mt-0.5">Complete Your Profile</h2>
                 </div>
+                <span className="text-2xl font-black" style={{ color: 'var(--aip-gold)' }}>{onboardingPct}%</span>
               </div>
-            </CardContent>
-          </Card>
-        )}
-        {!isIncomplete && isSubmitted && !changesRequestedRequest && (
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-full h-2 rounded-full bg-gray-200 mb-4">
+                <div
+                  className="h-2 rounded-full transition-all duration-700"
+                  style={{ width: `${onboardingPct}%`, background: 'linear-gradient(90deg, var(--aip-teal), var(--aip-navy))' }}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-4 justify-between">
+                <div className="flex flex-wrap gap-3">
+                  {ONBOARDING_STEPS.map((step, i) => (
+                    <span key={step.label} className="flex items-center gap-1.5 text-sm">
+                      {onboardingStepsComplete[i] ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <Clock className="w-4 h-4 text-amber-500" />
+                      )}
+                      <span className={onboardingStepsComplete[i] ? 'text-gray-900' : 'text-gray-500'}>{step.label}</span>
+                    </span>
+                  ))}
+                </div>
+                <Button
+                  variant="dashboard"
+                  size="sm"
+                  onClick={() => router.push('/doctor/dashboard/complete-profile')}
+                >
+                  Continue Setup
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </>
+          )}
+          {!isIncomplete && isSubmitted && !changesRequestedRequest && (
+            <div className="flex items-center gap-3">
               <AlertCircle className="h-6 w-6 text-blue-600 shrink-0" />
               <p className="text-sm text-blue-900">
                 Your profile is under review by AIP Administration. We will notify you once it is approved.
               </p>
-            </CardContent>
-          </Card>
-        )}
-        {changesRequestedRequest && (
-          <Card className="border-red-200 bg-red-50/50">
-            <CardContent className="p-4 flex flex-col gap-3">
+            </div>
+          )}
+          {changesRequestedRequest && (
+            <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
                 <h3 className="font-semibold text-red-900">Changes requested</h3>
@@ -218,211 +276,166 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
               <Button variant="destructive" size="sm" onClick={() => router.push('/doctor/dashboard/profile')}>
                 View Feedback & Update Profile
               </Button>
-            </CardContent>
-          </Card>
-        )}
-        {isLive && !expiresSoon && (
-          <Card className="border-green-200 bg-green-50/50">
-            <CardContent className="p-4 flex items-center justify-between">
+            </div>
+          )}
+          {isLive && !expiresSoon && (
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0" />
-                <span className="font-medium text-green-900">Your profile is live in the public directory.</span>
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
+                <span className="font-medium text-gray-900">Your profile is live in the public directory.</span>
               </div>
               <Link href="/doctor/dashboard/profile/public">
                 <Button variant="outline" size="sm">View profile</Button>
               </Link>
-            </CardContent>
-          </Card>
-        )}
-        {expiresSoon && membershipExpiry && (
-          <Card className="border-amber-200 bg-amber-50/50">
-            <CardContent className="p-4 flex items-center gap-3">
+            </div>
+          )}
+          {expiresSoon && membershipExpiry && (
+            <div className="flex items-center gap-3">
               <AlertCircle className="h-6 w-6 text-amber-600 shrink-0" />
               <p className="text-sm text-amber-900">
                 Membership expires soon ({membershipExpiry.toLocaleDateString()}). Renew to continue access.
               </p>
               <Link href="/doctor/dashboard/membership">
-                <Button size="sm">Renew</Button>
+                <Button size="sm" variant="dashboard">Renew</Button>
               </Link>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Zone 2: Key Metrics */}
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Key metrics</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Profile Completion</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{profileCompletion}%</div>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100">
-                <div className="h-full rounded-full bg-brand-teal" style={{ width: `${profileCompletion}%` }} />
-              </div>
-              <Link href="/doctor/dashboard/profile">
-                <Button variant="link" className="p-0 h-auto text-xs mt-1">Edit profile</Button>
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Profile Views</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{profileViews}</div>
-              <p className="text-xs text-gray-500 mt-1">this month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Referrals Received</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold">{receivedThisMonth.length}</span>
-                {referralTrend !== 0 && (
-                  <Badge variant={referralTrend > 0 ? 'default' : 'secondary'} className="text-xs">
-                    {referralTrend > 0 ? '↑' : '↓'} vs last month
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">this month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Referrals Sent</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{sentThisMonth.length}</div>
-              <p className="text-xs text-gray-500 mt-1">this month</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Network Size</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{networkSize ?? '—'}</div>
-              <p className="text-xs text-gray-500 mt-1">physicians in AIP</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-gray-500">Unread Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{unreadMessages}</div>
-              <Link href="/doctor/dashboard/messages">
-                <Button variant="link" className="p-0 h-auto text-xs mt-1">Open Messages</Button>
-              </Link>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* Metric cards — reference style */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { icon: Send, label: 'Referrals Sent', value: String(sentThisMonth.length), sub: referralTrend !== 0 ? `${referralTrend >= 0 ? '+' : ''}${referralTrend} vs last month` : 'this month', trend: referralTrend > 0 ? 'up' : null, color: 'var(--aip-teal)' },
+          { icon: Inbox, label: 'Referrals Received', value: String(receivedThisMonth.length), sub: 'this month', trend: null, color: 'var(--aip-navy)' },
+          { icon: Stethoscope, label: 'AIP Network', value: networkSize != null ? networkSize.toLocaleString() : '—', sub: 'Physicians', trend: null, color: 'var(--aip-teal)' },
+          { icon: MessageCircle, label: 'Unread Messages', value: String(unreadMessages), sub: 'View Messages →', trend: null, color: 'var(--aip-gold)', action: () => router.push('/doctor/dashboard/messages') },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="glass-card p-4 cursor-pointer"
+            onClick={card.action}
+            role={card.action ? 'button' : undefined}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <card.icon className="w-4 h-4" style={{ color: card.color }} />
+              <span className="text-xs text-gray-500 font-medium">{card.label}</span>
+            </div>
+            <div className="text-3xl font-black text-gray-900">{card.value}</div>
+            <div className="flex items-center gap-1 mt-1">
+              {card.trend === 'up' && <TrendingUp className="w-3 h-3 text-emerald-500" />}
+              <span className="text-xs text-gray-500">{card.sub}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Zone 3: Activity Feed & Quick Actions */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Recent Referrals</CardTitle>
-            <Link href="/doctor/dashboard/referrals">
-              <Button variant="ghost" size="sm">View All</Button>
+      {/* Recent Referrals + Announcements — two columns */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        <div className="glass-card p-5 lg:col-span-3">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-900">Recent Referrals</h3>
+            <Link href="/doctor/dashboard/referrals" className="text-xs font-medium flex items-center gap-1 text-[var(--aip-teal)] hover:underline">
+              View All <ArrowRight className="w-3 h-3" />
             </Link>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="overflow-x-auto">
             {referrals.length === 0 ? (
-              <p className="text-sm text-gray-500">No referrals yet.</p>
+              <p className="text-sm text-gray-500 py-4">No referrals yet.</p>
             ) : (
-              <ul className="space-y-2">
-                {referrals.slice(0, 5).map((r) => (
-                  <li key={(r as any).id} className="flex justify-between text-sm py-2 border-b border-gray-100 last:border-0">
-                    <span className="truncate">
-                      {(r as any).from_doctor_name ?? (r as any).fromDoctorName ?? 'From'} → {(r as any).to_doctor_name ?? (r as any).toDoctorName ?? 'To'}
-                    </span>
-                    <Badge variant="outline" className="text-xs">{(r as any).status ?? '—'}</Badge>
-                  </li>
-                ))}
-              </ul>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    {['Patient', 'Referred To', 'Condition', 'Status', 'Date'].map((h) => (
+                      <th key={h} className="text-left py-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {referrals.slice(0, 5).map((r) => {
+                    const created = (r as any).created_at ?? (r as any).date;
+                    const dateLabel = created ? new Date(created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).split(',')[0] : '—';
+                    const toName = (r as any).to_doctor_name ?? (r as any).toDoctorName ?? '—';
+                    const patient = (r as any).patient_name_or_initials ?? (r as any).patientNameOrInitials ?? '—';
+                    const condition = (r as any).condition_summary ?? (r as any).conditionSummary ?? '—';
+                    const status = (r as any).status ?? '—';
+                    return (
+                      <tr key={(r as any).id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                        <td className="py-2.5 px-2 font-medium text-gray-900">{patient}</td>
+                        <td className="py-2.5 px-2 text-gray-600">{toName}</td>
+                        <td className="py-2.5 px-2 text-gray-600 max-w-[120px] truncate" title={condition}>{condition}</td>
+                        <td className="py-2.5 px-2">
+                          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusBadgeClass(status))}>
+                            {status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-2 text-gray-500">{dateLabel}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Latest Announcements</CardTitle>
-            <Link href="/doctor/dashboard/community/announcements">
-              <Button variant="ghost" size="sm">View All</Button>
+          </div>
+        </div>
+
+        <div className="glass-card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-900">Latest Announcements</h3>
+            <Link href="/doctor/dashboard/community/announcements" className="text-xs font-medium flex items-center gap-1 text-[var(--aip-teal)] hover:underline">
+              View All <ArrowRight className="w-3 h-3" />
             </Link>
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className="space-y-3">
             {announcements.length === 0 ? (
               <p className="text-sm text-gray-500">No announcements.</p>
             ) : (
-              <ul className="space-y-2">
-                {announcements.map((a) => (
-                  <li key={a.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
-                    <span className="font-medium">{a.title}</span>
-                    <span className="text-gray-500 text-xs block">{formatDateTime(a.created_at)}</span>
-                  </li>
-                ))}
-              </ul>
+              announcements.map((a) => (
+                <div key={a.id} className="border-l-2 pl-3" style={{ borderColor: 'var(--aip-teal)' }}>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{a.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(a.created_at)}</p>
+                  {a.body && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.body}</p>}
+                </div>
+              ))
             )}
-          </CardContent>
-        </Card>
+          </div>
+          {events.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Upcoming Events</p>
+              <div className="flex flex-wrap gap-2">
+                {events.slice(0, 3).map((e) => (
+                  <span key={e.id} className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {e.title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Upcoming Events</CardTitle>
-          <Link href="/doctor/dashboard/community/announcements">
-            <Button variant="ghost" size="sm">View All</Button>
-          </Link>
-        </CardHeader>
-        <CardContent>
-          {events.length === 0 ? (
-            <p className="text-sm text-gray-500">No upcoming events.</p>
-          ) : (
-            <ul className="space-y-2">
-              {events.map((e) => (
-                <li key={e.id} className="text-sm py-2 border-b border-gray-100 last:border-0">
-                  <span className="font-medium">{e.title}</span>
-                  <span className="text-gray-500 text-xs block">{e.location} · {formatDateTime(e.date)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => router.push('/doctor/dashboard/profile')}>
-              <User className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/doctor/dashboard/find-physician')}>
-              <Search className="h-4 w-4 mr-2" />
-              Find a Physician
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/doctor/dashboard/referrals')}>
-              <Users className="h-4 w-4 mr-2" />
-              Send a Referral
-            </Button>
-            <Button variant="outline" onClick={() => router.push('/doctor/dashboard/find-physician/contacts')}>
-              <BookUser className="h-4 w-4 mr-2" />
-              View My Contacts
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="glass-card p-5">
+        <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={() => router.push('/doctor/dashboard/profile')} className="rounded-lg">
+            <User className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/doctor/dashboard/find-physician')} className="rounded-lg">
+            <Search className="h-4 w-4 mr-2" />
+            Find a Physician
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/doctor/dashboard/referrals')} className="rounded-lg">
+            <Users className="h-4 w-4 mr-2" />
+            Send a Referral
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/doctor/dashboard/find-physician/contacts')} className="rounded-lg">
+            <BookUser className="h-4 w-4 mr-2" />
+            View My Contacts
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -43,18 +43,18 @@ export default function AccountSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-teal" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--aip-teal)]" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative z-10">
       <SectionHeader
         title="Account Settings"
         description="Manage your login and notification preferences"
       />
-      <Card>
+      <Card className="glass-card">
         <CardContent className="p-6 space-y-6">
           <h3 className="font-semibold">Notification preferences</h3>
           <div className="space-y-4">

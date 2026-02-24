@@ -16,7 +16,7 @@ import { toCertificationItems } from '@/lib/utils/credentialUtils';
 import { geocodeZip } from '@/lib/services/geocodingService';
 import { Doctor } from '@/types';
 import { CertificationItem } from '@/types';
-import { Loader2, Building2, User, CheckCircle2 } from 'lucide-react';
+import { Loader2, Building2, User, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -288,7 +288,7 @@ export default function CompleteProfilePage() {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+        <Card className="glass-card max-w-md w-full">
           <CardHeader>
             <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-2" />
             <CardTitle className="text-center">Submission received</CardTitle>
@@ -316,7 +316,7 @@ export default function CompleteProfilePage() {
         </div>
 
         {step === 1 && (
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
@@ -376,14 +376,17 @@ export default function CompleteProfilePage() {
               ) : (
                 <>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button onClick={handleSubmit} disabled={submitting} className="w-full">
+                  <Button variant="dashboard" onClick={handleSubmit} disabled={submitting} className="w-full">
                     {submitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         Submitting...
                       </>
                     ) : (
-                      'Submit for approval'
+                      <>
+                        Submit for Approval
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
                     )}
                   </Button>
                 </>
@@ -393,7 +396,7 @@ export default function CompleteProfilePage() {
         )}
 
         {isPracticeAdmin && step === 2 && (
-          <Card>
+          <Card className="glass-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
@@ -445,14 +448,17 @@ export default function CompleteProfilePage() {
                 <Button variant="outline" onClick={() => setStep(1)}>
                   Back
                 </Button>
-                <Button onClick={handleSubmit} disabled={submitting} className="flex-1">
+                <Button variant="dashboard" onClick={handleSubmit} disabled={submitting} className="flex-1">
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Submitting...
                     </>
                   ) : (
-                    'Submit for approval'
+                    <>
+                      Submit for Approval
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </>
                   )}
                 </Button>
               </div>

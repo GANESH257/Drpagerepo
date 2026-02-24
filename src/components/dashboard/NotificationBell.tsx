@@ -51,13 +51,14 @@ export function NotificationBell({
             size="icon"
             onClick={() => router.push(href)}
             aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-            className="relative text-gray-600 hover:text-[#0F5FA8] hover:bg-[#0F5FA8]/10"
+            className="relative text-gray-600 hover:text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10 rounded-xl"
         >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none min-w-[1rem]">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                <span
+                    className="absolute top-0 right-0 h-2 w-2 rounded-full bg-[var(--aip-teal)] ring-2 ring-white"
+                    aria-hidden
+                />
             )}
         </Button>
     );

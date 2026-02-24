@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Plus } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { X, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Doctor, Insurance, ConditionServiceRow } from '@/types';
@@ -18,12 +16,16 @@ interface InsuranceSectionProps {
 }
 
 const COMMON_INSURANCE_PROVIDERS = [
+  'Aetna PPO',
   'Aetna',
+  'BCBS PPO',
   'Blue Cross Blue Shield',
+  'Cigna PPO',
   'Cigna',
-  'UnitedHealthcare',
+  'United Healthcare',
   'Medicare',
   'Medicaid',
+  'Humana Gold Plus',
   'Humana',
   'Kaiser Permanente',
   'Anthem',
@@ -226,222 +228,198 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-4xl">
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-3xl font-bold text-brand-dark-blue">Insurance & Services</h2>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">Services & Insurance</h1>
           {hasPendingInsuranceEdit && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+            <span className="rounded-md bg-amber-100 text-amber-800 px-2 py-0.5 text-xs font-medium border border-amber-200">
               Pending approval
-            </Badge>
+            </span>
           )}
         </div>
-        <p className="text-muted-foreground mt-2">
-          View and manage accepted insurance plans and services offered
-        </p>
         {hasPendingInsuranceEdit && (
-          <p className="text-sm text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-            You have pending insurance/services changes awaiting approval. Edit the form as needed and click &quot;Save Changes&quot; below to submit one request with all your updates.
+          <p className="text-xs text-amber-700 mt-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            You have pending insurance/services changes awaiting approval. Edit below and click &quot;Save Changes&quot; to submit updates.
           </p>
         )}
         {submitMessage && (
-          <p className="text-sm text-green-700 mt-1 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+          <p className="text-xs text-green-700 mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
             {submitMessage}
           </p>
         )}
         {submitError && (
-          <p className="text-sm text-destructive mt-1 bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+          <p className="text-xs text-red-700 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             {submitError}
           </p>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Accepted Insurance */}
-        <Card className="card-vibrant">
-          <CardHeader>
-            <CardTitle>Accepted Insurance</CardTitle>
-            <CardDescription>
-              Only list plans you accept; patients may filter by insurance.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Current Insurance */}
-            {insurance.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {insurance.map((ins) => (
-                  <Badge
-                    key={ins.slug}
-                    variant="colorful"
-                    className="flex items-center gap-1 pr-1 text-sm py-1.5"
-                  >
-                    {ins.name}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveInsurance(ins)}
-                      className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
-                      aria-label={`Remove ${ins.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No insurance plans added yet.</p>
-            )}
-
-            {/* Add Insurance */}
-            <div className="space-y-2 pt-2 border-t">
-              <label className="text-sm font-medium">Add Insurance Plan</label>
-              <div className="flex gap-2">
-                <Select value={newInsuranceName} onValueChange={setNewInsuranceName}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select or type insurance name" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMMON_INSURANCE_PROVIDERS.filter(
-                      (provider) =>
-                        !insurance.some(
-                          (ins) => ins.name.toLowerCase() === provider.toLowerCase()
-                        )
-                    ).map((provider) => (
-                      <SelectItem key={provider} value={provider}>
-                        {provider}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={newInsuranceName}
-                  onChange={(e) => setNewInsuranceName(e.target.value)}
-                  placeholder="Or type custom name"
-                  className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddInsurance();
-                    }
-                  }}
-                />
-                <Button
-                  onClick={handleAddInsurance}
-                  disabled={!newInsuranceName.trim() || isSaving}
-                  className="bg-brand-teal hover:bg-brand-teal/90"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Conditions & Services — two columns: Condition | Treatments / Services */}
-        <Card className="card-vibrant">
-          <CardHeader>
-            <CardTitle>Conditions & Services</CardTitle>
-            <CardDescription>
-              List the conditions you treat and the treatments or services you offer for each. Add one row per condition; use + to add multiple services for the same condition.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50 border-b">
-                    <th className="text-left font-medium p-3 w-[40%]">Condition</th>
-                    <th className="text-left font-medium p-3">Treatments / Services</th>
-                    <th className="w-10" aria-label="Remove row" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {(doctor.conditionServices ?? conditionServices).length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="p-4 text-muted-foreground text-center">
-                        No conditions added yet. Click &quot;Add condition&quot; below.
-                      </td>
-                    </tr>
+      {/* Section 1: Conditions Treated & Procedures Offered */}
+      <section>
+        <h2 className="text-lg font-bold text-gray-900">Conditions Treated & Procedures Offered</h2>
+        <p className="text-sm text-gray-600 mt-0.5">
+          Select conditions you treat. For each condition, choose the specific procedures and treatments you offer.
+        </p>
+        <div className="mt-4 space-y-5">
+          {(doctor.conditionServices ?? conditionServices).length === 0 ? (
+            <p className="text-sm text-gray-500 py-4">No conditions added yet.</p>
+          ) : (
+            (doctor.conditionServices ?? conditionServices).map((row, rowIndex) => (
+              <div key={rowIndex} className="border border-gray-200 rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <Check className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+                  {row.condition.trim() ? (
+                    <span className="font-semibold text-gray-900">{row.condition}</span>
                   ) : (
-                    (doctor.conditionServices ?? conditionServices).map((row, rowIndex) => (
-                      <tr key={rowIndex} className="border-b last:border-b-0 align-top">
-                        <td className="p-2">
-                          <Input
-                            placeholder="e.g. Diabetes, Hypertension"
-                            value={row.condition}
-                            onChange={(e) => updateConditionServiceRow(rowIndex, { ...row, condition: e.target.value })}
-                            className="h-9"
-                          />
-                        </td>
-                        <td className="p-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {(row.services.length === 0 ? [''] : row.services).map((svc, svcIndex) => (
-                              <div key={svcIndex} className="flex items-center gap-1">
-                                <Input
-                                  placeholder="Service or treatment"
-                                  value={svc}
-                                  onChange={(e) => updateServiceInRow(rowIndex, svcIndex, e.target.value)}
-                                  className="h-8 w-40"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeServiceFromRow(rowIndex, svcIndex)}
-                                  className="rounded-full p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
-                                  aria-label={`Remove service ${svcIndex + 1}`}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 shrink-0"
-                              onClick={() => addServiceToRow(rowIndex)}
-                              aria-label="Add service for this condition"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                        <td className="p-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => removeConditionRow(rowIndex)}
-                            aria-label="Remove this condition row"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
+                    <Input
+                      placeholder="e.g. Coronary Artery Disease"
+                      value={row.condition}
+                      onChange={(e) => updateConditionServiceRow(rowIndex, { ...row, condition: e.target.value })}
+                      className="h-8 flex-1 max-w-xs text-sm border-gray-200"
+                    />
                   )}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={addConditionRow} className="bg-brand-teal/10 border-brand-teal/30 text-brand-teal hover:bg-brand-teal/20">
-                <Plus className="h-4 w-4 mr-1" />
-                Add condition
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                  <button
+                    type="button"
+                    onClick={() => removeConditionRow(rowIndex)}
+                    className="ml-auto rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                    aria-label="Remove condition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pl-7">
+                  {(row.services.length === 0 ? [''] : row.services).map((svc, svcIndex) =>
+                    svc.trim() ? (
+                      <span
+                        key={svcIndex}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-sm text-gray-800"
+                      >
+                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                        {svc}
+                        <button
+                          type="button"
+                          onClick={() => removeServiceFromRow(rowIndex, svcIndex)}
+                          className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
+                          aria-label={`Remove ${svc}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : (
+                      <div key={svcIndex} className="inline-flex items-center gap-1">
+                        <Input
+                          placeholder="Add treatment..."
+                          value={svc}
+                          onChange={(e) => updateServiceInRow(rowIndex, svcIndex, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (e.currentTarget.value.trim()) addServiceToRow(rowIndex);
+                            }
+                          }}
+                          className="h-8 w-36 text-sm border-gray-200 rounded-lg"
+                        />
+                      </div>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => addServiceToRow(rowIndex)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-2.5 py-1 text-sm text-gray-600 hover:border-gray-400 hover:bg-gray-100"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Suggest Treatment
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={addConditionRow}
+          className="mt-4 text-sm font-medium text-[var(--aip-teal)] hover:underline"
+        >
+          + Add Condition or Suggest New
+        </button>
+      </section>
 
-      {/* Single Save Changes — only this creates an approval request (or saves for admin). */}
+      {/* Section 2: Accepted Insurance Plans */}
+      <section>
+        <h2 className="text-lg font-bold text-gray-900">Accepted Insurance Plans</h2>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {insurance.length === 0 && (
+            <p className="text-sm text-gray-500 w-full">No insurance plans added yet.</p>
+          )}
+          {insurance.map((ins) => (
+            <span
+              key={ins.slug}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 text-sm text-gray-800"
+            >
+              <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              {ins.name}
+              <button
+                type="button"
+                onClick={() => handleRemoveInsurance(ins)}
+                className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
+                aria-label={`Remove ${ins.name}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+          <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 mt-2 w-full">
+            <Select value={newInsuranceName} onValueChange={setNewInsuranceName}>
+              <SelectTrigger className="h-9 w-[180px] text-sm rounded-lg border-gray-200">
+                <SelectValue placeholder="Select plan" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_INSURANCE_PROVIDERS.filter(
+                  (provider) =>
+                    !insurance.some((ins) => ins.name.toLowerCase() === provider.toLowerCase())
+                ).map((provider) => (
+                  <SelectItem key={provider} value={provider}>
+                    {provider}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              value={newInsuranceName}
+              onChange={(e) => setNewInsuranceName(e.target.value)}
+              placeholder="Or type custom name"
+              className="h-9 w-40 text-sm rounded-lg border-gray-200"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddInsurance();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleAddInsurance}
+              disabled={!newInsuranceName.trim() || isSaving}
+              className="h-9 rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Plan
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Save Changes */}
       <div className="flex justify-end pt-2">
         <Button
           type="button"
-          variant="default"
           size="sm"
           disabled={isSaving}
           onClick={handleSaveChanges}
-          className="bg-brand-teal hover:bg-brand-teal/90"
+          className="rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white"
         >
           {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>

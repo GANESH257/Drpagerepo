@@ -55,7 +55,7 @@ export default function LeadershipCommitteesPage() {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[#0F5FA8] border-t-transparent" />
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--aip-teal)] border-t-transparent" />
           <p className="text-sm text-gray-600">Loading leadership...</p>
         </div>
       </div>
@@ -63,14 +63,14 @@ export default function LeadershipCommitteesPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative z-10">
       <SectionHeader
         title="Leadership & Committees"
         description="Board of Directors and official committees"
       />
 
       {error && (
-        <Card className="border-amber-200 bg-amber-50/50">
+        <Card className="glass-card border-amber-200 bg-amber-50/50">
           <CardContent className="py-4">
             <p className="text-sm text-amber-800">{error}</p>
           </CardContent>
@@ -79,12 +79,12 @@ export default function LeadershipCommitteesPage() {
 
       {/* Board of Directors - API-driven */}
       {board && (
-        <Card className="overflow-hidden border-[#0F5FA8]/20 bg-gradient-to-b from-slate-50/80 to-white">
+        <Card className="glass-card overflow-hidden border-[var(--aip-teal)]/20 bg-gradient-to-b from-slate-50/80 to-white">
           <CardHeader className="border-b border-slate-200/80 bg-white/60 pb-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0F5FA8]/10">
-                  <Shield className="h-6 w-6 text-[#0F5FA8]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--aip-teal)]/10">
+                  <Shield className="h-6 w-6" style={{ color: 'var(--aip-teal)' }} />
                 </div>
                 <div>
                   <CardTitle className="text-xl font-semibold text-gray-900">
@@ -96,7 +96,8 @@ export default function LeadershipCommitteesPage() {
               <Button
                 asChild
                 variant="outline"
-                className="shrink-0 border-[#0F5FA8]/30 text-[#0F5FA8] hover:bg-[#0F5FA8]/10"
+                className="shrink-0 rounded-lg"
+                style={{ borderColor: 'rgba(26,140,122,0.3)', color: 'var(--aip-teal)' }}
               >
                 <a
                   href={board.bylawsUrl.startsWith('http') ? board.bylawsUrl : board.bylawsUrl}
@@ -124,7 +125,7 @@ export default function LeadershipCommitteesPage() {
                     className="flex items-center justify-between rounded-lg border border-slate-200/80 bg-white px-4 py-3 shadow-sm"
                   >
                     <span className="font-medium text-gray-900">{d.fullName}</span>
-                    <span className="rounded-md bg-[#0F5FA8]/10 px-2.5 py-1 text-xs font-medium text-[#0F5FA8]">
+                    <span className="rounded-md px-2.5 py-1 text-xs font-medium" style={{ background: 'rgba(26,140,122,0.1)', color: 'var(--aip-teal)' }}>
                       {d.role}
                     </span>
                   </li>
@@ -139,10 +140,10 @@ export default function LeadershipCommitteesPage() {
 
       {/* Bylaws link block - prominent and trustworthy */}
       {board?.bylawsUrl && (
-        <Card className="border-[#0F5FA8]/15 bg-[#0F5FA8]/5">
+        <Card className="glass-card border-[var(--aip-teal)]/15 bg-[var(--aip-teal)]/5">
           <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-[#0F5FA8]" />
+              <FileText className="h-8 w-8" style={{ color: 'var(--aip-teal)' }} />
               <div>
                 <p className="font-semibold text-gray-900">Governance Bylaws</p>
                 <p className="text-sm text-gray-600">
@@ -150,7 +151,7 @@ export default function LeadershipCommitteesPage() {
                 </p>
               </div>
             </div>
-            <Button asChild className="bg-[#0F5FA8] hover:bg-[#0F5FA8]/90">
+            <Button asChild className="text-white rounded-lg" style={{ background: 'var(--aip-teal)' }}>
               <a
                 href={board.bylawsUrl.startsWith('http') ? board.bylawsUrl : board.bylawsUrl}
                 target="_blank"
@@ -173,7 +174,7 @@ export default function LeadershipCommitteesPage() {
           </div>
           <div className="space-y-4">
             {committees.map((c) => (
-              <Card key={c.id} className="border-gray-200">
+              <Card key={c.id} className="glass-card border-gray-200">
                 <CardHeader>
                   <CardTitle className="text-base">{c.name}</CardTitle>
                   {c.description && (
@@ -193,7 +194,8 @@ export default function LeadershipCommitteesPage() {
                               slug: m.doctor_slug ?? undefined,
                               id: m.doctor_id,
                             })}
-                            className="font-medium text-[#0F5FA8] hover:underline"
+                            className="font-medium hover:underline"
+                            style={{ color: 'var(--aip-teal)' }}
                           >
                             {m.full_name}
                           </Link>
@@ -215,7 +217,7 @@ export default function LeadershipCommitteesPage() {
       )}
 
       {!board?.directors?.length && !committees.length && !error && (
-        <Card>
+        <Card className="glass-card">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Users className="mb-4 h-14 w-14 text-gray-300" />
             <p className="font-medium text-gray-600">No leadership data available</p>

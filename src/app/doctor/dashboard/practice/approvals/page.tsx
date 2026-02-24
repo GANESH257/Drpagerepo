@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/dateUtils';
-import { Eye } from 'lucide-react';
+import { Eye, ArrowRight } from 'lucide-react';
 
 /** Applicant display name: prefer payload.doctor.fullName, else email, else role + id */
 function getApplicantDisplay(request: ApprovalRequest): { name: string; email: string } {
@@ -79,7 +79,7 @@ export default function PracticeAdminApprovalsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading approval requests...</p>
         </div>
       </div>
@@ -91,15 +91,17 @@ export default function PracticeAdminApprovalsPage() {
       <SectionHeader
         title="Practice Approval Requests"
         description="Review and approve requests for your practice"
+        variant="practice"
       />
 
       {requests.length === 0 ? (
         <EmptyState
           title="No approval requests"
           description="There are no approval requests for your practice yet."
+          className="card-practice-accent"
         />
       ) : (
-        <Card>
+        <Card className="card-practice-accent">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -139,14 +141,14 @@ export default function PracticeAdminApprovalsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="outline"
+                          variant="dashboard"
                           size="sm"
                           onClick={() =>
                             router.push(`/doctor/dashboard/practice/approvals/detail?id=${encodeURIComponent(request.id)}`)
                           }
                         >
-                          <Eye className="h-4 w-4 mr-2" />
                           Review
+                          <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -111,7 +111,7 @@ export function LocationsSection({ doctor: initialDoctor, onProfileUpdate }: Loc
             Add or update your practice locations
           </p>
         </div>
-        <Button onClick={handleAddLocation} variant="gradient">
+        <Button onClick={handleAddLocation} variant="dashboard">
           <Plus className="mr-2 h-4 w-4" />
           Add Location
         </Button>

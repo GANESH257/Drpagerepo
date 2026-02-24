@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { MapPin, Phone, Clock, Plus, Loader2, AlertTriangle, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Phone, Clock, Plus, Loader2, AlertTriangle, Pencil, Trash2, ArrowRight } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -648,7 +648,7 @@ export default function PracticeLocationsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading locations...</p>
         </div>
       </div>
@@ -681,9 +681,11 @@ export default function PracticeLocationsPage() {
       <SectionHeader
         title="Practice Locations"
         description="Add, edit, or remove locations in the draft below, then submit for admin approval."
+        variant="practice"
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <Button
+              variant="dashboard"
               onClick={handleSubmitForApproval}
               disabled={isSubmittingBulk || draftLocations.length === 0}
             >
@@ -693,14 +695,18 @@ export default function PracticeLocationsPage() {
                   Submitting...
                 </>
               ) : (
-                'Submit for approval'
+                <>
+                  Submit for Approval
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </>
               )}
             </Button>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="dashboard">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Location
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1268,7 +1274,7 @@ export default function PracticeLocationsPage() {
       </AlertDialog>
 
       {locations.length === 0 ? (
-        <Card>
+        <Card className="card-practice-accent">
           <CardContent className="py-12 text-center">
             <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -1285,7 +1291,7 @@ export default function PracticeLocationsPage() {
             const locationName = location.name || (index === 0 ? 'Main Office' : `Location ${index + 1}`);
             
             return (
-              <Card key={location.id}>
+              <Card key={location.id} className="card-practice-accent">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>

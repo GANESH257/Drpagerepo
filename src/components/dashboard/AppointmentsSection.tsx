@@ -237,7 +237,7 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
                           <>
                             <Button
                               size="sm"
-                              variant="gradient"
+                              variant="dashboard"
                               onClick={() => handleApprove(request)}
                             >
                               <CheckCircle2 className="h-4 w-4 mr-1" />
@@ -257,7 +257,7 @@ export function AppointmentsSection({ doctorId }: AppointmentsSectionProps) {
                         {request.status === 'Confirmed' && (
                           <Button
                             size="sm"
-                            variant="gradient"
+                            variant="dashboard"
                             onClick={() => handleStatusChange(request.id, 'Completed')}
                           >
                             Mark Completed

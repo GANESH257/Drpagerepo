@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import Link from 'next/link';
+import { LogOut, ChevronDown, Cog } from 'lucide-react';
 import { Doctor } from '@/types';
 import { PortalShell } from '@/components/portal/PortalShell';
 import { DoctorProvider } from './DoctorContext';
@@ -12,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { MessageBell } from './MessageBell';
 import { AnnouncementBell } from './AnnouncementBell';
 import { NotificationBell } from './NotificationBell';
+import { cn } from '@/lib/utils';
 import type { PortalNavItem } from '@/components/portal/portalNavTypes';
 
 interface DashboardLayoutProps {
@@ -37,7 +39,6 @@ import {
   Search,
   BookUser,
   ClipboardList,
-  Cog,
 } from 'lucide-react';
 
 const baseUrl = '/doctor/dashboard';
@@ -131,40 +132,107 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
   const navTree = isPracticeAdmin ? [...baseDoctorNavTree, ...practiceAdminNavTree] : baseDoctorNavTree;
 
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
+
+  const initials = currentDoctor.fullName
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   const headerRight = (
     <>
-      <div className="hidden items-center gap-3 sm:flex">
-        <div className="text-right">
-          <div className="font-bold text-brand-dark-blue leading-tight">{currentDoctor.fullName}</div>
-          {currentDoctor.verified && (
-            <div className="flex items-center mt-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-brand-teal mr-1.5 animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal">Verified Physician</span>
-            </div>
-          )}
-          {isPracticeAdmin && (
-            <Badge variant="default" className="mt-1 bg-blue-600 text-white">
-              Practice Admin
-            </Badge>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-1 md:gap-2 mr-2 md:mr-4">
+      <div className="flex items-center gap-1 md:gap-2">
         <MessageBell userId={currentDoctor.id} />
         <AnnouncementBell doctorId={currentDoctor.id} practiceId={currentDoctor.practiceId} />
         <NotificationBell doctorId={currentDoctor.id} />
       </div>
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={handleLogout}
-        className="h-10 px-3 md:px-5 rounded-2xl border-gray-200 text-gray-600 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all duration-300 group"
-        aria-label="Log out"
-      >
-        <LogOut className="h-4 w-4 md:mr-2 group-hover:scale-110 transition-transform" />
-        <span className="hidden md:inline">Sign Out</span>
-      </Button>
+      <div className="relative" ref={userMenuRef}>
+        <button
+          type="button"
+          onClick={() => setUserMenuOpen((o) => !o)}
+          className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 text-left transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--aip-teal)]/20 focus:ring-offset-2"
+          aria-expanded={userMenuOpen}
+          aria-haspopup="true"
+          aria-label="User menu"
+        >
+          <div
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
+            style={{ background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%)' }}
+          >
+            {initials}
+          </div>
+          <div className="hidden min-w-0 flex-col sm:flex">
+            <span className="truncate text-sm font-semibold text-gray-800">{currentDoctor.fullName}</span>
+            {currentDoctor.verified && (
+              <span className="flex items-center gap-1 text-[10px] font-medium text-[var(--aip-teal)]">
+                <span className="h-1 w-1 rounded-full bg-[var(--aip-teal)]" /> Verified
+              </span>
+            )}
+            {isPracticeAdmin && (
+              <Badge variant="secondary" className="mt-0.5 w-fit text-[10px] bg-blue-100 text-blue-800">
+                Practice Admin
+              </Badge>
+            )}
+          </div>
+          <ChevronDown
+            className={cn('h-4 w-4 flex-shrink-0 text-gray-500 transition-transform', userMenuOpen && 'rotate-180')}
+          />
+        </button>
+        {userMenuOpen && (
+          <div
+            className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+            role="menu"
+          >
+            <Link
+              href={`${baseUrl}/settings`}
+              onClick={() => setUserMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              role="menuitem"
+            >
+              <Cog className="h-4 w-4 text-gray-400" />
+              Account Settings
+            </Link>
+          </div>
+        )}
+      </div>
     </>
+  );
+
+  const sidebarFooter = (
+    <div className="flex items-center gap-2.5 px-2 py-2">
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+        style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+      >
+        {initials}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-bold text-[var(--sidebar-foreground)] truncate">{currentDoctor.fullName}</p>
+        <p className="text-xs truncate" style={{ color: 'var(--aip-teal)' }}>{currentDoctor.specialty}</p>
+      </div>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="text-[var(--sidebar-foreground)]/70 hover:text-red-400 transition-colors p-1 rounded"
+        aria-label="Sign out"
+      >
+        <LogOut className="w-4 h-4" />
+      </button>
+    </div>
   );
 
   return (
@@ -173,6 +241,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
         sidebarItems={navTree}
         headerTitle="Doctor Dashboard"
         headerRight={headerRight}
+        sidebarFooter={sidebarFooter}
       >
         {children}
       </PortalShell>

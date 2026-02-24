@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { PortalNavItem } from './portalNavTypes';
@@ -12,6 +12,8 @@ interface PortalSidebarProps {
   items: PortalNavItem[];
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  /** Optional footer (e.g. user avatar + logout) */
+  sidebarFooter?: ReactNode;
 }
 
 function isActive(href: string, pathname: string, basePaths: string[]) {
@@ -28,11 +30,10 @@ function hasActiveChild(item: PortalNavItem, pathname: string, basePaths: string
   );
 }
 
-export function PortalSidebar({ items, isCollapsed, onToggleCollapse }: PortalSidebarProps) {
+export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFooter }: PortalSidebarProps) {
   const pathname = usePathname();
   const basePaths = ['/admin', '/doctor/dashboard'];
 
-  // Default-open groups that contain the current path
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
     const set = new Set<string>();
     items.forEach((item) => {
@@ -67,144 +68,177 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse }: PortalSi
   return (
     <aside
       className={cn(
-        'fixed left-0 top-16 z-30 h-[calc(100vh-4rem)] bg-white transition-all duration-300 overflow-y-auto border-r border-gray-100 shadow-sm',
-        isCollapsed ? 'w-20' : 'w-72',
-        'hidden lg:block'
+        'portal-sidebar flex flex-col h-full flex-shrink-0 border-r transition-all duration-300 hidden lg:flex overflow-hidden',
+        'border-[var(--sidebar-border)]',
+        'bg-[var(--sidebar)] text-[var(--sidebar-foreground)]',
+        isCollapsed ? 'w-20' : 'w-64'
       )}
     >
-      <div className="flex h-full flex-col">
-        <div className="flex justify-end p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className="h-8 w-8 rounded-lg text-gray-500 hover:text-[#0F5FA8] hover:bg-gray-100 transition-all duration-200"
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      {/* Logo — reference design */}
+      <div className="flex-shrink-0 p-5 border-b border-[var(--sidebar-border)]">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-black text-sm flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
           >
-            {isCollapsed ? (
-              <ChevronRight className="h-5 w-5" />
-            ) : (
-              <ChevronLeft className="h-5 w-5" />
-            )}
-          </Button>
+            AIP
+          </div>
+          {!isCollapsed && (
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-[var(--sidebar-foreground)] leading-tight truncate">
+                Alliance of Independent
+              </p>
+              <p className="text-xs font-bold leading-tight truncate" style={{ color: 'var(--aip-teal)' }}>
+                Physicians
+              </p>
+              <p className="text-[10px] font-medium opacity-70" style={{ color: 'var(--aip-gold)' }}>
+                ST. LOUIS
+              </p>
+            </div>
+          )}
         </div>
+      </div>
 
-        <nav className="flex-1 space-y-1 px-4 pb-6">
-          {items.map((item) => {
-            const Icon = item.icon;
-            const href = item.href ?? '#';
-            const active = href !== '#' && isActive(href, pathname, basePaths);
-            const hasChildren = item.children && item.children.length > 0;
-            const isOpen = openGroups.has(item.label);
-            const activeChild = hasChildren && hasActiveChild(item, pathname, basePaths);
+      {/* Collapse toggle */}
+      <div className={cn('flex-shrink-0 flex justify-end p-2', isCollapsed && 'justify-center')}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className="h-8 w-8 rounded-lg text-[var(--sidebar-foreground)]/70 hover:bg-[var(--sidebar-accent)] hover:text-[var(--aip-teal)] transition-all"
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
 
-            if (hasChildren && !isCollapsed) {
-              return (
-                <div key={item.label} className="space-y-0.5">
-                  <div className="flex items-center gap-1 rounded-xl border border-transparent overflow-hidden">
-                    {href && href !== '#' ? (
-                      <Link
-                        href={href}
-                        className={cn(
-                          'flex-1 flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-all duration-200 min-w-0',
-                          active
-                            ? 'bg-[#0F5FA8] text-white'
-                            : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
-                        )}
-                      >
-                        <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-white' : 'text-gray-400')} />
-                        <span className="truncate">{item.label}</span>
-                      </Link>
-                    ) : (
-                      <span className="flex-1 flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-600">
-                        <Icon className="h-5 w-5 shrink-0 text-gray-400" />
-                        <span className="truncate">{item.label}</span>
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 rounded-lg text-gray-500 hover:text-[#0F5FA8] hover:bg-gray-100"
-                      onClick={() => toggleGroup(item.label)}
-                      aria-expanded={isOpen}
+      {/* Nav — scrollable; footer stays fixed at bottom */}
+      <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-0.5 sidebar-nav-scroll">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const href = item.href ?? '#';
+          const active = href !== '#' && isActive(href, pathname, basePaths);
+          const hasChildren = item.children && item.children.length > 0;
+          const isOpen = openGroups.has(item.label);
+          const activeChild = hasChildren && hasActiveChild(item, pathname, basePaths);
+
+          if (hasChildren && !isCollapsed) {
+            return (
+              <div key={item.label}>
+                <div className="flex items-center gap-1 rounded-lg overflow-hidden">
+                  {href && href !== '#' ? (
+                    <Link
+                      href={href}
+                      className={cn(
+                        'flex-1 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all min-w-0',
+                        active
+                          ? 'font-semibold bg-[var(--sidebar-accent)] text-[var(--aip-teal)]'
+                          : 'text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]'
+                      )}
                     >
-                      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                  {isOpen && (
-                    <div className="ml-4 pl-4 border-l-2 border-gray-200 space-y-0.5">
-                      {item.children!.map((child) => {
-                        const childHref = child.href ?? '#';
-                        const childActive = childHref !== '#' && (pathname === childHref || pathname.startsWith(childHref + '/'));
-                        const ChildIcon = child.icon;
-                        return (
-                          <Link
-                            key={childHref + child.label}
-                            href={childHref}
-                            className={cn(
-                              'flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                              childActive
-                                ? 'bg-[#0F5FA8]/10 text-[#0F5FA8] font-semibold'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
-                            )}
-                          >
-                            <ChildIcon className="h-4 w-4 shrink-0 text-gray-400" />
-                            <span className="truncate">{child.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  ) : (
+                    <span className="flex-1 flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-[var(--sidebar-foreground)]">
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(item.label)}
+                    className={cn(
+                      'flex items-center justify-center p-2 rounded-lg text-[var(--sidebar-foreground)]/70 hover:bg-[var(--sidebar-accent)] hover:text-[var(--aip-teal)] transition-all',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--aip-teal)]'
+                    )}
+                    aria-expanded={isOpen}
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 </div>
-              );
-            }
+                {isOpen && (
+                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-[var(--sidebar-border)] pl-3">
+                    {item.children!.map((child) => {
+                      const childHref = child.href ?? '#';
+                      const childActive =
+                        childHref !== '#' &&
+                        (pathname === childHref || pathname.startsWith(childHref + '/'));
+                      const ChildIcon = child.icon;
+                      return (
+                        <Link
+                          key={childHref + child.label}
+                          href={childHref}
+                          className={cn(
+                            'flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-all',
+                            childActive
+                              ? 'font-semibold text-[var(--aip-teal)]'
+                              : 'text-[var(--sidebar-foreground)]/80 hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-foreground)]'
+                          )}
+                        >
+                          <ChildIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
 
-            if (hasChildren && isCollapsed) {
-              return (
-                <Link
-                  key={item.label}
-                  href={href}
-                  title={item.label}
-                  className={cn(
-                    'group flex items-center justify-center rounded-xl px-2 py-3 text-sm font-semibold transition-all duration-200 border border-transparent',
-                    active || activeChild
-                      ? 'bg-[#0F5FA8] text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
-                  )}
-                >
-                  <Icon className={cn('h-5 w-5 shrink-0', (active || activeChild) ? 'text-white' : 'text-gray-400')} />
-                </Link>
-              );
-            }
-
+          if (hasChildren && isCollapsed) {
             return (
               <Link
-                key={item.href ?? item.label}
+                key={item.label}
                 href={href}
+                title={item.label}
                 className={cn(
-                  'group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 border border-transparent',
-                  active
-                    ? 'bg-[#0F5FA8] text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
+                  'flex items-center justify-center rounded-lg p-2 text-sm transition-all',
+                  active || activeChild
+                    ? 'bg-[var(--sidebar-accent)] text-[var(--aip-teal)]'
+                    : 'text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]'
                 )}
-                title={isCollapsed ? item.label : undefined}
               >
-                <Icon
-                  className={cn(
-                    'h-5 w-5 shrink-0',
-                    active ? 'text-white' : 'text-gray-400 group-hover:text-[#0F5FA8]'
-                  )}
-                />
-                {!isCollapsed && (
-                  <div className="flex-1 overflow-hidden">
-                    <div className="truncate leading-none">{item.label}</div>
-                  </div>
-                )}
+                <Icon className="w-4 h-4" />
               </Link>
             );
-          })}
-        </nav>
-      </div>
+          }
+
+          return (
+            <Link
+              key={item.href ?? item.label}
+              href={href}
+              title={isCollapsed ? item.label : undefined}
+              className={cn(
+                'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all',
+                active
+                  ? 'font-semibold bg-[var(--sidebar-accent)] text-[var(--aip-teal)]'
+                  : 'text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)]',
+                isCollapsed && 'justify-center'
+              )}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* User footer — optional; flex-shrink-0 so it never overlaps nav */}
+      {sidebarFooter && (
+        <div className="flex-shrink-0 p-3 border-t border-[var(--sidebar-border)]">
+          {sidebarFooter}
+        </div>
+      )}
     </aside>
   );
 }
