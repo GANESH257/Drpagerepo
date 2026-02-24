@@ -202,8 +202,8 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 md:mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm md:text-base text-white/70">
+        <div className="mt-10 md:mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-center items-center gap-6 md:gap-10 text-center">
+          <p className="text-sm md:text-base text-white/70 md:-translate-x-8">
             &copy; {currentYear} Alliance of Independent Physicians. All rights
             reserved.
           </p>

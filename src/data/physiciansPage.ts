@@ -3,6 +3,7 @@ export interface PhysicianBenefit {
   title: string;
   description: string;
   icon: string; // Lucide icon name
+  keywords?: string[]; // words to highlight as bold + animated in description
   link?: string;
   linkText?: string;
   size: 'small' | 'medium' | 'large';
@@ -60,6 +61,7 @@ export const physicianBenefits: PhysicianBenefit[] = [
     id: 'increase-patient-flow',
     title: 'Increase Your Patient Flow',
     description: 'Get discovered by thousands of patients searching our public directory and receive direct referrals from a trusted network of specialists.',
+    keywords: ['thousands', 'direct referrals', 'trusted network'],
     icon: 'Users',
     size: 'large',
     accentColor: 'blue',
@@ -68,6 +70,7 @@ export const physicianBenefits: PhysicianBenefit[] = [
     id: 'reduce-overhead',
     title: 'Reduce Your Overhead',
     description: 'Gain access to group purchasing discounts on medical supplies, equipment, and insurance that are typically only available to large hospital networks.',
+    keywords: ['group purchasing', 'discounts', 'large hospital networks'],
     icon: 'TrendingDown',
     size: 'medium',
     accentColor: 'green',
@@ -76,6 +79,7 @@ export const physicianBenefits: PhysicianBenefit[] = [
     id: 'simplify-administration',
     title: 'Simplify Your Administration',
     description: 'Our unified platform gives you a powerful digital presence, a secure referral network, and a community of peers to consult with, all in one place.',
+    keywords: ['unified platform', 'digital presence', 'referral network'],
     icon: 'Briefcase',
     size: 'medium',
     accentColor: 'blue',
@@ -84,6 +88,7 @@ export const physicianBenefits: PhysicianBenefit[] = [
     id: 'preserve-independence',
     title: 'Preserve Your Independence',
     description: 'We handle the network, you handle the medicine. The Alliance is run by physicians, for physicians, with the sole goal of helping private practice thrive.',
+    keywords: ['physicians', 'private practice', 'thrive'],
     icon: 'ShieldCheck',
     size: 'large',
     accentColor: 'green',

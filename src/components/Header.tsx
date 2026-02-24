@@ -142,7 +142,7 @@ export function Header() {
   // Always show solid navbar (removed transparent/invisible state)
   // Add shrink effect when scrolled
   const getHeaderClasses = () => {
-    const base = 'fixed top-4 md:top-6 z-50 w-full transition-all duration-300';
+    const base = 'fixed top-5 md:top-8 z-50 w-full transition-all duration-300';
     const shadow = isScrolled ? 'shadow-md' : 'shadow-sm';
 
     // Always show solid navbar with background
@@ -163,7 +163,7 @@ export function Header() {
   return (
     <header className={headerClasses}>
       <div className="container mx-auto px-4">
-        <div className={`flex items-center justify-between transition-all duration-300 flex-nowrap ${isScrolled ? 'h-20 md:h-24' : 'h-24 md:h-28'}`}>
+        <div className="flex items-center justify-between transition-all duration-300 flex-nowrap h-20 md:h-24">
           {/* Logo */}
           <Link href={homeLink} className="flex items-center space-x-2 flex-shrink-0 mr-4 lg:mr-6">
             <Image
@@ -230,7 +230,7 @@ export function Header() {
             <Button
               asChild
               size="sm"
-              className="text-xs xl:text-sm bg-brand-teal hover:bg-brand-teal/90 text-white transition-all whitespace-nowrap"
+              className="text-xs xl:text-sm bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105 whitespace-nowrap"
             >
               <Link href="/practices">Find a Practice</Link>
             </Button>
@@ -312,7 +312,7 @@ export function Header() {
                 <Button
                   asChild
                   size="sm"
-                  className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white"
+                  className="w-full bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105"
                 >
                   <Link href="/practices" onClick={() => setMobileMenuOpen(false)}>Find a Practice</Link>
                 </Button>

@@ -7,7 +7,7 @@ import { memberBenefits } from '@/data/memberBenefits';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import * as LucideIcons from 'lucide-react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const playfairDisplay = Playfair_Display({
@@ -66,6 +66,19 @@ export function MemberBenefitsSection() {
       id="member-benefits"
       className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]"
     >
+      {/* 3D animated hexagons + stars background */}
+      <div className="member-benefits-3d-bg" aria-hidden>
+        <div className="member-benefits-3d-inner">
+          <div className="member-benefits-hex member-benefits-hex-1" />
+          <div className="member-benefits-hex member-benefits-hex-2" />
+          <div className="member-benefits-hex member-benefits-hex-3" />
+          <div className="member-benefits-hex member-benefits-hex-4" />
+          <Star className="member-benefits-star member-benefits-star-1" strokeWidth={2} fill="currentColor" />
+          <Star className="member-benefits-star member-benefits-star-2" strokeWidth={2} fill="currentColor" />
+          <Star className="member-benefits-star member-benefits-star-3" strokeWidth={2} fill="currentColor" />
+          <Star className="member-benefits-star member-benefits-star-4" strokeWidth={2} fill="currentColor" />
+        </div>
+      </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Header – same style as JoinSteps (Mission-style, light background) */}

@@ -4,12 +4,12 @@ import { MembershipPlan } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Zap, Target, Crown, type LucideIcon } from 'lucide-react';
+import { Check, Zap, Briefcase, Crown, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PLAN_ICONS: Record<string, LucideIcon> = {
   basic: Zap,
-  professional: Target,
+  professional: Briefcase,
   premier: Crown,
 };
 
@@ -82,7 +82,7 @@ export function PlanCard({
             aria-hidden
           >
             {(() => {
-              const Icon = PLAN_ICONS[plan.id] ?? Target;
+              const Icon = PLAN_ICONS[plan.id] ?? Briefcase;
               return <Icon className="h-10 w-10" />;
             })()}
           </div>
@@ -133,8 +133,12 @@ export function PlanCard({
         <CardFooter className="relative z-10 pt-4">
           <Button
             onClick={onSelect}
-            variant={isSelected || isCurrentPlan ? 'gradient' : 'default'}
-            className="w-full"
+            className={cn(
+              'w-full shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105',
+              isCurrentPlan
+                ? 'bg-gray-200 text-gray-600 cursor-not-allowed hover:scale-100'
+                : 'bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90'
+            )}
             disabled={isCurrentPlan}
           >
             {isCurrentPlan

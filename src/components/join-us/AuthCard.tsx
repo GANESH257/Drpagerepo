@@ -26,8 +26,8 @@ export function AuthCard() {
       <CardContent className="space-y-4 p-6">
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-gray-100">
-            <TabsTrigger value="signin" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">Sign In</TabsTrigger>
-            <TabsTrigger value="signup" className="data-[state=active]:bg-[#0F5FA8] data-[state=active]:text-white">Create Account</TabsTrigger>
+            <TabsTrigger value="signin" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-dark-blue data-[state=active]:to-brand-teal data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300">Sign In</TabsTrigger>
+            <TabsTrigger value="signup" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-brand-dark-blue data-[state=active]:to-brand-teal data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300">Create Account</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin" className="space-y-4 mt-6">

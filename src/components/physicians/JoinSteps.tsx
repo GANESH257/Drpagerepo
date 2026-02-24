@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Playfair_Display } from 'next/font/google';
 import { Button } from '@/components/ui/button';
 import { joinSteps } from '@/data/physiciansPage';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, ExternalLink, Cog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const playfairDisplay = Playfair_Display({
@@ -51,6 +51,19 @@ export function JoinSteps() {
 
   return (
     <section ref={sectionRef} className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
+      {/* 3D animated cog shapes background (same as PatientSteps) */}
+      <div className="patient-steps-cogs-bg" aria-hidden>
+        <div className="patient-steps-cogs-inner">
+          <Cog className="patient-cog patient-cog-1" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-2" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-3" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-4" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-5" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-6" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-7" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-8" strokeWidth={2.25} />
+        </div>
+      </div>
       {/* Background Shapes (Matching PatientSteps) */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[10%] left-[5%] w-64 h-64 opacity-60">
@@ -161,7 +174,7 @@ export function JoinSteps() {
             <Button
               asChild
               size="lg"
-              className="bg-brand-teal hover:bg-brand-teal/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-10 h-14 rounded-full text-lg font-bold"
+              className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 px-10 h-14 rounded-full text-lg font-bold hover:scale-105"
             >
               <Link href="/join-us">
                 Join Now

@@ -45,6 +45,15 @@ export function BoardCertifiedBadge() {
       ref={sectionRef}
       className="py-16 md:py-24 relative overflow-hidden bg-white"
     >
+      {/* 3D animated medallion/badge shapes background */}
+      <div className="board-badge-3d-bg" aria-hidden>
+        <div className="board-badge-3d-inner">
+          <Award className="board-badge-medal board-badge-medal-1" strokeWidth={2} fill="currentColor" />
+          <Award className="board-badge-medal board-badge-medal-2" strokeWidth={2} fill="currentColor" />
+          <Award className="board-badge-medal board-badge-medal-3" strokeWidth={2} fill="currentColor" />
+          <Award className="board-badge-medal board-badge-medal-4" strokeWidth={2} fill="currentColor" />
+        </div>
+      </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div

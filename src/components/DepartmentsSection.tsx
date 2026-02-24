@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Playfair_Display } from 'next/font/google';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Stethoscope } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const playfairDisplay = Playfair_Display({
@@ -148,7 +148,24 @@ export function DepartmentsSection() {
       id="departments" 
       className="py-16 md:py-24 relative skin-gridline overflow-hidden"
     >
-
+      {/* 3D animated stethoscope shapes background */}
+      <div className="departments-3d-bg" aria-hidden>
+        <div className="departments-3d-inner">
+          <Stethoscope className="departments-stethoscope departments-stethoscope-center-top" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-1" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-2" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-3" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-4" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-5" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-6" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-7" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-8" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-9" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-10" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-11" strokeWidth={2} />
+          <Stethoscope className="departments-stethoscope departments-stethoscope-12" strokeWidth={2} />
+        </div>
+      </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         {/* Section Header – same text design as MissionStatementNewHome */}
         <div
@@ -181,7 +198,7 @@ export function DepartmentsSection() {
             <Button
               asChild
               size="lg"
-              className="bg-brand-teal hover:bg-brand-teal/90 text-white focus-ring transition-all duration-200 hover:scale-105 shadow-md"
+              className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 focus-ring hover:scale-105"
             >
               <Link href="/doctors">
                 View All Doctors

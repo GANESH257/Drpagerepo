@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Playfair_Display } from 'next/font/google';
 import { BoardMemberCard } from './BoardMemberCard';
-import { trusteeBoardMembers } from '@/data/trusteeBoardMembers';
+import { trusteeBoardMembers, boardOfficerRoleOrder } from '@/data/trusteeBoardMembers';
 
 const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
@@ -43,11 +43,13 @@ export function BoardMemberGrid() {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-          {trusteeBoardMembers.map((member) => (
-            <BoardMemberCard key={member.id} member={member} />
-          ))}
+        {/* Grid – Executive Committee only; 3 per row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {trusteeBoardMembers
+            .filter((member) => boardOfficerRoleOrder.includes(member.role as (typeof boardOfficerRoleOrder)[number]))
+            .map((member) => (
+              <BoardMemberCard key={member.id} member={member} />
+            ))}
         </div>
       </div>
     </section>

@@ -56,8 +56,24 @@ export default function ContactUsPage() {
         ref={heroRef}
         className="relative w-full pt-24 md:pt-28 pb-8 md:pb-12 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-brand-teal/5"
       >
+        {/* Animated 3D rings background (from loading screen) */}
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-40"
+          style={{ perspective: '2000px', transformStyle: 'preserve-3d' }}
+          aria-hidden
+        >
+          <div
+            className="loading-3d-rings contact-3d-rings relative w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96"
+            style={{ transform: 'scale(5) translateY(-8%)' }}
+          >
+            <div className="ring-3d ring-1" />
+            <div className="ring-3d ring-2" />
+            <div className="ring-3d ring-3" />
+            <div className="ring-3d ring-4" />
+          </div>
+        </div>
         {/* Soft gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden>
           <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-brand-teal/10 blur-3xl" />
           <div className="absolute top-1/2 -left-32 w-80 h-80 rounded-full bg-brand-dark-blue/8 blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-96 h-64 rounded-full bg-brand-teal/5 blur-3xl" />

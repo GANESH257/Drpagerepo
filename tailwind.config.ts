@@ -58,6 +58,20 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+        "accordion-up": "accordion-up 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

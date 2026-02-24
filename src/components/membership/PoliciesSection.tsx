@@ -152,7 +152,7 @@ export function PoliciesSection() {
                 Download the full membership policy document for detailed information about all policies and procedures.
               </p>
               <Button
-                className="bg-brand-teal hover:bg-brand-teal/90 text-white"
+                className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105"
                 asChild
               >
                 <Link href="/policies/membership-policy.pdf" target="_blank">

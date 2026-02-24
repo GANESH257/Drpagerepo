@@ -48,6 +48,23 @@ export function FAQSection() {
 
   return (
     <section ref={sectionRef} id="faq" className="py-6 md:py-8 relative overflow-hidden skin-paper">
+      {/* 3D animated question mark shapes background */}
+      <div className="faq-3d-bg" aria-hidden>
+        <div className="faq-3d-bg-inner">
+          <span className="faq-3d-q faq-3d-q-1">?</span>
+          <span className="faq-3d-q faq-3d-q-2">?</span>
+          <span className="faq-3d-q faq-3d-q-3">?</span>
+          <span className="faq-3d-q faq-3d-q-4">?</span>
+          <span className="faq-3d-q faq-3d-q-5">?</span>
+          <span className="faq-3d-q faq-3d-q-6">?</span>
+          <span className="faq-3d-q faq-3d-q-7">?</span>
+          <span className="faq-3d-q faq-3d-q-8">?</span>
+          <span className="faq-3d-q faq-3d-q-9">?</span>
+          <span className="faq-3d-q faq-3d-q-10">?</span>
+          <span className="faq-3d-q faq-3d-q-11">?</span>
+          <span className="faq-3d-q faq-3d-q-12">?</span>
+        </div>
+      </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
           {/* Header – same text design as Mission-style */}

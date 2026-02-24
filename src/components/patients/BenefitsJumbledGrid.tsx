@@ -307,12 +307,7 @@ export function BenefitsJumbledGrid() {
                     {card.link && card.linkText ? (
                       <Button
                         asChild
-                        className={cn(
-                          'w-fit rounded-md px-6 py-2.5 text-sm font-medium transition-all duration-200 focus-ring hover:scale-105 shadow-md',
-                          isTeal
-                            ? 'bg-brand-teal hover:bg-brand-teal/90 text-white'
-                            : 'bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white'
-                        )}
+                        className="w-fit rounded-md px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105"
                       >
                         <Link href={card.link}>
                           {card.linkText}
@@ -352,19 +347,21 @@ export function BenefitsJumbledGrid() {
             })}
           </div>
 
-          {/* Carousel controls */}
-          <div className="flex items-center gap-6 mt-10 md:mt-12">
+          {/* Carousel controls – fixed-size circle buttons with chevron icons */}
+          <div className="flex items-center justify-center gap-6 mt-10 md:mt-12 data-scroll-exclude" data-scroll-speed="0">
             <button
+              type="button"
               onClick={handlePrev}
-              className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
+              className="shrink-0 w-12 h-12 min-w-12 min-h-12 rounded-full bg-white border border-gray-200 inline-flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
               aria-label="Previous"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 shrink-0" aria-hidden />
             </button>
-            <div className="flex gap-2.5" role="tablist" aria-label="Benefit carousel">
+            <div className="flex gap-2.5 shrink-0" role="tablist" aria-label="Benefit carousel">
               {currentFeatures.map((_, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => handleDotClick(index)}
                   role="tab"
                   aria-selected={index === activeIndex}
@@ -379,11 +376,12 @@ export function BenefitsJumbledGrid() {
               ))}
             </div>
             <button
+              type="button"
               onClick={handleNext}
-              className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
+              className="shrink-0 w-12 h-12 min-w-12 min-h-12 rounded-full bg-white border border-gray-200 inline-flex items-center justify-center cursor-pointer transition-all duration-200 focus-ring hover:bg-brand-teal hover:text-white hover:border-brand-teal text-gray-700 hover:scale-105 shadow-sm"
               aria-label="Next"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-5 h-5 shrink-0" aria-hidden />
             </button>
           </div>
         </div>

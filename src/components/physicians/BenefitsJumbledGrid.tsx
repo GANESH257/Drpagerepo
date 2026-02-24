@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Playfair_Display } from 'next/font/google';
@@ -27,8 +27,10 @@ const iconMap: Record<string, keyof typeof LucideIcons> = {
 
 export function BenefitsJumbledGrid() {
   const [isVisible, setIsVisible] = useState(false);
+  const [visibleCards, setVisibleCards] = useState<boolean[]>(() => Array(physicianBenefits.length).fill(false));
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,15 +63,64 @@ export function BenefitsJumbledGrid() {
     return () => observer.disconnect();
   }, []);
 
+  // Per-card viewport: each card animates when it scrolls into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const indexStr = (entry.target as HTMLElement).getAttribute('data-card-index');
+          if (indexStr == null || !entry.isIntersecting) return;
+          const index = parseInt(indexStr, 10);
+          setVisibleCards((prev) => {
+            if (prev[index]) return prev;
+            const next = [...prev];
+            next[index] = true;
+            return next;
+          });
+        });
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -40px 0px' }
+    );
+
+    cardRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
   const getIcon = (iconName: string) => {
     const IconComponent = LucideIcons[iconMap[iconName] || 'Handshake'] as React.ComponentType<{ className?: string }>;
     return IconComponent || Handshake;
   };
 
+  /** Wrap keywords in description with bold + animated span */
+  const renderDescriptionWithKeywords = (
+    text: string,
+    keywords: string[] | undefined,
+    keywordClassName: string
+  ): ReactNode => {
+    if (!keywords?.length) return text;
+    const sorted = [...keywords].sort((a, b) => b.length - a.length);
+    const escaped = sorted.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
+    const parts = text.split(pattern);
+    return parts.map((part, i) => {
+      const isKeyword = sorted.some((k) => part.toLowerCase() === k.toLowerCase());
+      if (isKeyword) {
+        return (
+          <span key={i} className={keywordClassName}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <section
       ref={sectionRef}
-      className="py-16 md:py-24 relative overflow-hidden bg-white"
+      className="pt-16 md:pt-24 pb-10 md:pb-14 relative overflow-hidden bg-white"
     >
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
@@ -100,50 +151,84 @@ export function BenefitsJumbledGrid() {
             </p>
           </div>
 
-          {/* Desktop: Asymmetric 3-column grid */}
-          <div className="hidden lg:grid lg:grid-cols-3 gap-6 auto-rows-fr">
+          {/* Desktop: staggered layout – wide cards + animated numbers in empty space */}
+          <div className="hidden lg:flex lg:flex-col lg:gap-6">
             {physicianBenefits.map((benefit, index) => {
               const IconComponent = getIcon(benefit.icon);
               const cardDelay = prefersReducedMotion ? 0 : index * 150;
               const isLarge = benefit.size === 'large';
               const accentColor = benefit.accentColor === 'blue' ? 'brand-dark-blue' : 'emerald-600';
 
-              // Grid placement for asymmetric layout
-              let gridClass = '';
-              if (benefit.id === 'collective-bargaining') {
-                gridClass = 'lg:col-span-2'; // Spans 2 columns
-              } else if (benefit.id === 'clinical-autonomy') {
-                gridClass = 'lg:col-span-2'; // Spans 2 columns
-              }
+              // Card on left for 0,2 → number on right (1, 3). Card on right for 1,3 → number on left (2, 4).
+              const cardOnLeft = index % 2 === 0;
+              const alignClass = cardOnLeft ? 'lg:self-start' : 'lg:self-end';
 
               // Card style: standard glass (contact-style) for white/emerald; keep dark/image for special cards
               const isDarkCard = benefit.id === 'collective-bargaining' || benefit.id === 'clinical-autonomy';
               const hasImageBackground = benefit.id === 'clinical-autonomy';
               const isStandardGlass = !isDarkCard && !hasImageBackground;
 
-              return (
+              // Slide in from left for even cards, from right for odd cards (per-card viewport)
+              const cardVisible = visibleCards[index];
+              const slideX = cardOnLeft ? '-120px' : '120px';
+              const transformIn = 'translateX(0) translateY(0) scale(1)';
+              const transformOut = prefersReducedMotion
+                ? 'translateY(20px) scale(0.98)'
+                : `translateX(${slideX}) translateY(20px) scale(0.98)`;
+
+              // Number color matches the card: dark cards → white; glass cards → accent (blue or green)
+              const numberColorClass = isDarkCard
+                ? 'text-white/25'
+                : accentColor === 'blue'
+                  ? 'text-brand-dark-blue/25'
+                  : 'text-emerald-600/25';
+
+              const numberEl = (
                 <div
-                  key={benefit.id}
+                  className={cn(
+                    'flex items-center min-h-[140px] flex-1 min-w-0',
+                    cardOnLeft ? 'justify-end pr-4' : 'justify-start pl-4'
+                  )}
                   style={{
-                    opacity: isVisible ? 1 : 0,
-                    transform: isVisible && !prefersReducedMotion
-                      ? 'translateY(0) scale(1)'
-                      : 'translateY(30px) scale(0.95)',
+                    order: cardOnLeft ? 2 : 1,
+                    opacity: cardVisible ? 1 : 0,
+                    transform: cardVisible && !prefersReducedMotion ? 'scale(1)' : 'scale(0.3)',
                     transition: prefersReducedMotion
                       ? `opacity 0.3s ease ${cardDelay}ms`
-                      : `opacity 0.8s ease-out ${cardDelay}ms, transform 0.8s ease-out ${cardDelay}ms`,
+                      : `opacity 0.6s ease-out ${cardDelay}ms, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${cardDelay}ms`,
                   }}
-                  className={cn('h-full', gridClass)}
+                  aria-hidden
                 >
+                  <span className={cn('text-[6rem] md:text-[7rem] font-black leading-none select-none tabular-nums', numberColorClass)}>
+                    {index + 1}
+                  </span>
+                </div>
+              );
+
+              return (
+                <div key={benefit.id} className="w-full flex flex-row justify-between items-stretch gap-2 min-h-[140px]">
+                  <div
+                    ref={(el) => { cardRefs.current[index] = el; }}
+                    data-card-index={index}
+                    style={{
+                      order: cardOnLeft ? 1 : 2,
+                      opacity: cardVisible ? 1 : 0,
+                      transform: cardVisible && !prefersReducedMotion ? transformIn : transformOut,
+                      transition: prefersReducedMotion
+                        ? `opacity 0.3s ease ${cardDelay}ms`
+                        : `opacity 0.7s ease-out ${cardDelay}ms, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) ${cardDelay}ms`,
+                    }}
+                    className="h-full w-[88%] min-h-0 lg:min-h-[140px] shrink-0"
+                  >
                   <Card
                     className={cn(
                       'group relative overflow-hidden h-full transition-all duration-500 ease-out data-scroll-exclude',
-                      'hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02]',
+                      'hover:-translate-y-2 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.01]',
                       isStandardGlass &&
-                        'bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:bg-white/75',
+                        'bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-1 shadow-2xl shadow-black/15 hover:bg-white/75',
                       isDarkCard && !hasImageBackground && 'bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-dark-blue/90 border border-white/20 hover:border-brand-teal/60',
                       hasImageBackground && 'border border-white/20',
-                      isLarge ? 'p-8' : 'p-6'
+                      'py-4 px-5 md:py-5 md:px-8'
                     )}
                   >
                     {/* Standard glass cards: same decorative layers as ContactInfoCards */}
@@ -187,68 +272,76 @@ export function BenefitsJumbledGrid() {
                     )}
 
                     <CardContent className={cn(
-                      "p-0 flex flex-col h-full items-center text-center",
+                      "p-0 flex flex-row h-full items-center gap-4 md:gap-6 text-left",
                       (hasImageBackground || isDarkCard) && "relative z-20"
                     )}>
-                      {/* Top accent line */}
-                      <div
-                        className={cn(
-                          'h-1 w-16 mb-4 rounded-full',
-                          isDarkCard ? 'bg-white' : 'bg-emerald-600'
-                        )}
-                      />
-
-                      {/* Standard icon – same as Contact cards: large gradient box, pulsate, hover scale/glow */}
-                      <div
-                        className={cn(
-                          'w-24 h-24 rounded-3xl flex items-center justify-center mb-6 shadow-2xl relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)]',
-                          isDarkCard ? 'bg-white/20 text-white' : 'bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white',
-                          isStandardGlass && isVisible && !prefersReducedMotion && 'pulsate-bck-normal'
-                        )}
-                      >
-                        {isStandardGlass && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                        )}
-                        <IconComponent className={cn('text-white relative z-10', isStandardGlass ? 'h-12 w-12' : 'h-10 w-10')} aria-hidden="true" />
-                      </div>
-
-                    {/* Title */}
-                    <h3 className={cn(
-                      "text-xl md:text-2xl font-bold mb-3",
-                      isDarkCard ? "text-white" : "text-brand-dark-blue"
-                    )}>
-                      {benefit.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className={cn(
-                      'mb-4 flex-grow',
-                      isDarkCard ? 'text-white/90' : 'text-gray-700',
-                      isLarge ? 'text-base md:text-lg' : 'text-sm md:text-base'
-                    )}>
-                      {benefit.description}
-                    </p>
-
-                    {/* Link button */}
-                    {benefit.link && benefit.linkText && (
-                      <div className="mt-auto">
-                        <Button
-                          asChild
-                          variant="ghost"
+                      {/* Left: icon (compact for bar) */}
+                      <div className="flex flex-col items-center shrink-0">
+                        <div
                           className={cn(
-                            'p-0 h-auto text-sm font-semibold hover:underline',
-                            isDarkCard ? 'text-white hover:text-white/80' : 'text-emerald-600 hover:text-emerald-600/80'
+                            'h-0.5 w-8 rounded-full mb-2',
+                            isDarkCard ? 'bg-white' : 'bg-emerald-600'
+                          )}
+                          aria-hidden
+                        />
+                        <div
+                          className={cn(
+                            'w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shadow-xl relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-110 group-hover:shadow-[0_0_24px_rgba(15,95,168,0.4)]',
+                            isDarkCard ? 'bg-white/20 text-white' : 'bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white',
+                            isStandardGlass && isVisible && !prefersReducedMotion && 'pulsate-bck-normal'
                           )}
                         >
-                          <Link href={benefit.link}>
-                            {benefit.linkText}
-                            <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                          </Link>
-                        </Button>
+                          {isStandardGlass && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
+                          )}
+                          <IconComponent className={cn('text-white relative z-10', 'h-7 w-7 md:h-8 md:w-8')} aria-hidden="true" />
+                        </div>
                       </div>
-                    )}
+
+                      {/* Right: title, description, link (single line / compact) */}
+                      <div className="flex flex-col justify-center min-w-0 flex-1 py-1">
+                        <h3 className={cn(
+                          "text-lg md:text-xl font-extrabold mb-0.5 tracking-tight leading-tight",
+                          isDarkCard ? "text-white" : "text-brand-dark-blue"
+                        )}>
+                          {benefit.title}
+                        </h3>
+                        <p className={cn(
+                          'text-sm md:text-base',
+                          isDarkCard ? 'text-white/90' : 'text-gray-700',
+                          'leading-snug line-clamp-2'
+                        )}>
+                          {renderDescriptionWithKeywords(
+                            benefit.description,
+                            benefit.keywords,
+                            cn(
+                              'font-bold benefits-description-keyword',
+                              isDarkCard ? 'text-white' : 'text-brand-dark-blue'
+                            )
+                          )}
+                        </p>
+                        {benefit.link && benefit.linkText && (
+                          <div className="mt-1.5">
+                            <Button
+                              asChild
+                              variant="ghost"
+                              className={cn(
+                                'p-0 h-auto text-xs md:text-sm font-semibold hover:underline',
+                                isDarkCard ? 'text-white hover:text-white/80' : 'text-emerald-600 hover:text-emerald-600/80'
+                              )}
+                            >
+                              <Link href={benefit.link}>
+                                {benefit.linkText}
+                                <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                   </CardContent>
                 </Card>
+                  </div>
+                  {numberEl}
                 </div>
               );
             })}
@@ -323,8 +416,14 @@ export function BenefitsJumbledGrid() {
                         {isStandardGlass && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />}
                         <IconComponent className={cn('text-white relative z-10', isStandardGlass ? 'h-12 w-12' : 'h-10 w-10')} aria-hidden="true" />
                       </div>
-                      <h3 className={cn("text-xl font-bold mb-3", isDarkCard ? "text-white" : "text-brand-dark-blue")}>{benefit.title}</h3>
-                      <p className={cn('mb-4 flex-grow text-base', isDarkCard ? 'text-white/90' : 'text-gray-700')}>{benefit.description}</p>
+                      <h3 className={cn("text-xl md:text-2xl font-extrabold mb-3 tracking-tight leading-tight", isDarkCard ? "text-white" : "text-brand-dark-blue")}>{benefit.title}</h3>
+                      <p className={cn('mb-4 flex-grow text-base', isDarkCard ? 'text-white/90' : 'text-gray-700')}>
+                        {renderDescriptionWithKeywords(
+                          benefit.description,
+                          benefit.keywords,
+                          cn('font-bold benefits-description-keyword', isDarkCard ? 'text-white' : 'text-brand-dark-blue')
+                        )}
+                      </p>
                       {benefit.link && benefit.linkText && (
                         <div className="mt-auto">
                           <Button asChild variant="ghost" className={cn('p-0 h-auto text-sm font-semibold hover:underline', isDarkCard ? 'text-white hover:text-white/80' : 'text-emerald-600 hover:text-emerald-600/80')}>
@@ -407,8 +506,14 @@ export function BenefitsJumbledGrid() {
                         {isStandardGlass && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />}
                         <IconComponent className={cn('text-white relative z-10', isStandardGlass ? 'h-12 w-12' : 'h-10 w-10')} aria-hidden="true" />
                       </div>
-                      <h3 className={cn("text-xl font-bold mb-3", isDarkCard ? "text-white" : "text-brand-dark-blue")}>{benefit.title}</h3>
-                      <p className={cn('mb-4 text-base', isDarkCard ? 'text-white/90' : 'text-gray-700')}>{benefit.description}</p>
+                      <h3 className={cn("text-xl md:text-2xl font-extrabold mb-3 tracking-tight leading-tight", isDarkCard ? "text-white" : "text-brand-dark-blue")}>{benefit.title}</h3>
+                      <p className={cn('mb-4 text-base', isDarkCard ? 'text-white/90' : 'text-gray-700')}>
+                        {renderDescriptionWithKeywords(
+                          benefit.description,
+                          benefit.keywords,
+                          cn('font-bold benefits-description-keyword', isDarkCard ? 'text-white' : 'text-brand-dark-blue')
+                        )}
+                      </p>
                       {benefit.link && benefit.linkText && (
                         <div className="mt-auto">
                           <Button asChild variant="ghost" className={cn('p-0 h-auto text-sm font-semibold hover:underline', isDarkCard ? 'text-white hover:text-white/80' : 'text-emerald-600 hover:text-emerald-600/80')}>
@@ -437,7 +542,7 @@ export function BenefitsJumbledGrid() {
             <Button
               asChild
               size="lg"
-              className="bg-brand-teal hover:bg-brand-teal/90 text-white shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-6 text-lg font-semibold"
+              className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 px-8 py-6 text-lg font-semibold hover:scale-105"
             >
               <Link href="/membership">
                 View Membership Plans

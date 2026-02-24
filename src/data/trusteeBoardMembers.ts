@@ -1,10 +1,13 @@
 import { TrusteeBoardMember } from '@/types';
 
+/** Officer roles to show in the Executive Committee block (order: President, Secretary, Treasurer, Member-at-Large, Member-at-Large) */
+export const boardOfficerRoleOrder = ['President', 'Secretary', 'Treasurer', 'Member-at-Large'] as const;
+
 export const trusteeBoardMembers: TrusteeBoardMember[] = [
   {
     id: '1',
-    name: 'Dr. Robert Hacker',
-    role: 'Chair',
+    name: 'Robert Hacker, M.D.',
+    role: 'President',
     photo: '/Dr_images/physician-robert-hacker-md.jpg',
     bio: 'Dr. Robert Hacker is board-certified in both General and Vascular Surgery, a Fellow of the American College of Surgeons, and President of the Alliance of Independent Practitioners. He brings extensive leadership experience and strategic vision to guide the organization\'s mission.',
     specialty: 'Vascular Surgery',
@@ -14,18 +17,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
   },
   {
     id: '2',
-    name: 'Dr. Amit Bhandarkar',
-    role: 'Vice Chair',
-    photo: '/Dr_images/Amit.png',
-    bio: 'Dr. Amit Bhandarkar is a fellowship-trained Orthopedic Spine Surgeon specializing in Minimally Invasive Spine Surgery and Endoscopic Spine Surgery. He has been instrumental in developing strategic initiatives for physician recruitment and member engagement.',
-    specialty: 'Orthopedic Spine',
-    location: 'Chesterfield, MO',
-    term: '2023-2026',
-    email: 'amit.bhandarkar@aip.com',
-  },
-  {
-    id: '3',
-    name: 'Dr. Hashim S. Raza',
+    name: 'Hashim Raza, M.D.',
     role: 'Secretary',
     photo: '/Dr_images/provider-Hashim-Raza.jpg',
     bio: 'Dr. Hashim S. Raza is a board-certified internist with hospital privileges at Missouri Baptist Medical Center. He maintains board records and ensures proper documentation of all meetings and decisions.',
@@ -35,7 +27,40 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'hashim.raza@aip.com',
   },
   {
+    id: '3',
+    name: 'Amit Bhandarkar, M.D.',
+    role: 'Member-at-Large',
+    photo: '/Dr_images/Amit.png',
+    bio: 'Dr. Amit Bhandarkar is a fellowship-trained Orthopedic Spine Surgeon specializing in Minimally Invasive Spine Surgery and Endoscopic Spine Surgery. He has been instrumental in developing strategic initiatives for physician recruitment and member engagement.',
+    specialty: 'Orthopedic Spine',
+    location: 'Chesterfield, MO',
+    term: '2023-2026',
+    email: 'amit.bhandarkar@aip.com',
+  },
+  {
     id: '4',
+    name: 'George Mansour, M.D.',
+    role: 'Treasurer',
+    photo: '/Dr_images/physician-placeholder.jpg',
+    bio: 'Dr. George Mansour serves as Treasurer of the Alliance of Independent Practitioners, overseeing financial stewardship and budgeting for the organization.',
+    specialty: '',
+    location: 'St. Louis, MO',
+    term: '2023-2026',
+    email: 'george.mansour@aip.com',
+  },
+  {
+    id: '5',
+    name: 'Scott Hardeman, M.D.',
+    role: 'Member-at-Large',
+    photo: '/Dr_images/physician-placeholder.jpg',
+    bio: 'Dr. Scott Hardeman serves as Member-at-Large on the Board of the Alliance of Independent Practitioners.',
+    specialty: '',
+    location: 'St. Louis, MO',
+    term: '2023-2026',
+    email: 'scott.hardeman@aip.com',
+  },
+  {
+    id: '6',
     name: 'Dr. Phillip Brick',
     role: 'Trustee',
     photo: '/Dr_images/Phillip-Brick.jpg',
@@ -46,7 +71,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'phillip.brick@aip.com',
   },
   {
-    id: '5',
+    id: '7',
     name: 'Dr. Richard DiValerio',
     role: 'Trustee',
     photo: '/Dr_images/provider-Richard-Di-Valerio.jpg',
@@ -57,7 +82,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'richard.divalerio@aip.com',
   },
   {
-    id: '6',
+    id: '8',
     name: 'Dr. Ying Du',
     role: 'Trustee',
     photo: '/Dr_images/provider-Ying-Du-2023v2.jpg',
@@ -68,7 +93,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'ying.du@aip.com',
   },
   {
-    id: '7',
+    id: '9',
     name: 'Dr. Damon Payton',
     role: 'Trustee',
     photo: '/Dr_images/provider-Damon-Payton.jpg',
@@ -79,7 +104,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'damon.payton@aip.com',
   },
   {
-    id: '8',
+    id: '10',
     name: 'Dr. Azra Niaz',
     role: 'Trustee',
     photo: '/Dr_images/Dr.-Azra-Niaz-Profile-Image.png',
@@ -90,7 +115,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'azra.niaz@aip.com',
   },
   {
-    id: '9',
+    id: '11',
     name: 'Dr. Sitwat Malik',
     role: 'Trustee',
     photo: '/Dr_images/dr-sitwat-malik.png',
@@ -101,7 +126,7 @@ export const trusteeBoardMembers: TrusteeBoardMember[] = [
     email: 'sitwat.malik@aip.com',
   },
   {
-    id: '10',
+    id: '12',
     name: 'Dr. Melvin Maclin',
     role: 'Trustee',
     photo: '/Dr_images/provider-Melvin-Maclin-sm.jpg',

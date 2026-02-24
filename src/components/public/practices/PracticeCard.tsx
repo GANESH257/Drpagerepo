@@ -152,8 +152,7 @@ export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel
         <div className="mt-auto">
           <Button 
             asChild 
-            variant="gradient"
-            className="w-full"
+            className="w-full bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105 [&_a]:text-white"
           >
             <Link href={`/practices/${practice.slug}`}>View Practice</Link>
           </Button>

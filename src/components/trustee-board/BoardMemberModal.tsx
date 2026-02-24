@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
 import { TrusteeBoardMember } from '@/types';
 import { cn } from '@/lib/utils';
@@ -75,43 +76,46 @@ export function BoardMemberModal({
         {/* Body: bio + details */}
         <div className="px-6 pb-6">
           <div className="space-y-5">
-            <div className="text-center">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+            <div className="rounded-xl border border-brand-teal/20 bg-gradient-to-br from-white via-gray-50/80 to-brand-teal/10 px-5 py-4 text-center shadow-lg shadow-black/5">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-dark-blue mb-3">
                 Biography
               </h3>
-              <p className="text-gray-700 leading-relaxed text-sm">
+              <p className="text-gray-700 leading-relaxed text-sm max-h-32 overflow-y-auto">
                 {member.bio}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200/80">
               {member.location && (
-                <div className="rounded-xl bg-gray-50 px-4 py-3 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                <div className="rounded-xl border border-brand-dark-blue/15 bg-gradient-to-br from-white to-brand-dark-blue/5 px-4 py-3.5 text-center shadow-md shadow-black/5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-dark-blue mb-1">
                     Location
                   </p>
-                  <p className="text-gray-900 text-sm">{member.location}</p>
+                  <p className="text-gray-900 text-sm font-medium">{member.location}</p>
                 </div>
               )}
               {member.term && (
-                <div className="rounded-xl bg-gray-50 px-4 py-3 text-center">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                <div className="rounded-xl border border-brand-teal/20 bg-gradient-to-br from-white to-brand-teal/5 px-4 py-3.5 text-center shadow-md shadow-black/5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-brand-dark-blue mb-1">
                     Term
                   </p>
-                  <p className="text-gray-900 text-sm">{member.term}</p>
+                  <p className="text-gray-900 text-sm font-medium">{member.term}</p>
                 </div>
               )}
             </div>
 
             {member.email && (
               <div className="flex justify-center mt-2">
-                <a
-                  href={`mailto:${member.email}`}
-                  className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-brand-teal text-white font-semibold text-sm hover:bg-brand-teal/90 transition-colors"
+                <Button
+                  asChild
+                  size="lg"
+                  className="h-12 py-3 px-6 text-base font-semibold bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 focus-ring hover:scale-105 rounded-xl"
                 >
-                  <Mail className="h-4 w-4 shrink-0" />
-                  Contact {member.name.split(' ')[0]}
-                </a>
+                  <a href={`mailto:${member.email}`} className="inline-flex items-center justify-center gap-2">
+                    <Mail className="h-4 w-4 shrink-0" aria-hidden />
+                    Contact {member.name.split(' ')[0]}
+                  </a>
+                </Button>
               </div>
             )}
           </div>

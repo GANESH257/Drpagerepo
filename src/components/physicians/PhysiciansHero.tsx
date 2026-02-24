@@ -127,7 +127,7 @@ export function PhysiciansHero() {
             <Button
               asChild
               size="lg"
-              className="bg-gradient-to-r from-brand-dark-blue to-emerald-600 text-white hover:from-brand-dark-blue/90 hover:to-emerald-600/90 shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
+              className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto"
               aria-label="Join the Alliance"
             >
               <Link href="/join-us">

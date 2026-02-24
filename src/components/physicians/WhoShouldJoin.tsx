@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Playfair_Display } from 'next/font/google';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const playfairDisplay = Playfair_Display({
@@ -53,6 +53,18 @@ export function WhoShouldJoin() {
       ref={sectionRef}
       className="py-16 md:py-24 relative overflow-hidden bg-gradient-to-br from-gray-50 to-white"
     >
+      {/* 3D plus signs + diamonds background (different from other sections) */}
+      <div className="who-join-3d-bg" aria-hidden>
+        <div className="who-join-3d-inner">
+          <Plus className="who-join-plus who-join-plus-1" strokeWidth={2.75} />
+          <Plus className="who-join-plus who-join-plus-2" strokeWidth={2.75} />
+          <Plus className="who-join-plus who-join-plus-3" strokeWidth={2.75} />
+          <Plus className="who-join-plus who-join-plus-4" strokeWidth={2.75} />
+          <div className="who-join-diamond who-join-diamond-1" />
+          <div className="who-join-diamond who-join-diamond-2" />
+          <div className="who-join-diamond who-join-diamond-3" />
+        </div>
+      </div>
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header – same text design as MissionStatementNewHome */}

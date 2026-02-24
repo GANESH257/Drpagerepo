@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, PhoneCall, Mail, MessageCircle } from 'lucide-react';
 import type { ContactEnquiry } from '@/lib/contactStorage';
 
 const playfairDisplay = Playfair_Display({
@@ -246,8 +246,23 @@ export function ContactForm() {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-white" data-scroll-exclude>
-      <div className="container mx-auto px-4">
+    <section className="py-16 md:py-24 bg-white relative overflow-hidden" data-scroll-exclude>
+      {/* 3D animated phone/calling shapes background */}
+      <div className="contact-3d-bg" aria-hidden>
+        <div className="contact-3d-inner">
+          <PhoneCall className="contact-3d-icon contact-icon-1" strokeWidth={3} />
+          <MessageCircle className="contact-3d-icon contact-icon-2" strokeWidth={3} />
+          <Mail className="contact-3d-icon contact-icon-3" strokeWidth={3} />
+          <Mail className="contact-3d-icon contact-icon-4" strokeWidth={3} />
+          <PhoneCall className="contact-3d-icon contact-icon-5" strokeWidth={3} />
+          <MessageCircle className="contact-3d-icon contact-icon-6" strokeWidth={3} />
+          <Mail className="contact-3d-icon contact-icon-7" strokeWidth={3} />
+          <MessageCircle className="contact-3d-icon contact-icon-8" strokeWidth={3} />
+          <PhoneCall className="contact-3d-icon contact-icon-9" strokeWidth={3} />
+          <MessageCircle className="contact-3d-icon contact-icon-10" strokeWidth={3} />
+        </div>
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto">
           <Card className="bg-white border border-gray-200 shadow-lg" data-scroll-exclude>
             <CardHeader className="pb-4">
@@ -689,7 +704,7 @@ export function ContactForm() {
                     type="submit"
                     size="lg"
                     disabled={isSubmitting}
-                    className="flex-1 bg-brand-dark-blue hover:bg-brand-dark-blue/90 text-white transition-all duration-200 hover:shadow-lg hover:scale-105"
+                    className="flex-1 bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 focus-ring hover:scale-105"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
                   </Button>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
+import { Cog } from 'lucide-react';
 import { Playfair_Display } from 'next/font/google';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +76,19 @@ export function PatientSteps() {
 
   return (
     <section ref={sectionRef} className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
+      {/* 3D animated cog shapes background */}
+      <div className="patient-steps-cogs-bg" aria-hidden>
+        <div className="patient-steps-cogs-inner">
+          <Cog className="patient-cog patient-cog-1" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-2" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-3" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-4" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-5" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-6" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-7" strokeWidth={2.25} />
+          <Cog className="patient-cog patient-cog-8" strokeWidth={2.25} />
+        </div>
+      </div>
       {/* Background Shapes */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[10%] left-[5%] w-64 h-64 opacity-60">

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Mail } from 'lucide-react';
 import { TrusteeBoardMember } from '@/types';
 import { BoardMemberModal } from './BoardMemberModal';
@@ -68,17 +69,19 @@ export function BoardMemberCard({ member }: BoardMemberCardProps) {
             {member.term && <p className="text-gray-500">Term: {member.term}</p>}
           </div>
 
-          {/* Email Link (if available) – centered */}
+          {/* Contact button – gradient CTA style */}
           {member.email && (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
-              <a
-                href={`mailto:${member.email}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-brand-teal hover:text-brand-dark-blue transition-colors"
+            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center" onClick={(e) => e.stopPropagation()}>
+              <Button
+                asChild
+                size="sm"
+                className="bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-lg hover:shadow-xl transition-all duration-300 focus-ring hover:scale-105 [&_span]:text-white [&_svg]:text-white"
               >
-                <Mail className="h-4 w-4 shrink-0" />
-                <span>Contact</span>
-              </a>
+                <a href={`mailto:${member.email}`} className="inline-flex items-center justify-center gap-2 text-white font-semibold [text-shadow:0_1px_2px_rgba(0,0,0,0.2)]">
+                  <Mail className="h-4 w-4 shrink-0 text-white" aria-hidden />
+                  <span className="text-white">Contact</span>
+                </a>
+              </Button>
             </div>
           )}
         </CardContent>

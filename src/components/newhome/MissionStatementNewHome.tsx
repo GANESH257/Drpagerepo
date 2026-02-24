@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Playfair_Display } from 'next/font/google';
+import { FileText } from 'lucide-react';
 
 const playfairDisplay = Playfair_Display({ 
   subsets: ['latin'],
@@ -61,9 +63,54 @@ export function MissionStatementNewHome() {
   };
 
   return (
-    <section ref={sectionRef} className="pt-32 md:pt-40 pb-12 md:pb-16 relative overflow-hidden">
+    <section ref={sectionRef} className="pt-24 md:pt-28 pb-12 md:pb-16 relative overflow-hidden">
       {/* Background: white */}
       <div className="absolute inset-0 z-0 bg-white" aria-hidden />
+      {/* 3D shapes background (same theme as loading rings, different shape & motion) */}
+      <div className="mission-3d-bg" aria-hidden>
+        <div className="mission-3d-bg-inner">
+          <div className="mission-cube mission-cube-1">
+            <div className="mission-cube-inner">
+              <div className="mission-cube-face mission-cube-face-front" />
+              <div className="mission-cube-face mission-cube-face-back" />
+              <div className="mission-cube-face mission-cube-face-right" />
+              <div className="mission-cube-face mission-cube-face-left" />
+              <div className="mission-cube-face mission-cube-face-top" />
+              <div className="mission-cube-face mission-cube-face-bottom" />
+            </div>
+          </div>
+          <div className="mission-cube mission-cube-2">
+            <div className="mission-cube-inner">
+              <div className="mission-cube-face mission-cube-face-front" />
+              <div className="mission-cube-face mission-cube-face-back" />
+              <div className="mission-cube-face mission-cube-face-right" />
+              <div className="mission-cube-face mission-cube-face-left" />
+              <div className="mission-cube-face mission-cube-face-top" />
+              <div className="mission-cube-face mission-cube-face-bottom" />
+            </div>
+          </div>
+          <div className="mission-cube mission-cube-3">
+            <div className="mission-cube-inner">
+              <div className="mission-cube-face mission-cube-face-front" />
+              <div className="mission-cube-face mission-cube-face-back" />
+              <div className="mission-cube-face mission-cube-face-right" />
+              <div className="mission-cube-face mission-cube-face-left" />
+              <div className="mission-cube-face mission-cube-face-top" />
+              <div className="mission-cube-face mission-cube-face-bottom" />
+            </div>
+          </div>
+          <div className="mission-cube mission-cube-4">
+            <div className="mission-cube-inner">
+              <div className="mission-cube-face mission-cube-face-front" />
+              <div className="mission-cube-face mission-cube-face-back" />
+              <div className="mission-cube-face mission-cube-face-right" />
+              <div className="mission-cube-face mission-cube-face-left" />
+              <div className="mission-cube-face mission-cube-face-top" />
+              <div className="mission-cube-face mission-cube-face-bottom" />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-7xl mx-auto">
@@ -89,6 +136,19 @@ export function MissionStatementNewHome() {
                 <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&rdquo;</span>
               </p>
             </div>
+          </div>
+
+          {/* View Governance Bylaws */}
+          <div className="mt-10 md:mt-12 text-center" style={animationStyle(400)}>
+            <Link
+              href="/policies/governance-bylaws.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 px-6 py-3 bg-brand-dark-blue text-white rounded-lg hover:bg-brand-dark-blue/90 transition-colors duration-300 shadow-md hover:shadow-lg"
+            >
+              <FileText className="h-5 w-5" aria-hidden="true" />
+              <span className="font-semibold">View Governance Bylaws</span>
+            </Link>
           </div>
         </div>
       </div>

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { DoctorBenefitsPanel } from './DoctorBenefitsPanel';
 import { AuthCard } from './AuthCard';
-import { GenericCTASection } from '@/components/GenericCTASection';
 
 export function JoinUsLayout() {
   const [isVisible, setIsVisible] = useState(false);
@@ -75,7 +74,6 @@ export function JoinUsLayout() {
           </div>
         </div>
       </div>
-      <GenericCTASection />
     </div>
   );
 }

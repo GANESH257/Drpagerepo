@@ -303,7 +303,7 @@ export function SignUpForm({ onSuccess, onSwitchToSignIn }: SignUpFormProps) {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="w-full bg-[#0F5FA8] hover:bg-[#1a6bb8] text-white"
+        className="w-full bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105"
         disabled={isSubmitting || !agreeToTerms}
       >
         {isSubmitting ? 'Creating account...' : 'Create Account'}
