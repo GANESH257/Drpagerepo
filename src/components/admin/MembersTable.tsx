@@ -209,7 +209,7 @@ export function MembersTable() {
       <div className="space-y-6">
         {/* Header with Create Button */}
         <div className="flex items-center justify-between">
-          <Button onClick={handleCreate} className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
+          <Button onClick={handleCreate} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90">
             <Plus className="h-4 w-4 mr-2" />
             Create New Doctor
           </Button>
@@ -358,17 +358,17 @@ export function MembersTable() {
         </div>
 
         {/* Table */}
-        <div className="border rounded-lg overflow-hidden">
+        <div className="glass-card p-0 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-dark-blue">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-dark-blue">Email</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-dark-blue">Specialty</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-dark-blue">Credentials</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-brand-dark-blue">Status</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-brand-dark-blue">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Specialty</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Credentials</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,7 +387,7 @@ export function MembersTable() {
                       className="border-t hover:bg-accent/50 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-brand-dark-blue">
+                        <div className="font-medium text-foreground">
                           {doctor.firstName} {doctor.lastName}
                         </div>
                       </td>

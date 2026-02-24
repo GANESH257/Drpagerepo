@@ -11,11 +11,10 @@ import { getApprovalTimeline } from '@/lib/services/approvalEngine';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError, NotFoundError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
-import { ApprovalStatusBadge } from '@/components/shared/approvals/ApprovalStatusBadge';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { ApprovalTypeBadge } from '@/components/shared/approvals/ApprovalTypeBadge';
 import { Timeline } from '@/components/shared/approvals/Timeline';
 import { RequestedChangesRenderer } from '@/components/shared/approvals/RequestedChangesRenderer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -290,7 +289,7 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
         return (
             <ul className="list-disc list-inside space-y-2 text-sm">
                 {effects.map((effect, idx) => (
-                    <li key={idx} className="text-gray-700">{effect}</li>
+                    <li key={idx} className="text-muted-foreground">{effect}</li>
                 ))}
             </ul>
         );
@@ -300,8 +299,8 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading approval request...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--aip-teal)' }} />
+                    <p className="text-muted-foreground">Loading approval request...</p>
                 </div>
             </div>
         );
@@ -310,7 +309,7 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
     if (!request) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-600">Approval request not found</p>
+                <p className="text-muted-foreground">Approval request not found</p>
                 <Button onClick={() => router.push(backHref)} className="mt-4">
                     Back to Queue
                 </Button>
@@ -331,7 +330,7 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="mb-2 -ml-2 text-gray-600 hover:text-[#0F5FA8]"
+                        className="mb-2 -ml-2 text-muted-foreground hover:text-[var(--aip-teal)]"
                         onClick={() => router.push(backHref)}
                     >
                         ← Back to Queue
@@ -344,38 +343,38 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </div>
 
             {/* Request Summary */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">Request Summary</CardTitle>
+                        <h3 className="text-lg font-semibold text-foreground">Request Summary</h3>
                         <div className="flex gap-2">
                             <ApprovalTypeBadge type={request.type} />
-                            <ApprovalStatusBadge status={request.status} />
+                            <StatusBadge status={request.status} />
                         </div>
                     </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                </div>
+                <div className="p-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label className="text-gray-600">Submitted At</Label>
+                            <Label className="text-muted-foreground">Submitted At</Label>
                             <p className="font-medium">{formatDateTime(request.submittedAt)}</p>
                         </div>
                         <div>
-                            <Label className="text-gray-600">Last Updated</Label>
+                            <Label className="text-muted-foreground">Last Updated</Label>
                             <p className="font-medium">{formatDateTime(request.updatedAt)}</p>
                         </div>
                         <div>
-                            <Label className="text-gray-600">Submitted By</Label>
+                            <Label className="text-muted-foreground">Submitted By</Label>
                             <p className="font-medium">
                                 {request.submittedBy.role}
                                 {request.submittedBy.email && (
-                                    <span className="text-gray-600 ml-2">({request.submittedBy.email})</span>
+                                    <span className="text-muted-foreground ml-2">({request.submittedBy.email})</span>
                                 )}
                             </p>
                         </div>
                         {targetDisplay && (
                             <div>
-                                <Label className="text-gray-600">Target</Label>
+                                <Label className="text-muted-foreground">Target</Label>
                                 <p className="font-medium">
                                     {targetDisplay.type === 'practice'
                                         ? (targetDisplay.data as Practice).name
@@ -384,75 +383,75 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                             </div>
                         )}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Dual Approval Status */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                    <CardTitle className="text-lg">Approval Status</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Approval Status</h3>
+                </div>
+                <div className="p-6 space-y-4">
                     <div>
-                        <Label className="text-gray-600 mb-2 block">Admin Approval</Label>
+                        <Label className="text-muted-foreground mb-2 block">Admin Approval</Label>
                         <div className="flex items-center gap-2">
-                            <ApprovalStatusBadge status={request.approvals.admin.status as any} />
+                            <StatusBadge status={request.approvals.admin.status as string} />
                             {request.approvals.admin.decidedAt && (
-                                <span className="text-sm text-gray-600">
+                                <span className="text-sm text-muted-foreground">
                                     on {formatDateTime(request.approvals.admin.decidedAt)}
                                 </span>
                             )}
                         </div>
                         {request.approvals.admin.notes && (
-                            <p className="text-sm text-gray-600 mt-2">{request.approvals.admin.notes}</p>
+                            <p className="text-sm text-muted-foreground mt-2">{request.approvals.admin.notes}</p>
                         )}
                     </div>
 
                     {request.approvals.practiceAdmin && (
                         <div>
-                            <Label className="text-gray-600 mb-2 block">Practice Admin Approval</Label>
+                            <Label className="text-muted-foreground mb-2 block">Practice Admin Approval</Label>
                             <div className="flex items-center gap-2">
-                                <ApprovalStatusBadge status={request.approvals.practiceAdmin.status as any} />
+                                <StatusBadge status={request.approvals.practiceAdmin.status as string} />
                                 {request.approvals.practiceAdmin.decidedAt && (
-                                    <span className="text-sm text-gray-600">
+                                    <span className="text-sm text-muted-foreground">
                                         on {formatDateTime(request.approvals.practiceAdmin.decidedAt)}
                                     </span>
                                 )}
                             </div>
                             {request.approvals.practiceAdmin.notes && (
-                                <p className="text-sm text-gray-600 mt-2">{request.approvals.practiceAdmin.notes}</p>
+                                <p className="text-sm text-muted-foreground mt-2">{request.approvals.practiceAdmin.notes}</p>
                             )}
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Requested Changes */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                    <CardTitle className="text-lg">Requested Changes</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Requested Changes</h3>
+                </div>
+                <div className="p-6">
                     {renderPayload()}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* What Happens When Approved */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                    <CardTitle className="text-lg">What Happens When Approved</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">What Happens When Approved</h3>
+                </div>
+                <div className="p-6">
                     {renderApprovalEffects()}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Admin Actions */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                    <CardTitle className="text-lg">Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Actions</h3>
+                </div>
+                <div className="p-6 pt-6">
                     <div className="flex flex-wrap gap-3">
                         {canMarkUnderReview && (
                             <Dialog open={showUnderReviewDialog} onOpenChange={setShowUnderReviewDialog}>
@@ -492,7 +491,7 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                         {canApprove && (
                             <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-[#0F5FA8] hover:bg-[#0F5FA8]/90">Approve</Button>
+                                    <Button className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>Approve</Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
@@ -573,18 +572,18 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                             </Dialog>
                         )}
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             {/* Timeline */}
-            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                    <CardTitle className="text-lg">Timeline</CardTitle>
-                </CardHeader>
-                <CardContent>
+            <div className="glass-card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold text-foreground">Timeline</h3>
+                </div>
+                <div className="p-6">
                     <Timeline records={timeline} />
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     );
 }

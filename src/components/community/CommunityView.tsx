@@ -156,8 +156,8 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-gray-900">Community Forum</h1>
-          <p className="mt-0.5 text-xs text-gray-600">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Community Forum</h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Connect, discuss, and share knowledge with your AIP colleagues
           </p>
         </div>
@@ -180,8 +180,8 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       <div className="flex flex-col gap-5 lg:flex-row">
         {/* Section filter - compact */}
         <aside className="lg:w-48 shrink-0">
-          <div className="hidden lg:block rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <div className="hidden lg:block rounded-xl border border-border bg-white p-3 shadow-sm">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <LayoutGrid className="h-3.5 w-3.5" />
               Section
             </p>
@@ -194,7 +194,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                   className={`block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                     section === s.id
                       ? 'bg-[var(--aip-teal)] font-medium text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      : 'text-muted-foreground hover:bg-accent/50'
                   }`}
                 >
                   {s.name}
@@ -220,35 +220,35 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
         <main className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search posts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-sm rounded-lg border-gray-200"
+                className="pl-9 h-9 text-sm rounded-lg border-border"
                 aria-label="Search posts"
               />
             </div>
-            <span className="text-xs text-gray-500 shrink-0">
+            <span className="text-xs text-muted-foreground shrink-0">
               {filteredPosts.length} {filteredPosts.length === 1 ? 'post' : 'posts'}
             </span>
           </div>
 
           {loading ? (
             <div className="flex min-h-[280px] items-center justify-center py-12">
-              <div className="flex flex-col items-center gap-3 text-gray-500">
+              <div className="flex flex-col items-center gap-3 text-muted-foreground">
                 <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--aip-teal)] border-t-transparent" />
                 <span className="text-sm">Loading posts...</span>
               </div>
             </div>
           ) : filteredPosts.length === 0 ? (
             <div className="glass-card rounded-xl py-12 text-center">
-              <MessageCircle className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-              <p className="font-medium text-gray-600">
+              <MessageCircle className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+              <p className="font-medium text-muted-foreground">
                 {searchQuery.trim() ? 'No posts match your search.' : 'No posts in this section yet.'}
               </p>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {searchQuery.trim() ? 'Try a different search or section.' : 'Be the first to post.'}
               </p>
               {canPost && !searchQuery.trim() && (
@@ -276,7 +276,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                     <button
                       type="button"
                       onClick={() => openPost(post.id)}
-                      className="w-full text-left glass-card rounded-xl p-4 flex gap-4 items-start hover:shadow-md transition-shadow border border-gray-200"
+                      className="w-full text-left glass-card rounded-xl p-4 flex gap-4 items-start hover:shadow-md transition-shadow border border-border"
                     >
                       <div
                         className="w-11 h-11 rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0"
@@ -285,8 +285,8 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900">{post.title}</h3>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <h3 className="font-semibold text-foreground">{post.title}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground">
                           {post.author_display_name}
                           {sectionName && ` · ${sectionName}`}
                           {' · '}
@@ -294,13 +294,13 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {sectionName && (
-                            <span className="inline-flex rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                            <span className="inline-flex rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                               {sectionName}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="shrink-0 text-xs text-gray-500">
+                      <div className="shrink-0 text-xs text-muted-foreground">
                         <span>— replies</span>
                       </div>
                     </button>
@@ -379,16 +379,16 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                   {postDetail.author_display_name} · {formatDateTime(postDetail.created_at)}
                 </CardDescription>
               </DialogHeader>
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-700">
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap text-muted-foreground">
                 {postDetail.body}
               </div>
               <div className="mt-6 border-t pt-6">
-                <h4 className="mb-3 font-semibold text-gray-900">Answers</h4>
+                <h4 className="mb-3 font-semibold text-foreground">Answers</h4>
                 {postDetail.comments && postDetail.comments.length > 0 ? (
                   <ul className="space-y-4">
                     {postDetail.comments.map((c) => (
                       <li key={c.id}>
-                        <div className="flex gap-3 rounded-xl bg-gray-50 p-4">
+                        <div className="flex gap-3 rounded-xl bg-muted/50 p-4">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0F5FA8]/10">
                             <User className="h-4 w-4 text-[#0F5FA8]" />
                           </div>
@@ -396,10 +396,10 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                             <div className="text-sm font-medium text-[#0F5FA8]">
                               {c.author_display_name}
                             </div>
-                            <div className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                            <div className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
                               {c.body}
                             </div>
-                            <div className="mt-2 text-xs text-gray-500">
+                            <div className="mt-2 text-xs text-muted-foreground">
                               {formatDateTime(c.created_at)}
                             </div>
                           </div>
@@ -408,7 +408,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-gray-500">No answers yet.</p>
+                  <p className="text-sm text-muted-foreground">No answers yet.</p>
                 )}
               </div>
               {canPost && (

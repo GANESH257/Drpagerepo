@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Users, Crown, FileText, CheckCircle2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getJoinRequests } from '@/lib/api/join-requests';
 import { getDoctors } from '@/lib/api/doctors';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
@@ -56,14 +55,14 @@ export function StatsCards() {
       value: totalDoctors.toString(),
       description: `${totalDoctorsFromApi} in directory + ${acceptedRequests.length} accepted`,
       icon: Users,
-      color: 'text-brand-teal',
+      color: 'text-[var(--aip-teal)]',
     },
     {
       title: 'Doctors per Plan',
       value: `${planDistribution.basic + planDistribution.professional + planDistribution.premier}`,
       description: `Basic: ${planDistribution.basic}, Pro: ${planDistribution.professional}, Premier: ${planDistribution.premier}`,
       icon: Crown,
-      color: 'text-brand-dark-blue',
+      color: 'text-[var(--aip-teal)]',
     },
     {
       title: 'Pending Requests',
@@ -85,15 +84,13 @@ export function StatsCards() {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Loading...</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#0F5FA8]">-</div>
-              <p className="text-xs text-gray-500 mt-1">Loading data...</p>
-            </CardContent>
-          </Card>
+          <div key={i} className="glass-card p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <span className="text-sm font-medium text-muted-foreground">Loading...</span>
+            </div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>-</div>
+            <p className="text-xs text-muted-foreground mt-1">Loading data...</p>
+          </div>
         ))}
       </div>
     );
@@ -102,11 +99,9 @@ export function StatsCards() {
   if (error) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white border border-red-200 rounded-xl shadow-sm col-span-4">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6 col-span-4">
+          <p className="text-destructive">{error}</p>
+        </div>
       </div>
     );
   }
@@ -116,18 +111,16 @@ export function StatsCards() {
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">{stat.title}</CardTitle>
-              <Icon className={`h-4 w-4 ${stat.color === 'text-brand-teal' ? 'text-[#0F5FA8]' : stat.color === 'text-accent-amber' ? 'text-amber-600' : stat.color === 'text-accent-emerald' ? 'text-emerald-600' : 'text-[#0F5FA8]'}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-[#0F5FA8]">{stat.value}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
+          <div key={index} className="glass-card p-6">
+            <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
+              <Icon className="h-4 w-4 text-[var(--aip-teal)]" />
+            </div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>{stat.value}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stat.description}
+            </p>
+          </div>
         );
       })}
     </div>

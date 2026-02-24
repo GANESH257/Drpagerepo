@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import {
   Table,
   TableBody,
@@ -69,49 +69,47 @@ export default function AdminCommunityReportsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0F5FA8]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--aip-teal)' }} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Reported Posts Queue</h2>
-        <p className="text-gray-600 mt-1">Review flagged posts; dismiss report or delete post.</p>
-      </div>
+      <SectionHeader
+        title="Reported Posts Queue"
+        description="Review flagged posts; dismiss report or delete post."
+      />
       {error && (
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
-      <Card>
-        <CardContent className="pt-6">
+      <div className="glass-card overflow-hidden">
+        <div className="p-6">
           {reports.length === 0 ? (
-            <p className="text-gray-600">No reported posts.</p>
+            <p className="text-muted-foreground">No reported posts.</p>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Post</TableHead>
-                  <TableHead>Section</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Reported by</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Post</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Section</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Author</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Reported by</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Reason</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                  <TableHead className="text-right uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {reports.map((r) => (
-                  <TableRow key={r.id}>
+                  <TableRow key={r.id} className="hover:bg-accent/30">
                     <TableCell>
                       <div className="max-w-[200px]">
                         <div className="font-medium truncate">{r.post_title || '(No title)'}</div>
                         {r.post_body && (
-                          <div className="text-xs text-gray-500 truncate max-w-[200px]">
+                          <div className="text-xs text-muted-foreground truncate max-w-[200px]">
                             {r.post_body}
                           </div>
                         )}
@@ -134,6 +132,7 @@ export default function AdminCommunityReportsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
                         disabled={!!actingId}
                         onClick={() => handleDismiss(r)}
                       >
@@ -153,8 +152,8 @@ export default function AdminCommunityReportsPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

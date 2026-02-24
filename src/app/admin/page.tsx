@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Building2, Users, FileCheck } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { StatsCards } from '@/components/admin/StatsCards';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { AdminJoinRequest } from '@/lib/adminStorage';
 import { getJoinRequests } from '@/lib/api/join-requests';
 import { getAdminStats } from '@/lib/api/admin-stats';
@@ -43,19 +43,9 @@ export default function AdminDashboardPage() {
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
     .slice(0, 5);
 
-  const getStatusBadge = (status: AdminJoinRequest['status']) => {
-    switch (status) {
-      case 'submitted':
-      case 'under_review':
-        return <Badge className="bg-gray-100 text-gray-700 border-gray-300">Pending</Badge>;
-      case 'approved':
-        return <Badge className="bg-[#0F5FA8] text-white border-[#0F5FA8]">Accepted</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: AdminJoinRequest['status']) => (
+    <StatusBadge status={status} />
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -67,109 +57,83 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Dashboard</h2>
-        <p className="text-gray-600 mt-2">
-          Overview of membership requests, plans, and statistics
-        </p>
-      </div>
+      <SectionHeader
+        title="Dashboard"
+        description="Overview of membership requests, plans, and statistics"
+      />
 
-      {/* Stats Cards */}
       <StatsCards />
 
-      {/* Quick Access Cards - API-backed metrics */}
+      {/* Quick Access - glass-card style */}
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-teal/10 rounded-lg">
-                  <Building2 className="h-6 w-6 text-brand-teal" />
-                </div>
-                <div>
-                  <CardTitle className="text-[#0F5FA8]">Total Practices</CardTitle>
-                  <CardDescription className="text-gray-600">Manage practices and rosters</CardDescription>
-                </div>
-              </div>
+        <div className="glass-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg" style={{ background: 'rgba(26, 140, 122, 0.15)' }}>
+              <Building2 className="h-6 w-6" style={{ color: 'var(--aip-teal)' }} />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.totalPractices ?? 0)}</div>
-              <Button asChild className="bg-brand-dark-blue hover:bg-brand-dark-blue/90">
-                <Link href="/admin/members/practices">
-                  Manage Practices
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div>
+              <h3 className="font-semibold text-foreground">Total Practices</h3>
+              <p className="text-sm text-muted-foreground">Manage practices and rosters</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-teal/10 rounded-lg">
-                  <Users className="h-6 w-6 text-brand-teal" />
-                </div>
-                <div>
-                  <CardTitle className="text-[#0F5FA8]">Total Doctors</CardTitle>
-                  <CardDescription className="text-gray-600">Edit profiles and status</CardDescription>
-                </div>
-              </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalPractices ?? 0)}</span>
+            <Button asChild className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>
+              <Link href="/admin/members/practices">
+                Manage Practices
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="glass-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg" style={{ background: 'rgba(26, 140, 122, 0.15)' }}>
+              <Users className="h-6 w-6" style={{ color: 'var(--aip-teal)' }} />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.totalDoctors ?? 0)}</div>
-              <Button asChild variant="outline" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-                <Link href="/admin/members/doctors">
-                  Manage Doctors
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div>
+              <h3 className="font-semibold text-foreground">Total Doctors</h3>
+              <p className="text-sm text-muted-foreground">Edit profiles and status</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <FileCheck className="h-6 w-6 text-amber-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-[#0F5FA8]">Pending Approvals</CardTitle>
-                  <CardDescription className="text-gray-600">Membership and profile approvals</CardDescription>
-                </div>
-              </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalDoctors ?? 0)}</span>
+            <Button asChild variant="outline" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
+              <Link href="/admin/members/doctors">
+                Manage Doctors
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="glass-card p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-amber-100">
+              <FileCheck className="h-6 w-6 text-amber-600" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-[#0F5FA8]">{loading ? '—' : (stats?.pendingApprovals ?? 0)}</div>
-              <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-                <Link href="/admin/approvals">
-                  Review
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div>
+              <h3 className="font-semibold text-foreground">Pending Approvals</h3>
+              <p className="text-sm text-muted-foreground">Membership and profile approvals</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.pendingApprovals ?? 0)}</span>
+            <Button asChild variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
+              <Link href="/admin/approvals">
+                Review
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Analytics Charts */}
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-xl font-semibold text-[#0F5FA8] mb-2">Analytics & Insights</h3>
-          <p className="text-sm text-gray-600">
-            Visual overview of network growth, distribution, and membership trends
-          </p>
-        </div>
-
-        {/* Charts Grid */}
+      {/* Analytics */}
+      <div className="space-y-4">
+        <SectionHeader
+          title="Analytics & Insights"
+          description="Visual overview of network growth, distribution, and membership trends"
+        />
         <div className="grid gap-6 md:grid-cols-2">
           <DoctorsJoinedPerMonthChart requests={requests} />
           <GrowthTrendChart requests={requests} />
@@ -179,64 +143,56 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Recent Requests */}
-      <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-[#0F5FA8]">Recent Requests</CardTitle>
-              <CardDescription className="text-gray-600">
-                Latest membership requests requiring attention
-              </CardDescription>
-            </div>
-            <Button asChild variant="outline" size="sm" className="border-[#0F5FA8] text-[#0F5FA8] hover:bg-[#0F5FA8] hover:text-white">
-              <Link href="/admin/approvals">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+      {/* Recent Requests - glass-card */}
+      <div className="glass-card p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Recent Requests</h3>
+            <p className="text-sm text-muted-foreground">Latest membership requests requiring attention</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {recentRequests.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-600">No membership requests yet.</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Requests will appear here once physicians submit applications.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentRequests.map((request) => (
-                <Link
-                  key={request.id}
-                  href={`/admin/approvals/${request.id}`}
-                  className="block p-4 rounded-lg border border-gray-200 hover:border-[#0F5FA8]/30 hover:bg-[#0F5FA8]/5 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="font-semibold text-[#0F5FA8]">
-                          {request.applicant.fullName}
-                        </span>
-                        {getStatusBadge(request.status)}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        <span>{request.applicant.specialty}</span>
-                        <span className="mx-2">•</span>
-                        <span>{request.plan.planId}</span>
-                        <span className="mx-2">•</span>
-                        <span>{formatDate(request.submittedAt)}</span>
-                      </div>
+          <Button asChild variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10 w-fit">
+            <Link href="/admin/approvals">
+              View All
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+        {recentRequests.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No membership requests yet.</p>
+            <p className="text-sm mt-2">Requests will appear here once physicians submit applications.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recentRequests.map((request) => (
+              <Link
+                key={request.id}
+                href={`/admin/approvals/${request.id}`}
+                className="block p-4 rounded-lg border border-border hover:bg-accent/30 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="font-semibold" style={{ color: 'var(--aip-teal)' }}>
+                        {request.applicant.fullName}
+                      </span>
+                      {getStatusBadge(request.status)}
                     </div>
-                    <ArrowRight className="h-4 w-4 text-gray-400" />
+                    <div className="text-sm text-muted-foreground">
+                      <span>{request.applicant.specialty}</span>
+                      <span className="mx-2">•</span>
+                      <span>{request.plan.planId}</span>
+                      <span className="mx-2">•</span>
+                      <span>{formatDate(request.submittedAt)}</span>
+                    </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

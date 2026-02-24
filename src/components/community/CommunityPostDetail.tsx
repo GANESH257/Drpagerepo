@@ -27,25 +27,25 @@ export function CommunityPostDetail({
         <ArrowLeft className="h-4 w-4" />
         Back to list
       </Button>
-      <Card>
+      <Card className="glass-card border-border">
         <CardHeader className="pb-2">
-          <h2 className="text-xl font-semibold text-gray-900">{post.title}</h2>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="font-medium text-gray-700">
+          <h2 className="text-xl font-semibold text-foreground">{post.title}</h2>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">
               {post.author_display_name}
               {post.author_type === 'admin' && (
-                <span className="ml-1 text-brand-dark-blue">(Admin)</span>
+                <span className="ml-1 text-[var(--aip-teal)]">(Admin)</span>
               )}
             </span>
             <span>{formatDateTime(post.created_at)}</span>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <p className="text-gray-700 whitespace-pre-wrap">{post.body}</p>
+          <p className="text-foreground whitespace-pre-wrap">{post.body}</p>
         </CardContent>
       </Card>
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+        <h3 className="text-sm font-semibold text-foreground mb-2">
           Answers ({post.comments?.length ?? 0})
         </h3>
         <CommunityCommentList comments={post.comments ?? []} />

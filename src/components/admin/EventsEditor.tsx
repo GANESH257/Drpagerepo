@@ -306,13 +306,13 @@ export function EventsEditor() {
         <TabsContent value="global" className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-semibold text-brand-dark-blue">Global Medical Events</h3>
+              <h3 className="text-xl font-semibold text-foreground">Global Medical Events</h3>
               <p className="text-sm text-muted-foreground">
                 Manage medical conferences, webinars, and continuing education events
               </p>
             </div>
             <div className="flex gap-3">
-              <Button onClick={handleAddGlobalEvent} variant="gradient" disabled={loading}>
+              <Button onClick={handleAddGlobalEvent} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }} disabled={loading}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Event
               </Button>
@@ -339,7 +339,7 @@ export function EventsEditor() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-semibold text-brand-dark-blue">{event.title}</span>
+                    <span className="font-semibold text-foreground">{event.title}</span>
                     <Badge variant={isUpcoming(event.date) ? 'gradient' : 'outline'}>
                       {isUpcoming(event.date) ? 'Upcoming' : 'Past'}
                     </Badge>
@@ -373,7 +373,7 @@ export function EventsEditor() {
         <TabsContent value="board" className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xl font-semibold text-brand-dark-blue">Board Meetings</h3>
+              <h3 className="text-xl font-semibold text-foreground">Board Meetings</h3>
               <p className="text-sm text-muted-foreground">
                 Manage board meetings including the next meeting and upcoming meetings
               </p>
@@ -382,7 +382,7 @@ export function EventsEditor() {
               <Button onClick={() => { setResetType('board'); setIsResetDialogOpen(true); }} variant="outline">
                 Reset to Defaults
               </Button>
-              <Button onClick={handleAddBoardMeeting} variant="gradient">
+              <Button onClick={handleAddBoardMeeting} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Meeting
               </Button>
@@ -392,11 +392,11 @@ export function EventsEditor() {
           {/* Next Meeting */}
           {boardMeetings.nextMeeting && boardMeetings.nextMeeting.id && (
             <div className="space-y-3">
-              <h4 className="font-semibold text-brand-dark-blue">Next Meeting</h4>
-              <div className="flex items-center justify-between p-4 border-2 border-brand-teal rounded-lg bg-brand-teal/5">
+              <h4 className="font-semibold text-foreground">Next Meeting</h4>
+              <div className="flex items-center justify-between p-4 border-2 rounded-lg border-[var(--aip-teal)] bg-[var(--aip-teal)]/5">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-semibold text-brand-dark-blue">
+                    <span className="font-semibold text-foreground">
                       {formatDate(boardMeetings.nextMeeting.date)} at {boardMeetings.nextMeeting.time} {boardMeetings.nextMeeting.timezone}
                     </span>
                     {boardMeetings.nextMeeting.isVirtual && <Badge variant="outline">Virtual</Badge>}
@@ -418,7 +418,7 @@ export function EventsEditor() {
 
           {/* Upcoming Meetings */}
           <div className="space-y-3">
-            <h4 className="font-semibold text-brand-dark-blue">Upcoming Meetings</h4>
+            <h4 className="font-semibold text-foreground">Upcoming Meetings</h4>
             {boardMeetings.upcomingMeetings.map((meeting) => (
               <div
                 key={meeting.id}
@@ -426,7 +426,7 @@ export function EventsEditor() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="font-semibold text-brand-dark-blue">
+                    <span className="font-semibold text-foreground">
                       {formatDate(meeting.date)} at {meeting.time} {meeting.timezone}
                     </span>
                     {meeting.isVirtual && <Badge variant="outline">Virtual</Badge>}
@@ -534,7 +534,7 @@ export function EventsEditor() {
             </Button>
             <Button
               onClick={handleSaveGlobalEvent}
-              variant="gradient"
+              className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90"
               disabled={!globalFormData.title || !globalFormData.date || saving}
             >
               {saving ? 'Saving...' : 'Save Event'}
@@ -669,7 +669,7 @@ export function EventsEditor() {
             </Button>
             <Button
               onClick={handleSaveBoardMeeting}
-              variant="gradient"
+              className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90"
               disabled={!boardFormData.date || !boardFormData.time}
             >
               Save Meeting
@@ -711,7 +711,7 @@ export function EventsEditor() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleReset} className="bg-brand-teal hover:bg-brand-teal/90">
+            <AlertDialogAction onClick={handleReset} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90">
               Reset to Defaults
             </AlertDialogAction>
           </AlertDialogFooter>

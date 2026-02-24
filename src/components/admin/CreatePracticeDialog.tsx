@@ -117,7 +117,7 @@ export function CreatePracticeDialog({ open, onOpenChange, onSave }: CreatePract
         <div className="space-y-4 py-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
+            <h3 className="font-semibold text-foreground">Basic Information</h3>
             <div>
               <Label htmlFor="create-name">Practice Name *</Label>
               <Input
@@ -141,7 +141,7 @@ export function CreatePracticeDialog({ open, onOpenChange, onSave }: CreatePract
 
           {/* Contact Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Contact Information</h3>
+            <h3 className="font-semibold text-foreground">Contact Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="create-phone">Phone *</Label>
@@ -177,7 +177,7 @@ export function CreatePracticeDialog({ open, onOpenChange, onSave }: CreatePract
 
           {/* Address */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Primary Address</h3>
+            <h3 className="font-semibold text-foreground">Primary Address</h3>
             <div>
               <Label htmlFor="create-address-line1">Street Address</Label>
               <Input
@@ -249,7 +249,7 @@ export function CreatePracticeDialog({ open, onOpenChange, onSave }: CreatePract
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving || !formData.name.trim() || !formData.phone.trim()}>
+          <Button onClick={handleSave} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90" disabled={isSaving || !formData.name.trim() || !formData.phone.trim()}>
             {isSaving ? 'Creating...' : 'Create Practice'}
           </Button>
         </DialogFooter>

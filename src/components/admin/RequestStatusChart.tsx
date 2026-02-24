@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 import { AdminJoinRequest } from '@/lib/adminStorage';
 import { getRequestStatusDistribution, StatusData } from '@/lib/adminAnalytics';
@@ -22,12 +21,12 @@ export function RequestStatusChart({ requests }: RequestStatusChartProps) {
   const chartData = useMemo(() => getRequestStatusDistribution(requests), [requests]);
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700">Request Status Distribution</CardTitle>
-        <FileText className="h-4 w-4 text-gray-500" />
-      </CardHeader>
-      <CardContent>
+    <div className="glass-card p-6">
+      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <h3 className="text-sm font-medium text-muted-foreground">Request Status Distribution</h3>
+        <FileText className="h-4 w-4 text-[var(--aip-teal)]" />
+      </div>
+      <div className="pt-2">
         {chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[250px] text-muted-foreground">
             <p>No request data available</p>
@@ -54,8 +53,8 @@ export function RequestStatusChart({ requests }: RequestStatusChartProps) {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'var(--card)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   padding: '8px 12px',
                 }}
@@ -72,7 +71,7 @@ export function RequestStatusChart({ requests }: RequestStatusChartProps) {
             </PieChart>
           </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

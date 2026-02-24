@@ -98,9 +98,9 @@ export function AdminMobileSidebar({ open, onOpenChange }: AdminMobileSidebarPro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white">
-        <SheetHeader className="border-b border-gray-200 p-4">
-          <SheetTitle className="text-[#0F5FA8]">Navigation</SheetTitle>
+      <SheetContent side="left" className="w-80 p-0 flex flex-col bg-background">
+        <SheetHeader className="border-b border-border p-4">
+          <SheetTitle className="text-foreground" style={{ color: 'var(--aip-teal)' }}>Navigation</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 p-4 flex-1">
           {navItems.map((item) => {
@@ -115,16 +115,16 @@ export function AdminMobileSidebar({ open, onOpenChange }: AdminMobileSidebarPro
                 onClick={() => onOpenChange(false)}
                 className={cn(
                   'flex items-start gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
-                  'hover:bg-gray-100',
+                  'hover:bg-accent/50',
                   isActive
-                    ? 'bg-[#0F5FA8]/10 text-[#0F5FA8] border-l-[3px] border-[#0F5FA8]'
-                    : 'text-gray-600'
+                    ? 'bg-[var(--aip-teal)]/15 text-[var(--aip-teal)] border-l-[3px] border-[var(--aip-teal)]'
+                    : 'text-muted-foreground'
                 )}
               >
-                <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', isActive && 'text-[#0F5FA8]')} />
+                <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', isActive && 'text-[var(--aip-teal)]')} />
                 <div className="flex-1">
-                  <div className="font-medium">{item.label}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="font-medium text-foreground">{item.label}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     {item.description}
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export function AdminMobileSidebar({ open, onOpenChange }: AdminMobileSidebarPro
             );
           })}
         </nav>
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-border p-4">
           <Button
             variant="outline"
             size="sm"

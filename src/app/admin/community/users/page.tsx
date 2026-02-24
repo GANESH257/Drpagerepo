@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import {
   Table,
   TableBody,
@@ -11,7 +12,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   getCommunityModerationList,
   setUserModeration,
@@ -59,57 +59,45 @@ export default function AdminCommunityUsersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0F5FA8]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--aip-teal)' }} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">User Moderation</h2>
-        <p className="text-gray-600 mt-1">Suspend or ban users from the community forum.</p>
-      </div>
+      <SectionHeader
+        title="User Moderation"
+        description="Suspend or ban users from the community forum."
+      />
       {error && (
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
-      <Card>
-        <CardContent className="pt-6">
+      <div className="glass-card overflow-hidden">
+        <div className="p-6">
           {list.length === 0 ? (
-            <p className="text-gray-600">No moderated users. Only users with suspension or ban appear here.</p>
+            <p className="text-muted-foreground">No moderated users. Only users with suspension or ban appear here.</p>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Until</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Doctor</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Reason</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Until</TableHead>
+                  <TableHead className="text-right uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {list.map((u) => (
-                  <TableRow key={u.id}>
+                  <TableRow key={u.id} className="hover:bg-accent/30">
                     <TableCell>{u.full_name ?? u.doctor_id}</TableCell>
                     <TableCell>{u.email ?? '—'}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          u.status === 'banned'
-                            ? 'destructive'
-                            : u.status === 'suspended'
-                              ? 'secondary'
-                              : 'default'
-                        }
-                      >
-                        {u.status}
-                      </Badge>
+                      <StatusBadge status={u.status} />
                     </TableCell>
                     <TableCell>{u.reason ?? '—'}</TableCell>
                     <TableCell>
@@ -126,6 +114,7 @@ export default function AdminCommunityUsersPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
                           disabled={!!actingId}
                           onClick={() => handleStatus(u.doctor_id, 'active')}
                         >
@@ -158,8 +147,8 @@ export default function AdminCommunityUsersPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

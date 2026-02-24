@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import {
   Table,
   TableBody,
@@ -84,93 +84,89 @@ export default function AdminCommunityForumPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Forum Management</h2>
-        <p className="text-gray-600 mt-1">View forum and delete any post or topic.</p>
-      </div>
+      <SectionHeader
+        title="Forum Management"
+        description="View forum and delete any post or topic."
+      />
       {error && (
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700">Section</span>
-            <Select value={section} onValueChange={setSection}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select section" />
-              </SelectTrigger>
-              <SelectContent>
-                {sections.map((s) => (
-                  <SelectItem key={s.id || s.name} value={s.id || s.name || 'general'}>
-                    {s.name || s.id}
-                  </SelectItem>
-                ))}
-                {sections.length === 0 && (
-                  <SelectItem value="general">General</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+      <div className="glass-card p-6 space-y-4">
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</span>
+          <Select value={section} onValueChange={setSection}>
+            <SelectTrigger className="w-[200px] rounded-lg border border-input">
+              <SelectValue placeholder="Select section" />
+            </SelectTrigger>
+            <SelectContent>
+              {sections.map((s) => (
+                <SelectItem key={s.id || s.name} value={s.id || s.name || 'general'}>
+                  {s.name || s.id}
+                </SelectItem>
+              ))}
+              {sections.length === 0 && (
+                <SelectItem value="general">General</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--aip-teal)' }} />
           </div>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F5FA8]" />
-            </div>
-          ) : posts.length === 0 ? (
-            <p className="text-gray-600">No posts in this section.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+        ) : posts.length === 0 ? (
+          <p className="text-muted-foreground">No posts in this section.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="uppercase tracking-wider text-muted-foreground">Title</TableHead>
+                <TableHead className="uppercase tracking-wider text-muted-foreground">Author</TableHead>
+                <TableHead className="uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                <TableHead className="text-right uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {posts.map((p) => (
+                <TableRow key={p.id} className="hover:bg-accent/30">
+                  <TableCell>
+                    <div className="max-w-[300px]">
+                      <div className="font-medium truncate">{p.title || '(No title)'}</div>
+                      {p.body && (
+                        <div className="text-xs text-muted-foreground truncate max-w-[300px]">
+                          {p.body}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{p.author_display_name ?? p.author_id ?? '—'}</TableCell>
+                  <TableCell>
+                    {p.created_at
+                      ? new Date(p.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={!!actingId}
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      {actingId === p.id ? '…' : 'Delete post'}
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {posts.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="max-w-[300px]">
-                        <div className="font-medium truncate">{p.title || '(No title)'}</div>
-                        {p.body && (
-                          <div className="text-xs text-gray-500 truncate max-w-[300px]">
-                            {p.body}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{p.author_display_name ?? p.author_id ?? '—'}</TableCell>
-                    <TableCell>
-                      {p.created_at
-                        ? new Date(p.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
-                        : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={!!actingId}
-                        onClick={() => handleDelete(p.id)}
-                      >
-                        {actingId === p.id ? '…' : 'Delete post'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

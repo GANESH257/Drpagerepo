@@ -93,8 +93,8 @@ export function AdminShell({ children }: AdminShellProps) {
     <>
       <div className="hidden items-center gap-3 sm:flex">
         <div className="text-right">
-          <div className="font-semibold text-[#0F5FA8]">{session?.email || 'admin@aip.com'}</div>
-          <Badge variant="outline" className="mt-1 border-[#0F5FA8] text-[#0F5FA8] bg-white">
+          <div className="font-semibold" style={{ color: 'var(--aip-teal)' }}>{session?.email || 'admin@aip.com'}</div>
+          <Badge variant="outline" className="mt-1 border-[var(--aip-teal)] bg-transparent" style={{ color: 'var(--aip-teal)' }}>
             Admin
           </Badge>
         </div>

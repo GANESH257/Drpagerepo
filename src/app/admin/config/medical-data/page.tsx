@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
@@ -120,21 +120,20 @@ function SpecialtiesTab() {
     }
   };
 
-  if (loading) return <div className="animate-spin h-8 w-8 border-2 border-[#0F5FA8] rounded-full border-t-transparent" />;
+  if (loading) return <div className="animate-spin h-8 w-8 border-2 rounded-full border-t-transparent" style={{ borderColor: 'var(--aip-teal)' }} />;
   return (
-    <Card>
-      <CardContent className="pt-6 space-y-4">
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+    <div className="glass-card p-6 space-y-4">
+        {error && <p className="text-destructive text-sm">{error}</p>}
         <div className="flex justify-end">
-          <Button onClick={openCreate}>Add specialty</Button>
+          <Button onClick={openCreate} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>Add specialty</Button>
         </div>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Sort order</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Name</TableHead>
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Slug</TableHead>
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Sort order</TableHead>
+              <TableHead className="w-[120px] uppercase tracking-wider text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -176,8 +175,7 @@ function SpecialtiesTab() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
@@ -245,21 +243,20 @@ function InsuranceTab() {
     }
   };
 
-  if (loading) return <div className="animate-spin h-8 w-8 border-2 border-[#0F5FA8] rounded-full border-t-transparent" />;
+  if (loading) return <div className="animate-spin h-8 w-8 border-2 rounded-full border-t-transparent" style={{ borderColor: 'var(--aip-teal)' }} />;
   return (
-    <Card>
-      <CardContent className="pt-6 space-y-4">
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+    <div className="glass-card p-6 space-y-4">
+        {error && <p className="text-destructive text-sm">{error}</p>}
         <div className="flex justify-end">
-          <Button onClick={openCreate}>Add insurance provider</Button>
+          <Button onClick={openCreate} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>Add insurance provider</Button>
         </div>
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Sort order</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Name</TableHead>
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Slug</TableHead>
+              <TableHead className="uppercase tracking-wider text-muted-foreground">Sort order</TableHead>
+              <TableHead className="w-[120px] uppercase tracking-wider text-muted-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -301,8 +298,7 @@ function InsuranceTab() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
@@ -387,17 +383,16 @@ function ConditionsTreatmentsTab() {
     }
   };
 
-  if (loading) return <div className="animate-spin h-8 w-8 border-2 border-[#0F5FA8] rounded-full border-t-transparent" />;
+  if (loading) return <div className="animate-spin h-8 w-8 border-2 rounded-full border-t-transparent" style={{ borderColor: 'var(--aip-teal)' }} />;
   return (
-    <Card>
-      <CardContent className="pt-6 space-y-6">
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+    <div className="glass-card p-6 space-y-6">
+        {error && <p className="text-destructive text-sm">{error}</p>}
         <div>
-          <h3 className="font-semibold text-[#0F5FA8] mb-2">Conditions</h3>
+          <h3 className="font-semibold mb-2" style={{ color: 'var(--aip-teal)' }}>Conditions</h3>
           <div className="flex gap-2 mb-2">
             <Button size="sm" onClick={() => setAddCondOpen(true)}>Add condition</Button>
           </div>
-          <ul className="list-disc list-inside text-sm text-gray-600">
+          <ul className="list-disc list-inside text-sm text-muted-foreground">
             {conditions.map((c) => (
               <li key={c.id}>{c.name}</li>
             ))}
@@ -405,11 +400,11 @@ function ConditionsTreatmentsTab() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold text-[#0F5FA8] mb-2">Treatments</h3>
+          <h3 className="font-semibold mb-2" style={{ color: 'var(--aip-teal)' }}>Treatments</h3>
           <div className="flex gap-2 mb-2">
             <Button size="sm" onClick={() => setAddTreatOpen(true)}>Add treatment</Button>
           </div>
-          <ul className="list-disc list-inside text-sm text-gray-600">
+          <ul className="list-disc list-inside text-sm text-muted-foreground">
             {treatments.map((t) => (
               <li key={t.id}>{t.name}</li>
             ))}
@@ -417,7 +412,7 @@ function ConditionsTreatmentsTab() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold text-[#0F5FA8] mb-2">Condition – Treatment links</h3>
+          <h3 className="font-semibold text-foreground mb-2">Condition – Treatment links</h3>
           <div className="flex gap-2 mb-2">
             <Button size="sm" onClick={() => setLinkOpen(true)}>Link condition to treatment</Button>
           </div>
@@ -441,7 +436,7 @@ function ConditionsTreatmentsTab() {
               ))}
             </TableBody>
           </Table>
-          {links.length === 0 && <p className="text-sm text-gray-500">No links yet.</p>}
+          {links.length === 0 && <p className="text-sm text-muted-foreground">No links yet.</p>}
         </div>
         <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
           <DialogContent>
@@ -504,36 +499,50 @@ function ConditionsTreatmentsTab() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
 export default function AdminConfigMedicalDataPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Medical Data Lists</h2>
-        <p className="text-gray-600 mt-1">
-          Specialties, insurance providers, and conditions & treatments.
-        </p>
+      <SectionHeader
+        title="Medical Data Lists"
+        description="Specialties, insurance providers, and conditions & treatments."
+      />
+      <div className="glass-card p-6">
+        <Tabs defaultValue="specialties">
+          <TabsList className="inline-flex h-9 rounded-lg bg-muted p-1 text-muted-foreground mb-4">
+            <TabsTrigger
+              value="specialties"
+              className="rounded-md px-4 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:bg-gradient-to-br data-[state=active]:from-[var(--aip-teal)] data-[state=active]:to-[var(--aip-navy)]"
+            >
+              Specialties
+            </TabsTrigger>
+            <TabsTrigger
+              value="insurance"
+              className="rounded-md px-4 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:bg-gradient-to-br data-[state=active]:from-[var(--aip-teal)] data-[state=active]:to-[var(--aip-navy)]"
+            >
+              Insurance Providers
+            </TabsTrigger>
+            <TabsTrigger
+              value="conditions"
+              className="rounded-md px-4 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:bg-gradient-to-br data-[state=active]:from-[var(--aip-teal)] data-[state=active]:to-[var(--aip-navy)]"
+            >
+              Conditions & Treatments
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="specialties" className="mt-4">
+            <SpecialtiesTab />
+          </TabsContent>
+          <TabsContent value="insurance" className="mt-4">
+            <InsuranceTab />
+          </TabsContent>
+          <TabsContent value="conditions" className="mt-4">
+            <ConditionsTreatmentsTab />
+          </TabsContent>
+        </Tabs>
       </div>
-      <Tabs defaultValue="specialties">
-        <TabsList>
-          <TabsTrigger value="specialties">Specialties</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance Providers</TabsTrigger>
-          <TabsTrigger value="conditions">Conditions & Treatments</TabsTrigger>
-        </TabsList>
-        <TabsContent value="specialties" className="mt-4">
-          <SpecialtiesTab />
-        </TabsContent>
-        <TabsContent value="insurance" className="mt-4">
-          <InsuranceTab />
-        </TabsContent>
-        <TabsContent value="conditions" className="mt-4">
-          <ConditionsTreatmentsTab />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

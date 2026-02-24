@@ -22,7 +22,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { getDoctorsByPractice, assignPracticeAdminRole } from '@/lib/adminHelpers';
@@ -153,52 +152,47 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-brand-dark-blue flex items-center gap-2">
+          <h3 className="font-semibold text-foreground flex items-center gap-2" style={{ color: 'var(--aip-teal)' }}>
             <Users className="h-5 w-5" />
             Practice Roster ({practiceDoctors.length} doctor{practiceDoctors.length !== 1 ? 's' : ''})
           </h3>
         </div>
 
-        {/* Add Doctor */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Add Doctor to Practice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Select value={selectedDoctorToAdd} onValueChange={setSelectedDoctorToAdd}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Select a doctor to add..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDoctors.length === 0 ? (
-                    <SelectItem value="none" disabled>No available doctors</SelectItem>
-                  ) : (
-                    availableDoctors.map((doctor) => (
-                      <SelectItem key={doctor.id} value={doctor.id}>
-                        {doctor.fullName} {doctor.practiceId && doctor.practiceId !== practiceId && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            (Currently in another practice)
-                          </span>
-                        )}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={handleAddDoctor}
-                disabled={!selectedDoctorToAdd}
-                size="sm"
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Add Doctor to Practice</p>
+          <div className="flex gap-2">
+            <Select value={selectedDoctorToAdd} onValueChange={setSelectedDoctorToAdd}>
+              <SelectTrigger className="flex-1 rounded-lg border border-input focus:ring-2 focus:ring-ring">
+                <SelectValue placeholder="Select a doctor to add..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDoctors.length === 0 ? (
+                  <SelectItem value="none" disabled>No available doctors</SelectItem>
+                ) : (
+                  availableDoctors.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id}>
+                      {doctor.fullName} {doctor.practiceId && doctor.practiceId !== practiceId && (
+                        <span className="text-xs text-muted-foreground ml-2">
+                          (Currently in another practice)
+                        </span>
+                      )}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleAddDoctor}
+              disabled={!selectedDoctorToAdd}
+              size="sm"
+              className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+          </div>
+        </div>
 
-        {/* Doctors List */}
         <div className="space-y-2">
           {practiceDoctors.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -206,50 +200,49 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
             </div>
           ) : (
             practiceDoctors.map((doctor) => (
-              <Card key={doctor.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{doctor.fullName}</span>
-                        {doctor.roleInPractice === 'practice_admin' && (
-                          <Badge variant="default" className="flex items-center gap-1">
-                            <Crown className="h-3 w-3" />
-                            Practice Admin
-                          </Badge>
-                        )}
-                        {doctor.email && (
-                          <span className="text-sm text-muted-foreground">
-                            ({doctor.email})
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {doctor.specialty}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {doctor.roleInPractice !== 'practice_admin' && (
-                        <Button
-                          onClick={() => handlePromoteToAdmin(doctor)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Crown className="h-4 w-4 mr-1" />
-                          Make Admin
-                        </Button>
+              <div key={doctor.id} className="glass-card p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground">{doctor.fullName}</span>
+                      {doctor.roleInPractice === 'practice_admin' && (
+                        <Badge className="flex items-center gap-1 bg-[var(--aip-teal)]/20 text-[var(--aip-teal)] border-0">
+                          <Crown className="h-3 w-3" />
+                          Practice Admin
+                        </Badge>
                       )}
-                      <Button
-                        onClick={() => handleRemoveDoctor(doctor)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <UserMinus className="h-4 w-4" />
-                      </Button>
+                      {doctor.email && (
+                        <span className="text-sm text-muted-foreground">
+                          ({doctor.email})
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {doctor.specialty}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex gap-2">
+                    {doctor.roleInPractice !== 'practice_admin' && (
+                      <Button
+                        onClick={() => handlePromoteToAdmin(doctor)}
+                        variant="outline"
+                        size="sm"
+                        className="text-[var(--aip-teal)] border-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
+                      >
+                        <Crown className="h-4 w-4 mr-1" />
+                        Make Admin
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => handleRemoveDoctor(doctor)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>
@@ -305,7 +298,10 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmPromoteToAdmin}>
+            <AlertDialogAction
+              onClick={confirmPromoteToAdmin}
+              className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90"
+            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>

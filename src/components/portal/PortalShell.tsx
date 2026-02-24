@@ -46,7 +46,7 @@ export function PortalShell({
   const basePaths = ['/admin', '/doctor/dashboard'];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--dashboard-main-bg)]">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <PortalSidebar
         items={sidebarItems}
         isCollapsed={sidebarCollapsed}
@@ -60,17 +60,17 @@ export function PortalShell({
           onMenuClick={() => setMobileSidebarOpen(true)}
           isCollapsed={sidebarCollapsed}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden dashboard-main-bg px-4 py-6 md:py-8">
-          <div className="mx-auto w-full max-w-7xl">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background page-glow relative px-6 py-6">
+          <div className="mx-auto w-full max-w-7xl space-y-6 relative z-10">
             {children}
           </div>
         </main>
       </div>
       {/* Mobile Sidebar — same tree with groups and children */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="w-80 p-0 flex flex-col bg-white">
-          <SheetHeader className="border-b border-gray-200 p-6 pt-10">
-            <SheetTitle className="text-2xl font-bold tracking-tight text-[#0F5FA8]">
+        <SheetContent side="left" className="w-80 p-0 flex flex-col bg-background border-border">
+          <SheetHeader className="border-b border-border p-6 pt-10">
+            <SheetTitle className="text-2xl font-bold tracking-tight text-foreground" style={{ color: 'var(--aip-teal)' }}>
               {mobileSidebarTitle}
             </SheetTitle>
           </SheetHeader>
@@ -91,11 +91,11 @@ export function PortalShell({
                         className={cn(
                           'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all border border-transparent',
                           active
-                            ? 'bg-[#0F5FA8] text-white'
-                            : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
+                            ? 'bg-[var(--aip-teal)] text-white'
+                            : 'text-muted-foreground hover:bg-accent hover:text-[var(--aip-teal)]'
                         )}
                       >
-                        <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-white' : 'text-gray-400')} />
+                        <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-white' : 'text-muted-foreground')} />
                         <span>{item.label}</span>
                       </Link>
                     )}
@@ -111,11 +111,11 @@ export function PortalShell({
                           className={cn(
                             'flex items-center gap-3 rounded-lg px-4 py-2.5 pl-8 text-sm font-medium transition-all border border-transparent',
                             childActive
-                              ? 'bg-[#0F5FA8] text-white'
-                              : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
+                              ? 'bg-[var(--aip-teal)] text-white'
+                              : 'text-muted-foreground hover:bg-accent hover:text-[var(--aip-teal)]'
                           )}
                         >
-                          <ChildIcon className={cn('h-4 w-4 shrink-0', childActive ? 'text-white' : 'text-gray-400')} />
+                          <ChildIcon className={cn('h-4 w-4 shrink-0', childActive ? 'text-white' : 'text-muted-foreground')} />
                           <span>{child.label}</span>
                         </Link>
                       );
@@ -132,15 +132,15 @@ export function PortalShell({
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 border border-transparent',
                     active
-                      ? 'bg-[#0F5FA8] text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-[#0F5FA8]'
+                      ? 'bg-[var(--aip-teal)] text-white'
+                      : 'text-muted-foreground hover:bg-accent hover:text-[var(--aip-teal)]'
                   )}
                 >
-                  <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-white' : 'text-gray-400')} />
+                  <Icon className={cn('h-5 w-5 shrink-0', active ? 'text-white' : 'text-muted-foreground')} />
                   <div className="flex flex-col">
                     <span className="leading-none">{item.label}</span>
                     {!active && item.description && (
-                      <span className="text-[10px] font-medium text-gray-400 mt-1 line-clamp-1">
+                      <span className="text-[10px] font-medium text-muted-foreground mt-1 line-clamp-1">
                         {item.description}
                       </span>
                     )}
@@ -154,3 +154,4 @@ export function PortalShell({
     </div>
   );
 }
+

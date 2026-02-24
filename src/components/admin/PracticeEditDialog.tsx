@@ -176,7 +176,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
         <div className="space-y-6 py-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
+            <h3 className="font-semibold text-foreground">Basic Information</h3>
             <div>
               <Label htmlFor="name">Practice Name *</Label>
               <Input
@@ -198,7 +198,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
 
           {/* Contact Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Contact Information</h3>
+            <h3 className="font-semibold text-foreground">Contact Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="phone">Phone *</Label>
@@ -232,7 +232,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
 
           {/* Address */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Primary Address</h3>
+            <h3 className="font-semibold text-foreground">Primary Address</h3>
             <div>
               <Label htmlFor="address-line1">Street Address</Label>
               <Input
@@ -288,7 +288,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
           {/* Locations */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-brand-dark-blue">Practice Locations</h3>
+              <h3 className="font-semibold text-foreground">Practice Locations</h3>
               <Button type="button" onClick={addLocation} variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Location
@@ -382,7 +382,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
           {/* Services */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-brand-dark-blue">Services</h3>
+              <h3 className="font-semibold text-foreground">Services</h3>
               <Button type="button" onClick={addService} variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Service
@@ -412,7 +412,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
           {/* Insurance */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-brand-dark-blue">Insurance</h3>
+              <h3 className="font-semibold text-foreground">Insurance</h3>
               <Button type="button" onClick={addInsurance} variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Insurance
@@ -452,7 +452,7 @@ export function PracticeEditDialog({ practice, open, onOpenChange, onSave }: Pra
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90" disabled={isSaving}>
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </DialogFooter>

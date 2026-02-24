@@ -126,7 +126,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
         <div className="space-y-6 py-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
+            <h3 className="font-semibold text-foreground">Basic Information</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="create-firstName">First Name *</Label>
@@ -182,7 +182,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
 
           {/* Practice Assignment */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Practice Assignment (V2)</h3>
+            <h3 className="font-semibold text-foreground">Practice Assignment (V2)</h3>
             <div>
               <Label htmlFor="create-practiceId">Practice</Label>
               <Select
@@ -224,7 +224,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
 
           {/* Professional Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-brand-dark-blue">Professional Information</h3>
+            <h3 className="font-semibold text-foreground">Professional Information</h3>
             <div>
               <Label htmlFor="create-specialty">Primary Specialty *</Label>
               <Input
@@ -251,7 +251,7 @@ export function CreateDoctorDialog({ open, onOpenChange, onSave }: CreateDoctorD
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} variant="gradient" disabled={isSaving}>
+          <Button onClick={handleSave} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90" disabled={isSaving}>
             <Save className="mr-2 h-4 w-4" />
             Create Doctor
           </Button>

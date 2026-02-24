@@ -93,10 +93,10 @@ export default function AdminLayout({
     }
     
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="dark min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading admin portal...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--aip-teal)' }} />
+          <p className="text-muted-foreground">Loading admin portal...</p>
         </div>
       </div>
     );
@@ -104,8 +104,13 @@ export default function AdminLayout({
 
   // Don't wrap login page with shell
   if (isLoginPage) {
-    return <>{children}</>;
+    return <div className="dark min-h-screen bg-background text-foreground">{children}</div>;
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <div className="dark min-h-screen bg-background text-foreground">
+      <AdminShell>{children}</AdminShell>
+    </div>
+  );
 }
+

@@ -100,7 +100,7 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
   return (
     <aside
       className={cn(
-        'fixed left-0 top-40 md:top-44 z-30 h-[calc(100vh-10rem)] md:h-[calc(100vh-11rem)] border-r-2 border-brand-teal/20 bg-white transition-all duration-300 overflow-y-auto',
+        'fixed left-0 top-40 md:top-44 z-30 h-[calc(100vh-10rem)] md:h-[calc(100vh-11rem)] border-r-2 border-[var(--aip-teal)]/20 bg-background transition-all duration-300 overflow-y-auto',
         'bg-gradient-to-b from-white to-var(--skin-vibrant-teal)/30',
         isCollapsed ? 'w-16' : 'w-64',
         'hidden lg:block'
@@ -142,13 +142,13 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   'hover:bg-accent hover:text-accent-foreground',
                   isActive
-                    ? 'bg-brand-teal/15 text-brand-teal border-l-4 border-brand-teal shadow-sm'
-                    : 'text-muted-foreground hover:bg-brand-teal/5',
+                    ? 'bg-[var(--aip-teal)]/15 text-[var(--aip-teal)] border-l-4 border-[var(--aip-teal)] shadow-sm'
+                    : 'text-muted-foreground hover:bg-[var(--aip-teal)]/5',
                   isCollapsed && 'justify-center'
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-brand-teal')} />
+                <Icon className={cn('h-5 w-5 shrink-0', isActive && 'text-[var(--aip-teal)]')} />
                 {!isCollapsed && (
                   <div className="flex-1">
                     <div className="font-medium">{item.label}</div>

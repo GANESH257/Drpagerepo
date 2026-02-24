@@ -11,20 +11,23 @@ interface CommunityCommentListProps {
 export function CommunityCommentList({ comments }: CommunityCommentListProps) {
   if (comments.length === 0) {
     return (
-      <p className="text-sm text-gray-500 py-4">No answers yet. Be the first to answer.</p>
+      <p className="text-sm text-muted-foreground py-4">
+        No answers yet. Be the first to answer.
+      </p>
     );
   }
 
   return (
     <div className="space-y-3">
       {comments.map((c) => (
-        <Card key={c.id} className="border-gray-200">
+        <Card key={c.id} className="border-border glass-card">
           <CardContent className="p-3">
-            <p className="text-gray-700 text-sm whitespace-pre-wrap">{c.body}</p>
-            <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-500">
-              Answered by <span className="font-medium text-gray-700">{c.author_display_name}</span>
+            <p className="text-sm text-foreground whitespace-pre-wrap">{c.body}</p>
+            <div className="mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+              Answered by{' '}
+              <span className="font-medium text-foreground">{c.author_display_name}</span>
               {c.author_type === 'admin' && (
-                <span className="ml-1 text-brand-dark-blue">(Admin)</span>
+                <span className="ml-1 text-[var(--aip-teal)]">(Admin)</span>
               )}
               {' · '}
               {formatDateTime(c.created_at)}

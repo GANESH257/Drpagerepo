@@ -16,14 +16,14 @@ export function SectionHeader({ title, description, actions, className, variant 
       <div>
         <h2
           className={cn(
-            'text-2xl font-bold text-gray-900',
+            'text-2xl font-bold text-foreground',
             variant === 'practice' && 'border-l-4 border-[var(--aip-teal)] pl-4'
           )}
         >
           {title}
         </h2>
         {description && (
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
         )}
       </div>
       {actions && (

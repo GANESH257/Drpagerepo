@@ -247,7 +247,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
           <div className="space-y-6 py-4">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-brand-dark-blue">Basic Information</h3>
+              <h3 className="font-semibold text-foreground">Basic Information</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">First Name *</Label>
@@ -290,7 +290,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
 
             {/* Practice Assignment (V2) */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-brand-dark-blue">Practice Assignment (V2)</h3>
+              <h3 className="font-semibold text-foreground">Practice Assignment (V2)</h3>
               <div>
                 <Label htmlFor="practiceId">Practice</Label>
                 <Select
@@ -358,7 +358,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
 
             {/* Professional Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-brand-dark-blue">Professional Information</h3>
+              <h3 className="font-semibold text-foreground">Professional Information</h3>
               <div>
                 <Label htmlFor="specialty">Primary Specialty *</Label>
                 <Input
@@ -417,7 +417,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
 
             {/* Status Toggles */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-brand-dark-blue">Status</h3>
+              <h3 className="font-semibold text-foreground">Status</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -458,7 +458,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             {/* Membership Status */}
             {membership && (
               <div className="space-y-4">
-                <h3 className="font-semibold text-brand-dark-blue">Membership Status</h3>
+                <h3 className="font-semibold text-foreground">Membership Status</h3>
                 <div className="p-4 border rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Plan:</span>
@@ -486,7 +486,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
 
             {/* Password Management */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-brand-dark-blue">Password</h3>
+              <h3 className="font-semibold text-foreground">Password</h3>
               <Button onClick={handlePasswordResetClick} variant="outline" className="w-full">
                 <Key className="mr-2 h-4 w-4" />
                 Reset Password
@@ -496,7 +496,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             {/* Locations */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-brand-dark-blue">Locations</h3>
+                <h3 className="font-semibold text-foreground">Locations</h3>
                 <Button type="button" onClick={addLocation} variant="outline" size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Location
@@ -558,7 +558,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             {/* Insurance */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-brand-dark-blue">Insurance</h3>
+                <h3 className="font-semibold text-foreground">Insurance</h3>
                 <Button type="button" onClick={addInsurance} variant="outline" size="sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Insurance
@@ -595,7 +595,7 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} variant="gradient" disabled={isSaving}>
+            <Button onClick={handleSave} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90" disabled={isSaving}>
               <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>

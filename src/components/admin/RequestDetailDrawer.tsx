@@ -10,8 +10,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
@@ -100,7 +100,7 @@ export function RequestDetailDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-full sm:w-[540px] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-2xl font-bold text-brand-dark-blue">
+            <SheetTitle className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>
               Membership Request Details
             </SheetTitle>
             <SheetDescription>
@@ -109,23 +109,14 @@ export function RequestDetailDrawer({
           </SheetHeader>
 
           <div className="mt-6 space-y-6">
-            {/* Status Badge */}
             <div>
               <Label className="text-sm font-medium mb-2 block">Status</Label>
-              {request.status === 'submitted' && (
-                <Badge variant="vibrant">Pending</Badge>
-              )}
-              {request.status === 'approved' && (
-                <Badge variant="gradient">Accepted</Badge>
-              )}
-              {request.status === 'rejected' && (
-                <Badge variant="destructive">Rejected</Badge>
-              )}
+              <StatusBadge status={request.status} label={request.status === 'approved' ? 'Accepted' : undefined} />
             </div>
 
             {/* Applicant Information */}
             <div className="space-y-4">
-              <h3 className="font-semibold text-lg text-brand-dark-blue">Applicant Information</h3>
+              <h3 className="font-semibold text-lg text-foreground">Applicant Information</h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -168,7 +159,7 @@ export function RequestDetailDrawer({
                     href={request.applicant.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-teal hover:underline"
+                    className="text-[var(--aip-teal)] hover:underline"
                   >
                     {request.applicant.website}
                   </a>
@@ -178,7 +169,7 @@ export function RequestDetailDrawer({
               {request.applicant.messageToAdmin && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Message to Admin</Label>
-                  <p className="text-sm mt-1 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm mt-1 p-3 bg-muted/50 rounded-lg">
                     {request.applicant.messageToAdmin}
                   </p>
                 </div>
@@ -187,7 +178,7 @@ export function RequestDetailDrawer({
 
             {/* Plan Selection */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg text-brand-dark-blue">Plan Selection</h3>
+              <h3 className="font-semibold text-lg text-foreground">Plan Selection</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Plan</Label>
@@ -202,7 +193,7 @@ export function RequestDetailDrawer({
 
             {/* Payment Method */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg text-brand-dark-blue">Payment Method</h3>
+              <h3 className="font-semibold text-lg text-foreground">Payment Method</h3>
               <div>
                 <Label className="text-xs text-muted-foreground">Method</Label>
                 <p className="font-medium capitalize">{request.paymentMethod}</p>
@@ -223,7 +214,7 @@ export function RequestDetailDrawer({
 
             {/* Submission Info */}
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg text-brand-dark-blue">Submission Details</h3>
+              <h3 className="font-semibold text-lg text-foreground">Submission Details</h3>
               <div>
                 <Label className="text-xs text-muted-foreground">Submitted At</Label>
                 <p className="font-medium">{formatDate(request.submittedAt)}</p>
@@ -243,7 +234,7 @@ export function RequestDetailDrawer({
               {request.notes && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Notes</Label>
-                  <p className="text-sm mt-1 p-3 bg-gray-50 rounded-lg">{request.notes}</p>
+                  <p className="text-sm mt-1 p-3 bg-muted/50 rounded-lg">{request.notes}</p>
                 </div>
               )}
               {request.rejectionReason && (
@@ -268,8 +259,7 @@ export function RequestDetailDrawer({
               <div className="flex gap-3 pt-4 border-t">
                 <Button
                   onClick={() => setShowAcceptDialog(true)}
-                  variant="gradient"
-                  className="flex-1"
+                  className="flex-1 bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90"
                   disabled={isProcessing}
                 >
                   <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -314,7 +304,7 @@ export function RequestDetailDrawer({
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setNotes('')}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAccept} className="bg-brand-teal hover:bg-brand-teal/90">
+            <AlertDialogAction onClick={handleAccept} className="bg-gradient-to-br from-[var(--aip-teal)] to-[var(--aip-navy)] text-white hover:opacity-90">
               Accept Request
             </AlertDialogAction>
           </AlertDialogFooter>

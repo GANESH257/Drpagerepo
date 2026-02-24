@@ -11,10 +11,9 @@ import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors'
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { ApprovalTypeBadge } from '@/components/shared/approvals/ApprovalTypeBadge';
 import { EmptyState } from '@/components/shared/approvals/EmptyState';
-import { Card, CardContent } from '@/components/ui/card';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
@@ -23,9 +22,8 @@ import { RequestedChangesRenderer } from '@/components/shared/approvals/Requeste
 import { DateRangePicker, DateRange } from '@/components/shared/history/DateRangePicker';
 import { formatDateTime, formatDate } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { getApprovalTypeOptions, getApprovalTypeLabel } from '@/lib/utils/approvalTypeLabels';
+import { getApprovalTypeOptions } from '@/lib/utils/approvalTypeLabels';
 import { normalizeApprovalHistoryRecords, NormalizedApprovalHistoryRecord } from '@/lib/utils/approvalHistoryHelpers';
-import { deriveStatusFromAction, getStatusLabel, getStatusBadgeVariant } from '@/lib/utils/approvalStatusHelpers';
 import { getAllPractices } from '@/lib/services/practiceDirectoryService';
 import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
@@ -244,8 +242,8 @@ export default function AdminApprovalHistoryPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5FA8] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading approval history...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--aip-teal)' }} />
+          <p className="text-muted-foreground">Loading approval history...</p>
         </div>
       </div>
     );
@@ -258,9 +256,7 @@ export default function AdminApprovalHistoryPage() {
         description="Complete audit log of all approval actions with advanced filtering"
       />
 
-      {/* Filter Bar */}
-      <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        <CardContent className="p-4 md:p-6 space-y-4">
+      <div className="glass-card p-4 md:p-6 space-y-4">
           {/* Primary Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Type Filter */}
@@ -373,11 +369,9 @@ export default function AdminApprovalHistoryPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-        </CardContent>
-      </Card>
+      </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         Showing {filteredHistory.length} of {normalizedHistory.length} history records
       </div>
 
@@ -388,25 +382,24 @@ export default function AdminApprovalHistoryPage() {
           description="There are no approval history records matching your filters."
         />
       ) : (
-        <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <CardContent className="p-0">
+        <div className="glass-card overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/80 hover:bg-gray-50/80">
-                  <TableHead className="font-semibold text-gray-700">Timestamp</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Type</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Practice</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Doctor</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Decided By</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Reason</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Timestamp</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Type</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Practice</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Doctor</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Decided By</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Reason</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredHistory.map((record) => (
                   <TableRow
                     key={record.id}
-                    className="cursor-pointer hover:bg-[#0F5FA8]/5 transition-colors"
+                    className="cursor-pointer hover:bg-accent/30 transition-colors"
                     onClick={() => handleRowClick(record)}
                   >
                     <TableCell>
@@ -414,7 +407,7 @@ export default function AdminApprovalHistoryPage() {
                         <span className="text-sm font-medium">
                           {formatRelativeTime(record.timestamp)}
                         </span>
-                        <span className="text-xs text-gray-500" title={formatDateTime(record.timestamp)}>
+                        <span className="text-xs text-muted-foreground" title={formatDateTime(record.timestamp)}>
                           {formatDateTime(record.timestamp)}
                         </span>
                       </div>
@@ -423,9 +416,7 @@ export default function AdminApprovalHistoryPage() {
                       <ApprovalTypeBadge type={record.type} />
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(record.status)}>
-                        {getStatusLabel(record.status)}
-                      </Badge>
+                      <StatusBadge status={record.status} />
                     </TableCell>
                     <TableCell>
                       {record.practiceName ? (
@@ -433,7 +424,7 @@ export default function AdminApprovalHistoryPage() {
                       ) : record.practiceId ? (
                         <code className="text-xs">{record.practiceId}</code>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -442,7 +433,7 @@ export default function AdminApprovalHistoryPage() {
                       ) : record.doctorId ? (
                         <code className="text-xs">{record.doctorId}</code>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -450,7 +441,7 @@ export default function AdminApprovalHistoryPage() {
                         <div className="font-medium">
                           {record.actor.actorName || record.actor.actorRole}
                         </div>
-                        <div className="text-xs text-gray-500 capitalize">
+                        <div className="text-xs text-muted-foreground capitalize">
                           {record.actor.actorRole.replace('_', ' ')}
                         </div>
                       </div>
@@ -458,18 +449,17 @@ export default function AdminApprovalHistoryPage() {
                     <TableCell>
                       {record.reason ? (
                         <div className="flex items-center" title={record.reason}>
-                          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
                         </div>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </div>
       )}
 
       {/* Details Drawer */}
@@ -480,9 +470,7 @@ export default function AdminApprovalHistoryPage() {
               <SheetHeader>
                 <div className="flex items-center gap-2 mb-2">
                   <ApprovalTypeBadge type={selectedRecord.type} />
-                  <Badge variant={getStatusBadgeVariant(selectedRecord.status)}>
-                    {getStatusLabel(selectedRecord.status)}
-                  </Badge>
+                  <StatusBadge status={selectedRecord.status} />
                 </div>
                 <SheetTitle>Approval History Details</SheetTitle>
                 <SheetDescription>
@@ -496,9 +484,9 @@ export default function AdminApprovalHistoryPage() {
                   <h3 className="font-semibold mb-2">Summary</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Request ID:</span>
+                      <span className="text-muted-foreground">Request ID:</span>
                       <div className="flex items-center gap-2">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-xs bg-muted px-2 py-1 rounded">
                           {selectedRecord.requestId}
                         </code>
                         <Button
@@ -513,18 +501,18 @@ export default function AdminApprovalHistoryPage() {
                     </div>
                     {selectedRecord.practiceName && (
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Practice:</span>
+                        <span className="text-muted-foreground">Practice:</span>
                         <span className="font-medium">{selectedRecord.practiceName}</span>
                       </div>
                     )}
                     {selectedRecord.doctorName && (
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Doctor:</span>
+                        <span className="text-muted-foreground">Doctor:</span>
                         <span className="font-medium">{selectedRecord.doctorName}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">Actor:</span>
+                      <span className="text-muted-foreground">Actor:</span>
                       <span className="font-medium">
                         {selectedRecord.actor.actorName || selectedRecord.actor.actorRole}
                       </span>
@@ -539,9 +527,7 @@ export default function AdminApprovalHistoryPage() {
                   <h3 className="font-semibold mb-2">Decision</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <Badge variant={getStatusBadgeVariant(selectedRecord.status)}>
-                        {getStatusLabel(selectedRecord.status)}
-                      </Badge>
+                      <StatusBadge status={selectedRecord.status} />
                     </div>
                     {selectedRecord.reason && (
                       <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
@@ -625,7 +611,7 @@ export default function AdminApprovalHistoryPage() {
                       } else {
                         // Fallback to raw JSON
                         return (
-                          <div className="bg-gray-50 border rounded p-3 overflow-x-auto">
+                          <div className="bg-muted border border-border rounded p-3 overflow-x-auto">
                             <pre className="text-xs">
                               {JSON.stringify(selectedRecord.payloadSnapshot, null, 2)}
                             </pre>

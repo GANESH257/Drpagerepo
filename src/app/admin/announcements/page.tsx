@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -116,30 +116,29 @@ export default function AdminAnnouncementsPage() {
 
     return (
         <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] flex-col gap-4 md:gap-6">
-            <div className="block">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Announcements Center</h1>
-                <p className="text-sm md:text-base text-gray-500 mt-1 md:mt-2">Manage broadcasts and communications with physicians.</p>
-            </div>
+            <SectionHeader
+                title="Announcements Center"
+                description="Manage broadcasts and communications with physicians."
+            />
 
             <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 min-h-0 overflow-hidden">
-                {/* Sidebar - Recipients */}
-                <Card className="md:col-span-4 shadow-sm border-gray-200 flex flex-col min-h-0 h-full">
-                    <CardHeader className="pb-4 border-b shrink-0">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Users className="h-5 w-5 text-[#0F5FA8]" />
+                <div className="glass-card md:col-span-4 flex flex-col min-h-0 h-full overflow-hidden">
+                    <div className="pb-4 border-b border-border shrink-0 p-6">
+                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-2">
+                            <Users className="h-5 w-5" style={{ color: 'var(--aip-teal)' }} />
                             Targeting & Directory
-                        </CardTitle>
-                        <div className="relative mt-2">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </h2>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search doctors..."
-                                className="pl-9"
+                                className="pl-9 rounded-lg border border-input"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
-                    </CardHeader>
-                    <CardContent className="px-2 py-4 flex-1 overflow-y-auto">
+                    </div>
+                    <div className="px-4 py-4 flex-1 overflow-y-auto">
                         <div className="space-y-4">
                             {/* Targeting Options */}
                             <div className="px-2 space-y-2">
@@ -148,14 +147,15 @@ export default function AdminAnnouncementsPage() {
                                     className={cn(
                                         "w-full flex items-center gap-3 p-3 rounded-lg transition-all",
                                         announcementType === 'broadcast'
-                                            ? 'bg-[#0F5FA8] text-white shadow-md'
-                                            : 'hover:bg-gray-100 text-gray-700 border border-transparent'
+                                            ? 'text-white shadow-md'
+                                            : 'hover:bg-muted text-muted-foreground border border-transparent'
                                     )}
+                                    style={announcementType === 'broadcast' ? { background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' } : undefined}
                                 >
-                                    <Megaphone className={cn("h-5 w-5", announcementType === 'broadcast' ? "text-white" : "text-blue-600")} />
+                                    <Megaphone className={cn("h-5 w-5", announcementType === 'broadcast' ? "text-white" : "")} />
                                     <div className="text-left">
                                         <div className="font-bold text-sm">Broadcast All</div>
-                                        <div className={cn("text-[10px]", announcementType === 'broadcast' ? "text-blue-100" : "text-gray-500")}>Message every doctor</div>
+                                        <div className={cn("text-[10px]", announcementType === 'broadcast' ? "text-white/80" : "text-muted-foreground")}>Message every doctor</div>
                                     </div>
                                 </button>
 
@@ -164,14 +164,15 @@ export default function AdminAnnouncementsPage() {
                                     className={cn(
                                         "w-full flex items-center gap-3 p-3 rounded-lg transition-all",
                                         announcementType === 'specialty'
-                                            ? 'bg-[#0F5FA8] text-white shadow-md'
-                                            : 'hover:bg-gray-100 text-gray-700 border border-transparent'
+                                            ? 'text-white shadow-md'
+                                            : 'hover:bg-muted text-muted-foreground border border-transparent'
                                     )}
+                                    style={announcementType === 'specialty' ? { background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' } : undefined}
                                 >
-                                    <Users className={cn("h-5 w-5", announcementType === 'specialty' ? "text-white" : "text-purple-600")} />
+                                    <Users className={cn("h-5 w-5", announcementType === 'specialty' ? "text-white" : "")} />
                                     <div className="text-left">
                                         <div className="font-bold text-sm">By Specialty</div>
-                                        <div className={cn("text-[10px]", announcementType === 'specialty' ? "text-blue-100" : "text-gray-500")}>Target departments</div>
+                                        <div className={cn("text-[10px]", announcementType === 'specialty' ? "text-white/80" : "text-muted-foreground")}>Target departments</div>
                                     </div>
                                 </button>
 
@@ -180,21 +181,22 @@ export default function AdminAnnouncementsPage() {
                                     className={cn(
                                         "w-full flex items-center gap-3 p-3 rounded-lg transition-all",
                                         announcementType === 'group'
-                                            ? 'bg-[#0F5FA8] text-white shadow-md'
-                                            : 'hover:bg-gray-100 text-gray-700 border border-transparent'
+                                            ? 'text-white shadow-md'
+                                            : 'hover:bg-muted text-muted-foreground border border-transparent'
                                     )}
+                                    style={announcementType === 'group' ? { background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' } : undefined}
                                 >
-                                    <CheckCircle2 className={cn("h-5 w-5", announcementType === 'group' ? "text-white" : "text-green-600")} />
+                                    <CheckCircle2 className={cn("h-5 w-5", announcementType === 'group' ? "text-white" : "")} />
                                     <div className="text-left">
                                         <div className="font-bold text-sm">Custom Group</div>
-                                        <div className={cn("text-[10px]", announcementType === 'group' ? "text-blue-100" : "text-gray-500")}>Multi-select doctors</div>
+                                        <div className={cn("text-[10px]", announcementType === 'group' ? "text-white/80" : "text-muted-foreground")}>Multi-select doctors</div>
                                     </div>
                                 </button>
                             </div>
 
                             {/* All Doctors Section */}
                             <div className="px-2 pt-2 pb-4">
-                                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-2">
+                                <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2 px-2">
                                     {announcementType === 'group' ? `Select Recipients (${selectedDoctorIds.length})` : 'Directory'}
                                 </div>
                                 <div className="space-y-1">
@@ -216,14 +218,15 @@ export default function AdminAnnouncementsPage() {
                                                 className={cn(
                                                     "w-full flex items-center gap-3 p-2 rounded-lg transition-all",
                                                     (isSelected && announcementType === 'group')
-                                                        ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
-                                                        : 'hover:bg-gray-50 text-gray-700'
+                                                        ? 'bg-[var(--aip-teal)]/10 text-[var(--aip-teal)] ring-1 ring-[var(--aip-teal)]/30'
+                                                        : 'hover:bg-muted text-foreground'
                                                 )}
                                             >
                                                 <div className={cn(
                                                     "h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0",
-                                                    (isSelected && announcementType === 'group') ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
-                                                )}>
+                                                    (isSelected && announcementType === 'group') ? "text-white" : "bg-muted text-muted-foreground"
+                                                )}
+                                                style={(isSelected && announcementType === 'group') ? { background: 'var(--aip-teal)' } : undefined}>
                                                     {isSelected && announcementType === 'group' ? <CheckCircle2 className="h-4 w-4" /> : (doc.fullName ?? (doc as any).full_name ?? '?').charAt(0)}
                                                 </div>
                                                 <div className="text-left overflow-hidden flex-1">
@@ -236,47 +239,46 @@ export default function AdminAnnouncementsPage() {
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                {/* Broadcast Area */}
-                <Card className="md:col-span-8 shadow-sm border-gray-200 flex flex-col min-h-0 bg-gray-50 overflow-hidden h-full">
-                    <CardHeader className="bg-white border-b sticky top-0 z-10 p-4 md:p-6">
+                <div className="glass-card md:col-span-8 flex flex-col min-h-0 overflow-hidden h-full">
+                    <div className="border-b border-border sticky top-0 z-10 p-4 md:p-6 bg-card">
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-3">
-                                <div className={cn(
-                                    "h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center text-white shadow-inner shrink-0",
-                                    announcementType === 'broadcast' ? "bg-blue-600" : announcementType === 'specialty' ? "bg-purple-600" : "bg-green-600"
-                                )}>
+                                <div
+                                    className="h-10 w-10 md:h-12 md:w-12 rounded-full flex items-center justify-center text-white shadow-inner shrink-0"
+                                    style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+                                >
                                     {announcementType === 'broadcast' ? <Megaphone className="h-5 w-5 md:h-6 md:w-6" /> : announcementType === 'specialty' ? <Users className="h-5 w-5 md:h-6 md:w-6" /> : <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6" />}
                                 </div>
                                 <div>
-                                    <CardTitle className="text-lg md:text-xl">
+                                    <h2 className="text-lg md:text-xl font-bold text-foreground">
                                         {announcementType === 'broadcast' ? "Global Broadcast" : announcementType === 'specialty' ? "Specialty Announcement" : "Group Announcement"}
-                                    </CardTitle>
-                                    <CardDescription className="text-xs md:text-sm">
+                                    </h2>
+                                    <p className="text-xs md:text-sm text-muted-foreground">
                                         {announcementType === 'broadcast' ? "Sending to all doctors" : announcementType === 'specialty' ? "Targeting specific department" : `Targeting ${selectedDoctorIds.length} selected doctors`}
-                                    </CardDescription>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    </CardHeader>
+                    </div>
 
-                    <CardContent className="flex-1 flex flex-col p-0 overflow-hidden relative bg-white">
-                        <div className="flex-1 bg-white p-4 md:p-8 flex flex-col overflow-y-auto">
+                    <div className="flex-1 flex flex-col p-0 overflow-hidden relative">
+                        <div className="flex-1 p-4 md:p-8 flex flex-col overflow-y-auto">
                             <div className="max-w-xl w-full mx-auto space-y-6">
-                                <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-2xl text-center space-y-4 shadow-sm">
-                                    <div className={cn(
-                                        "h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center mx-auto shadow-sm",
-                                        announcementType === 'broadcast' ? "bg-blue-100 text-blue-600" : announcementType === 'specialty' ? "bg-purple-100 text-purple-600" : "bg-green-100 text-green-600"
-                                    )}>
+                                <div className="p-6 rounded-2xl text-center space-y-4 border border-border bg-muted/30">
+                                    <div
+                                        className="h-16 w-16 md:h-20 md:w-20 rounded-full flex items-center justify-center mx-auto"
+                                        style={{ background: 'rgba(26, 140, 122, 0.15)', color: 'var(--aip-teal)' }}
+                                    >
                                         {announcementType === 'broadcast' ? <Megaphone className="h-8 w-8 md:h-10 md:w-10" /> : announcementType === 'specialty' ? <Users className="h-8 w-8 md:h-10 md:w-10" /> : <CheckCircle2 className="h-8 w-8 md:h-10 md:w-10" />}
                                     </div>
                                     <div className="space-y-1">
-                                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+                                        <h3 className="text-xl md:text-2xl font-bold text-foreground">
                                             {announcementType === 'broadcast' ? "System-Wide Broadcast" : announcementType === 'specialty' ? "Department Targeting" : "Group Message"}
                                         </h3>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-muted-foreground">
                                             {announcementType === 'broadcast' ? `Delivered to all ${allDoctors.length} physicians.` : announcementType === 'specialty' ? "Select a department to notify." : `Selected ${selectedDoctorIds.length} physicians.`}
                                         </p>
                                     </div>
@@ -285,9 +287,9 @@ export default function AdminAnnouncementsPage() {
                                 <div className="space-y-4">
                                     {announcementType === 'specialty' && (
                                         <div className="space-y-2">
-                                            <Label className="text-sm font-bold text-gray-700">Select Specialty / Department</Label>
+                                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Specialty / Department</Label>
                                             <select
-                                                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                                className="w-full h-12 px-4 rounded-lg border border-input bg-background focus:ring-2 focus:ring-ring outline-none transition-all"
                                                 value={selectedSpecialty}
                                                 onChange={(e) => setSelectedSpecialty(e.target.value)}
                                             >
@@ -300,20 +302,20 @@ export default function AdminAnnouncementsPage() {
                                     )}
 
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Announcement Title</Label>
+                                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Announcement Title</Label>
                                         <Input
                                             value={announcementTitle}
                                             onChange={(e) => setAnnouncementTitle(e.target.value)}
                                             placeholder="Title for the announcement..."
-                                            className="rounded-xl h-12"
+                                            className="rounded-lg h-12 border border-input"
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-bold text-gray-700">Message Content</Label>
+                                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Message Content</Label>
                                         <Textarea
                                             placeholder="Type your announcement content here..."
-                                            className="min-h-[180px] text-base rounded-xl focus:ring-blue-500"
+                                            className="min-h-[180px] text-base rounded-lg border border-input focus:ring-2 focus:ring-ring"
                                             value={message}
                                             onChange={(e) => setMessage(e.target.value)}
                                         />
@@ -321,10 +323,8 @@ export default function AdminAnnouncementsPage() {
 
                                     <div className="flex gap-4 pt-4">
                                         <Button
-                                            className={cn(
-                                                "flex-1 py-6 rounded-xl text-white font-bold",
-                                                announcementType === 'broadcast' ? "bg-blue-600 hover:bg-blue-700" : announcementType === 'specialty' ? "bg-purple-600 hover:bg-purple-700" : "bg-green-600 hover:bg-green-700"
-                                            )}
+                                            className="flex-1 py-6 rounded-lg text-white font-bold border-0"
+                                            style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
                                             disabled={!message.trim() || isSending || (announcementType === 'specialty' && !selectedSpecialty) || (announcementType === 'group' && selectedDoctorIds.length === 0)}
                                             onClick={handleSend}
                                         >
@@ -334,8 +334,8 @@ export default function AdminAnnouncementsPage() {
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </div>
     );

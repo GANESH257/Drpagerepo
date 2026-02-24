@@ -1,27 +1,53 @@
 'use client';
 
-import { MessagesSectionAPI } from '@/components/dashboard/MessagesSectionAPI';
+import { useSearchParams } from 'next/navigation';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
+import { MessagesSection } from '@/components/dashboard/MessagesSection';
+import { Doctor } from '@/types';
 
 interface AdminMessagesWrapperProps {
   otherDoctorId?: string;
 }
 
-export function AdminMessagesWrapper({ otherDoctorId }: AdminMessagesWrapperProps) {
+// Virtual admin Doctor object — id must be 'admin' so Firebase messages
+// match the 'admin' senderId that MessagesSection uses for all contacts.
+const ADMIN_DOCTOR: Doctor = {
+  id: 'admin',
+  slug: 'admin',
+  firstName: 'Alliance',
+  lastName: 'Admin',
+  fullName: 'Alliance Admin',
+  specialty: 'System Administrator',
+  credentials: '',
+  bio: '',
+  locations: [],
+  insurance: [],
+  rating: 0,
+  reviewCount: 0,
+  reviews: [],
+  featured: false,
+  verified: true,
+  availability: [],
+  acceptsNewPatients: false,
+  conditionServices: [],
+};
+
+export function AdminMessagesWrapper({ otherDoctorId: otherDoctorIdProp }: AdminMessagesWrapperProps) {
+  const searchParams = useSearchParams();
+  // Resolve otherDoctorId from prop or from URL query param
+  const otherDoctorId = otherDoctorIdProp ?? searchParams.get('otherDoctorId') ?? undefined;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Messages</h2>
-        <p className="text-gray-600 mt-2">
-          Chat with physicians across the alliance
-        </p>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <MessagesSectionAPI
-          basePath="/admin/messages"
-          currentDoctorId={undefined}
-        />
-      </div>
+      <SectionHeader
+        title="Messages"
+        description="Chat with physicians across the alliance"
+      />
+      <MessagesSection
+        doctor={ADMIN_DOCTOR}
+        otherDoctorId={otherDoctorId}
+        basePath="/admin/messages"
+      />
     </div>
   );
 }

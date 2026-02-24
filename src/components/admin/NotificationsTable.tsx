@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Notification, NotificationType } from '@/types/notifications';
 import { getAllNotifications } from '@/lib/api/notifications';
@@ -137,16 +136,12 @@ export function NotificationsTable() {
   return (
     <div className="space-y-6">
       {error && (
-        <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <div className="glass-card p-6">
           <div className="space-y-4">
             {/* Search */}
             <div className="relative">
@@ -210,27 +205,23 @@ export function NotificationsTable() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
-      {/* Results Count */}
       <div className="text-sm text-muted-foreground">
         Showing {filteredNotifications.length} of {notifications.length} notifications
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Type</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Title</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Message</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Doctor</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -248,12 +239,12 @@ export function NotificationsTable() {
                   </TableRow>
                 ) : (
                   filteredNotifications.map((notification) => (
-                    <TableRow key={notification.id}>
+                    <TableRow key={notification.id} className="hover:bg-accent/30">
                       <TableCell>
                         {notification.readAt ? (
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Circle className="h-4 w-4 text-blue-600" />
+                          <Circle className="h-4 w-4" style={{ color: 'var(--aip-teal)' }} />
                         )}
                       </TableCell>
                       <TableCell>{getTypeBadge(notification.type)}</TableCell>
@@ -288,8 +279,7 @@ export function NotificationsTable() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

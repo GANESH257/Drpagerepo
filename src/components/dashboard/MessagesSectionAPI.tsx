@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MessageSquarePlus, Send, UserRound } from 'lucide-react';
+import { MessageSquarePlus, Send, UserRound, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,13 +50,22 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
   const [search, setSearch] = useState('');
   const otherDoctorHandled = useRef(false);
 
+  // Error states — surfaces all silent failures so the user can see what's wrong
+  const [threadListError, setThreadListError] = useState<string | null>(null);
+  const [doctorLoadError, setDoctorLoadError] = useState<string | null>(null);
+  const [newChatError, setNewChatError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+
   const loadThreads = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
+      setThreadListError(null);
       const list = await getThreads();
       setThreads(Array.isArray(list) ? list : []);
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to load conversations';
+      setThreadListError(msg);
       setThreads([]);
     }
   }, []);
@@ -153,9 +162,17 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
   useEffect(() => {
     const token = getToken();
     if (!token) return;
+    setDoctorLoadError(null);
     getAllDoctorsArray(token)
-      .then((list) => setAllDoctors(Array.isArray(list) ? list : []))
-      .catch(() => setAllDoctors([]));
+      .then((list) => {
+        if (Array.isArray(list)) setAllDoctors(list);
+        else setAllDoctors([]);
+      })
+      .catch((e) => {
+        const msg = e instanceof Error ? e.message : 'Failed to load physicians';
+        setDoctorLoadError(msg);
+        setAllDoctors([]);
+      });
   }, []);
 
   const openThread = (tid: string) => {
@@ -167,13 +184,15 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
   const handleSend = async () => {
     if (!selectedThreadId || !composer.trim()) return;
     setSending(true);
+    setSendError(null);
     try {
       await sendMessageAPI(selectedThreadId, composer.trim());
       setComposer('');
       await loadThreadDetail(selectedThreadId);
       await loadThreads();
     } catch (e) {
-      console.warn('Send message failed', e);
+      const msg = e instanceof Error ? e.message : 'Failed to send message';
+      setSendError(msg);
     } finally {
       setSending(false);
     }
@@ -182,6 +201,7 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
   const handleNewChatSelect = async (doctorId: string) => {
     const token = getToken();
     if (!token) return;
+    setNewChatError(null);
     try {
       const thread = await createThread({ participant_ids: [doctorId] });
       const tid = thread.id;
@@ -192,7 +212,8 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
       await loadThreads();
       setIsNewChatMode(false);
     } catch (e) {
-      console.warn('Create thread failed', e);
+      const msg = e instanceof Error ? e.message : 'Failed to start conversation';
+      setNewChatError(msg);
     }
   };
 
@@ -226,8 +247,8 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
     return (
       <div className="flex h-[calc(100vh-140px)] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#0F5FA8] border-t-transparent" />
-          <p className="text-sm text-gray-500">Loading messages...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--aip-teal)] border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading messages...</p>
         </div>
       </div>
     );
@@ -235,11 +256,11 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
 
   return (
     <div className="flex h-[calc(100vh-140px)] flex-col gap-4 overflow-hidden md:flex-row">
-      <Card className="flex w-full flex-col overflow-hidden border-gray-200 bg-white md:w-80 lg:w-96">
-        <CardHeader className="space-y-3 border-b bg-gray-50/50 pb-4">
+      <Card className="flex w-full flex-col overflow-hidden border-border bg-card md:w-80 lg:w-96">
+        <CardHeader className="space-y-3 border-b border-border bg-muted/50 pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <MessageSquarePlus className="h-5 w-5 text-[#0F5FA8]" />
+            <CardTitle className="flex items-center gap-2 text-xl text-foreground">
+              <MessageSquarePlus className="h-5 w-5 text-[var(--aip-teal)]" />
               {isNewChatMode ? 'New message' : 'Messages'}
             </CardTitle>
             <Button
@@ -249,7 +270,7 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
                 setIsNewChatMode(!isNewChatMode);
                 setSearch('');
               }}
-              className="text-xs font-semibold text-gray-600 hover:text-[#0F5FA8]"
+              className="text-xs font-semibold text-muted-foreground hover:text-[var(--aip-teal)]"
             >
               {isNewChatMode ? 'Back' : '+ New'}
             </Button>
@@ -258,14 +279,50 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={isNewChatMode ? 'Search physicians...' : 'Search conversations...'}
-            className="h-10 bg-white shadow-sm"
+            className="h-10 bg-background shadow-sm"
           />
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto p-0">
           <div className="p-2">
+            {/* Error banners */}
+            {threadListError && !isNewChatMode && (
+              <div className="mb-2 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-red-400">Could not load conversations</p>
+                  <p className="text-xs text-red-400/80">{threadListError}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => loadThreads()}
+                  className="shrink-0 text-red-400 hover:text-red-300"
+                  title="Retry"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            {doctorLoadError && isNewChatMode && (
+              <div className="mb-2 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-red-400">Could not load physicians</p>
+                  <p className="text-xs text-red-400/80">{doctorLoadError}</p>
+                </div>
+              </div>
+            )}
+            {newChatError && isNewChatMode && (
+              <div className="mb-2 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-red-400">Could not start conversation</p>
+                  <p className="text-xs text-red-400/80">{newChatError}</p>
+                </div>
+              </div>
+            )}
             {isNewChatMode ? (
-              filteredDoctors.length === 0 ? (
-                <p className="py-8 text-center text-sm text-gray-500">No physicians found.</p>
+              doctorLoadError ? null : filteredDoctors.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">No physicians found.</p>
               ) : (
                 <div className="space-y-0.5">
                   {filteredDoctors.map((d) => (
@@ -273,14 +330,14 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
                       key={d.id}
                       type="button"
                       onClick={() => handleNewChatSelect(d.id)}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-[#0F5FA8]/5"
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-[var(--aip-teal)]/10"
                     >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0F5FA8]/10 text-[#0F5FA8] font-bold">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--aip-teal)]/10 text-[var(--aip-teal)] font-bold">
                         {d.fullName?.charAt(0) || '?'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-gray-900">{d.fullName}</div>
-                        <div className="truncate text-xs text-gray-500">{d.specialty}</div>
+                        <div className="font-semibold text-foreground">{d.fullName}</div>
+                        <div className="truncate text-xs text-muted-foreground">{d.specialty}</div>
                       </div>
                     </button>
                   ))}
@@ -288,9 +345,9 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
               )
             ) : filteredThreads.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <UserRound className="mb-3 h-12 w-12 text-gray-300" />
-                <p className="text-sm font-medium text-gray-600">No conversations yet</p>
-                <p className="mt-1 text-xs text-gray-500">Start a new message above.</p>
+                <UserRound className="mb-3 h-12 w-12 text-muted-foreground" />
+                <p className="text-sm font-medium text-muted-foreground">No conversations yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">Start a new message above.</p>
               </div>
             ) : (
               <div className="space-y-0.5">
@@ -303,22 +360,22 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
                       onClick={() => openThread(t.id)}
                       className={cn(
                         'flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left',
-                        active ? 'bg-[#0F5FA8] text-white' : 'hover:bg-gray-100'
+                        active ? 'bg-[var(--aip-teal)] text-white' : 'hover:bg-accent'
                       )}
                     >
                       <div
                         className={cn(
                           'flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold',
-                          active ? 'bg-white/20' : 'bg-[#0F5FA8]/10 text-[#0F5FA8]'
+                          active ? 'bg-white/20' : 'bg-[var(--aip-teal)]/10 text-[var(--aip-teal)]'
                         )}
                       >
                         {displayNameForThread(t).charAt(0) || '?'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className={cn('truncate font-semibold', active ? 'text-white' : 'text-gray-900')}>
+                        <div className={cn('truncate font-semibold', active ? 'text-white' : 'text-foreground')}>
                           {displayNameForThread(t)}
                         </div>
-                        <div className={cn('truncate text-xs', active ? 'text-white/80' : 'text-gray-500')}>
+                        <div className={cn('truncate text-xs', active ? 'text-white/80' : 'text-muted-foreground')}>
                           {t.last_message_at
                             ? formatDateTime(t.last_message_at)
                             : `${t.message_count ?? 0} message(s)`}
@@ -333,42 +390,42 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
         </CardContent>
       </Card>
 
-      <Card className="flex flex-1 flex-col overflow-hidden border-gray-200 bg-white">
+      <Card className="flex flex-1 flex-col overflow-hidden border-border bg-card">
         {!selectedThreadId ? (
-          <div className="flex flex-1 flex-col items-center justify-center bg-gray-50/30 p-10 text-center">
-            <MessageSquarePlus className="mb-6 h-24 w-24 text-[#0F5FA8]/20" />
-            <h3 className="text-xl font-bold text-gray-900">Select a conversation</h3>
-            <p className="mt-2 max-w-xs text-gray-500">
+          <div className="flex flex-1 flex-col items-center justify-center bg-muted/30 p-10 text-center">
+            <MessageSquarePlus className="mb-6 h-24 w-24 text-[var(--aip-teal)]/20" />
+            <h3 className="text-xl font-bold text-foreground">Select a conversation</h3>
+            <p className="mt-2 max-w-xs text-muted-foreground">
               Choose a thread from the list or start a new message.
             </p>
           </div>
         ) : (
           <>
-            <CardHeader className="flex flex-row items-center gap-3 border-b px-6 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0F5FA8] text-sm font-bold text-white">
+            <CardHeader className="flex flex-row items-center gap-3 border-b border-border px-6 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--aip-teal)] text-sm font-bold text-white">
                 {threadDetail?.participants?.length
                   ? (threadDetail.participants as { participant_name?: string; full_name?: string }[])[0]?.participant_name?.charAt(0) ??
                     (threadDetail.participants as { full_name?: string }[])[0]?.full_name?.charAt(0) ?? '?'
                   : '?'}
               </div>
               <div className="min-w-0 flex-1">
-                <CardTitle className="truncate text-lg text-gray-900">
+                <CardTitle className="truncate text-lg text-foreground">
                   {threadDetail?.participants?.length
                     ? (threadDetail.participants as { participant_name?: string; full_name?: string }[])
                         .map((p) => p.participant_name ?? p.full_name)
                         .join(', ')
                     : 'Loading...'}
                 </CardTitle>
-                <CardDescription className="text-xs text-gray-500">
+                <CardDescription className="text-xs text-muted-foreground">
                   {threadDetail?.messages?.length ?? 0} message(s)
                 </CardDescription>
               </div>
             </CardHeader>
-            <CardContent className="relative flex-1 overflow-y-auto bg-[#f0f2f5] p-4 md:p-6">
+            <CardContent className="relative flex-1 overflow-y-auto bg-muted/30 p-4 md:p-6">
               <div className="flex min-h-full flex-col justify-end">
                 {!threadDetail?.messages?.length ? (
                   <div className="mb-auto flex flex-col items-center justify-center py-12 text-center">
-                    <p className="text-sm text-gray-500">No messages yet. Say hello!</p>
+                    <p className="text-sm text-muted-foreground">No messages yet. Say hello!</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -385,14 +442,14 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
                           <div
                             className={cn(
                               'max-w-[85%] rounded-2xl px-4 py-2 shadow-sm',
-                              mine ? 'bg-[#0F5FA8] text-white' : 'bg-white text-gray-900'
+                              mine ? 'bg-[var(--aip-teal)] text-white' : 'bg-muted text-foreground'
                             )}
                           >
                             {!mine && (
                               <p className="text-[10px] font-medium opacity-80">{m.sender_name}</p>
                             )}
                             <p className="text-sm">{m.content}</p>
-                            <p className={cn('mt-1 text-[10px]', mine ? 'text-white/70' : 'text-gray-500')}>
+                            <p className={cn('mt-1 text-[10px]', mine ? 'text-white/70' : 'text-muted-foreground')}>
                               {formatDateTime(m.created_at)}
                             </p>
                           </div>
@@ -401,16 +458,23 @@ export function MessagesSectionAPI({ currentDoctorId: currentDoctorIdProp, baseP
                     })}
                   </div>
                 )}
+                {sendError && (
+                  <div className="mt-2 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+                    <p className="text-xs text-red-400">{sendError}</p>
+                    <button type="button" onClick={() => setSendError(null)} className="ml-auto text-red-400 hover:text-red-300 text-xs">✕</button>
+                  </div>
+                )}
                 <div className="mt-4 flex gap-2">
                   <Input
                     value={composer}
-                    onChange={(e) => setComposer(e.target.value)}
+                    onChange={(e) => { setComposer(e.target.value); setSendError(null); }}
                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                     placeholder="Type a message..."
                     className="flex-1"
                     disabled={sending}
                   />
-                  <Button onClick={handleSend} disabled={!composer.trim() || sending} className="bg-[#0F5FA8] hover:bg-[#0F5FA8]/90">
+                  <Button onClick={handleSend} disabled={!composer.trim() || sending} className="bg-[var(--aip-teal)] hover:opacity-90">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

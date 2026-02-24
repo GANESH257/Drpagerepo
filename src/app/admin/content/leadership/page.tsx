@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { getCommittees } from '@/lib/api/committees';
 
 export default function AdminContentLeadershipPage() {
@@ -26,32 +26,32 @@ export default function AdminContentLeadershipPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0F5FA8]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--aip-teal)' }} />
       </div>
     );
   }
   if (error) {
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Leadership & Committees</h2>
-        <Card><CardContent className="pt-6"><p className="text-red-600">{error}</p></CardContent></Card>
+        <SectionHeader title="Leadership & Committees" description="Manage the public-facing leadership directory." />
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">Leadership & Committees</h2>
-        <p className="text-gray-600 mt-1">Manage the public-facing leadership directory (committees and members).</p>
+      <SectionHeader
+        title="Leadership & Committees"
+        description="Manage the public-facing leadership directory (committees and members)."
+      />
+      <div className="glass-card p-6">
+        <p className="text-muted-foreground">
+          {committees.length} committee{committees.length !== 1 ? 's' : ''} loaded. Full CRUD UI for committees and members will be implemented here (API-only).
+        </p>
       </div>
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-gray-600">
-            {committees.length} committee{committees.length !== 1 ? 's' : ''} loaded. Full CRUD UI for committees and members will be implemented here (API-only).
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

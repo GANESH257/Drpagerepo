@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
 import { AdminJoinRequest } from '@/lib/adminStorage';
 import { getGrowthTrendData, GrowthData } from '@/lib/adminAnalytics';
@@ -30,12 +29,12 @@ export function GrowthTrendChart({ requests }: GrowthTrendChartProps) {
   }, [requests]);
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700">Growth Trend</CardTitle>
-        <TrendingUp className="h-4 w-4 text-gray-500" />
-      </CardHeader>
-      <CardContent>
+    <div className="glass-card p-6">
+      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <h3 className="text-sm font-medium text-muted-foreground">Growth Trend</h3>
+        <TrendingUp className="h-4 w-4 text-[var(--aip-teal)]" />
+      </div>
+      <div className="pt-2">
         {loading ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
             <p>Loading growth data...</p>
@@ -73,15 +72,15 @@ export function GrowthTrendChart({ requests }: GrowthTrendChartProps) {
               <Line
                 type="monotone"
                 dataKey="total"
-                stroke="#2EC4B6"
+                stroke="var(--aip-teal)"
                 strokeWidth={2}
-                dot={{ fill: '#2EC4B6', r: 4 }}
+                dot={{ fill: 'var(--aip-teal)', r: 4 }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

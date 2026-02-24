@@ -5,7 +5,6 @@ import { Search, Send, User, Calendar, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -13,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StatusBadge } from '@/components/shared/StatusBadge';
 import { Referral } from '@/types/referrals';
 import { getAllReferrals as getAllReferralsAPI, Referral as ApiReferral } from '@/lib/api/referrals';
 import { getAllDoctorsArray } from '@/lib/api/doctors';
@@ -23,7 +22,7 @@ import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { formatDateTime } from '@/lib/dateUtils';
-import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
+import { normalizeReferralStatus } from '@/lib/utils/referralStatusLabels';
 
 export function ReferralsTable() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -129,20 +128,9 @@ export function ReferralsTable() {
     );
   }, [referrals, statusFilter, doctorFilter, practiceFilter, searchQuery, doctors]);
 
-  const getStatusBadge = (status: Referral['status']) => {
-    switch (status) {
-      case 'considering':
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">{getReferralStatusLabel(status)}</Badge>;
-      case 'accepted':
-        return <Badge className="bg-green-100 text-green-700 border-green-300">{getReferralStatusLabel(status)}</Badge>;
-      case 'no_show':
-        return <Badge className="bg-amber-100 text-amber-700 border-amber-300">{getReferralStatusLabel(status)}</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive">{getReferralStatusLabel(status)}</Badge>;
-      default:
-        return <Badge variant="outline">{status ? getReferralStatusLabel(status as Referral['status']) : status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: Referral['status']) => (
+    <StatusBadge status={status} />
+  );
 
   const getDoctorName = (doctorId: string): string => {
     const doctor = doctors.find(d => d.id === doctorId);
@@ -158,16 +146,12 @@ export function ReferralsTable() {
   return (
     <div className="space-y-6">
       {error && (
-        <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <div className="glass-card p-6">
           <div className="space-y-4">
             {/* Search */}
             <div className="relative">
@@ -233,27 +217,23 @@ export function ReferralsTable() {
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
-      {/* Results Count */}
       <div className="text-sm text-muted-foreground">
         Showing {filteredReferrals.length} of {referrals.length} referrals
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>From</TableHead>
-                  <TableHead>To</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Condition</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">From</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">To</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Patient</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Condition</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Status</TableHead>
+                  <TableHead className="uppercase tracking-wider text-muted-foreground">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -271,7 +251,7 @@ export function ReferralsTable() {
                   </TableRow>
                 ) : (
                   filteredReferrals.map((referral) => (
-                    <TableRow key={referral.id}>
+                    <TableRow key={referral.id} className="hover:bg-accent/30">
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{getDoctorName(referral.fromDoctorId)}</span>
@@ -324,8 +304,7 @@ export function ReferralsTable() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

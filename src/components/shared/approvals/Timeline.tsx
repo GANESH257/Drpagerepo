@@ -1,6 +1,5 @@
 import { ApprovalHistoryRecord } from '@/types/approvals';
 import { ReferralHistoryRecord } from '@/types/referrals';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/dateUtils';
 
@@ -73,7 +72,7 @@ function formatActor(record: TimelineRecord): string {
 export function Timeline({ records, className }: TimelineProps) {
   if (records.length === 0) {
     return (
-      <div className="text-center text-gray-500 py-8">
+      <div className="text-center text-muted-foreground py-8">
         No history records available
       </div>
     );
@@ -104,25 +103,25 @@ export function Timeline({ records, className }: TimelineProps) {
           const date = new Date(dateStr);
           
           return (
-            <Card key={isApprovalRecord(record) ? record.id : `ref-${index}`} className="p-4">
+            <div key={isApprovalRecord(record) ? record.id : `ref-${index}`} className="glass-card p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={getActionVariant(record.action)}>
                       {actionLabel}
                     </Badge>
-                    <span className="text-sm text-gray-600">by {actor}</span>
+                    <span className="text-sm text-muted-foreground">by {actor}</span>
                   </div>
                   {isApprovalRecord(record) && record.reason && (
-                    <p className="text-sm text-gray-700 mb-1">
+                    <p className="text-sm text-muted-foreground mb-1">
                       <strong>Reason:</strong> {record.reason}
                     </p>
                   )}
                   {isApprovalRecord(record) && record.notes && (
-                    <p className="text-sm text-gray-600">{record.notes}</p>
+                    <p className="text-sm text-muted-foreground">{record.notes}</p>
                   )}
                   {!isApprovalRecord(record) && record.metadata && (
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <div className="text-sm text-muted-foreground space-y-1">
                       {record.metadata.fromStatus && record.metadata.toStatus && (
                         <p>
                           Status changed from <strong>{record.metadata.fromStatus}</strong> to <strong>{record.metadata.toStatus}</strong>
@@ -137,14 +136,14 @@ export function Timeline({ records, className }: TimelineProps) {
                   )}
                   {/* Legacy fallback for old snapshot structure */}
                   {!isApprovalRecord(record) && !record.metadata && 'snapshot' in record && (record as any).snapshot && (
-                    <p className="text-sm text-gray-600">Status changed</p>
+                    <p className="text-sm text-muted-foreground">Status changed</p>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 ml-4">
+                <div className="text-xs text-muted-foreground ml-4">
                   {formatDateTime(date)}
                 </div>
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -191,19 +190,104 @@ export function PlansEditor() {
     setFormData({ ...formData, features });
   };
 
+  const renderPlanCard = (plan: MembershipPlan) => {
+    const monthlyPrice =
+      typeof plan.pricing.monthly === 'number'
+        ? `$${plan.pricing.monthly}`
+        : plan.pricing.monthly;
+    const annualPrice =
+      typeof plan.pricing.annual === 'number'
+        ? `$${plan.pricing.annual}`
+        : plan.pricing.annual;
+
+    return (
+      <div key={plan.id} className="glass-card relative overflow-hidden">
+        {plan.badge && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <Badge className="text-white border-0" style={{ background: 'var(--aip-teal)' }}>
+              {plan.badge}
+            </Badge>
+          </div>
+        )}
+        <div className="p-6 space-y-4">
+          <div>
+            <h3
+              className="text-2xl font-bold text-foreground"
+              style={{ color: 'var(--aip-teal)' }}
+            >
+              {plan.name}
+            </h3>
+            {plan.description && (
+              <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+            )}
+          </div>
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Monthly</div>
+              <div className="text-2xl font-bold">{monthlyPrice}/mo</div>
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground mb-1">Annual</div>
+              <div className="text-2xl font-bold">{annualPrice}/yr</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium mb-2">
+                Features ({Array.isArray(plan.features) ? plan.features.length : 0})
+              </div>
+              <ul className="space-y-1 text-sm">
+                {Array.isArray(plan.features) && plan.features.length > 0 ? (
+                  <>
+                    {plan.features.slice(0, 3).map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <Check
+                          className="h-4 w-4 shrink-0 mt-0.5"
+                          style={{ color: 'var(--aip-teal)' }}
+                        />
+                        <span className="text-foreground">{feature}</span>
+                      </li>
+                    ))}
+                    {plan.features.length > 3 && (
+                      <li className="text-muted-foreground">
+                        +{plan.features.length - 3} more
+                      </li>
+                    )}
+                  </>
+                ) : (
+                  <li className="text-muted-foreground text-sm">No features listed</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 pt-0 flex gap-2">
+          <Button
+            onClick={() => handleEdit(plan)}
+            variant="outline"
+            className="flex-1 border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+          <Button onClick={() => handleDelete(plan)} variant="destructive" size="icon">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="space-y-6">
         {/* Header Actions */}
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-semibold text-brand-dark-blue">Membership Plans</h3>
             <p className="text-sm text-muted-foreground">
               Manage plan pricing, features, and visibility
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={handleAdd} variant="gradient" disabled={loading}>
+            <Button onClick={handleAdd} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }} disabled={loading}>
               <Plus className="mr-2 h-4 w-4" />
               Add New Plan
             </Button>
@@ -211,100 +295,19 @@ export function PlansEditor() {
         </div>
 
         {error && (
-          <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
-            <CardContent className="pt-6">
-              <p className="text-red-600">{error}</p>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-6">
+            <p className="text-destructive">{error}</p>
+          </div>
         )}
 
         {loading && (
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <CardContent className="pt-6">
-              <p className="text-gray-600">Loading membership plans...</p>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-6">
+            <p className="text-muted-foreground">Loading membership plans...</p>
+          </div>
         )}
 
-        {/* Plans Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {plans.map((plan) => {
-            const monthlyPrice = typeof plan.pricing.monthly === 'number' 
-              ? `$${plan.pricing.monthly}` 
-              : plan.pricing.monthly;
-            const annualPrice = typeof plan.pricing.annual === 'number' 
-              ? `$${plan.pricing.annual}` 
-              : plan.pricing.annual;
-
-            return (
-              <Card key={plan.id} className="card-vibrant">
-                {plan.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-brand-teal text-white">{plan.badge}</Badge>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-brand-dark-blue">
-                    {plan.name}
-                  </CardTitle>
-                  {plan.description && (
-                    <CardDescription>{plan.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Monthly</div>
-                    <div className="text-2xl font-bold">{monthlyPrice}/mo</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Annual</div>
-                    <div className="text-2xl font-bold">{annualPrice}/yr</div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium mb-2">
-                      Features ({Array.isArray(plan.features) ? plan.features.length : 0})
-                    </div>
-                    <ul className="space-y-1 text-sm">
-                      {Array.isArray(plan.features) && plan.features.length > 0 ? (
-                        <>
-                          {plan.features.slice(0, 3).map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <Check className="h-4 w-4 text-brand-teal shrink-0 mt-0.5" />
-                              <span className="text-gray-700">{feature}</span>
-                            </li>
-                          ))}
-                          {plan.features.length > 3 && (
-                            <li className="text-muted-foreground">
-                              +{plan.features.length - 3} more
-                            </li>
-                          )}
-                        </>
-                      ) : (
-                        <li className="text-muted-foreground text-sm">No features listed</li>
-                      )}
-                    </ul>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex gap-2">
-                  <Button
-                    onClick={() => handleEdit(plan)}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(plan)}
-                    variant="destructive"
-                    size="icon"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
+          {plans.map(renderPlanCard)}
         </div>
       </div>
 
@@ -437,10 +440,10 @@ export function PlansEditor() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} variant="gradient" disabled={!formData.name}>
+            <Button onClick={handleSave} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }} disabled={!formData.name}>
               Save Plan
             </Button>
           </DialogFooter>

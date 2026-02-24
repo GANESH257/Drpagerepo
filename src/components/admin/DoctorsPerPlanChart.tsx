@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crown } from 'lucide-react';
 import { AdminJoinRequest } from '@/lib/adminStorage';
 import { getDoctorsPerPlan, PlanData } from '@/lib/adminAnalytics';
@@ -11,7 +10,7 @@ interface DoctorsPerPlanChartProps {
   requests: AdminJoinRequest[];
 }
 
-const COLORS = ['#2EC4B6', '#1A4B7F', '#F59E0B'];
+const COLORS = ['#1A8C7A', '#1B3A6B', '#B8973A'];
 
 export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
   const [chartData, setChartData] = useState<PlanData[]>([]);
@@ -32,12 +31,12 @@ export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
   }, [requests]);
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700">Doctors Per Plan</CardTitle>
-        <Crown className="h-4 w-4 text-gray-500" />
-      </CardHeader>
-      <CardContent>
+    <div className="glass-card p-6">
+      <div className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <h3 className="text-sm font-medium text-muted-foreground">Doctors Per Plan</h3>
+        <Crown className="h-4 w-4 text-[var(--aip-teal)]" />
+      </div>
+      <div className="pt-2">
         {loading ? (
           <div className="flex items-center justify-center h-[250px] text-muted-foreground">
             <p>Loading plan data...</p>
@@ -65,8 +64,8 @@ export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'var(--card)',
+                  border: '1px solid var(--border)',
                   borderRadius: '8px',
                   padding: '8px 12px',
                 }}
@@ -83,7 +82,7 @@ export function DoctorsPerPlanChart({ requests }: DoctorsPerPlanChartProps) {
             </PieChart>
           </ResponsiveContainer>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

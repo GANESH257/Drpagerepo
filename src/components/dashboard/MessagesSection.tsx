@@ -29,7 +29,7 @@ interface MessagesSectionProps {
 const AVATAR_COLORS = [
   'bg-sky-100 text-sky-700',
   'bg-emerald-100 text-emerald-700',
-  'bg-gray-200 text-gray-700',
+  'bg-muted text-foreground',
   'bg-violet-100 text-violet-700',
   'bg-amber-100 text-amber-700',
 ];
@@ -181,19 +181,19 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
   return (
     <div className="flex flex-col gap-5 overflow-hidden">
       <header>
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Secure direct messaging with AIP colleagues and administration.
         </p>
       </header>
 
       <div className="flex h-[calc(100vh-200px)] flex-col gap-4 overflow-hidden md:flex-row">
       {/* Sidebar - Conversation list */}
-      <Card className="flex w-full flex-col overflow-hidden border-gray-200 bg-white md:w-80 lg:w-96 glass-card">
-        <CardHeader className="border-b bg-gray-50/50 pb-4 space-y-3">
+      <Card className="flex w-full flex-col overflow-hidden border-border bg-card md:w-80 lg:w-96 glass-card">
+        <CardHeader className="border-b border-border bg-muted/50 pb-4 space-y-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <MessageSquarePlus className="h-5 w-5 text-brand-dark-blue" />
+            <CardTitle className="flex items-center gap-2 text-xl text-foreground">
+              <MessageSquarePlus className="h-5 w-5 text-[var(--aip-teal)]" />
               {isNewChatMode ? 'New Chat' : 'Chats'}
             </CardTitle>
             <Button
@@ -205,7 +205,9 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
               }}
               className={cn(
                 "h-8 px-2 text-xs font-semibold",
-                isNewChatMode ? "text-brand-dark-blue hover:text-brand-dark-blue" : "text-gray-500 hover:text-brand-dark-blue"
+                isNewChatMode
+                  ? "text-[var(--aip-teal)] hover:text-[var(--aip-teal)]"
+                  : "text-muted-foreground hover:text-[var(--aip-teal)]"
               )}
             >
               {isNewChatMode ? 'Back to Chats' : '+ New Chat'}
@@ -216,7 +218,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={isNewChatMode ? "Search all physicians..." : "Search messages..."}
-              className="h-10 bg-white shadow-sm focus-ring"
+              className="h-10 bg-background shadow-sm focus-ring"
             />
           </div>
         </CardHeader>
@@ -310,30 +312,30 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
       </Card>
 
       {/* Chat Thread */}
-      <Card className="flex flex-1 flex-col overflow-hidden border-gray-200 bg-white glass-card">
+      <Card className="flex flex-1 flex-col overflow-hidden border-border bg-card glass-card">
         {!selectedOtherId ? (
-          <div className="flex flex-1 flex-col items-center justify-center bg-gray-50/30 p-10 text-center">
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl">
-              <MessageSquarePlus className="h-12 w-12 text-brand-dark-blue/20" />
+          <div className="flex flex-1 flex-col items-center justify-center bg-muted/30 p-10 text-center">
+            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-card shadow-xl">
+              <MessageSquarePlus className="h-12 w-12 text-[var(--aip-teal)]/20" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900">Select a conversation</h3>
-            <p className="mt-2 max-w-xs text-gray-500">
+            <h3 className="text-xl font-bold text-foreground">Select a conversation</h3>
+            <p className="mt-2 max-w-xs text-muted-foreground">
               Your messages will appear here. Choose a contact from the list to start chatting.
             </p>
           </div>
         ) : (
           <>
-            <CardHeader className="border-b bg-white px-6 py-4">
-              <CardTitle className="text-lg font-bold text-gray-900">
+            <CardHeader className="border-b border-border bg-card px-6 py-4">
+              <CardTitle className="text-lg font-bold text-foreground">
                 Conversation with {selectedDoctor?.fullName}
               </CardTitle>
               {lastMessageSenderName != null && lastMessage && (
-                <CardDescription className="mt-1 text-sm text-gray-500">
+                <CardDescription className="mt-1 text-sm text-muted-foreground">
                   From: {lastMessageSenderName} – {formatMessageTime(lastMessage.sentAt)}
                 </CardDescription>
               )}
             </CardHeader>
-            <CardContent className="relative flex-1 overflow-y-auto bg-white p-0">
+            <CardContent className="relative flex-1 overflow-y-auto bg-background p-0">
               <div className="flex min-h-full flex-col justify-end p-4 md:p-6">
                 {threadMessages.length === 0 ? (
                   <div className="mb-auto flex h-full flex-col items-center justify-center p-12 text-center">
@@ -348,14 +350,16 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                         <div
                           key={m.id}
                           className={cn(
-                            'rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm',
-                            mine && 'bg-gray-50'
+                            'rounded-lg border border-border bg-card px-4 py-3 shadow-sm',
+                            mine && 'bg-[var(--aip-teal)]/10'
                           )}
                         >
-                          <div className="mb-1 text-xs font-medium text-gray-500">
+                          <div className="mb-1 text-xs font-medium text-muted-foreground">
                             {senderName} – {formatMessageTime(m.sentAt)}
                           </div>
-                          <div className="whitespace-pre-wrap text-sm text-gray-900">{m.content}</div>
+                          <div className="whitespace-pre-wrap text-sm text-foreground">
+                            {m.content}
+                          </div>
                         </div>
                       );
                     })}
@@ -365,8 +369,8 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
               </div>
             </CardContent>
 
-            <div className="border-t bg-white p-4">
-              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/50 p-2 focus-within:border-green-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-green-500/20">
+          <div className="border-t border-border bg-card p-4">
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2 focus-within:border-[var(--aip-teal)] focus-within:bg-background focus-within:ring-2 focus-within:ring-[var(--aip-teal)]/30">
                 <Textarea
                   value={composer}
                   onChange={(e) => setComposer(e.target.value)}

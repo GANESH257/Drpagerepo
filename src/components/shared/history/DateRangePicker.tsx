@@ -172,9 +172,9 @@ export function DateRangePicker({
       </div>
 
       {showCustom && (
-        <div className="flex gap-4 items-end p-3 border rounded-md bg-gray-50">
+        <div className="flex gap-4 items-end p-3 border rounded-md bg-muted/40">
           <div className="flex-1">
-            <Label htmlFor="date-from" className="text-xs text-gray-600">
+            <Label htmlFor="date-from" className="text-xs text-muted-foreground">
               From
             </Label>
             <Input
@@ -186,7 +186,7 @@ export function DateRangePicker({
             />
           </div>
           <div className="flex-1">
-            <Label htmlFor="date-to" className="text-xs text-gray-600">
+            <Label htmlFor="date-to" className="text-xs text-muted-foreground">
               To
             </Label>
             <Input
@@ -201,7 +201,7 @@ export function DateRangePicker({
       )}
 
       {(value.from || value.to) && (
-        <div className="text-xs text-gray-600 mt-1">
+        <div className="text-xs text-muted-foreground mt-1">
           {value.from && value.to
             ? `${formatDate(value.from)} - ${formatDate(value.to)}`
             : value.from

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,7 +64,7 @@ export default function AdminConfigSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0F5FA8]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--aip-teal)' }} />
       </div>
     );
   }
@@ -73,53 +73,49 @@ export default function AdminConfigSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0F5FA8]">System Settings</h2>
-        <p className="text-gray-600 mt-1">Global key-value settings (e.g. email templates, site name).</p>
-      </div>
+      <SectionHeader
+        title="System Settings"
+        description="Global key-value settings (e.g. email templates, site name)."
+      />
       {error && (
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+        </div>
       )}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex justify-between items-center">
-            <Label className="text-sm font-medium">Key-value settings</Label>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={addKey}>Add setting</Button>
-              <Button size="sm" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save all'}</Button>
-            </div>
+      <div className="glass-card p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Key-value settings</Label>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={addKey}>Add setting</Button>
+            <Button size="sm" className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }} onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save all'}</Button>
           </div>
-          {entries.length === 0 ? (
-            <p className="text-gray-500 text-sm">No settings. Click &quot;Add setting&quot; to add a key.</p>
-          ) : (
-            <div className="space-y-3">
-              {entries.map(([key, value]) => (
-                <div key={key} className="flex gap-2 items-center">
-                  <Input
-                    className="font-mono text-sm w-[200px]"
-                    value={key}
-                    readOnly
-                    disabled
-                  />
-                  <Input
-                    className="flex-1"
-                    value={value}
-                    onChange={(e) => updateKey(key, e.target.value)}
-                    placeholder="Value"
-                  />
-                  <Button variant="ghost" size="sm" className="text-red-600 shrink-0" onClick={() => removeKey(key)}>
-                    Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+        {entries.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No settings. Click &quot;Add setting&quot; to add a key.</p>
+        ) : (
+          <div className="space-y-3">
+            {entries.map(([key, value]) => (
+              <div key={key} className="flex gap-2 items-center">
+                <Input
+                  className="font-mono text-sm w-[200px] rounded-lg border border-input"
+                  value={key}
+                  readOnly
+                  disabled
+                />
+                <Input
+                  className="flex-1 rounded-lg border border-input focus:ring-2 focus:ring-ring"
+                  value={value}
+                  onChange={(e) => updateKey(key, e.target.value)}
+                  placeholder="Value"
+                />
+                <Button variant="ghost" size="sm" className="text-destructive shrink-0" onClick={() => removeKey(key)}>
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

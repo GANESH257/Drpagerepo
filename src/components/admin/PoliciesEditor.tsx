@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -175,13 +174,13 @@ export function PoliciesEditor() {
         {/* Header Actions */}
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-xl font-semibold text-brand-dark-blue">Organization Policies</h3>
+            <h3 className="text-xl font-semibold text-foreground">Organization Policies</h3>
             <p className="text-sm text-muted-foreground">
               Manage organization policies grouped by category
             </p>
           </div>
           <div className="flex gap-3">
-            <Button onClick={handleAdd} variant="gradient" disabled={loading}>
+            <Button onClick={handleAdd} className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }} disabled={loading}>
               <Plus className="mr-2 h-4 w-4" />
               Add Policy
             </Button>
@@ -189,19 +188,15 @@ export function PoliciesEditor() {
         </div>
 
         {error && (
-          <Card className="bg-white border border-red-200 rounded-xl shadow-sm">
-            <CardContent className="pt-6">
-              <p className="text-red-600">{error}</p>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-6">
+            <p className="text-destructive">{error}</p>
+          </div>
         )}
 
         {loading && (
-          <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-            <CardContent className="pt-6">
-              <p className="text-gray-600">Loading policies...</p>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-6">
+            <p className="text-muted-foreground">Loading policies...</p>
+          </div>
         )}
 
         {/* Policies by Category */}
@@ -209,10 +204,10 @@ export function PoliciesEditor() {
           {POLICY_CATEGORIES.map((category) => {
             const categoryPolicies = policiesByCategory[category] || [];
             return (
-              <AccordionItem key={category} value={category} className="card-vibrant rounded-lg px-4 border-none">
+              <AccordionItem key={category} value={category} className="glass-card rounded-lg px-4 border border-border">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-lg text-brand-dark-blue">{category}</span>
+                    <span className="font-semibold text-lg text-foreground" style={{ color: 'var(--aip-teal)' }}>{category}</span>
                     <Badge variant="outline">{categoryPolicies.length}</Badge>
                   </div>
                 </AccordionTrigger>
@@ -224,34 +219,33 @@ export function PoliciesEditor() {
                       </p>
                     ) : (
                       categoryPolicies.map((policy) => (
-                        <Card key={policy.id} className="border-2">
-                          <CardHeader>
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <CardTitle className="text-lg">{policy.title}</CardTitle>
-                                <CardDescription className="mt-2 whitespace-pre-wrap">
-                                  {policy.body}
-                                </CardDescription>
-                              </div>
-                              <div className="flex gap-2 ml-4">
-                                <Button
-                                  onClick={() => handleEdit(policy)}
-                                  variant="outline"
-                                  size="sm"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  onClick={() => handleDelete(policy)}
-                                  variant="destructive"
-                                  size="sm"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                        <div key={policy.id} className="glass-card p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="text-lg font-semibold text-foreground">{policy.title}</h4>
+                              <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                                {policy.body}
+                              </p>
                             </div>
-                          </CardHeader>
-                        </Card>
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                onClick={() => handleEdit(policy)}
+                                variant="outline"
+                                size="sm"
+                                className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleDelete(policy)}
+                                variant="destructive"
+                                size="sm"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       ))
                     )}
                   </div>
@@ -321,12 +315,13 @@ export function PoliciesEditor() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              variant="gradient"
+              className="text-white border-0"
+              style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
               disabled={!formData.title || !formData.category || !formData.body || saving}
             >
               {saving ? 'Saving...' : 'Save Policy'}
