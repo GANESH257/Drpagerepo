@@ -35,11 +35,11 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Doctor, Location, Insurance } from '@/types';
 import { Practice } from '@/types/practice';
-import { saveDoctorOverride } from '@/lib/memberStorage';
+import { updateDoctor } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { resetPassword, setPassword } from '@/lib/passwordUtils';
 import { getDepartments } from '@/lib/api/departments';
 import { getAllPracticesForAdmin, assignPracticeAdminRole, getDoctorsByPractice } from '@/lib/adminHelpers';
-import { loadMembership } from '@/lib/membershipStorage';
 import { getMembershipPlans as getMembershipPlansAPI } from '@/lib/api/membership-plans';
 import { transformMembershipPlansFromAPI } from '@/lib/api/membership-plans-transform';
 import { Badge } from '@/components/ui/badge';
@@ -102,11 +102,9 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
           roleInPractice: doctor.roleInPractice,
         });
         
-        // Load membership
-        if (doctor.id) {
-          const membershipData = loadMembership(doctor.id);
-          setMembership(membershipData);
-        }
+        // Membership from API doctor (planId / membership_plan_id when backend returns it)
+        const planId = (doctor as any).planId ?? (doctor as any).membership_plan_id;
+        setMembership(planId ? { planId, status: 'active' } : null);
       }
     }
   }, [open, doctor]);
@@ -114,39 +112,21 @@ export function MemberEditDialog({ doctor, open, onOpenChange, onSave }: MemberE
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Handle Practice Admin role transfer if needed
+      const token = getToken();
+      if (!token) throw new Error('Authentication required');
+      const fullName = `${formData.firstName} ${formData.lastName}, ${formData.credentials}`.trim();
+      const updated: Partial<Doctor> = { ...formData, fullName };
+
       if (formData.practiceId && formData.roleInPractice === 'practice_admin' && doctor.roleInPractice !== 'practice_admin') {
-        // Check if practice already has a Practice Admin
         const practiceDoctors = await getDoctorsByPractice(formData.practiceId);
         const currentAdmin = practiceDoctors.find(d => d.roleInPractice === 'practice_admin' && d.id !== doctor.id);
-        
         if (currentAdmin) {
-          // Transfer role: demote old admin, promote new admin
           await assignPracticeAdminRole(formData.practiceId, doctor.id, currentAdmin.id);
         } else {
-          // Just assign the role
           await assignPracticeAdminRole(formData.practiceId, doctor.id);
         }
-      } else if (formData.practiceId && formData.roleInPractice !== 'practice_admin' && doctor.roleInPractice === 'practice_admin') {
-        // Removing Practice Admin role - need to handle this
-        // For now, just update the doctor
-        const updated: Partial<Doctor> = {
-          ...formData,
-          fullName: `${formData.firstName} ${formData.lastName}, ${formData.credentials}`,
-        };
-        saveDoctorOverride(doctor.id, updated);
-      } else {
-        // Update fullName based on firstName and lastName
-        const fullName = `${formData.firstName} ${formData.lastName}, ${formData.credentials}`;
-        
-        const updated: Partial<Doctor> = {
-          ...formData,
-          fullName,
-        };
-
-        saveDoctorOverride(doctor.id, updated);
       }
-      
+      await updateDoctor(doctor.id, updated, token);
       onSave();
       onOpenChange(false);
     } catch (error) {

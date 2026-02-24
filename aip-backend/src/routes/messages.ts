@@ -10,14 +10,15 @@ const router = express.Router();
  */
 router.get('/unread-count', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const doctorResult = await pool.query(
-      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
-      [req.userId]
-    );
-    if (doctorResult.rows.length === 0) {
-      return res.json({ count: 0 });
+    let doctorId: string | null = req.doctorId ?? null;
+    if (!doctorId) {
+      const doctorResult = await pool.query(
+        'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+        [req.userId]
+      );
+      if (doctorResult.rows.length === 0) return res.json({ count: 0 });
+      doctorId = doctorResult.rows[0].id;
     }
-    const doctorId = doctorResult.rows[0].id;
     const result = await pool.query(
       `SELECT COUNT(m.id)::int as count
        FROM messages m
@@ -40,35 +41,74 @@ router.get('/threads', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
 
-    // Get user's doctor ID
-    const doctorResult = await pool.query(
-      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
-      [userId]
-    );
-
-    if (doctorResult.rows.length === 0) {
+    // Prefer doctor ID from JWT (set at login); fallback to lookup by user_id
+    let doctorId: string | null = req.doctorId ?? null;
+    if (!doctorId && userId) {
+      const doctorResult = await pool.query(
+        'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+        [userId]
+      );
+      if (doctorResult.rows.length === 0) {
+        return res.json([]);
+      }
+      doctorId = doctorResult.rows[0].id;
+    }
+    if (!doctorId || typeof doctorId !== 'string') {
       return res.json([]);
     }
 
-    const doctorId = doctorResult.rows[0].id;
-
     // Get threads where user is a participant
     const result = await pool.query(
-      `SELECT DISTINCT t.*, 
-              COUNT(DISTINCT m.id) as message_count,
+      `SELECT DISTINCT t.id, t.type, t.practice_id, t.created_at, t.updated_at,
+              COUNT(DISTINCT m.id)::int as message_count,
               MAX(m.created_at) as last_message_at
        FROM message_threads t
        INNER JOIN thread_participants tp ON t.id = tp.thread_id
        LEFT JOIN messages m ON t.id = m.thread_id
        WHERE tp.participant_id = $1 AND tp.participant_type = 'doctor'
-       GROUP BY t.id
+       GROUP BY t.id, t.type, t.practice_id, t.created_at, t.updated_at
        ORDER BY last_message_at DESC NULLS LAST, t.created_at DESC`,
       [doctorId]
     );
 
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching message threads:', error);
+    const threads = Array.isArray(result.rows) ? result.rows : [];
+    if (threads.length === 0 && process.env.NODE_ENV !== 'production') {
+      console.log('[messages] GET /threads: no threads for doctorId=', doctorId);
+    }
+    // Help debug: response header shows which doctorId was used (check in Network tab)
+    res.setHeader('X-Doctor-Id', doctorId);
+    res.setHeader('X-Thread-Count', String(threads.length));
+
+    const withParticipants = await Promise.all(
+      threads.map(async (row: any) => {
+        const partResult = await pool.query(
+          `SELECT tp.participant_id as id, d.full_name
+           FROM thread_participants tp
+           LEFT JOIN doctors d ON tp.participant_id = d.id AND tp.participant_type = 'doctor'
+           WHERE tp.thread_id = $1 AND tp.participant_id != $2`,
+          [row.id, doctorId]
+        );
+        const participants = Array.isArray(partResult.rows) ? partResult.rows : [];
+        return {
+          id: row.id,
+          type: row.type ?? 'direct',
+          practice_id: row.practice_id ?? null,
+          created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+          updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
+          message_count: row.message_count ?? 0,
+          last_message_at: row.last_message_at instanceof Date ? row.last_message_at.toISOString() : (row.last_message_at ?? null),
+          participants: participants.map((p: any) => ({
+            id: p.id,
+            full_name: p.full_name ?? p.id ?? 'Unknown',
+          })),
+        };
+      })
+    );
+
+    res.json(withParticipants);
+  } catch (error: any) {
+    console.error('Error fetching message threads:', error?.message ?? error);
+    if (error?.stack) console.error(error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -80,19 +120,15 @@ router.get('/threads', authenticateToken, async (req: AuthRequest, res) => {
 router.get('/threads/:threadId', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { threadId } = req.params;
-    const userId = req.userId;
-
-    // Verify user is participant
-    const doctorResult = await pool.query(
-      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
-      [userId]
-    );
-
-    if (doctorResult.rows.length === 0) {
-      return res.status(403).json({ error: 'Unauthorized' });
+    let doctorId: string | null = req.doctorId ?? null;
+    if (!doctorId) {
+      const doctorResult = await pool.query(
+        'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+        [req.userId]
+      );
+      if (doctorResult.rows.length === 0) return res.status(403).json({ error: 'Unauthorized' });
+      doctorId = doctorResult.rows[0].id;
     }
-
-    const doctorId = doctorResult.rows[0].id;
 
     const participantCheck = await pool.query(
       'SELECT * FROM thread_participants WHERE thread_id = $1 AND participant_id = $2 AND participant_type = $3',
@@ -158,17 +194,15 @@ router.post('/threads', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'At least one participant required' });
     }
 
-    const userId = req.userId;
-    const doctorResult = await pool.query(
-      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
-      [userId]
-    );
-
-    if (doctorResult.rows.length === 0) {
-      return res.status(403).json({ error: 'Doctor profile not found' });
+    let creatorId: string | null = req.doctorId ?? null;
+    if (!creatorId) {
+      const doctorResult = await pool.query(
+        'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+        [req.userId]
+      );
+      if (doctorResult.rows.length === 0) return res.status(403).json({ error: 'Doctor profile not found' });
+      creatorId = doctorResult.rows[0].id;
     }
-
-    const creatorId = doctorResult.rows[0].id;
     const threadId = `thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Create thread
@@ -226,17 +260,15 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Thread ID and content required' });
     }
 
-    const userId = req.userId;
-    const doctorResult = await pool.query(
-      'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
-      [userId]
-    );
-
-    if (doctorResult.rows.length === 0) {
-      return res.status(403).json({ error: 'Doctor profile not found' });
+    let senderId: string | null = req.doctorId ?? null;
+    if (!senderId) {
+      const doctorResult = await pool.query(
+        'SELECT id FROM doctors WHERE user_id = $1 LIMIT 1',
+        [req.userId]
+      );
+      if (doctorResult.rows.length === 0) return res.status(403).json({ error: 'Doctor profile not found' });
+      senderId = doctorResult.rows[0].id;
     }
-
-    const senderId = doctorResult.rows[0].id;
 
     // Verify user is participant
     const participantCheck = await pool.query(

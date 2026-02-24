@@ -2,7 +2,7 @@ import { Practice, PracticeLocation } from '@/types/practice';
 import { Doctor } from '@/types';
 import { getAllPracticesArray } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { haversineDistance } from '@/lib/distanceUtils';
 import { slugify } from '@/lib/slugify';
@@ -201,9 +201,9 @@ export async function getPracticeById(id: string): Promise<Practice | null> {
  * Filters by practiceId and sorts: practice_admin first, then by lastName, firstName
  */
 export async function getDoctorsForPractice(practiceId: string): Promise<Doctor[]> {
-  const allDoctors = await getAllDoctors();
-  
-  // Filter by practiceId
+  const token = getToken();
+  const allDoctors = token ? await getAllDoctorsArray(token) : [];
+
   const practiceDoctors = allDoctors.filter((d) => d.practiceId === practiceId);
   
   // Sort: practice_admin first, then by lastName, firstName
@@ -479,7 +479,8 @@ export async function getPracticeFilterOptions(): Promise<{
   services: string[];
 }> {
   const allPractices = await getAllPractices();
-  const allDoctors = await getAllDoctors();
+  const token = getToken();
+  const allDoctors = token ? await getAllDoctorsArray(token) : [];
 
   const specialtiesSet = new Set<string>();
   const statesSet = new Set<string>();

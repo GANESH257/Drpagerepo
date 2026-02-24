@@ -25,7 +25,8 @@ import { toast } from '@/lib/toast';
 import { getApprovalTypeOptions, getApprovalTypeLabel } from '@/lib/utils/approvalTypeLabels';
 import { normalizeApprovalHistoryRecords, NormalizedApprovalHistoryRecord } from '@/lib/utils/approvalHistoryHelpers';
 import { getStatusLabel, getStatusBadgeVariant } from '@/lib/utils/approvalStatusHelpers';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { Copy, AlertTriangle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -120,7 +121,8 @@ export default function PracticeAdminHistoryPage() {
   useEffect(() => {
     async function loadDoctors() {
       try {
-        const allDoctors = await getAllDoctors();
+        const token = getToken();
+        const allDoctors = await getAllDoctorsArray(token ?? undefined);
         setDoctors(allDoctors);
       } catch (error) {
         console.error('Error loading doctors:', error);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getUnreadCount } from '@/lib/api/messages';
+import { getToken } from '@/lib/api/config';
 
 interface MessageBellProps {
     /** User ID (kept for compatibility; count is for authenticated user) */
@@ -21,6 +22,10 @@ export function MessageBell({
     const [unreadCount, setUnreadCount] = useState(0);
 
     const refresh = useCallback(async () => {
+        if (!getToken()) {
+            setUnreadCount(0);
+            return;
+        }
         try {
             const count = await getUnreadCount();
             setUnreadCount(count);
@@ -32,7 +37,12 @@ export function MessageBell({
     useEffect(() => {
         refresh();
         const interval = setInterval(refresh, 30_000);
-        return () => clearInterval(interval);
+        const onFocus = () => refresh();
+        window.addEventListener('focus', onFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+        };
     }, [refresh]);
 
     return (

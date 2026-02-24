@@ -1,65 +1,52 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getAdminSession } from '@/lib/adminSession';
-import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
+import { getUnreadCount } from '@/lib/api/messages';
+
+const POLL_INTERVAL_MS = 30_000;
 
 export function FloatingMessageIcon() {
     const { getSession } = useDoctorSession();
     const [unreadCount, setUnreadCount] = useState(0);
     const [href, setHref] = useState('/doctor/dashboard/messages');
-
     const [isVisible, setIsVisible] = useState(false);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const fetchUnread = useCallback(async () => {
+        try {
+            const count = await getUnreadCount();
+            setUnreadCount(count);
+        } catch {
+            setUnreadCount(0);
+        }
+    }, []);
 
     useEffect(() => {
         try {
-            // Check admin session first
             const adminSession = getAdminSession();
             if (adminSession) {
-                setHref('/admin/announcements');
+                setHref('/admin/messages');
                 setIsVisible(true);
-                try {
-                    const unsubscribe = subscribeToTotalUnreadCount('admin', (count) => {
-                        setUnreadCount(count);
-                    });
-                    return () => {
-                        try {
-                            unsubscribe();
-                        } catch (err) {
-                            // Ignore unsubscribe errors
-                        }
-                    };
-                } catch (err) {
-                    console.warn('[FloatingMessageIcon] Failed to subscribe to unread count:', err);
-                    setUnreadCount(0);
-                }
-                return;
+                fetchUnread();
+                intervalRef.current = setInterval(fetchUnread, POLL_INTERVAL_MS);
+                return () => {
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                };
             }
 
-            // Fallback to doctor session
             const session = getSession();
             if (session?.doctorId) {
                 setHref('/doctor/dashboard/messages');
                 setIsVisible(true);
-                try {
-                    const unsubscribe = subscribeToTotalUnreadCount(session.doctorId, (count) => {
-                        setUnreadCount(count);
-                    });
-                    return () => {
-                        try {
-                            unsubscribe();
-                        } catch (err) {
-                            // Ignore unsubscribe errors
-                        }
-                    };
-                } catch (err) {
-                    console.warn('[FloatingMessageIcon] Failed to subscribe to unread count:', err);
-                    setUnreadCount(0);
-                }
-                return;
+                fetchUnread();
+                intervalRef.current = setInterval(fetchUnread, POLL_INTERVAL_MS);
+                return () => {
+                    if (intervalRef.current) clearInterval(intervalRef.current);
+                };
             }
 
             setIsVisible(false);
@@ -67,7 +54,14 @@ export function FloatingMessageIcon() {
             console.warn('[FloatingMessageIcon] Error in useEffect:', err);
             setIsVisible(false);
         }
-    }, [getSession]);
+    }, [getSession, fetchUnread]);
+
+    // Refresh unread when window gains focus (e.g. returning from messages)
+    useEffect(() => {
+        const onFocus = () => { if (isVisible) fetchUnread(); };
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+    }, [isVisible, fetchUnread]);
 
     if (!isVisible) return null;
 

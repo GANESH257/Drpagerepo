@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getInstitutionBySlug, getInstitutionDoctors } from '@/lib/institutionStorage';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { DoctorCard } from '@/components/DoctorCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,17 +26,22 @@ export function InstitutionDetailClient({ slug }: InstitutionDetailClientProps) 
 
   useEffect(() => {
     async function loadData() {
-      const allDocs = await getAllDoctors();
-      setAllDoctors(allDocs);
-      
       const inst = getInstitutionBySlug(slug);
       if (!inst) {
         return;
       }
-      
       setInstitution(inst);
-      const institutionDoctors = getInstitutionDoctors(inst.id, allDocs);
-      setDoctors(institutionDoctors);
+
+      try {
+        const token = getToken();
+        const allDocs = await getAllDoctorsArray(token ?? undefined);
+        setAllDoctors(allDocs);
+        const institutionDoctors = getInstitutionDoctors(inst.id, allDocs);
+        setDoctors(institutionDoctors);
+      } catch {
+        setAllDoctors([]);
+        setDoctors([]);
+      }
     }
     loadData();
   }, [slug]);

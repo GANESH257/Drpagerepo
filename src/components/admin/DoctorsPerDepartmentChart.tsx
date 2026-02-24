@@ -25,19 +25,24 @@ export function DoctorsPerDepartmentChart() {
   }, []);
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-700">Doctors Per Department</CardTitle>
-        <Building2 className="h-4 w-4 text-gray-500" />
+    <Card className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50/50 border-b border-gray-100">
+        <div>
+          <CardTitle className="text-base font-semibold text-gray-900">Doctors per department</CardTitle>
+          <p className="text-xs text-gray-500 mt-0.5">Physicians by specialty (API data)</p>
+        </div>
+        <Building2 className="h-5 w-5 text-[#0F5FA8]" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         {loading ? (
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            <p>Loading department data...</p>
+          <div className="flex flex-col items-center justify-center h-[300px] text-gray-500 gap-2">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0F5FA8] border-t-transparent" />
+            <p className="text-sm">Loading department data...</p>
           </div>
         ) : chartData.length === 0 ? (
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            <p>No department data available</p>
+          <div className="flex flex-col items-center justify-center h-[300px] text-gray-500 gap-2">
+            <Building2 className="h-12 w-12 text-gray-300" />
+            <p className="text-sm">No department data available</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
@@ -55,7 +60,7 @@ export function DoctorsPerDepartmentChart() {
               <YAxis
                 type="category"
                 dataKey="department"
-                tick={{ fontSize: 11, fill: '#6b7280' }}
+                tick={{ fontSize: 11, fill: '#374151' }}
                 stroke="#9ca3af"
                 width={120}
               />
@@ -65,15 +70,16 @@ export function DoctorsPerDepartmentChart() {
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
                   padding: '8px 12px',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                 }}
                 labelStyle={{ fontWeight: 600, color: '#1f2937' }}
                 formatter={(value: number | undefined) => [value ?? 0, 'Doctors']}
               />
               <Bar
                 dataKey="count"
-                fill="#1A4B7F"
+                fill="#0F5FA8"
                 radius={[0, 8, 8, 0]}
-                stroke="#1A4B7F"
+                stroke="#0F5FA8"
                 strokeWidth={1}
               />
             </BarChart>

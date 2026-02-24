@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Doctor, DoctorMessage } from '@/types';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import {
   markConversationAsRead,
   sendMessage,
@@ -38,7 +39,8 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
   useEffect(() => {
     async function loadDoctors() {
       try {
-        const all = await getAllDoctors();
+        const token = getToken();
+        const all = await getAllDoctorsArray(token ?? undefined);
         const filtered = all.filter((d) => d.id !== doctor.id);
 
         // If current user is not admin, add admin to the list of available contacts

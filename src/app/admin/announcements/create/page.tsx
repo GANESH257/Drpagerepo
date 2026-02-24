@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
-import { createAnnouncement, CreateAnnouncementInput } from '@/lib/services/announcementService';
+import { createAnnouncement } from '@/lib/api/announcements';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,15 +46,11 @@ export default function AdminCreateAnnouncementPage() {
     
     try {
       setIsSubmitting(true);
-      const actor = getActorFromSession();
-      
-      const input: CreateAnnouncementInput = {
-        audience: { kind: 'all_doctors' },
+      await createAnnouncement({
         title: formData.title,
-        message: formData.message,
-      };
-      createAnnouncement(actor, input);
-      
+        body: formData.message,
+        audience_type: 'all',
+      });
       toast.success('Announcement created and sent to all doctors');
       router.push('/admin');
     } catch (error: any) {

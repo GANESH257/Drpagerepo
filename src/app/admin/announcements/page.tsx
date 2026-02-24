@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, Users, Megaphone, CheckCircle2 } from 'lucide-react';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { Doctor } from '@/types';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import { createAnnouncement, CreateAnnouncementInput } from '@/lib/services/announcementService';
-import { getActorFromSession } from '@/lib/services/permissionService';
+import { createAnnouncement } from '@/lib/api/announcements';
 
 export default function AdminAnnouncementsPage() {
     const searchParams = useSearchParams();
@@ -32,20 +32,19 @@ export default function AdminAnnouncementsPage() {
     useEffect(() => {
         const doctorIdFromQuery = searchParams?.get('doctorId');
         if (doctorIdFromQuery) {
-            router.push(`/admin/messages?doctorId=${doctorIdFromQuery}`);
+            router.push(`/admin/messages?otherDoctorId=${encodeURIComponent(doctorIdFromQuery)}`);
         }
     }, [searchParams, router]);
 
     useEffect(() => {
-        async function loadDoctors() {
-            try {
-                const doctors = await getAllDoctors();
-                setAllDoctors(doctors);
-            } catch (error) {
+        const token = getToken();
+        if (!token) return;
+        getAllDoctorsArray(token)
+            .then((list) => setAllDoctors(Array.isArray(list) ? list : []))
+            .catch((error) => {
                 console.error('Error loading doctors:', error);
-            }
-        }
-        loadDoctors();
+                setAllDoctors([]);
+            });
     }, []);
 
     const specialties = useMemo(() => {
@@ -70,15 +69,12 @@ export default function AdminAnnouncementsPage() {
 
         setIsSending(true);
         try {
-            const actor = getActorFromSession();
-
             if (announcementType === 'broadcast') {
-                const input: CreateAnnouncementInput = {
-                    audience: { kind: 'all_doctors' },
+                await createAnnouncement({
                     title: announcementTitle,
-                    message: message,
-                };
-                await createAnnouncement(actor, input);
+                    body: message,
+                    audience_type: 'all',
+                });
                 toast.success(`Announcement broadcasted to all ${allDoctors.length} doctors`);
                 setMessage('');
                 setAnnouncementTitle('System Announcement');
@@ -87,12 +83,12 @@ export default function AdminAnnouncementsPage() {
                     toast.error('Please select a specialty');
                     return;
                 }
-                const input: CreateAnnouncementInput = {
-                    audience: { kind: 'specialty_doctors', specialty: selectedSpecialty },
+                await createAnnouncement({
                     title: announcementTitle,
-                    message: message,
-                };
-                await createAnnouncement(actor, input);
+                    body: message,
+                    audience_type: 'specialty',
+                    audience_specialty: selectedSpecialty,
+                });
                 toast.success(`Announcement sent to all ${selectedSpecialty} specialists`);
                 setMessage('');
             } else if (announcementType === 'group') {
@@ -100,12 +96,12 @@ export default function AdminAnnouncementsPage() {
                     toast.error('Please select at least one doctor');
                     return;
                 }
-                const input: CreateAnnouncementInput = {
-                    audience: { kind: 'specific_doctors', doctorIds: selectedDoctorIds },
+                await createAnnouncement({
                     title: announcementTitle,
-                    message: message,
-                };
-                await createAnnouncement(actor, input);
+                    body: message,
+                    audience_type: 'specific',
+                    doctor_ids: selectedDoctorIds,
+                });
                 toast.success(`Announcement sent to ${selectedDoctorIds.length} doctors`);
                 setMessage('');
                 setSelectedDoctorIds([]);

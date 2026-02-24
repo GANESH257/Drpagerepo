@@ -16,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { getAllDoctors, deleteDoctor } from '@/lib/memberStorage';
+import { getAllDoctorsArray, deleteDoctor as deleteDoctorAPI } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
+import { toast } from '@/lib/toast';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { MemberEditDialog } from './MemberEditDialog';
@@ -46,8 +48,9 @@ export function MembersTable() {
 
   const loadDoctors = async () => {
     try {
-      const allDoctors = await getAllDoctors();
-      setDoctors(allDoctors);
+      const token = getToken();
+      const list = token ? await getAllDoctorsArray(token) : [];
+      setDoctors(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error('Error loading doctors:', error);
     }
@@ -167,12 +170,23 @@ export function MembersTable() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!doctorToDelete) return;
-    deleteDoctor(doctorToDelete.id);
-    loadDoctors();
-    setIsDeleteDialogOpen(false);
-    setDoctorToDelete(null);
+    const token = getToken();
+    if (!token) {
+      toast.error('Authentication required');
+      return;
+    }
+    try {
+      await deleteDoctorAPI(doctorToDelete.id, token);
+      toast.success('Doctor removed');
+      await loadDoctors();
+      setIsDeleteDialogOpen(false);
+      setDoctorToDelete(null);
+    } catch (err) {
+      console.error('Delete doctor failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to delete doctor');
+    }
   };
 
   const handleSave = () => {

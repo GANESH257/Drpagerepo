@@ -36,12 +36,13 @@ import {
   Download,
   CreditCard,
   Wallet,
-  Calendar,
   Crown,
 } from 'lucide-react';
-import { membershipPlans } from '@/data/membershipPlans';
+import { membershipPlans as fallbackPlans } from '@/data/membershipPlans';
 import { PlanCard } from '@/components/membership/PlanCard';
 import { getMyMembership } from '@/lib/api/memberships';
+import { getMembershipPlans } from '@/lib/api/membership-plans';
+import type { MembershipPlan as ApiPlan } from '@/lib/api/membership-plans';
 import {
   initializeMembership,
   upgradeMembership,
@@ -50,7 +51,29 @@ import {
   updatePaymentMethod,
 } from '@/lib/membershipStorage';
 import { MembershipData, MembershipPlan } from '@/types';
+import { formatDate as formatDateUtil } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
+
+function mapApiPlanToUi(api: ApiPlan): MembershipPlan {
+  const features = Array.isArray(api.features)
+    ? api.features.map((f) => (typeof f === 'string' ? f : String(f)))
+    : api.features
+      ? [String(api.features)]
+      : [];
+  return {
+    id: api.id,
+    name: api.name,
+    badge: api.badge,
+    description: api.description,
+    pricing: {
+      monthly: api.monthly_price,
+      annual: api.annual_price,
+    },
+    features,
+    ctaLabel: api.cta_label ?? 'Get started',
+    ctaHref: api.cta_href ?? '#',
+  };
+}
 
 interface MembershipSectionProps {
   doctorId: string;
@@ -58,6 +81,18 @@ interface MembershipSectionProps {
 
 export function MembershipSection({ doctorId }: MembershipSectionProps) {
   const [membership, setMembership] = useState<MembershipData | null>(null);
+  const [plans, setPlans] = useState<MembershipPlan[]>(fallbackPlans);
+  const [plansLoading, setPlansLoading] = useState(true);
+
+  useEffect(() => {
+    getMembershipPlans()
+      .then((apiPlans) => {
+        const active = (apiPlans ?? []).filter((p) => p.active !== false);
+        setPlans(active.length > 0 ? active.map(mapApiPlanToUi) : fallbackPlans);
+      })
+      .catch(() => setPlans(fallbackPlans))
+      .finally(() => setPlansLoading(false));
+  }, []);
 
   useEffect(() => {
     getMyMembership()
@@ -127,11 +162,11 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
     });
   }, [doctorId]);
 
-  // Get current plan data
+  // Get current plan data (from API plans or fallback)
   const currentPlan = useMemo(() => {
     if (!membership) return null;
-    return membershipPlans.find((p) => p.id === membership.planId) || null;
-  }, [membership]);
+    return plans.find((p) => p.id === membership.planId) || null;
+  }, [membership, plans]);
 
   // Handle plan selection
   const handleSelectPlan = useCallback((planId: string) => {
@@ -191,14 +226,8 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
     [doctorId, refreshMembership]
   );
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+  const formatDate = (dateString: string) =>
+    formatDateUtil(dateString);
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -510,7 +539,12 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
 
           {/* Plan Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {membershipPlans.map((plan) => (
+            {plansLoading ? (
+              <div className="col-span-full flex justify-center py-8 text-muted-foreground">
+                Loading plans...
+              </div>
+            ) : (
+              plans.map((plan) => (
               <PlanCard
                 key={plan.id}
                 plan={plan}
@@ -520,7 +554,8 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
                 onSelect={() => handleSelectPlan(plan.id)}
                 showSelectButton={true}
               />
-            ))}
+            ))
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -553,7 +588,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
             <AlertDialogDescription>
               Are you sure you want to change your membership plan to{' '}
               <strong>
-                {membershipPlans.find((p) => p.id === selectedPlanId)?.name}
+                {plans.find((p) => p.id === selectedPlanId)?.name}
               </strong>{' '}
               ({selectedBillingCycle})? Your membership status will be set to
               pending until payment is completed.

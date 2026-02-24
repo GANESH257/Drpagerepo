@@ -26,10 +26,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { getDoctorsByPractice, assignPracticeAdminRole } from '@/lib/adminHelpers';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { updatePractice as updatePracticeAPI } from '@/lib/api/practices';
+import { updateDoctor } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
-import { saveDoctorOverride } from '@/lib/memberStorage';
-import { savePracticeOverride } from '@/lib/storage/practiceStorage';
 import { toast } from '@/lib/toast';
 
 interface PracticeRosterSectionProps {
@@ -52,13 +53,14 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
 
   const loadData = async () => {
     try {
-      const [practiceDoctorsList, allDoctorsList, practices] = await Promise.all([
+      const token = getToken();
+      const [practiceDoctorsList, allDoctorsRaw, practices] = await Promise.all([
         getDoctorsByPractice(practiceId),
-        getAllDoctors(),
+        token ? getAllDoctorsArray(token) : Promise.resolve([]),
         getAllPracticesForAdmin()
       ]);
+      const allDoctorsList = Array.isArray(allDoctorsRaw) ? allDoctorsRaw : [];
       const foundPractice = practices.find(p => p.id === practiceId);
-      
       setPracticeDoctors(practiceDoctorsList);
       setAllDoctors(allDoctorsList);
       setPractice(foundPractice || null);
@@ -74,29 +76,30 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
 
   const currentPracticeAdmin = practiceDoctors.find(d => d.roleInPractice === 'practice_admin');
 
-  const handleAddDoctor = () => {
+  const handleAddDoctor = async () => {
     if (!selectedDoctorToAdd || !practice) return;
-
     const doctor = allDoctors.find(d => d.id === selectedDoctorToAdd);
     if (!doctor) return;
-
-    // Update doctor's practiceId
-    saveDoctorOverride(selectedDoctorToAdd, {
-      practiceId,
-      roleInPractice: 'doctor',
-    });
-
-    // Update practice's doctorIds
-    const doctorIds = practice.doctorIds || [];
-    if (!doctorIds.includes(selectedDoctorToAdd)) {
-      savePracticeOverride(practiceId, {
-        doctorIds: [...doctorIds, selectedDoctorToAdd],
-      });
+    const token = getToken();
+    if (!token) return;
+    try {
+      await updateDoctor(selectedDoctorToAdd, { practiceId, roleInPractice: 'doctor' }, token);
+      const doctorIds = (practice.doctorIds || []).includes(selectedDoctorToAdd)
+        ? practice.doctorIds
+        : [...(practice.doctorIds || []), selectedDoctorToAdd];
+      try {
+        await updatePracticeAPI(practiceId, { doctor_ids: doctorIds } as any, token);
+      } catch {
+        // Backend may not support doctor_ids on practice; doctor update is enough if backend derives roster
+        undefined;
+      }
+      toast.success(`Added ${doctor.fullName} to practice`);
+      setSelectedDoctorToAdd('');
+      loadData();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to add doctor');
     }
-
-    toast.success(`Added ${doctor.fullName} to practice`);
-    setSelectedDoctorToAdd('');
-    loadData();
   };
 
   const handleRemoveDoctor = (doctor: Doctor) => {
@@ -104,25 +107,26 @@ export function PracticeRosterSection({ practiceId }: PracticeRosterSectionProps
     setIsRemoveDialogOpen(true);
   };
 
-  const confirmRemoveDoctor = () => {
+  const confirmRemoveDoctor = async () => {
     if (!doctorToRemove || !practice) return;
-
-    // Remove practiceId from doctor
-    saveDoctorOverride(doctorToRemove.id, {
-      practiceId: undefined,
-      roleInPractice: undefined,
-    });
-
-    // Remove doctor from practice's doctorIds
-    const doctorIds = practice.doctorIds.filter(id => id !== doctorToRemove.id);
-    savePracticeOverride(practiceId, {
-      doctorIds,
-    });
-
-    toast.success(`Removed ${doctorToRemove.fullName} from practice`);
-    setIsRemoveDialogOpen(false);
-    setDoctorToRemove(null);
-    loadData();
+    const token = getToken();
+    if (!token) return;
+    try {
+      await updateDoctor(doctorToRemove.id, { practiceId: undefined, roleInPractice: undefined }, token);
+      const doctorIds = practice.doctorIds.filter(id => id !== doctorToRemove.id);
+      try {
+        await updatePracticeAPI(practiceId, { doctor_ids: doctorIds } as any, token);
+      } catch {
+        undefined;
+      }
+      toast.success(`Removed ${doctorToRemove.fullName} from practice`);
+      setIsRemoveDialogOpen(false);
+      setDoctorToRemove(null);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to remove doctor');
+    }
   };
 
   const handlePromoteToAdmin = (doctor: Doctor) => {

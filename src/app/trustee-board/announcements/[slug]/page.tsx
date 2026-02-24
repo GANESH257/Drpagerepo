@@ -8,9 +8,7 @@ import { ArrowLeft, Calendar } from 'lucide-react';
 import { Metadata } from 'next';
 
 interface PageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
@@ -20,7 +18,8 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const announcement = trusteeAnnouncements.find((a) => a.slug === params.slug);
+  const { slug } = await params;
+  const announcement = trusteeAnnouncements.find((a) => a.slug === slug);
 
   if (!announcement) {
     return {
@@ -34,8 +33,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function AnnouncementDetailPage({ params }: PageProps) {
-  const announcement = trusteeAnnouncements.find((a) => a.slug === params.slug);
+export default async function AnnouncementDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const announcement = trusteeAnnouncements.find((a) => a.slug === slug);
 
   if (!announcement) {
     notFound();

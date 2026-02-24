@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getAnnouncements } from '@/lib/api/announcements';
+import { getToken } from '@/lib/api/config';
 
 interface AnnouncementBellProps {
     /** Doctor ID (kept for compatibility) */
@@ -24,9 +25,13 @@ export function AnnouncementBell({
     const [unreadCount, setUnreadCount] = useState(0);
 
     const refresh = useCallback(async () => {
+        if (!getToken()) {
+            setUnreadCount(0);
+            return;
+        }
         try {
             const list = await getAnnouncements();
-            const unread = Array.isArray(list) ? list.filter((a) => !a.read).length : 0;
+            const unread = Array.isArray(list) ? list.filter((a) => a.read !== true).length : 0;
             setUnreadCount(unread);
         } catch {
             setUnreadCount(0);
@@ -36,7 +41,12 @@ export function AnnouncementBell({
     useEffect(() => {
         refresh();
         const interval = setInterval(refresh, 60_000);
-        return () => clearInterval(interval);
+        const onFocus = () => refresh();
+        window.addEventListener('focus', onFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+        };
     }, [refresh]);
 
     return (

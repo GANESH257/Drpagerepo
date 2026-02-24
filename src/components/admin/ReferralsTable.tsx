@@ -17,7 +17,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Referral } from '@/types/referrals';
 import { getAllReferrals as getAllReferralsAPI, Referral as ApiReferral } from '@/lib/api/referrals';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
@@ -43,11 +44,13 @@ export function ReferralsTable() {
     try {
       setLoading(true);
       setError(null);
-      const [apiReferrals, allDoctors, allPractices] = await Promise.all([
+      const token = getToken();
+      const [apiReferrals, allDoctorsRaw, allPractices] = await Promise.all([
         getAllReferralsAPI(),
-        getAllDoctors(),
+        token ? getAllDoctorsArray(token) : Promise.resolve([]),
         getAllPracticesForAdmin()
       ]);
+      const allDoctors = Array.isArray(allDoctorsRaw) ? allDoctorsRaw : [];
 
       // Transform API format to frontend format
       const transformedReferrals: Referral[] = apiReferrals.map((r: ApiReferral) => ({

@@ -49,13 +49,11 @@ import {
   appendApprovalHistory,
   getApprovalHistory,
 } from '@/lib/storage/approvalStorage';
-import {
-  savePracticeOverride,
-  addCreatedPractice,
-} from '@/lib/storage/practiceStorage';
-import { saveDoctorOverride } from '@/lib/memberStorage';
+import { addCreatedPractice } from '@/lib/storage/practiceStorage';
+import { getAllDoctorsArray, updateDoctor } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
+import { updatePractice as updatePracticeAPI } from '@/lib/api/practices';
 import { addNotification } from '@/lib/storage/notificationStorage';
-import { doctors } from '@/data/doctors';
 import { practices } from '@/data/practices';
 import { getCreatedPractices } from '@/lib/storage/practiceStorage';
 import { slugify } from '@/lib/slugify';
@@ -94,26 +92,19 @@ function requiresPracticeAdminApproval(type: ApprovalType): boolean {
 }
 
 /**
- * Find practice admin doctor for a practice
- * 
- * Deterministic: Returns the practice admin with the lowest lexical doctor ID
- * (matches Step 3 assignment logic). If multiple practice admins exist (edge case),
- * consistently returns the same one.
+ * Find practice admin doctor for a practice (API-based).
+ * Deterministic: Returns the practice admin with the lowest lexical doctor ID.
  */
-function findPracticeAdminDoctor(practiceId: string): Doctor | null {
+async function findPracticeAdminDoctor(practiceId: string): Promise<Doctor | null> {
+  const token = getToken();
+  const doctors = token ? await getAllDoctorsArray(token) : [];
   const practiceAdmins = doctors.filter(
     (d) =>
       d.practiceId === practiceId &&
       d.roleInPractice === 'practice_admin'
   );
-
-  if (practiceAdmins.length === 0) {
-    return null;
-  }
-
-  // Deterministic: Sort by ID and return first (lowest lexical ID)
-  // This matches Step 3's practice admin assignment logic
-  practiceAdmins.sort((a, b) => a.id.localeCompare(b.id));
+  if (practiceAdmins.length === 0) return null;
+  practiceAdmins.sort((a, b) => (a.id ?? '').localeCompare(b.id ?? ''));
   return practiceAdmins[0];
 }
 
@@ -133,11 +124,11 @@ function notifyAdmins(request: ApprovalRequest): string[] {
 /**
  * Notify practice admin about approval request
  */
-function notifyPracticeAdmin(
+async function notifyPracticeAdmin(
   practiceId: string,
   request: ApprovalRequest
-): void {
-  const practiceAdmin = findPracticeAdminDoctor(practiceId);
+): Promise<void> {
+  const practiceAdmin = await findPracticeAdminDoctor(practiceId);
   if (!practiceAdmin || !practiceAdmin.id) {
     throw new NotFoundError(
       `No practice admin configured for practiceId=${practiceId}. Cannot route approval request.`
@@ -465,10 +456,9 @@ export async function submitApprovalRequest(
   notifyAdmins(request);
 
   // Notify practice admin if required
-  // Use practiceId from target or payload (for location requests)
   const practiceIdForNotification = input.target?.practiceId || (input.payload as any)?.practiceId;
   if (needsPracticeAdmin && practiceIdForNotification) {
-    notifyPracticeAdmin(practiceIdForNotification, request);
+    await notifyPracticeAdmin(practiceIdForNotification, request);
   }
 
   // Submit to API
@@ -576,7 +566,7 @@ export async function markUnderReview(
 
   // Notify practice admin if exists
   if (request.approvals.practiceAdmin?.practiceId) {
-    notifyPracticeAdmin(request.approvals.practiceAdmin.practiceId, {
+    await notifyPracticeAdmin(request.approvals.practiceAdmin.practiceId, {
       ...request,
       status: 'under_review',
     });
@@ -601,16 +591,18 @@ export async function decideAsAdmin(
 ): Promise<void> {
   assertAdmin(actor);
 
-  // Get request from API
   const apiRequest = await getApprovalRequestAPI(requestId);
   const request = transformApprovalRequestFromAPI(apiRequest);
-  
   if (!request) {
     throw new NotFoundError('ApprovalRequest', requestId);
   }
 
   const now = nowISO();
   const needsPracticeAdmin = requiresPracticeAdminApproval(request.type);
+
+  // Load doctors from API for validation
+  const token = getToken();
+  const doctors = token ? await getAllDoctorsArray(token) : [];
 
   // Authority checks for roster requests (before approval)
   if (
@@ -635,7 +627,7 @@ export async function decideAsAdmin(
       if (!doctorId) {
         throw new ValidationError('Missing doctorId in doctor_join_practice');
       }
-      const doctor = doctors.find(d => d.id === doctorId);
+      const doctor = doctors.find((d) => d.id === doctorId);
       if (!doctor) {
         throw new NotFoundError('Doctor', doctorId);
       }
@@ -646,7 +638,7 @@ export async function decideAsAdmin(
 
     if (request.type === 'practice_doctor_add_request') {
       const payload = request.payload as PracticeAddDoctorPayload;
-      const doctor = doctors.find(d => d.email === payload.doctorEmail);
+      const doctor = doctors.find((d) => d.email === payload.doctorEmail);
       if (!doctor) {
         throw new NotFoundError('Doctor', `email: ${payload.doctorEmail}`);
       }
@@ -657,14 +649,15 @@ export async function decideAsAdmin(
 
     if (request.type === 'practice_doctor_remove_request') {
       const payload = request.payload as PracticeRemoveDoctorPayload;
-      const doctor = doctors.find(d => d.id === payload.doctorId);
+      const doctor = doctors.find((d) => d.id === payload.doctorId);
       if (!doctor) {
         throw new NotFoundError('Doctor', payload.doctorId);
       }
       if (doctor.practiceId !== practiceId) {
         throw new ConflictError(`Doctor ${payload.doctorId} does not belong to practice ${practiceId}`);
       }
-      if (!practice.doctorIds.includes(payload.doctorId)) {
+      const practiceDoctorIds = practice.doctorIds ?? [];
+      if (!practiceDoctorIds.includes(payload.doctorId)) {
         throw new ConflictError(`Doctor ${payload.doctorId} not found in practice roster`);
       }
     }
@@ -699,7 +692,7 @@ export async function decideAsAdmin(
     );
 
     if (request.approvals.practiceAdmin?.practiceId) {
-      notifyPracticeAdmin(request.approvals.practiceAdmin.practiceId, {
+      await notifyPracticeAdmin(request.approvals.practiceAdmin.practiceId, {
         ...request,
         status: 'rejected',
       });
@@ -736,7 +729,7 @@ export async function decideAsAdmin(
     ) {
       // Notify practice admin
       if (updatedRequest.approvals.practiceAdmin?.practiceId) {
-        notifyPracticeAdmin(
+        await notifyPracticeAdmin(
           updatedRequest.approvals.practiceAdmin.practiceId,
           updatedRequest
         );
@@ -894,16 +887,18 @@ export async function decideAsPracticeAdmin(
 }
 
 /**
- * Apply side effects when request is approved
+ * Apply side effects when request is approved (API-based).
+ * Backend normally applies these when approveRequest() is called; this is used only if needed for local/legacy paths.
  */
 export async function applyApprovedRequestSideEffects(
   request: ApprovalRequest
 ): Promise<void> {
   const now = nowISO();
+  const token = getToken();
+  const doctors = token ? await getAllDoctorsArray(token) : [];
 
   switch (request.type) {
     case 'new_practice_with_admin_doctor': {
-      // Create new practice
       const practiceData = request.payload.practice as Partial<Practice>;
       const doctorData = request.payload.doctor as Partial<Doctor>;
 
@@ -917,10 +912,8 @@ export async function applyApprovedRequestSideEffects(
         ? slugify(practiceData.name)
         : `practice-${Date.now()}`;
 
-      // Migrate old location field to locations array if needed
       let locations = practiceData.locations;
       if (!locations || locations.length === 0) {
-        // If old location field exists (backward compatibility), migrate it
         const practiceDataAny = practiceData as any;
         if (practiceDataAny.location && practiceDataAny.location.lat && practiceDataAny.location.lng) {
           locations = [
@@ -936,7 +929,6 @@ export async function applyApprovedRequestSideEffects(
             },
           ];
         } else {
-          // Default empty location (will be excluded from distance features)
           locations = [];
         }
       }
@@ -965,23 +957,26 @@ export async function applyApprovedRequestSideEffects(
         updatedAt: now,
       };
 
-      // Save created practice
       addCreatedPractice(newPractice);
 
-      // Create doctor override
       const doctorId = doctorData.id || makeId('doctor');
-      saveDoctorOverride(doctorId, {
-        ...doctorData,
-        practiceId,
-        roleInPractice: 'practice_admin',
-        verified: true,
-      });
+      if (token) {
+        await updateDoctor(
+          doctorId,
+          {
+            ...doctorData,
+            practiceId,
+            roleInPractice: 'practice_admin',
+            verified: true,
+          },
+          token
+        );
+      }
 
-      // Add doctor to practice
       newPractice.doctorIds.push(doctorId);
-      savePracticeOverride(practiceId, {
-        doctorIds: newPractice.doctorIds,
-      });
+      if (token) {
+        await updatePracticeAPI(practiceId, { doctor_ids: newPractice.doctorIds } as any, token);
+      }
 
       break;
     }
@@ -995,9 +990,8 @@ export async function applyApprovedRequestSideEffects(
         throw new ValidationError('Missing practiceId or doctorId');
       }
 
-      // Get entities
       const practice = await getPracticeById(practiceId);
-      const doctor = doctors.find(d => d.id === doctorId);
+      const doctor = doctors.find((d) => d.id === doctorId);
 
       if (!practice) {
         throw new NotFoundError('Practice', practiceId);
@@ -1037,36 +1031,35 @@ export async function applyApprovedRequestSideEffects(
         }
       })();
 
-      // Two-sided mutation
-      const updatedDoctorIds = [...practice.doctorIds, doctorId];
-      savePracticeOverride(practiceId, {
-        doctorIds: updatedDoctorIds,
-        specialties: [
-          ...new Set([
-            ...(practice.specialties || []),
-            ...(doctor.specialties || [doctor.specialty || '']),
-          ]),
-        ],
-        updatedAt: now,
-      });
+      const updatedDoctorIds = [...(practice.doctorIds ?? []), doctorId];
+      if (token) {
+        await updatePracticeAPI(
+          practiceId,
+          {
+            doctor_ids: updatedDoctorIds,
+            specialties: [
+              ...new Set([
+                ...(practice.specialties || []),
+                ...(doctor.specialties || [doctor.specialty || '']),
+              ]),
+            ],
+          } as any,
+          token
+        );
+      }
 
-      // Handle old practice removal
       const oldPracticeId = doctor.practiceId;
       if (oldPracticeId && oldPracticeId !== practiceId) {
         const oldPractice = await getPracticeById(oldPracticeId);
-        if (oldPractice) {
-          const updatedOldDoctorIds = oldPractice.doctorIds.filter(id => id !== doctorId);
-          savePracticeOverride(oldPracticeId, {
-            doctorIds: updatedOldDoctorIds,
-            updatedAt: now,
-          });
+        if (oldPractice && token) {
+          const updatedOldDoctorIds = (oldPractice.doctorIds ?? []).filter((id) => id !== doctorId);
+          await updatePracticeAPI(oldPracticeId, { doctor_ids: updatedOldDoctorIds } as any, token);
         }
       }
 
-      saveDoctorOverride(doctorId, {
-        practiceId: practiceId,
-        roleInPractice: 'doctor',
-      });
+      if (token) {
+        await updateDoctor(doctorId, { practiceId, roleInPractice: 'doctor' }, token);
+      }
 
       // Store snapshot in history
       const afterPractice = await getPracticeById(practiceId);
@@ -1109,23 +1102,19 @@ export async function applyApprovedRequestSideEffects(
         return;
       }
 
-      // Apply payload.after deterministically (full authoritative snapshot)
-      // Create new object from payload.after - not a merge, not a patch, not a diff
       const updatedPractice: PracticeOverride = {
         name: payload.after.name,
         description: payload.after.description,
         phone: payload.after.phone,
         website: payload.after.website,
         services: payload.after.services,
-        // Convert insurances array to insurance objects if needed
-        insurance: payload.after.insurances?.map(name => ({
-          name,
-          slug: slugify(name)
-        })) || [],
+        insurance: payload.after.insurances?.map((name) => ({ name, slug: slugify(name) })) || [],
         updatedAt: now,
       };
 
-      savePracticeOverride(practiceId, updatedPractice);
+      if (token) {
+        await updatePracticeAPI(practiceId, updatedPractice as any, token);
+      }
       break;
     }
 
@@ -1135,18 +1124,14 @@ export async function applyApprovedRequestSideEffects(
         console.error('Missing practiceId in target');
         return;
       }
-
       const locations = request.payload.locations;
       if (!locations) {
         console.error('Missing locations in payload');
         return;
       }
-
-      savePracticeOverride(practiceId, {
-        locations,
-        updatedAt: now,
-      });
-
+      if (token) {
+        await updatePracticeAPI(practiceId, { locations, updatedAt: now } as any, token);
+      }
       break;
     }
 
@@ -1156,21 +1141,12 @@ export async function applyApprovedRequestSideEffects(
         console.error('Missing practiceId in target');
         return;
       }
-
-      const patch: Partial<Practice> = {
-        updatedAt: now,
-      };
-
-      if (request.payload.insurance !== undefined) {
-        patch.insurance = request.payload.insurance;
+      const patch: Record<string, any> = { updatedAt: now };
+      if (request.payload.insurance !== undefined) patch.insurance = request.payload.insurance;
+      if (request.payload.services !== undefined) patch.services = request.payload.services;
+      if (token) {
+        await updatePracticeAPI(practiceId, patch, token);
       }
-
-      if (request.payload.services !== undefined) {
-        patch.services = request.payload.services;
-      }
-
-      savePracticeOverride(practiceId, patch);
-
       break;
     }
 
@@ -1202,13 +1178,10 @@ export async function applyApprovedRequestSideEffects(
         return;
       }
 
-      // Append location
       const updatedLocations = [...practice.locations, payload.location];
-      savePracticeOverride(practiceId, {
-        locations: updatedLocations,
-        updatedAt: now,
-      });
-
+      if (token) {
+        await updatePracticeAPI(practiceId, { locations: updatedLocations, updatedAt: now } as any, token);
+      }
       break;
     }
 
@@ -1241,15 +1214,11 @@ export async function applyApprovedRequestSideEffects(
         return;
       }
 
-      // Replace location (preserve array order)
       const updatedLocations = [...practice.locations];
       updatedLocations[locationIndex] = payload.updatedLocation;
-
-      savePracticeOverride(practiceId, {
-        locations: updatedLocations,
-        updatedAt: now,
-      });
-
+      if (token) {
+        await updatePracticeAPI(practiceId, { locations: updatedLocations, updatedAt: now } as any, token);
+      }
       break;
     }
 
@@ -1287,13 +1256,10 @@ export async function applyApprovedRequestSideEffects(
         return;
       }
 
-      // Remove location
-      const updatedLocations = practice.locations.filter(loc => loc.id !== payload.locationId);
-      savePracticeOverride(practiceId, {
-        locations: updatedLocations,
-        updatedAt: now,
-      });
-
+      const updatedLocations = practice.locations.filter((loc) => loc.id !== payload.locationId);
+      if (token) {
+        await updatePracticeAPI(practiceId, { locations: updatedLocations, updatedAt: now } as any, token);
+      }
       break;
     }
 
@@ -1311,8 +1277,7 @@ export async function applyApprovedRequestSideEffects(
         throw new ValidationError('Missing doctor email in payload or target');
       }
 
-      // Find doctor by email
-      const doctor = doctors.find(d => d.email === doctorEmail);
+      const doctor = doctors.find((d) => d.email === doctorEmail);
       if (!doctor) {
         throw new NotFoundError('Doctor', `email: ${doctorEmail}`);
       }
@@ -1359,28 +1324,26 @@ export async function applyApprovedRequestSideEffects(
         }
       })();
 
-      // Two-sided mutation
-      const updatedDoctorIds = [...practice.doctorIds, doctorId];
-      savePracticeOverride(practiceId, {
-        doctorIds: updatedDoctorIds,
-        specialties: [
-          ...new Set([
-            ...(practice.specialties || []),
-            ...(doctor.specialties || [doctor.specialty || '']),
-          ]),
-        ],
-        updatedAt: now,
-      });
+      const updatedDoctorIds = [...(practice.doctorIds ?? []), doctorId];
+      if (token) {
+        await updatePracticeAPI(
+          practiceId,
+          {
+            doctor_ids: updatedDoctorIds,
+            specialties: [
+              ...new Set([
+                ...(practice.specialties || []),
+                ...(doctor.specialties || [doctor.specialty || '']),
+              ]),
+            ],
+          } as any,
+          token
+        );
+        await updateDoctor(doctorId, { practiceId, roleInPractice: 'doctor' }, token);
+      }
 
-      saveDoctorOverride(doctorId, {
-        practiceId: practiceId,
-        roleInPractice: 'doctor',
-      });
-
-      // Store snapshot in history
       const afterPractice = await getPracticeById(practiceId);
-      const afterDoctor = doctors.find(d => d.id === doctorId);
-
+      const afterDoctor = doctors.find((d) => d.id === doctorId);
       if (afterPractice && afterDoctor) {
         appendApprovalHistory({
           id: makeId('ahr'),
@@ -1390,22 +1353,13 @@ export async function applyApprovedRequestSideEffects(
           doctorId: doctorId,
           action: 'final_approved',
           at: now,
-          by: {
-            role: 'admin', // System action logged as admin
-          },
+          by: { role: 'admin' },
           snapshot: {
-            before: {
-              practice: beforePractice,
-              doctor: beforeDoctor,
-            },
-            after: {
-              practice: afterPractice,
-              doctor: afterDoctor,
-            },
+            before: { practice: beforePractice, doctor: beforeDoctor },
+            after: { practice: afterPractice, doctor: afterDoctor },
           },
         });
       }
-
       break;
     }
 
@@ -1438,10 +1392,9 @@ export async function applyApprovedRequestSideEffects(
         throw new ConflictError(`Doctor ${doctorId} does not belong to practice ${practiceId}`);
       }
 
-      // Last practice_admin guard (MANDATORY)
-      const allDoctors = [...doctors];
-      const practiceAdmins = practice.doctorIds
-        .map(id => allDoctors.find(d => d.id === id))
+      const practiceDoctorIds = practice.doctorIds ?? [];
+      const practiceAdmins = practiceDoctorIds
+        .map((id) => doctors.find((d) => d.id === id))
         .filter((d): d is Doctor => d !== undefined && d.roleInPractice === 'practice_admin');
 
       if (practiceAdmins.length === 1 && practiceAdmins[0]?.id === doctorId) {
@@ -1473,21 +1426,14 @@ export async function applyApprovedRequestSideEffects(
         }
       })();
 
-      // Two-sided mutation
-      const updatedDoctorIds = practice.doctorIds.filter(id => id !== doctorId);
-      savePracticeOverride(practiceId, {
-        doctorIds: updatedDoctorIds,
-        updatedAt: now,
-      });
+      const updatedDoctorIds = (practice.doctorIds ?? []).filter((id) => id !== doctorId);
+      if (token) {
+        await updatePracticeAPI(practiceId, { doctor_ids: updatedDoctorIds } as any, token);
+        await updateDoctor(doctorId, { practiceId: undefined, roleInPractice: undefined } as any, token);
+      }
 
-      saveDoctorOverride(doctorId, {
-        practiceId: undefined, // Remove practice association
-        roleInPractice: undefined,
-      });
-
-      // Store snapshot in history
       const afterPractice = await getPracticeById(practiceId);
-      const afterDoctor = doctors.find(d => d.id === doctorId);
+      const afterDoctor = doctors.find((d) => d.id === doctorId);
 
       if (afterPractice && afterDoctor) {
         appendApprovalHistory({

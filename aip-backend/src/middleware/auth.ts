@@ -26,9 +26,9 @@ export const authenticateToken = (
     }
     
     const decoded = jwt.verify(token, jwtSecret) as any;
-    req.userId = decoded.userId;
+    req.userId = decoded.userId ?? decoded.user_id;
     req.userRole = decoded.role;
-    req.doctorId = decoded.doctorId;
+    req.doctorId = decoded.doctorId ?? decoded.doctor_id;
     next();
   } catch (error) {
     return res.status(403).json({ error: 'Invalid or expired token' });

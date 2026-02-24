@@ -29,6 +29,7 @@ import { getAnnouncements } from '@/lib/api/announcements';
 import { getEvents } from '@/lib/api/events';
 import { getUnreadCount } from '@/lib/api/messages';
 import { getDoctors } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getApprovalRequests } from '@/lib/api/approval-requests';
 import { formatDateTime } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
@@ -67,7 +68,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
         getUnreadCount().catch(() => 0),
         getMyMembership().catch(() => null),
         getApprovalRequests().catch(() => []),
-        getDoctors({ limit: 1 }).catch(() => ({ doctors: [], pagination: { total: 0 } })),
+        getDoctors({ limit: 1 }, getToken() ?? undefined).catch(() => ({ doctors: [], pagination: { total: 0 } })),
       ]);
       setReferrals(Array.isArray(refs) ? refs : []);
       setAppointments(Array.isArray(apps) ? apps : []);

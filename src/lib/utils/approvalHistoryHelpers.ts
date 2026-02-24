@@ -6,7 +6,9 @@
 
 import { ApprovalHistoryRecord, ApprovalRequest } from '@/types/approvals';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
+import { Doctor } from '@/types';
 import { deriveStatusFromAction } from './approvalStatusHelpers';
 
 /**
@@ -34,13 +36,15 @@ export interface NormalizedApprovalHistoryRecord {
 
 /**
  * Normalize approval history record for filtering and display
- * 
+ *
  * @param record History record to normalize
  * @param request Optional approval request for additional context (payload snapshot)
+ * @param doctors Optional list of doctors for name lookup (avoids extra API calls when provided)
  */
 export async function normalizeApprovalHistoryRecord(
   record: ApprovalHistoryRecord,
-  request?: ApprovalRequest
+  request?: ApprovalRequest,
+  doctors?: Doctor[]
 ): Promise<NormalizedApprovalHistoryRecord> {
   // Derive status from action
   const status = deriveStatusFromAction(record.action);
@@ -49,10 +53,11 @@ export async function normalizeApprovalHistoryRecord(
   const practice = record.practiceId ? await getPracticeById(record.practiceId) : null;
   const practiceName = practice?.name;
 
-  // Lookup doctor name
-  const allDoctors = await getAllDoctors();
+  // Lookup doctor name (use provided list or fetch from API once)
+  const token = getToken();
+  const allDoctors = doctors ?? (token ? await getAllDoctorsArray(token) : []);
   const doctorName = record.doctorId
-    ? allDoctors.find((d: any) => d.id === record.doctorId)?.fullName
+    ? allDoctors.find((d) => d.id === record.doctorId)?.fullName
     : undefined;
 
   // Get actor info
@@ -90,11 +95,13 @@ export async function normalizeApprovalHistoryRecord(
 }
 
 /**
- * Normalize multiple approval history records
+ * Normalize multiple approval history records.
+ * Pass `doctors` when already loaded (e.g. from API) to avoid N+1 lookups.
  */
 export async function normalizeApprovalHistoryRecords(
   records: ApprovalHistoryRecord[],
-  requests?: ApprovalRequest[]
+  requests?: ApprovalRequest[],
+  doctors?: Doctor[]
 ): Promise<NormalizedApprovalHistoryRecord[]> {
   const requestMap = requests
     ? new Map(requests.map((r) => [r.id, r]))
@@ -103,7 +110,7 @@ export async function normalizeApprovalHistoryRecords(
   const normalized = await Promise.all(
     records.map(async (record) => {
       const request = requestMap?.get(record.requestId);
-      return await normalizeApprovalHistoryRecord(record, request);
+      return await normalizeApprovalHistoryRecord(record, request, doctors);
     })
   );
   return normalized;

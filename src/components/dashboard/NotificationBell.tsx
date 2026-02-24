@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getNotifications as getNotificationsAPI } from '@/lib/api/notifications';
+import { getToken } from '@/lib/api/config';
 
 interface NotificationBellProps {
     /** Doctor ID (kept for API compatibility; count is for authenticated user) */
@@ -21,6 +22,10 @@ export function NotificationBell({
     const [unreadCount, setUnreadCount] = useState(0);
 
     const refresh = useCallback(async () => {
+        if (!getToken()) {
+            setUnreadCount(0);
+            return;
+        }
         try {
             const list = await getNotificationsAPI(true);
             setUnreadCount(Array.isArray(list) ? list.length : 0);
@@ -32,7 +37,12 @@ export function NotificationBell({
     useEffect(() => {
         refresh();
         const interval = setInterval(refresh, 30_000);
-        return () => clearInterval(interval);
+        const onFocus = () => refresh();
+        window.addEventListener('focus', onFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', onFocus);
+        };
     }, [refresh]);
 
     return (

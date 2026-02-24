@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { NotificationType } from '@/types/notifications';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
-import { getNotifications as getNotificationsAPI, markAsRead as markNotificationReadAPI } from '@/lib/api/notifications';
+import { getNotifications as getNotificationsAPI, markAsRead as markNotificationReadAPI, markAllAsRead as markAllNotificationsReadAPI } from '@/lib/api/notifications';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -91,6 +91,17 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsReadAPI();
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, readAt: n.readAt ?? new Date().toISOString() }))
+      );
+    } catch (e) {
+      console.error('Failed to mark all as read:', e);
+    }
+  };
+
   const filteredNotifications = filter === 'unread'
     ? notifications.filter((n) => !n.readAt)
     : notifications;
@@ -110,10 +121,17 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title="Notifications"
-        description={`You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
-      />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <SectionHeader
+          title="Notifications"
+          description={`You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
+        />
+        {unreadCount > 0 && (
+          <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
+            Mark all as read
+          </Button>
+        )}
+      </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unread')}>
         <TabsList>

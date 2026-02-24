@@ -76,6 +76,13 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       // Call API login endpoint
       const response = await login(email, password);
       
+      // Do not allow admin to sign in here — they must use the Admin login page
+      if (response.user.role === 'admin') {
+        setGeneralError('Please use the Admin login page to sign in as an administrator.');
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Store token and user info
       setToken(response.token, response.user);
       
@@ -83,8 +90,6 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       if (response.user.role === 'doctor' && response.user.doctorId) {
         onSuccess?.();
         router.push('/doctor/dashboard');
-      } else if (response.user.role === 'admin') {
-        router.push('/admin');
       } else {
         // Applicant or other roles
         setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');

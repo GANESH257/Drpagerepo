@@ -1,6 +1,6 @@
 import { AdminJoinRequest } from './adminStorage';
-import { getAllDoctors } from './memberStorage';
-import { loadMembership } from './membershipStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getDepartments } from '@/lib/api/departments';
 import { Doctor } from '@/types';
 
@@ -93,8 +93,9 @@ export function getDoctorsJoinedPerMonth(requests: AdminJoinRequest[]): MonthlyJ
  * Get doctors per department/specialty
  */
 export async function getDoctorsPerDepartment(): Promise<DepartmentData[]> {
+  const token = getToken();
   const [doctors, departments] = await Promise.all([
-    getAllDoctors(),
+    token ? getAllDoctorsArray(token) : Promise.resolve([]),
     getDepartments()
   ]);
   
@@ -159,21 +160,15 @@ export async function getDoctorsPerPlan(requests: AdminJoinRequest[]): Promise<P
     }
   });
 
-  // Count existing doctors (check membership storage)
-  const doctors = await getAllDoctors();
+  const token = getToken();
+  const doctors = token ? await getAllDoctorsArray(token) : [];
   doctors.forEach((doctor) => {
-    if (typeof window !== 'undefined') {
-      const membership = loadMembership(doctor.id);
-      const planId = membership?.planId || 'basic';
-      if (planCounts.hasOwnProperty(planId)) {
-        planCounts[planId]++;
-      } else {
-        planCounts.basic++;
-      }
-    } else {
-      // Server-side: default to basic
-      planCounts.basic++;
-    }
+    const planId =
+      (doctor as any).planId ??
+      (doctor as any).membership_plan_id ??
+      'basic';
+    const key = planCounts.hasOwnProperty(planId) ? planId : 'basic';
+    planCounts[key]++;
   });
 
   // Generate demo data if distribution is too skewed
@@ -275,7 +270,8 @@ export async function getGrowthTrendData(requests: AdminJoinRequest[]): Promise<
   const monthlyTotals: Record<string, number> = {};
 
   // Get existing doctors count from API
-  const allDoctors = await getAllDoctors();
+  const token = getToken();
+  const allDoctors = token ? await getAllDoctorsArray(token) : [];
   const existingDoctorsCount = allDoctors.length;
   const baseCount = Math.max(50, existingDoctorsCount - approvedRequests.length);
 

@@ -22,7 +22,8 @@ import { Timeline } from '@/components/shared/approvals/Timeline';
 import { DateRangePicker, DateRange } from '@/components/shared/history/DateRangePicker';
 import { formatDateTime, formatDate } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { ExternalLink, Copy } from 'lucide-react';
 
@@ -64,8 +65,9 @@ export default function DoctorHistoryPage() {
       try {
         const actor = getActorFromSession();
         if (actor.kind === 'doctor' && actor.doctorId) {
-          const allDoctors = await getAllDoctors();
-          const doctor = allDoctors.find((d) => d.id === actor.doctorId);
+          const token = getToken();
+          const doctors = await getAllDoctorsArray(token ?? undefined);
+          const doctor = doctors.find((d) => d.id === actor.doctorId);
           setCurrentDoctor(doctor || null);
         }
       } catch {
@@ -101,8 +103,9 @@ export default function DoctorHistoryPage() {
           throw new PermissionDeniedError('Must be a doctor');
         }
 
-        // Load doctors first
-        const doctors = await getAllDoctors();
+        // Load doctors from API
+        const token = getToken();
+        const doctors = await getAllDoctorsArray(token ?? undefined);
         setAllDoctors(doctors);
 
         const { referralsSent, referralsReceived } = getReferralsForDoctor(actor, actor.doctorId);
@@ -115,6 +118,7 @@ export default function DoctorHistoryPage() {
         } else if (error instanceof PermissionDeniedError) {
           router.push('/doctor/dashboard');
         }
+        setAllDoctors([]);
         setIsLoading(false);
       }
     }

@@ -4,6 +4,11 @@
 
 import { apiClient, ApiError, getToken } from './config';
 
+export interface ThreadParticipant {
+  id: string;
+  full_name: string;
+}
+
 export interface MessageThread {
   id: string;
   type: string;
@@ -12,6 +17,7 @@ export interface MessageThread {
   updated_at: string;
   last_message_at?: string;
   message_count?: number;
+  participants?: ThreadParticipant[];
 }
 
 export interface Message {

@@ -5,6 +5,7 @@ import { MessagesSectionWrapper } from '@/components/dashboard/MessagesSectionWr
 
 export default function MessagesPage() {
   const searchParams = useSearchParams();
+  const threadId = searchParams.get('threadId') ?? undefined;
   const otherDoctorId = searchParams.get('otherDoctorId') ?? undefined;
-  return <MessagesSectionWrapper otherDoctorId={otherDoctorId} />;
+  return <MessagesSectionWrapper threadId={threadId} otherDoctorId={otherDoctorId} />;
 }

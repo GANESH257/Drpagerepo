@@ -22,8 +22,7 @@ import { toast } from '@/lib/toast';
 import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone } from 'lucide-react';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { PracticeInvitation } from '@/types/invitations';
-import { loadMembership } from '@/lib/membershipStorage';
-import { membershipPlans } from '@/data/membershipPlans';
+import { getMembershipPlans } from '@/lib/api/membership-plans';
 
 export default function PracticeRosterPage() {
   const router = useRouter();
@@ -37,6 +36,7 @@ export default function PracticeRosterPage() {
   
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
+  const [membershipPlans, setMembershipPlans] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
     async function loadData() {
@@ -74,6 +74,14 @@ export default function PracticeRosterPage() {
           invitationLink: inv.invitation_link ?? (inv.token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join-us/application?invitation=${inv.token}` : undefined),
         }));
         setInvitations(practiceInvitations);
+        
+        // Load membership plans from API for plan display
+        try {
+          const apiPlans = await getMembershipPlans();
+          setMembershipPlans(Array.isArray(apiPlans) ? apiPlans.map((p) => ({ id: p.id, name: p.name })) : []);
+        } catch {
+          setMembershipPlans([]);
+        }
         
         setIsLoading(false);
       } catch (error) {
@@ -333,8 +341,9 @@ export default function PracticeRosterPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {practiceDoctors.map((doctor) => {
-            const membership = loadMembership(doctor.id);
-            const membershipPlan = membership ? membershipPlans.find(p => p.id === membership.planId) : null;
+            const d = doctor as { planId?: string; plan_id?: string; membership_plan_id?: string };
+            const planId = d.planId ?? d.plan_id ?? d.membership_plan_id;
+            const planName = planId ? membershipPlans.find((p) => p.id === planId)?.name ?? planId : null;
 
             return (
               <Card key={doctor.id}>
@@ -366,13 +375,13 @@ export default function PracticeRosterPage() {
                     )}
                   </div>
 
-                  {/* Membership Status */}
-                  {membership && (
+                  {/* Membership plan from API */}
+                  {planName && (
                     <div className="pt-2 border-t">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">Membership:</span>
-                        <Badge variant={membership.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                          {membershipPlan?.name || membership.planId} ({membership.status})
+                        <Badge variant="default" className="text-xs">
+                          {planName}
                         </Badge>
                       </div>
                     </div>

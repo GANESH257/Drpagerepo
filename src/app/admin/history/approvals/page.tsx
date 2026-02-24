@@ -27,7 +27,8 @@ import { getApprovalTypeOptions, getApprovalTypeLabel } from '@/lib/utils/approv
 import { normalizeApprovalHistoryRecords, NormalizedApprovalHistoryRecord } from '@/lib/utils/approvalHistoryHelpers';
 import { deriveStatusFromAction, getStatusLabel, getStatusBadgeVariant } from '@/lib/utils/approvalStatusHelpers';
 import { getAllPractices } from '@/lib/services/practiceDirectoryService';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { Copy, AlertTriangle } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -72,13 +73,15 @@ export default function AdminApprovalHistoryPage() {
         const actor = getActorFromSession();
         assertAdmin(actor);
         
+        const token = getToken();
         // Load all data from API
-        const [allHistory, apiRequests, allPractices, allDoctors] = await Promise.all([
+        const [allHistory, apiRequests, allPractices, allDoctorsRaw] = await Promise.all([
           getApprovalHistoryAPI(),
           getApprovalRequestsAPI(),
           getAllPractices(),
-          getAllDoctors(),
+          token ? getAllDoctorsArray(token) : Promise.resolve([]),
         ]);
+        const allDoctors = Array.isArray(allDoctorsRaw) ? allDoctorsRaw : [];
 
         // Transform approval requests
         const transformedRequests = transformApprovalRequestsFromAPI(apiRequests);
@@ -122,16 +125,16 @@ export default function AdminApprovalHistoryPage() {
     loadData();
   }, [router]);
 
-  // Normalize history records
+  // Normalize history records (pass doctors from API to avoid N+1 lookups)
   const [normalizedHistory, setNormalizedHistory] = useState<NormalizedApprovalHistoryRecord[]>([]);
-  
+
   useEffect(() => {
     async function normalize() {
-      const normalized = await normalizeApprovalHistoryRecords(history, requests);
+      const normalized = await normalizeApprovalHistoryRecords(history, requests, doctors);
       setNormalizedHistory(normalized);
     }
     normalize();
-  }, [history, requests]);
+  }, [history, requests, doctors]);
 
   // Filter history records
   const filteredHistory = useMemo(() => {
@@ -256,8 +259,8 @@ export default function AdminApprovalHistoryPage() {
       />
 
       {/* Filter Bar */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
+      <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <CardContent className="p-4 md:p-6 space-y-4">
           {/* Primary Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Type Filter */}
@@ -385,25 +388,25 @@ export default function AdminApprovalHistoryPage() {
           description="There are no approval history records matching your filters."
         />
       ) : (
-        <Card>
+        <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Timestamp</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Practice</TableHead>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead>Decided By</TableHead>
-                  <TableHead>Reason</TableHead>
+                <TableRow className="bg-gray-50/80 hover:bg-gray-50/80">
+                  <TableHead className="font-semibold text-gray-700">Timestamp</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Type</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Practice</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Doctor</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Decided By</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Reason</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredHistory.map((record) => (
                   <TableRow
                     key={record.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-[#0F5FA8]/5 transition-colors"
                     onClick={() => handleRowClick(record)}
                   >
                     <TableCell>

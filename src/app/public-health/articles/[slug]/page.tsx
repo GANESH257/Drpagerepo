@@ -10,9 +10,7 @@ import { Clock, ArrowLeft } from 'lucide-react';
 import { Metadata } from 'next';
 
 interface PageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
@@ -112,7 +110,8 @@ function findRelatedArticles(currentArticle: PublicHealthArticle, allArticles: P
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const article = publicHealthArticles.find(a => a.slug === params.slug);
+  const { slug } = await params;
+  const article = publicHealthArticles.find(a => a.slug === slug);
 
   if (!article) {
     return {
@@ -136,8 +135,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default function ArticleDetailPage({ params }: PageProps) {
-  const article = publicHealthArticles.find(a => a.slug === params.slug);
+export default async function ArticleDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const article = publicHealthArticles.find(a => a.slug === slug);
 
   if (!article) {
     notFound();

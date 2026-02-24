@@ -8,6 +8,7 @@ import { getReferralTimeline } from '@/lib/services/referralEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { getReferrals as getReferralsAPI, updateReferral as updateReferralAPI } from '@/lib/api/referrals';
 import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 import { getMyContacts } from '@/lib/api/contacts';
 import { Doctor } from '@/types';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -86,9 +87,10 @@ export default function ReferralsV2Page() {
       const actor = getActorFromSession();
       assertDoctor(actor);
       if (actor.kind !== 'doctor' || !actor.doctorId) throw new PermissionDeniedError('Must be a doctor');
+      const token = getToken();
       const [apiList, doctorsList, contactsList] = await Promise.all([
         getReferralsAPI(actor.doctorId),
-        getAllDoctorsArray(),
+        getAllDoctorsArray(token ?? undefined),
         getMyContacts().catch(() => []),
       ]);
       const all = (Array.isArray(apiList) ? apiList : []).map(mapApiToReferral);

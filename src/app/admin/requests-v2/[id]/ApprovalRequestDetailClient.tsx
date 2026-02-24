@@ -24,7 +24,8 @@ import { Input } from '@/components/ui/input';
 import { formatDateTime } from '@/lib/dateUtils';
 import { toast } from '@/lib/toast';
 import { getAllPractices } from '@/lib/services/practiceDirectoryService';
-import { getAllDoctors } from '@/lib/memberStorage';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
 
 interface ApprovalRequestDetailClientProps {
     requestId: string;
@@ -57,12 +58,14 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                 const actor = getActorFromSession();
                 assertAdmin(actor);
 
+                const token = getToken();
                 // Load all data from API
-                const [apiRequest, allPractices, allDoctors] = await Promise.all([
+                const [apiRequest, allPractices, allDoctorsRaw] = await Promise.all([
                     getApprovalRequestAPI(requestId),
                     getAllPractices(),
-                    getAllDoctors(),
+                    token ? getAllDoctorsArray(token) : Promise.resolve([]),
                 ]);
+                const allDoctors = Array.isArray(allDoctorsRaw) ? allDoctorsRaw : [];
 
                 const transformedRequest = transformApprovalRequestFromAPI(apiRequest);
                 setRequest(transformedRequest);
@@ -321,22 +324,30 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
     const canReject = request.approvals.admin.status === 'pending';
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <SectionHeader
-                    title="Approval Request Details"
-                    description={`Request ID: ${request.id}`}
-                />
-                <Button variant="outline" onClick={() => router.push(backHref)}>
-                    Back to Queue
-                </Button>
+        <div className="space-y-8 max-w-4xl">
+            {/* Header with back */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mb-2 -ml-2 text-gray-600 hover:text-[#0F5FA8]"
+                        onClick={() => router.push(backHref)}
+                    >
+                        ← Back to Queue
+                    </Button>
+                    <SectionHeader
+                        title="Approval Request Details"
+                        description={`Request ID: ${request.id}`}
+                    />
+                </div>
             </div>
 
             {/* Request Summary */}
-            <Card>
-                <CardHeader>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
                     <div className="flex items-center justify-between">
-                        <CardTitle>Request Summary</CardTitle>
+                        <CardTitle className="text-lg">Request Summary</CardTitle>
                         <div className="flex gap-2">
                             <ApprovalTypeBadge type={request.type} />
                             <ApprovalStatusBadge status={request.status} />
@@ -377,9 +388,9 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </Card>
 
             {/* Dual Approval Status */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Approval Status</CardTitle>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+                    <CardTitle className="text-lg">Approval Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
@@ -417,9 +428,9 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </Card>
 
             {/* Requested Changes */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Requested Changes</CardTitle>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+                    <CardTitle className="text-lg">Requested Changes</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {renderPayload()}
@@ -427,9 +438,9 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </Card>
 
             {/* What Happens When Approved */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>What Happens When Approved</CardTitle>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+                    <CardTitle className="text-lg">What Happens When Approved</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {renderApprovalEffects()}
@@ -437,12 +448,12 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </Card>
 
             {/* Admin Actions */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Actions</CardTitle>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+                    <CardTitle className="text-lg">Actions</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex gap-2">
+                <CardContent className="pt-6">
+                    <div className="flex flex-wrap gap-3">
                         {canMarkUnderReview && (
                             <Dialog open={showUnderReviewDialog} onOpenChange={setShowUnderReviewDialog}>
                                 <DialogTrigger asChild>
@@ -481,7 +492,7 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                         {canApprove && (
                             <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
                                 <DialogTrigger asChild>
-                                    <Button>Approve</Button>
+                                    <Button className="bg-[#0F5FA8] hover:bg-[#0F5FA8]/90">Approve</Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
@@ -566,9 +577,9 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
             </Card>
 
             {/* Timeline */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Timeline</CardTitle>
+            <Card className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+                    <CardTitle className="text-lg">Timeline</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Timeline records={timeline} />

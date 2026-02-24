@@ -15,8 +15,9 @@ export function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = studentArticles.find((a) => a.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const article = studentArticles.find((a) => a.slug === slug);
 
   if (!article) {
     return {
@@ -43,9 +44,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 interface PageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
 const categoryLabels: Record<StudentArticle['category'], string> = {
@@ -56,8 +55,9 @@ const categoryLabels: Record<StudentArticle['category'], string> = {
   'finance': 'Finance',
 };
 
-export default function ArticleDetailPage({ params }: PageProps) {
-  const article = studentArticles.find((a) => a.slug === params.slug);
+export default async function ArticleDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const article = studentArticles.find((a) => a.slug === slug);
 
   if (!article) {
     notFound();

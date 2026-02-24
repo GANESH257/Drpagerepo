@@ -6,8 +6,11 @@ import { Referral } from '@/types/referrals';
 import { Notification } from '@/types/notifications';
 import { getAllPractices } from '@/lib/services/practiceDirectoryService';
 import { getDoctorsForPractice } from '@/lib/services/practiceDirectoryService';
-import { getAllDoctors, saveDoctorOverride } from '@/lib/memberStorage';
-import { savePracticeOverride, addCreatedPractice } from '@/lib/storage/practiceStorage';
+import { getAllDoctorsArray, updateDoctor } from '@/lib/api/doctors';
+import { updatePractice } from '@/lib/api/practices';
+import { getToken } from '@/lib/api/config';
+import { saveDoctorOverride } from '@/lib/memberStorage';
+import { addCreatedPractice } from '@/lib/storage/practiceStorage';
 import { getReferrals } from '@/lib/storage/referralStorage';
 import { getNotifications } from '@/lib/storage/notificationStorage';
 import { LS_KEYS } from '@/lib/storage/keys';
@@ -42,54 +45,41 @@ export async function assignPracticeAdminRole(
   newAdminDoctorId: string,
   oldAdminDoctorId?: string
 ): Promise<void> {
-  const allDoctors = await getAllDoctors();
-  
-  // Find old practice admin if not provided
+  const token = getToken();
+  if (!token) throw new Error('Authentication required');
+  const allDoctors = await getAllDoctorsArray(token);
+
   if (!oldAdminDoctorId) {
     const practiceDoctors = allDoctors.filter(d => d.practiceId === practiceId);
     const oldAdmin = practiceDoctors.find(d => d.roleInPractice === 'practice_admin');
-    if (oldAdmin) {
-      oldAdminDoctorId = oldAdmin.id;
-    }
+    if (oldAdmin) oldAdminDoctorId = oldAdmin.id;
   }
-  
-  // Update old admin to regular doctor
+
   if (oldAdminDoctorId && oldAdminDoctorId !== newAdminDoctorId) {
-    const oldAdmin = allDoctors.find(d => d.id === oldAdminDoctorId);
-    if (oldAdmin) {
-      saveDoctorOverride(oldAdminDoctorId, {
-        roleInPractice: 'doctor',
-      });
-    }
+    await updateDoctor(oldAdminDoctorId, { roleInPractice: 'doctor' }, token);
   }
-  
-  // Update new admin
+
   const newAdmin = allDoctors.find(d => d.id === newAdminDoctorId);
-  if (!newAdmin) {
-    throw new Error(`Doctor ${newAdminDoctorId} not found`);
-  }
-  
-  // Ensure doctor belongs to practice
-  if (newAdmin.practiceId !== practiceId) {
-    saveDoctorOverride(newAdminDoctorId, {
-      practiceId,
-      roleInPractice: 'practice_admin',
-    });
-  } else {
-    saveDoctorOverride(newAdminDoctorId, {
-      roleInPractice: 'practice_admin',
-    });
-  }
-  
-  // Update practice doctorIds if needed
+  if (!newAdmin) throw new Error(`Doctor ${newAdminDoctorId} not found`);
+
+  await updateDoctor(
+    newAdminDoctorId,
+    newAdmin.practiceId !== practiceId
+      ? { practiceId, roleInPractice: 'practice_admin' }
+      : { roleInPractice: 'practice_admin' },
+    token
+  );
+
   const allPractices = await getAllPracticesForAdmin();
   const practice = allPractices.find(p => p.id === practiceId);
   if (practice) {
     const doctorIds = practice.doctorIds || [];
     if (!doctorIds.includes(newAdminDoctorId)) {
-      savePracticeOverride(practiceId, {
-        doctorIds: [...doctorIds, newAdminDoctorId],
-      });
+      try {
+        await updatePractice(practiceId, { doctor_ids: [...doctorIds, newAdminDoctorId] } as any, token);
+      } catch {
+        // Backend may not support doctor_ids on practice
+      }
     }
   }
 }
@@ -102,7 +92,8 @@ export async function assignPracticeAdminRole(
  * @returns New doctor ID
  */
 export async function createNewDoctor(doctorData: Partial<Doctor>): Promise<string> {
-  const allDoctors = await getAllDoctors();
+  const token = getToken();
+  const allDoctors = token ? await getAllDoctorsArray(token) : [];
   
   // Generate new ID
   const newId = makeId('doc');
@@ -142,23 +133,23 @@ export async function createNewDoctor(doctorData: Partial<Doctor>): Promise<stri
     ...doctorData,
   };
   
-  // Save as override (this effectively creates the doctor)
   saveDoctorOverride(newId, newDoctor);
-  
-  // If practice is assigned, update practice doctorIds
-  if (newDoctor.practiceId) {
-    const allPractices = await getAllPractices();
-    const practice = allPractices.find(p => p.id === newDoctor.practiceId);
+
+  if (newDoctor.practiceId && token) {
+    const allPractices = await getAllPracticesForAdmin();
+    const practice = allPractices.find((p) => p.id === newDoctor.practiceId);
     if (practice) {
-      const doctorIds = practice.doctorIds || [];
+      const doctorIds = practice.doctorIds ?? [];
       if (!doctorIds.includes(newId)) {
-        savePracticeOverride(newDoctor.practiceId, {
-          doctorIds: [...doctorIds, newId],
-        });
+        try {
+          await updatePractice(newDoctor.practiceId, { doctor_ids: [...doctorIds, newId] } as any, token);
+        } catch {
+          // Backend may not support doctor_ids on practice
+        }
       }
     }
   }
-  
+
   return newId;
 }
 
@@ -231,7 +222,8 @@ export function getAllReferrals(): Referral[] {
  * Aggregates all notifications from all doctors
  */
 export async function getAllNotifications(): Promise<Array<Notification & { doctorName?: string; doctorEmail?: string }>> {
-  const allDoctors = await getAllDoctors();
+  const token = getToken();
+  const allDoctors = token ? await getAllDoctorsArray(token) : [];
   const allNotifications: Array<Notification & { doctorName?: string; doctorEmail?: string }> = [];
   
   // Iterate through all doctors and collect their notifications

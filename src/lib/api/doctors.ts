@@ -178,3 +178,17 @@ export async function updateDoctor(
     throw new Error(apiError.error || 'Failed to update doctor');
   }
 }
+
+/**
+ * Delete a doctor (backend DELETE /api/doctors/:id).
+ * Requires authentication; pass token from getToken().
+ */
+export async function deleteDoctor(id: string, token: string): Promise<void> {
+  try {
+    await apiClient.delete(`/api/doctors/${id}`, token);
+  } catch (error) {
+    const apiError = error as ApiError;
+    if (apiError.status === 404) throw new Error('Doctor not found');
+    throw new Error(apiError.error || 'Failed to delete doctor');
+  }
+}

@@ -1,6 +1,7 @@
 import { Institution, Doctor } from '@/types';
 import { getAllInstitutions } from './institutionStorage';
-import { getAllDoctors } from './memberStorage';
+import { getAllDoctorsArray } from './api/doctors';
+import { getToken } from './api/config';
 import { haversineDistance, getZIPLatLng, getLocationCoordinates } from './distanceUtils';
 
 export interface InstitutionSearchFilters {
@@ -32,7 +33,8 @@ export interface SearchResults {
  */
 export async function searchInstitutions(filters: InstitutionSearchFilters): Promise<SearchResults> {
   const allInstitutions = getAllInstitutions();
-  const allDoctors = await getAllDoctors();
+  const token = typeof window !== 'undefined' ? getToken() : null;
+  const allDoctors = await getAllDoctorsArray(token ?? undefined);
 
   let results: InstitutionSearchResult[] = [];
 
