@@ -130,7 +130,7 @@ export default function AdminMembersDoctorsPage() {
       await updateDoctor(editing.id, { firstName, lastName, email: email || undefined, specialty: specialty || undefined, status: status || undefined }, token);
       setEditOpen(false);
       setEditing(null);
-      load();
+      void load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
     } finally {

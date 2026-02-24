@@ -33,7 +33,9 @@ export async function markAnnouncementRead(id: string): Promise<void> {
 export interface CreateAnnouncementPayload {
   title: string;
   body: string;
-  audience_type: 'all' | 'specialty' | 'practice' | 'specific';
+  /** Use canonical backend values: 'all_doctors' | 'specialty_doctors' | 'practice_doctors' | 'specific_doctors'
+   *  The backend also accepts the short forms 'all' | 'specialty' | 'practice' | 'specific' for backwards-compat. */
+  audience_type: 'all_doctors' | 'specialty_doctors' | 'practice_doctors' | 'specific_doctors' | 'all' | 'specialty' | 'practice' | 'specific';
   audience_specialty?: string;
   audience_practice_id?: string;
   doctor_ids?: string[];

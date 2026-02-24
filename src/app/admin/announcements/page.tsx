@@ -73,7 +73,7 @@ export default function AdminAnnouncementsPage() {
                 await createAnnouncement({
                     title: announcementTitle,
                     body: message,
-                    audience_type: 'all',
+                    audience_type: 'all_doctors',
                 });
                 toast.success(`Announcement broadcasted to all ${allDoctors.length} doctors`);
                 setMessage('');
@@ -86,7 +86,7 @@ export default function AdminAnnouncementsPage() {
                 await createAnnouncement({
                     title: announcementTitle,
                     body: message,
-                    audience_type: 'specialty',
+                    audience_type: 'specialty_doctors',
                     audience_specialty: selectedSpecialty,
                 });
                 toast.success(`Announcement sent to all ${selectedSpecialty} specialists`);
@@ -99,7 +99,7 @@ export default function AdminAnnouncementsPage() {
                 await createAnnouncement({
                     title: announcementTitle,
                     body: message,
-                    audience_type: 'specific',
+                    audience_type: 'specific_doctors',
                     doctor_ids: selectedDoctorIds,
                 });
                 toast.success(`Announcement sent to ${selectedDoctorIds.length} doctors`);

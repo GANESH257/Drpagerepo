@@ -114,7 +114,7 @@ export default function ReferralsV2Page() {
 
   useEffect(() => {
     let cancelled = false;
-    loadReferralsAndDoctors().then(() => { if (cancelled) return; });
+    void loadReferralsAndDoctors();
     return () => { cancelled = true; };
   }, [loadReferralsAndDoctors]);
 
@@ -518,7 +518,7 @@ export default function ReferralsV2Page() {
                                 </button>
                               }
                               onSuccess={() => {
-                                loadReferralsAndDoctors();
+                                void loadReferralsAndDoctors();
                                 setShowNewReferralDialog(false);
                               }}
                             />

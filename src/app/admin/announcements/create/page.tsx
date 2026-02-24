@@ -48,7 +48,7 @@ export default function AdminCreateAnnouncementPage() {
       await createAnnouncement({
         title: formData.title,
         body: formData.message,
-        audience_type: 'all',
+        audience_type: 'all_doctors',
       });
       toast.success('Announcement created and sent to all doctors');
       router.push('/admin');

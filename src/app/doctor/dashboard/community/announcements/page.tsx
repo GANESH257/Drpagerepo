@@ -5,7 +5,7 @@ import { getAnnouncements, markAnnouncementRead, Announcement } from '@/lib/api/
 import { getEvents } from '@/lib/api/events';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/dateUtils';
-import { Building2, Laptop, PartyPopper, FileText } from 'lucide-react';
+import { Building2, Laptop, PartyPopper, FileText, AlertCircle, RefreshCw, Megaphone, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function formatEventDate(dateStr: string): string {
@@ -31,19 +31,36 @@ export default function AnnouncementsEventsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [annError, setAnnError] = useState<string | null>(null);
+  const [evError, setEvError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try {
-      const [ann, ev] = await Promise.all([getAnnouncements(), getEvents()]);
-      setAnnouncements(Array.isArray(ann) ? ann : []);
-      setEvents(Array.isArray(ev) ? ev : []);
-    } catch {
+    setAnnError(null);
+    setEvError(null);
+
+    const [annResult, evResult] = await Promise.allSettled([
+      getAnnouncements(),
+      getEvents(),
+    ]);
+
+    if (annResult.status === 'fulfilled') {
+      setAnnouncements(Array.isArray(annResult.value) ? annResult.value : []);
+    } else {
+      console.error('[AnnouncementsPage] announcements error:', annResult.reason);
+      setAnnError(annResult.reason?.message || 'Failed to load announcements');
       setAnnouncements([]);
-      setEvents([]);
-    } finally {
-      setLoading(false);
     }
+
+    if (evResult.status === 'fulfilled') {
+      setEvents(Array.isArray(evResult.value) ? evResult.value : []);
+    } else {
+      console.error('[AnnouncementsPage] events error:', evResult.reason);
+      setEvError(evResult.reason?.message || 'Failed to load events');
+      setEvents([]);
+    }
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -61,8 +78,9 @@ export default function AnnouncementsEventsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--aip-teal)]" />
+        <p className="text-sm text-gray-500">Loading announcements & events…</p>
       </div>
     );
   }
@@ -75,19 +93,46 @@ export default function AnnouncementsEventsPage() {
   return (
     <div className="space-y-5 relative z-10 max-w-6xl">
       {/* Header */}
-      <header>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Announcements & Events</h1>
-        <p className="mt-0.5 text-xs text-gray-600">
-          Official news and upcoming events from AIP Administration
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">Announcements & Events</h1>
+          <p className="mt-0.5 text-xs text-gray-600">
+            Official news and upcoming events from AIP Administration
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={load}
+          className="shrink-0 flex items-center gap-1.5 text-xs"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
+        </Button>
       </header>
 
       <div className="flex flex-col gap-6 lg:flex-row">
         {/* Main: announcement cards */}
         <main className="min-w-0 flex-1 space-y-4">
-          {announcements.length === 0 ? (
-            <div className="glass-card rounded-xl py-12 text-center text-gray-600">
-              No announcements.
+          {annError ? (
+            <div className="glass-card rounded-xl p-6 flex flex-col items-center gap-3 text-center">
+              <AlertCircle className="h-8 w-8 text-amber-500" />
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Could not load announcements</p>
+                <p className="text-xs text-gray-500 mt-1">{annError}</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={load} className="flex items-center gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5" />
+                Try again
+              </Button>
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="glass-card rounded-xl py-14 flex flex-col items-center gap-3 text-center px-6">
+              <div className="h-14 w-14 rounded-full flex items-center justify-center" style={{ background: 'rgba(26,140,122,0.1)' }}>
+                <Megaphone className="h-7 w-7" style={{ color: 'var(--aip-teal)' }} />
+              </div>
+              <p className="font-semibold text-gray-900">No announcements yet</p>
+              <p className="text-sm text-gray-500">Check back later for updates from AIP Administration.</p>
             </div>
           ) : (
             announcements.map((a) => (
@@ -100,16 +145,26 @@ export default function AnnouncementsEventsPage() {
                 style={!a.read ? { borderLeftColor: 'var(--aip-teal)' } : undefined}
               >
                 <div className="p-5">
-                  <h2 className="text-lg font-bold text-gray-900">{a.title}</h2>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <h2 className="text-lg font-bold text-gray-900">{a.title}</h2>
+                    {!a.read && (
+                      <span
+                        className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                        style={{ background: 'var(--aip-teal)' }}
+                      >
+                        NEW
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">
                     Posted {formatDate(a.created_at)}
-                    {a.created_by ? ` - by ${a.created_by}` : ' - by AIP Administration'}
+                    {a.created_by ? ` — by ${a.created_by}` : ' — by AIP Administration'}
                   </p>
                   <p className="mt-3 text-sm text-gray-700 leading-relaxed">
                     {a.body}
                   </p>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {!a.read && (
+                  {!a.read && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -118,15 +173,8 @@ export default function AnnouncementsEventsPage() {
                       >
                         Mark as read
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      className="rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white text-sm"
-                      onClick={() => handleMarkRead(a.id)}
-                    >
-                      Read more
-                    </Button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </article>
             ))
@@ -136,9 +184,21 @@ export default function AnnouncementsEventsPage() {
         {/* Sidebar: Upcoming Events */}
         <aside className="lg:w-72 shrink-0">
           <div className="glass-card rounded-xl border border-gray-200 p-5 shadow-sm">
-            <h3 className="text-base font-bold text-gray-900">Upcoming Events</h3>
-            {upcomingEvents.length === 0 ? (
-              <p className="mt-3 text-sm text-gray-500">No upcoming events.</p>
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" style={{ color: 'var(--aip-teal)' }} />
+              Upcoming Events
+            </h3>
+            {evError ? (
+              <div className="mt-3 flex flex-col items-center gap-2 text-center py-4">
+                <AlertCircle className="h-5 w-5 text-amber-500" />
+                <p className="text-xs text-gray-500">{evError}</p>
+                <Button size="sm" variant="outline" onClick={load} className="text-xs flex items-center gap-1">
+                  <RefreshCw className="h-3 w-3" />
+                  Retry
+                </Button>
+              </div>
+            ) : upcomingEvents.length === 0 ? (
+              <p className="mt-3 text-sm text-gray-500">No upcoming events scheduled.</p>
             ) : (
               <ul className="mt-4 space-y-4">
                 {upcomingEvents.map((e) => {

@@ -17,11 +17,13 @@ export interface Event {
 }
 
 /**
- * Get all events
+ * Get all events — passes auth token when available so authenticated
+ * users (doctors) get the full list instead of a 401/403.
  */
 export async function getEvents(): Promise<Event[]> {
   try {
-    const response = await apiClient.get<Event[]>('/api/events');
+    const token = getToken();
+    const response = await apiClient.get<Event[]>('/api/events', token ?? undefined);
     return response;
   } catch (error) {
     const apiError = error as ApiError;

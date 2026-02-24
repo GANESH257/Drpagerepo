@@ -40,20 +40,21 @@ export function StatsCards() {
 
   const acceptedRequests = joinRequests.filter((r) => r.status === 'approved');
   const pendingRequests = joinRequests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
-  const totalDoctors = totalDoctorsFromApi + acceptedRequests.length;
-  
-  // Calculate doctors per plan (simplified - assume accepted requests are distributed)
+  // totalDoctorsFromApi is the authoritative count from the doctors table (already includes accepted ones)
+  const totalDoctors = totalDoctorsFromApi;
+
+  // Calculate doctors per plan from join request data
   const planDistribution = {
-    basic: acceptedRequests.filter((r) => r.plan.planId === 'basic').length,
-    professional: acceptedRequests.filter((r) => r.plan.planId === 'professional').length,
-    premier: acceptedRequests.filter((r) => r.plan.planId === 'premier').length,
+    basic: acceptedRequests.filter((r) => r.plan?.planId === 'basic').length,
+    professional: acceptedRequests.filter((r) => r.plan?.planId === 'professional').length,
+    premier: acceptedRequests.filter((r) => r.plan?.planId === 'premier').length,
   };
 
   const stats = [
     {
       title: 'Total Doctors',
       value: totalDoctors.toString(),
-      description: `${totalDoctorsFromApi} in directory + ${acceptedRequests.length} accepted`,
+      description: `${totalDoctorsFromApi} in directory`,
       icon: Users,
       color: 'text-[var(--aip-teal)]',
     },

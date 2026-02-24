@@ -23,13 +23,15 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const practiceId = doctor.practice_id;
     const specialty = doctor.specialty;
 
+    // Accept both the canonical DB values ('all_doctors') AND the legacy
+    // short-form values ('all') that may have been stored before normalisation.
     const result = await pool.query(
       `SELECT a.*, ar.read_at IS NOT NULL as read
        FROM announcements a
        LEFT JOIN announcement_read ar ON ar.announcement_id = a.id AND ar.doctor_id = $1
-       WHERE a.audience_type = 'all_doctors'
-          OR (a.audience_type = 'practice_doctors' AND a.audience_practice_id = $2)
-          OR (a.audience_type = 'specialty_doctors' AND a.audience_specialty = $3)
+       WHERE a.audience_type IN ('all_doctors', 'all')
+          OR (a.audience_type IN ('practice_doctors', 'practice') AND a.audience_practice_id = $2)
+          OR (a.audience_type IN ('specialty_doctors', 'specialty') AND a.audience_specialty = $3)
        ORDER BY a.created_at DESC
        LIMIT 100`,
       [doctorId, practiceId, specialty]
@@ -77,10 +79,23 @@ router.patch('/:id/read', authenticateToken, async (req: AuthRequest, res) => {
  * POST /api/announcements
  * Create announcement (admin or practice_admin for practice-scoped)
  */
+// Normalize short-form audience_type values sent by the frontend into the
+// canonical values stored in the DB and queried by the GET route.
+function normalizeAudienceType(raw: string): string {
+  const map: Record<string, string> = {
+    'all':       'all_doctors',
+    'specialty': 'specialty_doctors',
+    'practice':  'practice_doctors',
+    'specific':  'specific_doctors',
+  };
+  return map[raw] ?? raw; // pass through if already canonical
+}
+
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const userRole = req.userRole;
-    const { audience_type, audience_practice_id, audience_specialty, title, body } = req.body;
+    const { audience_practice_id, audience_specialty, title, body, doctor_ids } = req.body;
+    const audience_type = normalizeAudienceType(req.body.audience_type ?? '');
 
     if (!title || !body || !audience_type) {
       return res.status(400).json({ error: 'title, body, and audience_type required' });

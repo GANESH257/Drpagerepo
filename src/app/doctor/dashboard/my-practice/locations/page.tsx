@@ -42,6 +42,7 @@ export default function MyPracticeLocationsPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [practiceName, setPracticeName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const practiceId = getPracticeId(doctor);
 
@@ -60,7 +61,10 @@ export default function MyPracticeLocationsPage() {
           address: formatAddress(loc),
         })));
       })
-      .catch(() => setLocations([]))
+      .catch((err) => {
+        setLoadError(err?.message || 'Failed to load practice locations');
+        setLocations([]);
+      })
       .finally(() => setLoading(false));
   }, [practiceId]);
 
@@ -89,7 +93,32 @@ export default function MyPracticeLocationsPage() {
         </Link>
       </div>
 
-      {locations.length === 0 ? (
+      {loadError ? (
+        <div className="glass-card rounded-2xl py-12 text-center space-y-3">
+          <p className="text-sm text-red-600">{loadError}</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setLoading(true);
+              setLoadError(null);
+              const pid = getPracticeId(doctor);
+              if (!pid) { setLoading(false); return; }
+              const token = getToken();
+              getPractice(pid, token)
+                .then((p) => {
+                  setPracticeName(p.name || '');
+                  const locs = Array.isArray(p.locations) ? p.locations : [];
+                  setLocations(locs.map((loc: any) => ({ ...loc, address: formatAddress(loc) })));
+                })
+                .catch((err) => setLoadError(err?.message || 'Failed to load'))
+                .finally(() => setLoading(false));
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : locations.length === 0 ? (
         <div className="glass-card rounded-2xl py-12 text-center">
           <p className="text-sm text-gray-600">No locations on file for this practice.</p>
         </div>

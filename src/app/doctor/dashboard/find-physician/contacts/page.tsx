@@ -4,19 +4,36 @@ import { useEffect, useState, useCallback } from 'react';
 import { getMyContacts, removeContact, ContactDoctor } from '@/lib/api/contacts';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookUser, UserMinus, ExternalLink, Loader2 } from 'lucide-react';
+import { BookUser, UserMinus, ExternalLink, Loader2, Send, AlertCircle, RefreshCw } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
+import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
+import type { Doctor } from '@/types';
+
+function contactToDoctor(c: ContactDoctor): Doctor {
+  return {
+    id: c.id,
+    fullName: c.full_name ?? '',
+    specialty: c.specialty ?? '',
+    slug: c.slug ?? '',
+    email: (c as any).email ?? '',
+  } as Doctor;
+}
 
 export default function MyContactsPage() {
   const [contacts, setContacts] = useState<ContactDoctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [referralTarget, setReferralTarget] = useState<ContactDoctor | null>(null);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const list = await getMyContacts();
       setContacts(Array.isArray(list) ? list : []);
-    } catch {
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : 'Failed to load contacts');
       setContacts([]);
     } finally {
       setLoading(false);
@@ -79,6 +96,16 @@ export default function MyContactsPage() {
           <Loader2 className="h-10 w-10 animate-spin text-[var(--aip-teal)]" aria-hidden />
           <p className="mt-4 text-sm text-gray-500">Loading contacts...</p>
         </div>
+      ) : loadError ? (
+        <div className="glass-card rounded-2xl py-16 flex flex-col items-center gap-3 text-center px-6">
+          <AlertCircle className="h-10 w-10 text-amber-500" />
+          <p className="font-semibold text-gray-900">Could not load contacts</p>
+          <p className="text-sm text-gray-500">{loadError}</p>
+          <Button size="sm" variant="outline" onClick={load} className="flex items-center gap-1.5 mt-1">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Try again
+          </Button>
+        </div>
       ) : contacts.length === 0 ? (
         <div className="glass-card rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 overflow-hidden">
           <div className="py-20 text-center">
@@ -123,7 +150,7 @@ export default function MyContactsPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex border-t border-gray-100 bg-gray-50/60 px-5 py-3 gap-2 mt-auto">
+                    <div className="flex border-t border-gray-100 bg-gray-50/60 px-5 py-3 gap-2 mt-auto flex-wrap">
                       <Link
                         href={getDoctorProfileUrl({ slug: c.slug, id: c.id })}
                         target="_blank"
@@ -140,6 +167,16 @@ export default function MyContactsPage() {
                         </Button>
                       </Link>
                       <Button
+                        size="sm"
+                        onClick={() => setReferralTarget(c)}
+                        className="rounded-lg text-white shrink-0"
+                        style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+                        title="Send referral"
+                      >
+                        <Send className="h-3.5 w-3.5 mr-1.5 shrink-0" />
+                        Refer
+                      </Button>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRemove(c.id)}
@@ -155,6 +192,14 @@ export default function MyContactsPage() {
             ))}
           </ul>
         </>
+      )}
+
+      {referralTarget && (
+        <ReferralDialog
+          doctor={contactToDoctor(referralTarget)}
+          open={!!referralTarget}
+          onOpenChange={(open) => { if (!open) setReferralTarget(null); }}
+        />
       )}
     </div>
   );

@@ -46,6 +46,13 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Track which condition rows and service cells are actively being edited.
+  // Without this, typing a single character converts the <Input> to a <span>
+  // because the conditional `row.condition.trim() ? <span> : <Input>` fires on
+  // every keystroke re-render.
+  const [editingConditionIndex, setEditingConditionIndex] = useState<number | null>(null);
+  const [editingServiceKey, setEditingServiceKey] = useState<string | null>(null);
+
   useEffect(() => {
     async function load() {
       const saved = await loadDoctorProfile(doctor.id);
@@ -169,6 +176,8 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
     const next = [...(doctor.conditionServices ?? conditionServices), { condition: '', services: [''] }];
     const updatedDoctor = { ...doctor, conditionServices: next };
     setDoctor(updatedDoctor);
+    // Put the new row into edit mode immediately
+    setEditingConditionIndex(next.length - 1);
   };
 
   const removeConditionRow = (index: number) => {
@@ -180,10 +189,13 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   const addServiceToRow = (rowIndex: number) => {
     const rows = doctor.conditionServices ?? conditionServices;
     const row = rows[rowIndex] ?? EMPTY_ROW;
+    const nextServices = [...row.services, ''];
     const nextRows = [...rows];
-    nextRows[rowIndex] = { ...row, services: [...row.services, ''] };
+    nextRows[rowIndex] = { ...row, services: nextServices };
     const updatedDoctor = { ...doctor, conditionServices: nextRows };
     setDoctor(updatedDoctor);
+    // Put the new service cell into edit mode immediately
+    setEditingServiceKey(`${rowIndex}-${nextServices.length - 1}`);
   };
 
   const updateServiceInRow = (rowIndex: number, serviceIndex: number, value: string) => {
@@ -266,75 +278,124 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
           {(doctor.conditionServices ?? conditionServices).length === 0 ? (
             <p className="text-sm text-gray-500 py-4">No conditions added yet.</p>
           ) : (
-            (doctor.conditionServices ?? conditionServices).map((row, rowIndex) => (
-              <div key={rowIndex} className="border border-gray-200 rounded-xl bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-3">
-                  <Check className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
-                  {row.condition.trim() ? (
-                    <span className="font-semibold text-gray-900">{row.condition}</span>
-                  ) : (
-                    <Input
-                      placeholder="e.g. Coronary Artery Disease"
-                      value={row.condition}
-                      onChange={(e) => updateConditionServiceRow(rowIndex, { ...row, condition: e.target.value })}
-                      className="h-8 flex-1 max-w-xs text-sm border-gray-200"
-                    />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeConditionRow(rowIndex)}
-                    className="ml-auto rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                    aria-label="Remove condition"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 pl-7">
-                  {(row.services.length === 0 ? [''] : row.services).map((svc, svcIndex) =>
-                    svc.trim() ? (
-                      <span
-                        key={svcIndex}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-sm text-gray-800"
-                      >
-                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                        {svc}
-                        <button
-                          type="button"
-                          onClick={() => removeServiceFromRow(rowIndex, svcIndex)}
-                          className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
-                          aria-label={`Remove ${svc}`}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
+            (doctor.conditionServices ?? conditionServices).map((row, rowIndex) => {
+              const isEditingCondition =
+                editingConditionIndex === rowIndex || !row.condition.trim();
+
+              return (
+                <div key={rowIndex} className="border border-gray-200 rounded-xl bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Check className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+                    {isEditingCondition ? (
+                      <Input
+                        autoFocus={editingConditionIndex === rowIndex}
+                        placeholder="e.g. Coronary Artery Disease"
+                        value={row.condition}
+                        onChange={(e) =>
+                          updateConditionServiceRow(rowIndex, { ...row, condition: e.target.value })
+                        }
+                        onFocus={() => setEditingConditionIndex(rowIndex)}
+                        onBlur={() => {
+                          if (row.condition.trim()) setEditingConditionIndex(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (row.condition.trim()) setEditingConditionIndex(null);
+                          }
+                        }}
+                        className="h-8 flex-1 max-w-xs text-sm border-gray-200"
+                      />
                     ) : (
-                      <div key={svcIndex} className="inline-flex items-center gap-1">
-                        <Input
-                          placeholder="Add treatment..."
-                          value={svc}
-                          onChange={(e) => updateServiceInRow(rowIndex, svcIndex, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (e.currentTarget.value.trim()) addServiceToRow(rowIndex);
+                      <button
+                        type="button"
+                        className="font-semibold text-gray-900 hover:underline hover:text-[var(--aip-teal)] text-left"
+                        onClick={() => setEditingConditionIndex(rowIndex)}
+                        title="Click to edit"
+                      >
+                        {row.condition}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeConditionRow(rowIndex)}
+                      className="ml-auto rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      aria-label="Remove condition"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 pl-7">
+                    {(row.services.length === 0 ? [''] : row.services).map((svc, svcIndex) => {
+                      const serviceKey = `${rowIndex}-${svcIndex}`;
+                      const isEditingService =
+                        editingServiceKey === serviceKey || !svc.trim();
+
+                      return isEditingService ? (
+                        <div key={svcIndex} className="inline-flex items-center gap-1">
+                          <Input
+                            autoFocus={editingServiceKey === serviceKey}
+                            placeholder="Add treatment..."
+                            value={svc}
+                            onChange={(e) =>
+                              updateServiceInRow(rowIndex, svcIndex, e.target.value)
                             }
-                          }}
-                          className="h-8 w-36 text-sm border-gray-200 rounded-lg"
-                        />
-                      </div>
-                    )
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => addServiceToRow(rowIndex)}
-                    className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-2.5 py-1 text-sm text-gray-600 hover:border-gray-400 hover:bg-gray-100"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Suggest Treatment
-                  </button>
+                            onFocus={() => setEditingServiceKey(serviceKey)}
+                            onBlur={() => {
+                              if (svc.trim()) setEditingServiceKey(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (e.currentTarget.value.trim()) {
+                                  setEditingServiceKey(null);
+                                  addServiceToRow(rowIndex);
+                                }
+                              }
+                              if (e.key === 'Escape') {
+                                setEditingServiceKey(null);
+                              }
+                            }}
+                            className="h-8 w-36 text-sm border-gray-200 rounded-lg"
+                          />
+                        </div>
+                      ) : (
+                        <span
+                          key={svcIndex}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-sm text-gray-800"
+                        >
+                          <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <button
+                            type="button"
+                            className="hover:underline"
+                            onClick={() => setEditingServiceKey(serviceKey)}
+                            title="Click to edit"
+                          >
+                            {svc}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeServiceFromRow(rowIndex, svcIndex)}
+                            className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
+                            aria-label={`Remove ${svc}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => addServiceToRow(rowIndex)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-2.5 py-1 text-sm text-gray-600 hover:border-gray-400 hover:bg-gray-100"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Suggest Treatment
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
         <button

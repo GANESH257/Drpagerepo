@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
-import { createAnnouncement, CreateAnnouncementInput } from '@/lib/services/announcementService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
+import { createAnnouncement } from '@/lib/api/announcements';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import Link from 'next/link';
 export default function PracticeAdminCreateAnnouncementPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [practiceId, setPracticeId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -27,6 +28,9 @@ export default function PracticeAdminCreateAnnouncementPage() {
     try {
       const actor = getActorFromSession();
       assertPracticeAdmin(actor);
+      if (actor.kind === 'doctor' && actor.practiceId) {
+        setPracticeId(actor.practiceId);
+      }
     } catch (error) {
       if (error instanceof AuthRequiredError) {
         router.push('/join-us');
@@ -38,32 +42,27 @@ export default function PracticeAdminCreateAnnouncementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.message.trim()) {
       toast.error('Please fill in all required fields');
       return;
     }
-    
+
+    if (!practiceId) {
+      toast.error('Practice not found. Please try again.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const actor = getActorFromSession();
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Must be practice admin');
-      }
-      
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Must be practice admin');
-      }
-      
-      const input: CreateAnnouncementInput = {
-        audience: { kind: 'practice_doctors', practiceId: actor.practiceId },
+      // Send via REST API so doctors see it in their Announcements page
+      await createAnnouncement({
         title: formData.title,
-        message: formData.message,
-      };
-      createAnnouncement(actor, input);
-      
-      toast.success('Announcement created and sent to practice doctors');
+        body: formData.message,
+        audience_type: 'practice_doctors',
+        audience_practice_id: practiceId,
+      });
+      toast.success('Announcement sent to all doctors in your practice');
       router.push('/doctor/dashboard/practice');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create announcement');

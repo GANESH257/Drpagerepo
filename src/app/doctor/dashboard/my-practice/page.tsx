@@ -20,6 +20,7 @@ export default function MyPracticePage() {
   const { doctor } = useDoctorContext();
   const [practice, setPractice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const practiceId =
     (doctor as any)?.practice_id ??
@@ -54,7 +55,10 @@ export default function MyPracticePage() {
           doctors: Array.isArray(r.doctors) ? r.doctors : [],
         });
       })
-      .catch(() => setPractice(null))
+      .catch((err) => {
+        setLoadError(err?.message || 'Failed to load practice profile');
+        setPractice(null);
+      })
       .finally(() => setLoading(false));
   }, [practiceId]);
 
@@ -68,11 +72,42 @@ export default function MyPracticePage() {
 
   if (!practice) {
     return (
-      <div className="text-center py-12">
-        <p className="text-sm text-gray-600">No practice associated with your profile.</p>
-        <Button onClick={() => router.push('/doctor/dashboard')} className="mt-4" size="sm">
-          Back to Dashboard
-        </Button>
+      <div className="text-center py-12 space-y-3">
+        <p className="text-sm text-gray-600">
+          {loadError ? loadError : 'No practice associated with your profile.'}
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          {loadError && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setLoading(true);
+                setLoadError(null);
+                const token = getToken();
+                getPractice(practiceId!, token)
+                  .then((raw) => {
+                    const r = raw as any;
+                    setPractice({
+                      ...raw,
+                      locations: Array.isArray(raw.locations) ? raw.locations : [],
+                      specialties: Array.isArray(raw.specialties) ? raw.specialties : [],
+                      services: Array.isArray(raw.services) ? raw.services : [],
+                      insurance: Array.isArray(raw.insurance) ? raw.insurance : [],
+                      doctors: Array.isArray(r.doctors) ? r.doctors : [],
+                    });
+                  })
+                  .catch((err) => setLoadError(err?.message || 'Failed to load'))
+                  .finally(() => setLoading(false));
+              }}
+            >
+              Retry
+            </Button>
+          )}
+          <Button onClick={() => router.push('/doctor/dashboard')} size="sm" variant="outline">
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     );
   }

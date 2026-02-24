@@ -80,7 +80,7 @@ export function RequestsTable() {
               All ({requests.length})
             </TabsTrigger>
             <TabsTrigger value="Pending" className="rounded-md px-4 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:bg-gradient-to-br data-[state=active]:from-[var(--aip-teal)] data-[state=active]:to-[var(--aip-navy)]">
-              Pending ({requests.filter((r) => r.status === 'submitted').length})
+              Pending ({requests.filter((r) => r.status === 'submitted' || r.status === 'under_review').length})
             </TabsTrigger>
             <TabsTrigger value="Accepted" className="rounded-md px-4 data-[state=active]:text-white data-[state=active]:shadow-none data-[state=active]:bg-gradient-to-br data-[state=active]:from-[var(--aip-teal)] data-[state=active]:to-[var(--aip-navy)]">
               Accepted ({requests.filter((r) => r.status === 'approved').length})
