@@ -1,29 +1,17 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getAdminSession } from '@/lib/adminSession';
-import { getUnreadCount } from '@/lib/api/messages';
-
-const POLL_INTERVAL_MS = 30_000;
+import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
 
 export function FloatingMessageIcon() {
     const { getSession } = useDoctorSession();
     const [unreadCount, setUnreadCount] = useState(0);
     const [href, setHref] = useState('/doctor/dashboard/messages');
     const [isVisible, setIsVisible] = useState(false);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-    const fetchUnread = useCallback(async () => {
-        try {
-            const count = await getUnreadCount();
-            setUnreadCount(count);
-        } catch {
-            setUnreadCount(0);
-        }
-    }, []);
 
     useEffect(() => {
         try {
@@ -31,22 +19,18 @@ export function FloatingMessageIcon() {
             if (adminSession) {
                 setHref('/admin/messages');
                 setIsVisible(true);
-                fetchUnread();
-                intervalRef.current = setInterval(fetchUnread, POLL_INTERVAL_MS);
-                return () => {
-                    if (intervalRef.current) clearInterval(intervalRef.current);
-                };
+                // Admin uses id 'admin' in Firestore messages
+                const unsub = subscribeToTotalUnreadCount('admin', setUnreadCount);
+                return unsub;
             }
 
             const session = getSession();
             if (session?.doctorId) {
                 setHref('/doctor/dashboard/messages');
                 setIsVisible(true);
-                fetchUnread();
-                intervalRef.current = setInterval(fetchUnread, POLL_INTERVAL_MS);
-                return () => {
-                    if (intervalRef.current) clearInterval(intervalRef.current);
-                };
+                // Real-time Firestore subscription — no polling needed
+                const unsub = subscribeToTotalUnreadCount(session.doctorId, setUnreadCount);
+                return unsub;
             }
 
             setIsVisible(false);
@@ -54,14 +38,7 @@ export function FloatingMessageIcon() {
             console.warn('[FloatingMessageIcon] Error in useEffect:', err);
             setIsVisible(false);
         }
-    }, [getSession, fetchUnread]);
-
-    // Refresh unread when window gains focus (e.g. returning from messages)
-    useEffect(() => {
-        const onFocus = () => { if (isVisible) fetchUnread(); };
-        window.addEventListener('focus', onFocus);
-        return () => window.removeEventListener('focus', onFocus);
-    }, [isVisible, fetchUnread]);
+    }, [getSession]);
 
     if (!isVisible) return null;
 

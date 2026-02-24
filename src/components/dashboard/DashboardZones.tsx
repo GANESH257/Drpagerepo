@@ -27,7 +27,7 @@ import { getProfileStats } from '@/lib/api/profile-stats';
 import { getMyMembership } from '@/lib/api/memberships';
 import { getAnnouncements } from '@/lib/api/announcements';
 import { getEvents } from '@/lib/api/events';
-import { getUnreadCount } from '@/lib/api/messages';
+import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
 import { getDoctors } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
 import { getApprovalRequests } from '@/lib/api/approval-requests';
@@ -81,7 +81,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
         getProfileStats().catch(() => ({ profile_views_this_month: 0 })),
         getAnnouncements().catch(() => []),
         getEvents().catch(() => []),
-        getUnreadCount().catch(() => 0),
+        Promise.resolve(0), // unread count handled by Firestore subscription below
         getMyMembership().catch(() => null),
         getApprovalRequests().catch(() => []),
         getDoctors({ limit: 1 }, getToken() ?? undefined).catch(() => ({ doctors: [], pagination: { total: 0 } })),
@@ -113,6 +113,16 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Real-time Firestore unread message count — replaces the REST API poll which
+  // always returned 0 because messages are stored in Firestore, not PostgreSQL.
+  useEffect(() => {
+    if (!doctor.id) return;
+    const unsub = subscribeToTotalUnreadCount(doctor.id, (count) => {
+      setUnreadMessages(count);
+    });
+    return unsub;
+  }, [doctor.id]);
 
   const profileCompletion = (() => {
     const fields = [

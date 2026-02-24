@@ -517,4 +517,3 @@ export * from './referrals';
 export * from './notifications';
 export * from './invitations';
 export * from './membership';
-export * from './announcements';

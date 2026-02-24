@@ -111,7 +111,7 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
         setDoctor(updated);
         onProfileUpdate?.(updated);
       } else {
-        saveDoctorProfile(doctor.id, updatedDoctor);
+        await saveDoctorProfile(doctor.id, updatedDoctor);
         onProfileUpdate?.(updatedDoctor);
       }
       return;

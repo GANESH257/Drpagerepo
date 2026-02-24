@@ -3,16 +3,12 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-/**
- * Redirect old /admin/requests route to new V2 route
- * The V2 route has all the enhanced features from Steps 10.5, 10.6, 10.7
- */
+/** Redirect legacy /admin/requests directly to the canonical approvals page. */
 export default function AdminRequestsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to V2 page
-    router.replace('/admin/requests-v2');
+    router.replace('/admin/approvals');
   }, [router]);
 
   return (

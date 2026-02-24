@@ -481,7 +481,7 @@ export default function ReferralsV2Page() {
             ) : networkDoctorsError ? (
               <div className="py-12 text-center">
                 <p className="text-gray-600 mb-2">{networkDoctorsError}</p>
-                <Button variant="outline" size="sm" onClick={() => { setNetworkDoctorsError(null); setNetworkDoctorsLoading(true); loadReferralsAndDoctors(); }}>
+                <Button variant="outline" size="sm" onClick={() => { setNetworkDoctorsError(null); setNetworkDoctorsLoading(true); void loadReferralsAndDoctors(); }}>
                   Retry
                 </Button>
               </div>

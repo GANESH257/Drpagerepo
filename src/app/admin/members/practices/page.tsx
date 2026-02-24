@@ -129,7 +129,7 @@ export default function AdminMembersPracticesPage() {
       await updatePractice(editing.id, { name: formName, city: formCity || undefined, state: formState || undefined, status: formStatus || undefined }, token);
       setEditOpen(false);
       setEditing(null);
-      void load();
+      await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
     } finally {

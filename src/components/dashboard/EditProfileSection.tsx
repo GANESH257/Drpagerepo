@@ -264,7 +264,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
           setTimeout(() => setSaveSuccess(false), 3000);
           return;
         }
-        saveDoctorProfile(doctor.id, doctor);
+        await saveDoctorProfile(doctor.id, doctor);
         onProfileUpdate?.(doctor);
         setOriginalDoctor(doctor);
         setIsSaving(false);

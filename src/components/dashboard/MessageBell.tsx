@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getUnreadCount } from '@/lib/api/messages';
-import { getToken } from '@/lib/api/config';
+import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
 
 interface MessageBellProps {
-    /** User ID (kept for compatibility; count is for authenticated user) */
+    /** Doctor ID — required to subscribe to the correct Firestore unread count */
     userId?: string;
     /** Href to navigate to when icon is clicked */
     href?: string;
@@ -21,29 +20,14 @@ export function MessageBell({
     const router = useRouter();
     const [unreadCount, setUnreadCount] = useState(0);
 
-    const refresh = useCallback(async () => {
-        if (!getToken()) {
-            setUnreadCount(0);
-            return;
-        }
-        try {
-            const count = await getUnreadCount();
-            setUnreadCount(count);
-        } catch {
-            setUnreadCount(0);
-        }
-    }, []);
-
     useEffect(() => {
-        refresh();
-        const interval = setInterval(refresh, 30_000);
-        const onFocus = () => refresh();
-        window.addEventListener('focus', onFocus);
-        return () => {
-            clearInterval(interval);
-            window.removeEventListener('focus', onFocus);
-        };
-    }, [refresh]);
+        if (!userId) return;
+        // Real-time Firestore subscription — updates instantly when new messages arrive
+        const unsubscribe = subscribeToTotalUnreadCount(userId, (count) => {
+            setUnreadCount(count);
+        });
+        return unsubscribe;
+    }, [userId]);
 
     return (
         <Button
