@@ -346,6 +346,8 @@ const doctorUpdateKeyMap: Record<string, string> = {
   hospitalPrivileges: 'hospital_privileges',
   statesLicensedIn: 'states_licensed_in',
   conditionsAndServices: 'conditions_and_services',
+  conditionServices: 'conditions_and_services',
+  insurance: 'insurance',
   acceptsNewPatients: 'accepts_new_patients',
   reviewCount: 'review_count',
   practiceId: 'practice_id',
@@ -367,6 +369,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       'first_name', 'last_name', 'full_name', 'credentials', 'specialty', 'bio', 'about',
       'profile_image_url', 'email', 'phone', 'website', 'medical_school', 'residency', 'internship',
       'board_certifications', 'hospital_privileges', 'states_licensed_in', 'conditions_and_services',
+      'insurance',
       'verified', 'featured', 'accepts_new_patients', 'npi', 'profile_status', 'badges_awards', 'status',
     ]);
     const setParts: string[] = [];
@@ -377,7 +380,11 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
       if (value === undefined) continue;
       if (!allowed.has(dbKey)) continue;
       setParts.push(`${dbKey} = $${idx + 1}`);
-      values.push(value);
+      // JSONB columns: stringify for JSON
+      let val: unknown = value;
+      if (dbKey === 'insurance' && Array.isArray(value)) val = JSON.stringify(value);
+      else if (dbKey === 'conditions_and_services' && (Array.isArray(value) || (typeof value === 'object' && value !== null))) val = JSON.stringify(value);
+      values.push(val);
       idx++;
     }
     if (setParts.length === 0) {

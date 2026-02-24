@@ -57,6 +57,7 @@ function ApplicationContent() {
               phone: '',
               city: '',
               state: '',
+              npi: '',
             }
           : undefined,
       };

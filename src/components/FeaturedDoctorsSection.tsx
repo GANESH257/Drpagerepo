@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, CheckCircle2, UserPlus } from 'lucide-react';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 export function FeaturedDoctorsSection() {
   const [isVisible, setIsVisible] = useState(false);
@@ -197,7 +198,7 @@ export function FeaturedDoctorsSection() {
                     variant="outline" 
                     className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white transition-all duration-200 focus-ring hover:scale-105"
                   >
-                    <Link href={`/doctors/${doctor.slug}`}>View Profile</Link>
+                    <Link href={getDoctorProfileUrl(doctor)}>View Profile</Link>
                   </Button>
                 </CardContent>
               </Card>

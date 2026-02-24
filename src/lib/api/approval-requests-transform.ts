@@ -25,9 +25,21 @@ export function transformApprovalRequestFromAPI(
     adminStatus = 'rejected';
   }
 
-  // Map practice_admin_status if present
+  // Map practice_admin_status. Only for PA-only types (profile/insurance edit) do we always derive when practice_id is set,
+  // so PA approval persists after reload. All other types (join, profile completion, etc.) keep original behavior.
+  const PA_APPROVAL_ONLY_TYPES = ['doctor_profile_edit', 'doctor_insurance_edit'];
+  const isPaOnlyType = PA_APPROVAL_ONLY_TYPES.includes(apiRequest.type);
   let practiceAdminStatus: 'pending' | 'approved' | 'rejected' | undefined = undefined;
-  if (apiRequest.practice_admin_status) {
+  if (isPaOnlyType && apiRequest.practice_id) {
+    const raw = apiRequest.practice_admin_status;
+    if (raw === 'approved') {
+      practiceAdminStatus = 'approved';
+    } else if (raw === 'rejected') {
+      practiceAdminStatus = 'rejected';
+    } else {
+      practiceAdminStatus = 'pending';
+    }
+  } else if (apiRequest.practice_admin_status) {
     if (apiRequest.practice_admin_status === 'approved') {
       practiceAdminStatus = 'approved';
     } else if (apiRequest.practice_admin_status === 'rejected') {
@@ -48,11 +60,19 @@ export function transformApprovalRequestFromAPI(
   else if (adminStatus === 'approved' && (!practiceAdminStatus || practiceAdminStatus === 'approved')) {
     overallStatus = 'approved';
   }
+  // PA-only types: when practice admin approved, no admin step — show as approved
+  else if (
+    practiceAdminStatus === 'approved' &&
+    adminStatus === 'pending' &&
+    PA_APPROVAL_ONLY_TYPES.includes(apiRequest.type)
+  ) {
+    overallStatus = 'approved';
+  }
   // Check if admin approved but practice admin still pending (under review)
   else if (adminStatus === 'approved' && practiceAdminStatus === 'pending') {
     overallStatus = 'under_review';
   }
-  // Check if practice admin approved but admin still pending (under review)
+  // Check if practice admin approved but admin still pending (under review) — non-PA-only types
   else if (practiceAdminStatus === 'approved' && adminStatus === 'pending') {
     overallStatus = 'under_review';
   }
@@ -115,14 +135,16 @@ export function transformApprovalRequestFromAPI(
         decidedAt: apiRequest.admin_reviewed_at || undefined,
         notes: apiRequest.admin_notes || undefined,
       },
-      ...(practiceAdminStatus !== undefined && apiRequest.practice_id && {
-        practiceAdmin: {
-          practiceId: apiRequest.practice_id,
-          status: practiceAdminStatus,
-          decidedAt: apiRequest.practice_admin_reviewed_at || undefined,
-          notes: apiRequest.practice_admin_notes || undefined,
-        },
-      }),
+      ...(practiceAdminStatus !== undefined && apiRequest.practice_id
+        ? {
+            practiceAdmin: {
+              practiceId: apiRequest.practice_id,
+              status: practiceAdminStatus,
+              decidedAt: apiRequest.practice_admin_reviewed_at || undefined,
+              notes: apiRequest.practice_admin_notes || undefined,
+            },
+          }
+        : {}),
     },
     target,
     payload,

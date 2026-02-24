@@ -7,6 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Users, Building2, Navigation } from 'lucide-react';
 
+/** Build view URL for a practice (static page; no dynamic [slug] route) */
+function getPracticeViewUrl(practice: Practice): string {
+  const slug = practice.slug || practice.id;
+  return `/practices/view?slug=${encodeURIComponent(slug)}`;
+}
+
 interface PracticeCardProps {
   practice: Practice;
   doctorCount?: number; // Optional doctor count (will be computed if not provided)
@@ -17,70 +23,39 @@ interface PracticeCardProps {
 
 export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel, derivedSpecialties }: PracticeCardProps) {
   const [imageError, setImageError] = useState(false);
-  
-  // Use derivedSpecialties if provided, otherwise fallback to practice.specialties
+
+  const hasImage = !!(practice.logo || (practice.images && practice.images.length > 0));
+  const imageUrl = practice.logo || (practice.images && practice.images[0]) || '';
+  const viewUrl = getPracticeViewUrl(practice);
+
   const specialtiesToDisplay = derivedSpecialties || practice.specialties || [];
-  
-  // Get top 3 specialties to display
   const displaySpecialties = specialtiesToDisplay.slice(0, 3);
   const remainingSpecialtyCount = specialtiesToDisplay.length - 3;
-  
-  // Use provided doctorCount or compute from doctorIds
   const count = doctorCount ?? (practice.doctorIds?.length ?? 0);
-
-  // Generate practice image URL
-  const generatePracticeImage = (practice: Practice): string => {
-    if (practice.logo) return practice.logo;
-    if (practice.images && practice.images.length > 0) return practice.images[0];
-    
-    // Generate consistent image based on practice ID hash
-    let hash = 0;
-    const id = practice.id.toLowerCase();
-    for (let i = 0; i < id.length; i++) {
-      hash = ((hash << 5) - hash) + id.charCodeAt(i);
-      hash = hash & hash;
-    }
-    
-    // Use medical/healthcare themed images
-    const imageOptions = [
-      '/bg_art.png',
-      '/bgnews.png',
-      '/network-bg.jpg',
-      '/network-bg2.jpeg',
-      '/bg2.jpg',
-      '/bg3.jpg',
-      '/bg4.jpg',
-      '/for_dr.png',
-      '/for_dr2.png',
-    ];
-    
-    // Use hash to select consistent image for each practice
-    const imageIndex = Math.abs(hash) % imageOptions.length;
-    return imageOptions[imageIndex];
-  };
-  
-  const imageUrl = generatePracticeImage(practice);
-  const fallbackImageUrl = '/bg_art.png';
 
   return (
     <Card className="h-full card-vibrant focus-ring group flex flex-col hover:shadow-lg transition-shadow">
       <CardHeader className="p-0 flex flex-col flex-1 min-h-0">
-        {/* Practice Image/Logo */}
-        <div className="relative w-full h-56 sm:h-64 md:h-60 bg-gray-100 overflow-hidden rounded-t-xl flex-shrink-0">
-          <Image
-            src={imageError ? fallbackImageUrl : imageUrl}
-            alt={practice.name}
-            fill
-            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
-            unoptimized
-            onError={() => setImageError(true)}
-          />
+        {/* Practice image only when from DB/API; otherwise simple placeholder */}
+        <div className="relative w-full h-56 sm:h-64 md:h-60 bg-gray-100 overflow-hidden rounded-t-xl flex-shrink-0 flex items-center justify-center">
+          {hasImage && !imageError ? (
+            <Image
+              src={imageUrl}
+              alt={practice.name}
+              fill
+              className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
+              unoptimized
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <Building2 className="h-20 w-20 text-gray-300" aria-hidden />
+          )}
         </div>
         <div className="p-6 pb-4 flex flex-col min-h-[100px]">
           <div className="flex items-start justify-between gap-3 flex-shrink-0">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-xl group-hover:text-brand-teal transition-colors break-words">
-                <Link href={`/practices/${practice.slug}`} className="focus-ring rounded-md px-1 -ml-1">
+                <Link href={viewUrl} className="focus-ring rounded-md px-1 -ml-1">
                   {practice.name}
                 </Link>
               </CardTitle>
@@ -155,7 +130,7 @@ export function PracticeCard({ practice, doctorCount, distanceMiles, originLabel
             variant="gradient"
             className="w-full"
           >
-            <Link href={`/practices/${practice.slug}`}>View Practice</Link>
+            <Link href={viewUrl}>View Practice</Link>
           </Button>
         </div>
       </CardContent>

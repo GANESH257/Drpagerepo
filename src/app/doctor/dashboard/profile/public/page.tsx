@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 export default function ViewPublicProfilePage() {
   const { doctor } = useDoctorContext();
-  const slug = (doctor as any)?.slug ?? doctor?.slug;
-  const publicUrl = slug ? `/doctors/${slug}` : `/doctors/${doctor.id}`;
+  const publicUrl = getDoctorProfileUrl({ slug: (doctor as any)?.slug ?? doctor?.slug, id: doctor?.id ?? '' });
 
   return (
     <div className="space-y-6">

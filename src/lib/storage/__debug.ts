@@ -88,7 +88,7 @@ export function createDummyReferral(): Referral {
     },
     condition: 'Cardiac evaluation needed',
     notes: 'Patient requires specialist consultation',
-    status: 'new',
+    status: 'considering',
   };
 }
 

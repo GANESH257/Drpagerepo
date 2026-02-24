@@ -21,7 +21,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Doctor } from '@/types';
-import { loadAppointmentRequests, loadReferrals } from '@/lib/doctorStorage';
+import { loadAppointmentRequests } from '@/lib/doctorStorage';
+import { getReferrals } from '@/lib/api/referrals';
 import { getProfileStats } from '@/lib/api/profile-stats';
 import { getMyMembership } from '@/lib/api/memberships';
 import { getAnnouncements } from '@/lib/api/announcements';
@@ -58,7 +59,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
     setLoadError(null);
     try {
       const [refs, apps, stats, ann, ev, unread, membershipRes, approvalList, doctorsRes] = await Promise.all([
-        loadReferrals(doctorId).catch(() => []),
+        getReferrals(doctorId).catch(() => []),
         loadAppointmentRequests(doctorId).catch(() => []),
         getProfileStats().catch(() => ({ profile_views_this_month: 0 })),
         getAnnouncements().catch(() => []),
@@ -136,7 +137,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
   const onboardingStepsComplete = [
     Boolean(doctor.firstName && doctor.lastName && doctor.fullName),
     Boolean(doctor.credentials && doctor.medicalSchool),
-    (doctor.insurance?.length ?? 0) > 0 || (doctor.conditionsAndServices?.length ?? 0) > 0,
+    (doctor.insurance?.length ?? 0) > 0 || (doctor.conditionServices?.length ?? 0) > 0 || (doctor.conditionsAndServices?.length ?? 0) > 0,
     (doctor.insurance?.length ?? 0) > 0,
   ];
   const stepsDone = onboardingStepsComplete.filter(Boolean).length;

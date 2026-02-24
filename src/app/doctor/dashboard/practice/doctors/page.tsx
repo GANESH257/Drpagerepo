@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/lib/toast';
 import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone } from 'lucide-react';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { PracticeInvitation } from '@/types/invitations';
 import { loadMembership } from '@/lib/membershipStorage';
 import { membershipPlans } from '@/data/membershipPlans';
@@ -383,7 +384,7 @@ export default function PracticeRosterPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => router.push(`/doctors/${doctor.slug || doctor.id}`)}
+                      onClick={() => router.push(getDoctorProfileUrl(doctor))}
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                       View Profile

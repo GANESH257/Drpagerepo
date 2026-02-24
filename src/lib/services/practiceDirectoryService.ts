@@ -1,10 +1,11 @@
-import { Practice } from '@/types/practice';
+import { Practice, PracticeLocation } from '@/types/practice';
 import { Doctor } from '@/types';
 import { getAllPracticesArray } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { getAllDoctors } from '@/lib/memberStorage';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { haversineDistance } from '@/lib/distanceUtils';
+import { slugify } from '@/lib/slugify';
 
 /**
  * Practice search filters for directory search
@@ -114,9 +115,19 @@ function ensurePracticeShape(practice: any): Practice {
         zip: flat.zip ?? '',
         country: flat.country ?? 'USA',
       };
+  const slug =
+    practice.slug && String(practice.slug).trim()
+      ? String(practice.slug).trim()
+      : practice.name && String(practice.name).trim()
+        ? slugify(practice.name)
+        : practice.id
+          ? String(practice.id)
+          : '';
   return {
     ...practice,
+    slug: slug || (practice as Practice).slug,
     address,
+    logo: practice.logo ?? practice.logo_url ?? undefined,
     specialties: Array.isArray(practice.specialties) ? practice.specialties : (practice.specialty ? [practice.specialty] : []),
     doctorIds: Array.isArray(practice.doctorIds) ? practice.doctorIds : (Array.isArray(practice.doctors) ? practice.doctors.map((d: any) => d.id ?? d) : []),
     insurance: Array.isArray(practice.insurance) ? practice.insurance : [],
@@ -346,9 +357,10 @@ export async function searchPractices(
     if (filters.origin && hasCoords(practice)) {
       // Calculate distance to closest location
       const locationsWithCoords = practice.locations.filter(
-        (loc) => loc.lat && loc.lng
+        (loc): loc is PracticeLocation & { lat: number; lng: number } =>
+          typeof loc.lat === 'number' && typeof loc.lng === 'number'
       );
-      
+
       if (locationsWithCoords.length > 0) {
         const origin = filters.origin!; // Already checked above
         const distances = locationsWithCoords.map((loc) =>

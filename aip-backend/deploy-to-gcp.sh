@@ -8,11 +8,19 @@ set -e  # Exit on error
 echo "🚀 Starting GCP Backend Deployment..."
 echo ""
 
-# Configuration (UPDATE THESE VALUES)
-PROJECT_ID="aip-backend-112180822704"
+# Configuration - uses current gcloud project (run: gcloud config set project YOUR_PROJECT_ID)
+PROJECT_ID="${GCP_PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
+if [ -z "$PROJECT_ID" ]; then
+    echo "❌ ERROR: No project set. Run: gcloud config set project YOUR_PROJECT_ID"
+    exit 1
+fi
 REGION="us-central1"
 SERVICE_NAME="aip-backend"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
+# GCS bucket for image uploads (doctor profile, practice logo, badges). Leave empty to use local disk.
+GCS_BUCKET="${GCS_BUCKET:-aipdr-488018-uploads}"
+echo "📌 Project: $PROJECT_ID"
+echo "📌 GCS bucket (uploads): $GCS_BUCKET"
 
 # Get Cloud SQL connection name
 echo "📋 Getting Cloud SQL connection name..."
@@ -31,12 +39,12 @@ read -sp "Enter Cloud SQL database password: " DB_PASSWORD
 echo ""
 read -sp "Enter JWT secret (min 32 characters): " JWT_SECRET
 echo ""
-read -p "Enter frontend URL (default: https://ensembledemospace.com): " FRONTEND_URL
-FRONTEND_URL=${FRONTEND_URL:-https://ensembledemospace.com}
+read -p "Enter frontend URL (e.g. https://yourdomain.com or http://localhost:3000): " FRONTEND_URL
+FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
 
 echo ""
 echo "🔨 Building Docker image..."
-gcloud builds submit --tag "${IMAGE_NAME}:latest" --project="$PROJECT_ID"
+gcloud builds submit --tag "${IMAGE_NAME}:latest" --project="$PROJECT_ID" .
 
 echo ""
 echo "📦 Deploying to Cloud Run..."
@@ -47,14 +55,16 @@ gcloud run deploy "$SERVICE_NAME" \
   --allow-unauthenticated \
   --add-cloudsql-instances "$CONNECTION_NAME" \
   --set-env-vars "DB_SOCKET_PATH=/cloudsql/$CONNECTION_NAME" \
-  --set-env-vars "DB_NAME=aip_production" \
+  --set-env-vars "DB_NAME=postgres" \
   --set-env-vars "DB_USER=postgres" \
   --set-env-vars "DB_PASSWORD=$DB_PASSWORD" \
   --set-env-vars "JWT_SECRET=$JWT_SECRET" \
   --set-env-vars "JWT_EXPIRES_IN=7d" \
   --set-env-vars "FRONTEND_URL=$FRONTEND_URL" \
-  --set-env-vars "FRONTEND_URL_WWW=https://www.ensembledemospace.com" \
+  --set-env-vars "FRONTEND_URL_WWW=$FRONTEND_URL" \
   --set-env-vars "NODE_ENV=production" \
+  --set-env-vars "GCS_BUCKET=$GCS_BUCKET" \
+  --set-env-vars "UPLOAD_STORAGE=gcs" \
   --memory 512Mi \
   --cpu 1 \
   --timeout 300 \
@@ -75,5 +85,5 @@ echo "✅ Backend deployed successfully!"
 echo ""
 echo "📝 Next steps:"
 echo "1. Update frontend .env.local: NEXT_PUBLIC_API_URL=$SERVICE_URL"
-echo "2. Run SQL migration: psql -h YOUR_DB_HOST -U postgres -d aip_production -f migrations/001_approval_requests_schema.sql"
-echo "3. Test the join-us flow with a new doctor"
+echo "2. Rebuild frontend and test admin login at /admin/login"
+echo "3. If using GCS: grant Cloud Run's service account Storage Object Admin on bucket $GCS_BUCKET (see docs/GCS_IMAGE_UPLOAD_SETUP.md)"

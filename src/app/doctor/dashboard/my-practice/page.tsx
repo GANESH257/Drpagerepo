@@ -17,7 +17,20 @@ export default function MyPracticePage() {
   const [practice, setPractice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const practiceId = (doctor as any)?.practice_id ?? doctor?.practiceId;
+  const practiceId =
+    (doctor as any)?.practice_id ??
+    doctor?.practiceId ??
+    (typeof window !== 'undefined'
+      ? (() => {
+          try {
+            const u = localStorage.getItem('aip_doctor_user');
+            if (u) return (JSON.parse(u) as { practiceId?: string }).practiceId ?? null;
+          } catch {
+            // ignore
+          }
+          return null;
+        })()
+      : null);
 
   useEffect(() => {
     if (!practiceId) {

@@ -3,19 +3,40 @@
  */
 
 import { apiClient, ApiError } from './config';
-import { Doctor } from '@/types';
+import { Doctor, ConditionServiceRow } from '@/types';
+
+/** Normalize conditions_and_services from API to conditionServices (and legacy conditionsAndServices) */
+function normalizeConditionServices(raw: any): { conditionServices: ConditionServiceRow[]; conditionsAndServices: string[] } {
+  const cs = raw.conditions_and_services ?? raw.conditionServices ?? raw.conditionsAndServices;
+  if (Array.isArray(cs) && cs.length > 0) {
+    const first = cs[0];
+    if (typeof first === 'object' && first !== null && 'condition' in first && Array.isArray(first.services)) {
+      const conditionServices = cs as ConditionServiceRow[];
+      const conditionsAndServices = conditionServices.flatMap((r) => [r.condition, ...r.services].filter(Boolean));
+      return { conditionServices, conditionsAndServices };
+    }
+    const legacy = cs as string[];
+    const conditionServices: ConditionServiceRow[] = legacy.map((s) => ({ condition: s, services: [] }));
+    return { conditionServices, conditionsAndServices: legacy };
+  }
+  return { conditionServices: [], conditionsAndServices: [] };
+}
 
 /** Normalize API doctor (snake_case) to frontend Doctor (camelCase) */
 function normalizeDoctorFromAPI(raw: any): Doctor {
+  const { conditionServices, conditionsAndServices } = normalizeConditionServices(raw);
   return {
     ...raw,
     firstName: raw.first_name ?? raw.firstName ?? '',
     lastName: raw.last_name ?? raw.lastName ?? '',
     fullName: (raw.full_name ?? raw.fullName ?? [raw.first_name ?? raw.firstName, raw.last_name ?? raw.lastName].filter(Boolean).join(' ').trim()) || '',
     practiceId: raw.practice_id ?? raw.practiceId,
+    practiceName: raw.practice_name ?? raw.practiceName,
     roleInPractice: raw.role_in_practice ?? raw.roleInPractice,
     locations: Array.isArray(raw.locations) ? raw.locations : (raw.locations ?? []),
     insurance: Array.isArray(raw.insurance) ? raw.insurance : (raw.insurance ?? []),
+    conditionServices,
+    conditionsAndServices,
     specialties: Array.isArray(raw.specialties) ? raw.specialties : (raw.specialty ? [raw.specialty] : raw.specialties ?? []),
     rating: typeof raw.rating === 'number' ? raw.rating : 0,
     reviewCount: typeof raw.reviewCount === 'number' ? raw.reviewCount : (raw.review_count ?? 0),
@@ -31,6 +52,14 @@ function normalizeDoctorFromAPI(raw: any): Doctor {
     profileStatus: raw.profile_status ?? raw.profileStatus ?? 'active',
     boardCertifications: raw.board_certifications ?? raw.boardCertifications ?? [],
     badgesAwards: raw.badges_awards ?? raw.badgesAwards ?? [],
+    image: raw.profile_image_url ?? raw.image ?? undefined,
+    medicalSchool: raw.medical_school ?? raw.medicalSchool ?? undefined,
+    residency: raw.residency ?? undefined,
+    internship: raw.internship ?? undefined,
+    about: raw.about ?? undefined,
+    phone: raw.phone ?? undefined,
+    website: raw.website ?? raw.personal_website ?? raw.website_url ?? undefined,
+    bookingUrl: raw.booking_url ?? raw.bookingUrl ?? undefined,
   };
 }
 
@@ -72,8 +101,13 @@ export async function getDoctors(
     const queryString = queryParams.toString();
     const endpoint = `/api/doctors${queryString ? `?${queryString}` : ''}`;
 
-    const response = await apiClient.get<DoctorsResponse>(endpoint, token);
-    return response;
+    const response = await apiClient.get<any>(endpoint, token);
+    const rawDoctors = Array.isArray(response.doctors) ? response.doctors : [];
+    const doctors = rawDoctors.map((raw: any) => normalizeDoctorFromAPI(raw));
+    return {
+      doctors,
+      pagination: response.pagination ?? { page: 1, limit: rawDoctors.length, total: doctors.length, totalPages: 1 },
+    };
   } catch (error) {
     const apiError = error as ApiError;
     throw new Error(apiError.error || 'Failed to fetch doctors');

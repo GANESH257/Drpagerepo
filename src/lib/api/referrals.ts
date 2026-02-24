@@ -20,6 +20,8 @@ export interface Referral {
   attended_at?: string;
   from_doctor_name?: string;
   to_doctor_name?: string;
+  from_practice_id?: string;
+  to_practice_id?: string;
 }
 
 /**

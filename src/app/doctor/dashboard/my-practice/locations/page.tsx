@@ -11,6 +11,22 @@ import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 
+function getPracticeId(doctor: any): string | null {
+  const fromDoctor = (doctor as any)?.practice_id ?? doctor?.practiceId;
+  if (fromDoctor) return fromDoctor;
+  if (typeof window === 'undefined') return null;
+  try {
+    const user = localStorage.getItem('aip_doctor_user');
+    if (user) {
+      const parsed = JSON.parse(user) as { practiceId?: string };
+      return parsed.practiceId ?? null;
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 export default function MyPracticeLocationsPage() {
   const router = useRouter();
   const { doctor } = useDoctorContext();
@@ -18,7 +34,7 @@ export default function MyPracticeLocationsPage() {
   const [practiceName, setPracticeName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const practiceId = (doctor as any)?.practice_id ?? doctor?.practiceId;
+  const practiceId = getPracticeId(doctor);
 
   useEffect(() => {
     if (!practiceId) {

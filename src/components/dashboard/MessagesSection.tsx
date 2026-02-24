@@ -136,7 +136,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
   const openConversation = (id: string) => {
     const base = basePath || '/doctor/dashboard/messages';
     const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    router.push(`${cleanBase}/${id}`);
+    router.push(`${cleanBase}?otherDoctorId=${encodeURIComponent(id)}`);
   };
 
   const handleSend = async () => {

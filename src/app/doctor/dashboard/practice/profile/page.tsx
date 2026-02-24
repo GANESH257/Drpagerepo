@@ -1,28 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
+/** Edit Practice Profile: redirect to Practice hub where the Request Edit flow lives. */
 export default function EditPracticeProfilePage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/doctor/dashboard/practice');
+  }, [router]);
   return (
-    <div className="space-y-6">
-      <SectionHeader
-        title="Edit Practice Profile"
-        description="Update the shared details of your practice"
-      />
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-gray-700 mb-4">
-            To edit your practice name, description, contact info, and address, use the Practice Management hub and click &quot;Edit practice details&quot; to submit changes for approval.
-          </p>
-          <Link href="/doctor/dashboard/practice">
-            <Button>Go to Practice Management</Button>
-          </Link>
-        </CardContent>
-      </Card>
+    <div className="flex items-center justify-center min-h-[300px]">
+      <p className="text-gray-600">Redirecting to Practice…</p>
     </div>
   );
 }

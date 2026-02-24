@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, CheckCircle2 } from 'lucide-react';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 export function FeaturedDoctors() {
   const featured = doctors.filter((d) => d.featured).slice(0, 6);
@@ -69,7 +70,7 @@ export function FeaturedDoctors() {
                   {doctor.bio}
                 </p>
                 <Button asChild variant="outline" className="w-full">
-                  <Link href={`/doctors/${doctor.slug}`}>View Profile</Link>
+                  <Link href={getDoctorProfileUrl(doctor)}>View Profile</Link>
                 </Button>
               </CardContent>
             </Card>

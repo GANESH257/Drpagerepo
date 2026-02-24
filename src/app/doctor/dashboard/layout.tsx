@@ -17,7 +17,7 @@ export default function DoctorDashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { getToken, getUser, isAuthenticated, updateSessionDoctorId } = useDoctorSession();
+  const { getToken, getUser, isAuthenticated, updateSessionDoctorId, updateSessionWithDoctorInfo } = useDoctorSession();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +68,8 @@ export default function DoctorDashboardLayout({
         if (!user.doctorId) {
           updateSessionDoctorId(doctorId);
         }
+        // Store practiceId and roleInPractice for API-created doctors (getActorFromSession needs these)
+        updateSessionWithDoctorInfo(loadedDoctor);
         
         setDoctor(loadedDoctor);
         setIsLoading(false);
@@ -142,8 +144,10 @@ export default function DoctorDashboardLayout({
 
   const handleProfileUpdate = (_updatedDoctor: Doctor) => {};
 
+  // Newly approved doctors must ONLY see: Add profile data + Add practice data (2 screens).
+  // Show gate when: profile_status is pending_profile, OR verified is not true (false/undefined).
   const isPendingProfile =
-    doctor.profileStatus === 'pending_profile' || doctor.verified === false;
+    doctor.profileStatus === 'pending_profile' || doctor.verified !== true;
   const isPendingProfilePA = isPendingProfile && doctor.roleInPractice === 'practice_admin';
   const isPendingProfileDoctorOnly = isPendingProfile && doctor.roleInPractice !== 'practice_admin';
 

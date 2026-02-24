@@ -49,11 +49,47 @@ const typeConfig: Record<ApprovalType, {
     variant: 'secondary',
     colorClass: 'bg-teal-100 text-teal-800 border-teal-300',
   },
+  doctor_profile_edit: {
+    label: 'Doctor Profile Edit',
+    icon: FileEdit,
+    variant: 'secondary',
+    colorClass: 'bg-teal-100 text-teal-800 border-teal-300',
+  },
+  practice_admin_profile_edit: {
+    label: 'Practice Admin Profile Edit',
+    icon: FileEdit,
+    variant: 'default',
+    colorClass: 'bg-sky-100 text-sky-800 border-sky-300',
+  },
+  doctor_insurance_edit: {
+    label: 'Doctor Insurance & Services',
+    icon: Shield,
+    variant: 'secondary',
+    colorClass: 'bg-teal-100 text-teal-800 border-teal-300',
+  },
+  practice_admin_insurance_edit: {
+    label: 'Practice Admin Insurance & Services',
+    icon: Shield,
+    variant: 'default',
+    colorClass: 'bg-sky-100 text-sky-800 border-sky-300',
+  },
   practice_edit_request: {
     label: 'Practice Edit Request',
     icon: Edit,
     variant: 'outline',
     colorClass: 'bg-purple-100 text-purple-800 border-purple-300',
+  },
+  practice_admin_practice_profile_edit: {
+    label: 'Practice Profile Edit',
+    icon: Edit,
+    variant: 'default',
+    colorClass: 'bg-sky-100 text-sky-800 border-sky-300',
+  },
+  practice_admin_practice_locations_edit: {
+    label: 'Practice Locations Edit',
+    icon: MapPin,
+    variant: 'default',
+    colorClass: 'bg-sky-100 text-sky-800 border-sky-300',
   },
   practice_doctor_add_request: {
     label: 'Add Doctor to Practice',

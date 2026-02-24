@@ -45,34 +45,36 @@ export function getActorFromSession(): Actor {
 
   // Check doctor session
   try {
+    // Prefer aip_doctor_user (has practiceId, roleInPractice from API when layout loads doctor)
+    const userData = localStorage.getItem('aip_doctor_user');
     const sessionData = localStorage.getItem('aip_doctor_session');
-    if (sessionData) {
-      const session = JSON.parse(sessionData) as {
-        email: string;
-        role: string;
-        doctorId?: string;
-        loginAt: string;
-      };
+    const session = sessionData ? (JSON.parse(sessionData) as { email: string; role: string; doctorId?: string; loginAt: string }) : null;
+    const user = userData ? (JSON.parse(userData) as { email: string; role: string; doctorId?: string; practiceId?: string; roleInPractice?: 'doctor' | 'practice_admin' }) : null;
 
+    const effectiveSession = user ?? session;
+    if (effectiveSession) {
       // Require role doctor so we don't treat applicants as doctors
-      if (session.role !== 'doctor') {
+      if (effectiveSession.role !== 'doctor') {
         return { kind: 'public' };
       }
 
-      // If doctorId already in session, use it (session is source of truth for API-created doctors)
-      if (session.doctorId) {
-        const doctor = doctors.find((d) => d.id === session.doctorId);
+      // If doctorId in session/user, use it (session is source of truth for API-created doctors)
+      const doctorId = effectiveSession.doctorId ?? (session?.doctorId);
+      if (doctorId) {
+        // Prefer practiceId/roleInPractice from user (set when layout loads doctor from API)
+        const practiceId = user?.practiceId ?? doctors.find((d) => d.id === doctorId)?.practiceId;
+        const roleInPractice = user?.roleInPractice ?? doctors.find((d) => d.id === doctorId)?.roleInPractice;
         return {
           kind: 'doctor',
-          doctorId: session.doctorId,
-          email: session.email,
-          practiceId: doctor?.practiceId,
-          roleInPractice: doctor?.roleInPractice,
+          doctorId,
+          email: effectiveSession.email,
+          practiceId,
+          roleInPractice,
         };
       }
 
       // Otherwise, resolve doctorId from email (for legacy/static doctors)
-      const normalizedEmail = normalizeEmail(session.email);
+      const normalizedEmail = normalizeEmail(effectiveSession.email);
       if (normalizedEmail) {
         const doctor = doctors.find(
           (d) => d.email && normalizeEmail(d.email) === normalizedEmail
@@ -81,7 +83,7 @@ export function getActorFromSession(): Actor {
           return {
             kind: 'doctor',
             doctorId: doctor.id,
-            email: session.email,
+            email: effectiveSession.email,
             practiceId: doctor.practiceId,
             roleInPractice: doctor.roleInPractice,
           };

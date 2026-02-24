@@ -5,8 +5,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Practice } from '@/types/practice';
-import { Doctor } from '@/types';
-import { getPracticeBySlug, getDoctorsForPractice } from '@/lib/services/practiceDirectoryService';
+import { Doctor, ConditionServiceRow } from '@/types';
+import { getPracticeBySlug, getPracticeById, getDoctorsForPractice } from '@/lib/services/practiceDirectoryService';
 import { DoctorMiniCard } from '@/components/public/practices/DoctorMiniCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,10 @@ import {
 } from 'lucide-react';
 
 interface PracticeProfileClientProps {
-  slug: string;
+  /** Load practice by slug (from URL or API) */
+  slug?: string;
+  /** When provided, load practice by ID (e.g. from ?id= in URL); used when slug is not in URL */
+  practiceId?: string;
 }
 
 /**
@@ -34,27 +37,57 @@ interface PracticeProfileClientProps {
  */
 function deriveSpecialtiesFromDoctors(doctors: Doctor[]): string[] {
   const specialtiesSet = new Set<string>();
-  
   doctors.forEach(doctor => {
-    // Add primary specialty
-    if (doctor.specialty && doctor.specialty.trim()) {
-      specialtiesSet.add(doctor.specialty.trim());
-    }
-    // Add all specialties array
+    if (doctor.specialty && doctor.specialty.trim()) specialtiesSet.add(doctor.specialty.trim());
     if (doctor.specialties && Array.isArray(doctor.specialties)) {
-      doctor.specialties.forEach(spec => {
-        if (spec && spec.trim()) {
-          specialtiesSet.add(spec.trim());
-        }
-      });
+      doctor.specialties.forEach(spec => { if (spec && spec.trim()) specialtiesSet.add(spec.trim()); });
     }
   });
-  
-  // Return sorted array
   return Array.from(specialtiesSet).sort();
 }
 
-export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
+/** Combined insurance from all doctors (dedupe by name) */
+function combinedInsuranceFromDoctors(doctors: Doctor[]): { name: string; slug: string }[] {
+  const byName = new Map<string, string>();
+  doctors.forEach(doctor => {
+    (doctor.insurance ?? []).forEach(ins => {
+      if (ins.name && ins.name.trim()) {
+        const name = ins.name.trim();
+        if (!byName.has(name)) byName.set(name, (ins.slug || name.toLowerCase().replace(/\s+/g, '-')));
+      }
+    });
+  });
+  return Array.from(byName.entries()).map(([name, slug]) => ({ name, slug }));
+}
+
+/** Combined condition-services from all doctors: merge same condition, dedupe services */
+function combinedConditionServicesFromDoctors(doctors: Doctor[]): ConditionServiceRow[] {
+  const byCondition = new Map<string, Set<string>>();
+  doctors.forEach(doctor => {
+    const rows = doctor.conditionServices ?? [];
+    if (rows.length > 0) {
+      rows.forEach(row => {
+        const cond = (row.condition || '').trim();
+        if (!cond && !(row.services && row.services.length > 0)) return;
+        const key = cond || '\u200b'; // empty condition → keyed as one row
+        if (!byCondition.has(key)) byCondition.set(key, new Set());
+        (row.services ?? []).forEach(s => { if (s && s.trim()) byCondition.get(key)!.add(s.trim()); });
+      });
+    } else {
+      (doctor.conditionsAndServices ?? []).forEach(s => {
+        const t = (s || '').trim();
+        if (!t) return;
+        if (!byCondition.has(t)) byCondition.set(t, new Set());
+      });
+    }
+  });
+  return Array.from(byCondition.entries()).map(([condition, services]) => ({
+    condition: condition === '\u200b' ? '' : condition,
+    services: Array.from(services),
+  }));
+}
+
+export function PracticeProfileClient({ slug, practiceId }: PracticeProfileClientProps) {
   const [practice, setPractice] = useState<Practice | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [derivedSpecialties, setDerivedSpecialties] = useState<string[]>([]);
@@ -62,8 +95,11 @@ export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
 
   useEffect(() => {
     async function loadPracticeData() {
-      // Load practice
-      const practiceData = await getPracticeBySlug(slug);
+      const practiceData = practiceId
+        ? await getPracticeById(practiceId)
+        : slug
+          ? await getPracticeBySlug(slug)
+          : null;
       if (!practiceData) {
         setLoading(false);
         return;
@@ -71,20 +107,18 @@ export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
 
       setPractice(practiceData);
 
-      // Load doctors for this practice
       const practiceDoctors = await getDoctorsForPractice(practiceData.id);
       setDoctors(practiceDoctors);
 
-      // Derive specialties from doctors
       const specialties = practiceDoctors.length > 0
         ? deriveSpecialtiesFromDoctors(practiceDoctors)
-        : (practiceData.specialties || []); // Fallback to practice.specialties
+        : (practiceData.specialties || []);
       setDerivedSpecialties(specialties);
 
       setLoading(false);
     }
     loadPracticeData();
-  }, [slug]);
+  }, [slug, practiceId]);
 
   if (loading) {
     return (
@@ -107,9 +141,21 @@ export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Back link */}
+      <div className="container mx-auto px-4 pt-24 pb-2">
+        <div className="max-w-6xl mx-auto">
+          <Link
+            href="/practices"
+            className="inline-flex items-center text-sm text-brand-teal hover:underline font-medium"
+          >
+            ← Back to Find Practices
+          </Link>
+        </div>
+      </div>
+
       {/* Hero Header */}
       <div className="bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue-alt to-brand-dark-blue/90 text-white">
-        <div className="container mx-auto px-4 pt-32 pb-16">
+        <div className="container mx-auto px-4 pt-8 pb-16">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">{practice.name}</h1>
             <div className="flex flex-wrap items-center gap-4 text-lg mb-4">
@@ -288,26 +334,88 @@ export function PracticeProfileClient({ slug }: PracticeProfileClientProps) {
                 </Card>
               )}
 
-              {/* Insurance */}
-              {practice.insurance && practice.insurance.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-brand-teal" />
-                      Accepted Insurance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {practice.insurance.map((ins) => (
-                        <Badge key={ins.slug} variant="secondary" className="text-sm">
-                          {ins.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Accepted Insurance — practice + combined from doctors */}
+              {(() => {
+                const practiceIns = practice.insurance ?? [];
+                const fromDoctors = combinedInsuranceFromDoctors(doctors);
+                const practiceNames = new Set(practiceIns.map((i) => i.name.trim()));
+                const extraFromDoctors = fromDoctors.filter((d) => !practiceNames.has(d.name));
+                const hasAny = practiceIns.length > 0 || extraFromDoctors.length > 0;
+                if (!hasAny) return null;
+                return (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-brand-teal" />
+                        Accepted Insurance
+                      </CardTitle>
+                      <CardDescription>
+                        {practiceIns.length > 0 && extraFromDoctors.length > 0
+                          ? 'Practice and plans accepted by our physicians'
+                          : practiceIns.length > 0
+                            ? 'Insurance plans accepted at this practice'
+                            : 'Insurance plans accepted by our physicians'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {practiceIns.map((ins) => (
+                          <Badge key={ins.slug || ins.name} variant="secondary" className="text-sm">
+                            {ins.name}
+                          </Badge>
+                        ))}
+                        {extraFromDoctors.map((ins) => (
+                          <Badge key={ins.slug} variant="outline" className="text-sm">
+                            {ins.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
+              {/* Conditions & services — combined from doctors */}
+              {doctors.length > 0 && (() => {
+                const combined = combinedConditionServicesFromDoctors(doctors);
+                const hasRows = combined.some((r) => r.condition || (r.services && r.services.length > 0));
+                if (!hasRows) return null;
+                return (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Stethoscope className="h-5 w-5 text-brand-teal" />
+                        Conditions & Services
+                      </CardTitle>
+                      <CardDescription>
+                        Conditions treated and services offered by our physicians
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-md border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="bg-muted/50 border-b">
+                              <th className="text-left font-medium p-3 w-[40%]">Condition</th>
+                              <th className="text-left font-medium p-3">Treatments / Services</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {combined.map((row, i) => (
+                              <tr key={i} className="border-b last:border-b-0">
+                                <td className="p-3 text-gray-700">{row.condition || '—'}</td>
+                                <td className="p-3 text-gray-600">
+                                  {row.services && row.services.length > 0 ? row.services.join(', ') : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
 
               {/* Doctor Roster */}
               {doctors.length > 0 && (

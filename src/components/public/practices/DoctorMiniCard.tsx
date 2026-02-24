@@ -7,9 +7,10 @@ import { Doctor } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GraduationCap, Shield, MapPin, CheckCircle2, Calendar, MessageCircle } from 'lucide-react';
+import { GraduationCap, Shield, MapPin, CheckCircle2, Calendar, MessageCircle, User } from 'lucide-react';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getAdminSession } from '@/lib/adminSession';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 interface DoctorMiniCardProps {
   doctor: Doctor;
@@ -46,25 +47,8 @@ export function DoctorMiniCard({ doctor }: DoctorMiniCardProps) {
     };
   }, [isAuthenticated]);
 
-  // Generate doctor image URL
-  const generateDoctorImage = (doctor: Doctor): string => {
-    if (doctor.image) return doctor.image;
-    
-    // Create a hash from doctor's name for consistent image
-    let hash = 0;
-    const name = doctor.fullName.toLowerCase();
-    for (let i = 0; i < name.length; i++) {
-      hash = ((hash << 5) - hash) + name.charCodeAt(i);
-      hash = hash & hash;
-    }
-    
-    const photoId = Math.abs(hash % 100);
-    const gender = Math.abs(hash) % 2 === 0 ? 'men' : 'women';
-    return `https://randomuser.me/api/portraits/${gender}/${photoId}.jpg`;
-  };
-  
-  const imageUrl = generateDoctorImage(doctor);
-  const fallbackImageUrl = `https://i.pravatar.cc/300?img=${Math.abs(doctor.id.charCodeAt(0) % 70)}`;
+  // Only use image from DB/API; no placeholder/random images
+  const imageUrl = doctor.image && !imageError ? doctor.image : null;
 
   // Get earliest available slot
   const earliestSlot = doctor.availability
@@ -83,16 +67,20 @@ export function DoctorMiniCard({ doctor }: DoctorMiniCardProps) {
   return (
     <Card className="h-full card-vibrant focus-ring group flex flex-col hover:shadow-lg transition-shadow">
       <CardHeader className="p-0 flex flex-col flex-1 min-h-0">
-        {/* Doctor Image */}
-        <div className="relative w-full h-48 sm:h-52 bg-gray-100 overflow-hidden rounded-t-xl flex-shrink-0">
-          <Image
-            src={imageError ? fallbackImageUrl : imageUrl}
-            alt={doctor.fullName}
-            fill
-            className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
-            unoptimized
-            onError={() => setImageError(true)}
-          />
+        {/* Doctor Image: only from DB/API; otherwise neutral placeholder */}
+        <div className="relative w-full h-48 sm:h-52 bg-muted overflow-hidden rounded-t-xl flex-shrink-0 flex items-center justify-center">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={doctor.fullName}
+              fill
+              className="object-cover object-center group-hover:scale-110 transition-transform duration-500"
+              unoptimized
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <User className="h-24 w-24 text-muted-foreground/50" aria-hidden />
+          )}
           {doctor.roleInPractice === 'practice_admin' && (
             <Badge variant="vibrant" className="absolute top-3 right-3 px-2 py-1 text-xs font-semibold">
               <Shield className="h-3 w-3 mr-1" />
@@ -198,7 +186,7 @@ export function DoctorMiniCard({ doctor }: DoctorMiniCardProps) {
               className="w-full text-sm border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
               size="sm"
             >
-              <Link href={isAdminLoggedIn ? `/admin/announcements?doctorId=${doctor.id}` : `/doctor/dashboard/messages/${doctor.id}`}>
+              <Link href={isAdminLoggedIn ? `/admin/announcements?doctorId=${doctor.id}` : `/doctor/dashboard/messages?otherDoctorId=${encodeURIComponent(doctor.id)}`}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Message
               </Link>
@@ -210,7 +198,7 @@ export function DoctorMiniCard({ doctor }: DoctorMiniCardProps) {
             className="w-full text-sm"
             size="sm"
           >
-            <Link href={`/doctors/${doctor.slug}`}>View Profile</Link>
+            <Link href={getDoctorProfileUrl(doctor)}>View Profile</Link>
           </Button>
         </div>
       </CardContent>

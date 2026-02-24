@@ -25,6 +25,8 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
+import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
 
 export default function ReferralsV2Page() {
   const router = useRouter();
@@ -70,10 +72,13 @@ export default function ReferralsV2Page() {
     updatedAt: r.updated_at ?? r.updatedAt ?? '',
     fromDoctorId: r.from_doctor_id ?? r.fromDoctorId ?? '',
     toDoctorId: r.to_doctor_id ?? r.toDoctorId ?? '',
-    patient: { name: r.patient_name_or_initials ?? r.patient?.name },
+    patient: {
+      name: r.patient_name_or_initials ?? r.patient?.name,
+      sex: (r.patient_sex ?? r.patient?.sex) as 'male' | 'female' | 'other' | undefined,
+    },
     condition: r.condition_summary ?? r.condition ?? '',
     notes: r.notes,
-    status: (r.status?.toLowerCase() === 'attended' ? 'attended' : r.status?.toLowerCase() === 'removed' ? 'removed' : 'new') as ReferralStatus,
+    status: normalizeReferralStatus(r.status),
   });
 
   const loadReferralsAndDoctors = useCallback(async () => {
@@ -138,7 +143,7 @@ export default function ReferralsV2Page() {
         try {
           const actor = getActorFromSession();
           if (actor.kind === 'doctor') {
-            const history = getReferralTimeline(actor, referral.id);
+            const history = getReferralTimeline(actor, referral.id, referral);
             setTimeline(history);
           }
         } catch (error) {
@@ -162,13 +167,13 @@ export default function ReferralsV2Page() {
       }
 
       await updateReferralAPI(referralId, { status: newStatus });
-      toast.success(`Referral marked as ${newStatus}`);
+      toast.success(`Referral marked as ${getReferralStatusLabel(newStatus)}`);
       await loadReferralsAndDoctors();
 
       // Reload timeline if dialog is open for this referral
       if (selectedReferral?.id === referralId && showDetailDialog) {
         try {
-          const history = getReferralTimeline(actor, referralId);
+          const history = getReferralTimeline(actor, referralId, selectedReferral);
           setTimeline(history);
         } catch (error) {
           console.error('Failed to reload timeline:', error);
@@ -184,7 +189,8 @@ export default function ReferralsV2Page() {
     try {
       const actor = getActorFromSession();
       if (actor.kind === 'doctor') {
-        const history = getReferralTimeline(actor, referral.id);
+        // Pass referral so timeline works for API-sourced referrals (not in localStorage)
+        const history = getReferralTimeline(actor, referral.id, referral);
         setTimeline(history);
       }
     } catch (error) {
@@ -195,9 +201,10 @@ export default function ReferralsV2Page() {
 
   const getStatusBadge = (status: ReferralStatus) => {
     const variants: Record<ReferralStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      new: 'outline',
-      attended: 'default',
-      removed: 'destructive',
+      considering: 'outline',
+      accepted: 'default',
+      no_show: 'secondary',
+      cancelled: 'destructive',
     };
     return variants[status];
   };
@@ -313,7 +320,7 @@ export default function ReferralsV2Page() {
                     filteredDoctors.map((doc) => {
                       const displayName = doc.fullName ?? (doc as any).full_name ?? '—';
                       const displaySpecialty = doc.specialty ?? (doc as any).specialties?.[0] ?? '—';
-                      const profileHref = `/doctors/${doc.slug || doc.id}`;
+                      const profileHref = getDoctorProfileUrl(doc);
                       return (
                         <div key={doc.id} className="group relative flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-brand-teal/50 hover:bg-brand-teal/5">
                           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-brand-dark-blue/10 text-brand-dark-blue text-lg font-bold">
@@ -368,7 +375,7 @@ export default function ReferralsV2Page() {
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold">From: {getDoctorName(referral.fromDoctorId)}</h3>
                         <Badge variant={getStatusBadge(referral.status)}>
-                          {referral.status}
+                          {getReferralStatusLabel(referral.status)}
                         </Badge>
                       </div>
                       <p className="text-gray-700 mb-1">
@@ -397,7 +404,7 @@ export default function ReferralsV2Page() {
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Button>
-                      {referral.status === 'new' && (
+                      {referral.status === 'considering' && (
                         <Select
                           value={referral.status}
                           onValueChange={(value) => handleStatusChange(referral.id, value as ReferralStatus)}
@@ -406,16 +413,22 @@ export default function ReferralsV2Page() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="attended">
+                            <SelectItem value="accepted">
                               <div className="flex items-center">
                                 <CheckCircle className="h-4 w-4 mr-2" />
-                                Mark Attended
+                                Accepted
                               </div>
                             </SelectItem>
-                            <SelectItem value="removed">
+                            <SelectItem value="no_show">
                               <div className="flex items-center">
                                 <XCircle className="h-4 w-4 mr-2" />
-                                Mark Removed
+                                No Show
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="cancelled">
+                              <div className="flex items-center">
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Cancelled
                               </div>
                             </SelectItem>
                           </SelectContent>
@@ -445,7 +458,7 @@ export default function ReferralsV2Page() {
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold">To: {getDoctorName(referral.toDoctorId)}</h3>
                         <Badge variant={getStatusBadge(referral.status)}>
-                          {referral.status}
+                          {getReferralStatusLabel(referral.status)}
                         </Badge>
                       </div>
                       <p className="text-gray-700 mb-1">
@@ -527,7 +540,7 @@ export default function ReferralsV2Page() {
               <div>
                 <h4 className="font-semibold mb-2">Status</h4>
                 <Badge variant={getStatusBadge(selectedReferral.status)}>
-                  {selectedReferral.status}
+                  {getReferralStatusLabel(selectedReferral.status)}
                 </Badge>
               </div>
               <div>

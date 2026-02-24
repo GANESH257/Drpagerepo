@@ -22,13 +22,14 @@ import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { formatDateTime } from '@/lib/dateUtils';
+import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
 
 export function ReferralsTable() {
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [practices, setPractices] = useState<Practice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'attended' | 'removed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | Referral['status']>('all');
   const [doctorFilter, setDoctorFilter] = useState<string>('all');
   const [practiceFilter, setPracticeFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
@@ -55,13 +56,15 @@ export function ReferralsTable() {
         updatedAt: r.updated_at,
         fromDoctorId: r.from_doctor_id,
         toDoctorId: r.to_doctor_id,
+        fromPracticeId: r.from_practice_id,
+        toPracticeId: r.to_practice_id,
         patient: {
           name: r.patient_name_or_initials,
           sex: r.patient_sex as 'male' | 'female' | 'other' | undefined,
         },
         condition: r.condition_summary,
         notes: r.notes,
-        status: r.status as 'new' | 'attended' | 'removed',
+        status: normalizeReferralStatus(r.status),
       }));
 
       setReferrals(transformedReferrals);
@@ -125,14 +128,16 @@ export function ReferralsTable() {
 
   const getStatusBadge = (status: Referral['status']) => {
     switch (status) {
-      case 'new':
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">New</Badge>;
-      case 'attended':
-        return <Badge className="bg-green-100 text-green-700 border-green-300">Attended</Badge>;
-      case 'removed':
-        return <Badge variant="destructive">Removed</Badge>;
+      case 'considering':
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-300">{getReferralStatusLabel(status)}</Badge>;
+      case 'accepted':
+        return <Badge className="bg-green-100 text-green-700 border-green-300">{getReferralStatusLabel(status)}</Badge>;
+      case 'no_show':
+        return <Badge className="bg-amber-100 text-amber-700 border-amber-300">{getReferralStatusLabel(status)}</Badge>;
+      case 'cancelled':
+        return <Badge variant="destructive">{getReferralStatusLabel(status)}</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{status ? getReferralStatusLabel(status as Referral['status']) : status}</Badge>;
     }
   };
 
@@ -182,9 +187,10 @@ export function ReferralsTable() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="new">New</SelectItem>
-                    <SelectItem value="attended">Attended</SelectItem>
-                    <SelectItem value="removed">Removed</SelectItem>
+                    <SelectItem value="considering">Considering</SelectItem>
+                    <SelectItem value="accepted">Accepted</SelectItem>
+                    <SelectItem value="no_show">No Show</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

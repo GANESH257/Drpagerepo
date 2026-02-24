@@ -4,3 +4,6 @@ dist
 *.log
 .DS_Store
 uploads
+
+# GCS service account key (never commit)
+config/*.json

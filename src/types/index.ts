@@ -36,6 +36,12 @@ export interface CertificationItem {
   year?: string;
 }
 
+/** One row in Conditions & Services: a condition and the treatments/services offered for it */
+export interface ConditionServiceRow {
+  condition: string;
+  services: string[];
+}
+
 export interface Doctor {
   id: string;
   slug: string;
@@ -49,6 +55,7 @@ export interface Doctor {
   about?: string; // Long biographical text for profile page
   image?: string;
   email?: string; // Email address for dashboard login
+  phone?: string; // Contact phone
   locations: Location[];
   insurance: Insurance[];
   rating: number;
@@ -58,7 +65,10 @@ export interface Doctor {
   verified: boolean;
   availability: BookingSlot[];
   acceptsNewPatients: boolean;
+  /** Legacy: flat list of condition/service strings. Prefer conditionServices when available. */
   conditionsAndServices?: string[];
+  /** Condition → treatments/services (two-column). Each row: one condition, multiple services. */
+  conditionServices?: ConditionServiceRow[];
   // Professional Credentials
   hospitalPrivileges?: string[];
   medicalSchool?: string;
@@ -73,9 +83,11 @@ export interface Doctor {
   bookingUrl?: string; // Direct booking/contact page URL
   institutionId?: string; // FK to Institution (backward compatibility)
   practiceId?: string; // FK to Practice (V2)
+  practiceName?: string; // Practice name (from API join)
   roleInPractice?: 'doctor' | 'practice_admin'; // Role within practice (V2)
   npi?: string; // National Provider Identifier (10-digit)
   profileStatus?: string; // 'active' | 'pending_profile'
+  status?: string; // 'active' | 'inactive' (admin portal)
 }
 
 /**

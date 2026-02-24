@@ -11,6 +11,16 @@ const TYPES_REQUIRING_PRACTICE_ADMIN = [
   'practice_location_remove_request', 'practice_location_change_request', 'practice_insurance_services_change_request',
 ];
 
+/** Profile edit: only practice admin can approve (doctor's edit). Admin may also approve. */
+const PA_APPROVAL_ONLY_TYPES = ['doctor_profile_edit', 'doctor_insurance_edit'];
+/** Profile edit / insurance / practice profile / practice locations: only admin can approve (practice admin's edit). */
+const ADMIN_APPROVAL_ONLY_TYPES = [
+  'practice_admin_profile_edit',
+  'practice_admin_insurance_edit',
+  'practice_admin_practice_profile_edit',
+  'practice_admin_practice_locations_edit',
+];
+
 /**
  * GET /api/approval-requests
  * Get approval requests with filters
@@ -59,8 +69,9 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
         type NOT IN (${practiceAdminTypesList})
         OR practice_admin_status = 'approved'
       )`;
-    } else if (userRole === 'practice_admin') {
-      // Practice admin sees only their practice's requests
+    } else if (userRole === 'practice_admin' || userRole === 'doctor') {
+      // Practice admin sees their practice's requests. JWT has role='doctor' for all doctors;
+      // check if this doctor is a PA for any practice and use PA filter if so.
       const practiceAdminResult = await pool.query(
         `SELECT practice_id FROM practice_roles 
          WHERE doctor_id IN (SELECT id FROM doctors WHERE user_id = $1) 
@@ -73,11 +84,16 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
         paramCount++;
         query += ` AND practice_id = ANY($${paramCount})`;
         params.push(practiceIds);
-      } else {
+      } else if (userRole === 'practice_admin') {
         return res.json([]);
+      } else {
+        // Doctor but not PA: only their own submitted requests
+        paramCount++;
+        query += ` AND requested_by = $${paramCount}`;
+        params.push(userId);
       }
     } else {
-      // Regular users see only their own requests
+      // Applicant/public: only their own requests
       paramCount++;
       query += ` AND requested_by = $${paramCount}`;
       params.push(userId);
@@ -164,7 +180,8 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
 
 /**
  * POST /api/approval-requests
- * Create new approval request
+ * Create new approval request.
+ * For profile completion types: overwrites any existing PENDING request for same doctor/practice.
  */
 router.post('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
@@ -175,7 +192,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     const userId = req.userId;
-    const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const practiceId = practice_id || payload?.practiceId || null;
+    const doctorId = target_doctor_id || payload?.doctorId || null;
 
     // Determine requested_by_type
     let requested_by_type = 'applicant';
@@ -185,6 +203,57 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
       requested_by_type = 'practice_admin';
     }
 
+    // Overwrite: for profile completion and profile edit types, replace existing PENDING request with new submission
+    const OVERWRITE_TYPES_DOCTOR = [
+      'practice_admin_profile_practice_completion',
+      'doctor_profile_completion',
+      'doctor_profile_edit',
+      'doctor_insurance_edit',
+      'practice_admin_profile_edit',
+    ];
+    const OVERWRITE_TYPES_PRACTICE = ['practice_admin_practice_profile_edit', 'practice_admin_practice_locations_edit'];
+
+    if (OVERWRITE_TYPES_DOCTOR.includes(type) && doctorId) {
+      let existingQuery = `SELECT id FROM approval_requests WHERE type = $1 AND admin_status = 'pending' AND requested_by = $2 AND target_doctor_id = $3`;
+      const existingParams: any[] = [type, userId, doctorId];
+      let p = 4;
+      if (type === 'practice_admin_profile_practice_completion' && practiceId) {
+        existingQuery += ` AND practice_id = $${p}`;
+        existingParams.push(practiceId);
+        p++;
+      }
+      if (type === 'doctor_profile_edit' || type === 'doctor_insurance_edit') {
+        existingQuery += ` AND practice_admin_status = 'pending'`;
+      }
+      existingQuery += ` ORDER BY created_at DESC LIMIT 1`;
+
+      const existingResult = await pool.query(existingQuery, existingParams);
+      if (existingResult.rows.length > 0) {
+        const existingId = existingResult.rows[0].id;
+        const updateResult = await pool.query(
+          `UPDATE approval_requests SET payload = $1, practice_id = COALESCE($2, practice_id), target_doctor_id = COALESCE($3, target_doctor_id), updated_at = NOW() WHERE id = $4 RETURNING *`,
+          [JSON.stringify(payload), practiceId, doctorId, existingId]
+        );
+        return res.status(200).json(updateResult.rows[0]);
+      }
+    }
+
+    if (OVERWRITE_TYPES_PRACTICE.includes(type) && practiceId) {
+      const existingResult = await pool.query(
+        `SELECT id FROM approval_requests WHERE type = $1 AND admin_status = 'pending' AND requested_by = $2 AND practice_id = $3 ORDER BY created_at DESC LIMIT 1`,
+        [type, userId, practiceId]
+      );
+      if (existingResult.rows.length > 0) {
+        const existingId = existingResult.rows[0].id;
+        const updateResult = await pool.query(
+          `UPDATE approval_requests SET payload = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+          [JSON.stringify(payload), existingId]
+        );
+        return res.status(200).json(updateResult.rows[0]);
+      }
+    }
+
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const result = await pool.query(
       `INSERT INTO approval_requests (
         id, type, requested_by, requested_by_type, practice_id, target_doctor_id, payload
@@ -195,8 +264,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res) => {
         type,
         userId,
         requested_by_type,
-        practice_id || null,
-        target_doctor_id || null,
+        practiceId,
+        doctorId,
         JSON.stringify(payload),
       ]
     );
@@ -264,13 +333,9 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
  */
 router.post('/:id/approve', authenticateToken, async (req: AuthRequest, res) => {
   const { notes } = req.body;
-  const userRole = req.userRole;
+  let userRole = req.userRole;
   const userId = req.userId;
   const requestId = req.params.id;
-
-  if (userRole !== 'admin' && userRole !== 'practice_admin') {
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
 
   // 1) Load current request (read-only)
   const requestResult = await pool.query(
@@ -282,6 +347,21 @@ router.post('/:id/approve', authenticateToken, async (req: AuthRequest, res) => 
   }
   const request = requestResult.rows[0];
 
+  // JWT has role='doctor' for all doctors; if this doctor is PA for the request's practice, treat as practice_admin
+  if (userRole === 'doctor' && request.practice_id) {
+    const paCheck = await pool.query(
+      `SELECT 1 FROM practice_roles 
+       WHERE doctor_id IN (SELECT id FROM doctors WHERE user_id = $1) 
+       AND role = 'practice_admin' AND practice_id = $2`,
+      [userId, request.practice_id]
+    );
+    if (paCheck.rows.length > 0) userRole = 'practice_admin';
+  }
+
+  if (userRole !== 'admin' && userRole !== 'practice_admin') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
   if (userRole === 'practice_admin') {
     const practiceAdminCheck = await pool.query(
       `SELECT practice_id FROM practice_roles 
@@ -292,6 +372,14 @@ router.post('/:id/approve', authenticateToken, async (req: AuthRequest, res) => 
     if (practiceAdminCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Not authorized for this practice' });
     }
+  }
+
+  // Restrict approver by type: practice_admin_profile_edit = admin only; doctor_profile_edit = PA or admin
+  if (ADMIN_APPROVAL_ONLY_TYPES.includes(request.type) && userRole !== 'admin') {
+    return res.status(403).json({ error: 'Only system admin can approve this request' });
+  }
+  if (PA_APPROVAL_ONLY_TYPES.includes(request.type) && userRole !== 'practice_admin' && userRole !== 'admin') {
+    return res.status(403).json({ error: 'Only practice admin (or system admin) can approve this request' });
   }
 
   // Admin can only approve after practice admin has approved (for types that require it)
@@ -341,8 +429,8 @@ router.post('/:id/approve', authenticateToken, async (req: AuthRequest, res) => 
   try {
     await pool.query(
       `INSERT INTO approval_history (
-        id, approval_request_id, action, performed_by, performed_by_type, actor_id, actor_type, notes
-      ) VALUES ($1, $2, 'approved', $3, $4, $3, $4, $5)`,
+        id, approval_request_id, action, performed_by, performed_by_type, notes
+      ) VALUES ($1, $2, 'approved', $3, $4, $5)`,
       [historyId, requestId, userId, userRole, notes || null]
     );
   } catch (historyErr) {
@@ -352,8 +440,10 @@ router.post('/:id/approve', authenticateToken, async (req: AuthRequest, res) => 
 
   const payload = typeof savedRow.payload === 'string' ? JSON.parse(savedRow.payload) : savedRow.payload;
   const needsPracticeAdmin = TYPES_REQUIRING_PRACTICE_ADMIN.includes(savedRow.type);
-  const bothApproved = savedRow.admin_status === 'approved' &&
-    (!needsPracticeAdmin || savedRow.practice_admin_status === 'approved');
+  const adminOnlyApproved = ADMIN_APPROVAL_ONLY_TYPES.includes(savedRow.type) && savedRow.admin_status === 'approved';
+  const paOnlyApproved = PA_APPROVAL_ONLY_TYPES.includes(savedRow.type) && (savedRow.practice_admin_status === 'approved' || savedRow.admin_status === 'approved');
+  const bothApproved = adminOnlyApproved || paOnlyApproved || (savedRow.admin_status === 'approved' &&
+    (!needsPracticeAdmin || savedRow.practice_admin_status === 'approved'));
 
   let sideEffectsApplied = false;
   let sideEffectsError: string | undefined;
@@ -544,11 +634,13 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
       const doctorSlug = `${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${doctorId.slice(-8)}`;
       console.log('[Approval setup] Creating doctor:', doctorId, 'for user:', user.id);
       const npiVal = doctorData.npi && /^\d{10}$/.test(String(doctorData.npi).trim()) ? String(doctorData.npi).trim() : null;
+      // CRITICAL: verified=false and profile_status='pending_profile' so newly approved doctors
+      // see ONLY the 2-screen flow (profile + practice) until they complete and admin approves.
       await client.query(
         `INSERT INTO doctors (
           id, user_id, practice_id, slug, first_name, last_name, full_name, credentials, specialty, phone, email,
           npi, verified, profile_status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false, 'pending_profile', NOW(), NOW())`,
         [
           doctorId,
           user.id,
@@ -562,8 +654,6 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
           doctorData.phone || null,
           user.email,
           npiVal,
-          false,
-          'pending_profile',
         ]
       );
 
@@ -721,6 +811,55 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
         doc.npi ?? null, JSON.stringify(doc.badgesAwards ?? []), doctorId,
       ]
     );
+  } else if (request.type === 'doctor_profile_edit' || request.type === 'practice_admin_profile_edit') {
+    const doctorId = payload.doctorId || request.target_doctor_id;
+    if (!doctorId) throw new Error('doctorId required for profile edit');
+    const doc = payload.doctor || {};
+    await client.query(
+      `UPDATE doctors SET
+        first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name), full_name = COALESCE($3, full_name),
+        credentials = COALESCE($4, credentials), specialty = COALESCE($5, specialty), profile_image_url = COALESCE($6, profile_image_url),
+        bio = COALESCE($7, bio), about = COALESCE($8, about), phone = COALESCE($9, phone), website = COALESCE($10, website),
+        medical_school = COALESCE($11, medical_school), residency = COALESCE($12, residency), internship = COALESCE($13, internship),
+        board_certifications = COALESCE($14, board_certifications), hospital_privileges = COALESCE($15, hospital_privileges),
+        states_licensed_in = COALESCE($16, states_licensed_in), npi = COALESCE($17, npi),
+        badges_awards = COALESCE($18, badges_awards), updated_at = NOW()
+       WHERE id = $19`,
+      [
+        doc.firstName ?? null, doc.lastName ?? null, doc.fullName ?? null, doc.credentials ?? null, doc.specialty ?? null, doc.profileImageUrl ?? null,
+        doc.bio ?? null, doc.about ?? null, doc.phone ?? null, doc.website ?? null,
+        doc.medicalSchool ?? null, doc.residency ?? null, doc.internship ?? null,
+        JSON.stringify(doc.boardCertifications ?? []), JSON.stringify(doc.hospitalPrivileges ?? []), JSON.stringify(doc.statesLicensedIn ?? []),
+        doc.npi ?? null, JSON.stringify(doc.badgesAwards ?? []), doctorId,
+      ]
+    );
+  } else if (request.type === 'doctor_insurance_edit' || request.type === 'practice_admin_insurance_edit') {
+    const doctorId = payload.doctorId || request.target_doctor_id;
+    if (!doctorId) throw new Error('doctorId required for insurance edit');
+    const insurance = payload.insurance !== undefined ? JSON.stringify(payload.insurance) : undefined;
+    const conditionServicesVal = payload.conditionServices !== undefined ? JSON.stringify(payload.conditionServices) : undefined;
+    const conditionsAndServicesVal = payload.conditionsAndServices !== undefined ? JSON.stringify(payload.conditionsAndServices) : undefined;
+    const conditions_and_services = conditionServicesVal ?? conditionsAndServicesVal;
+    if (insurance !== undefined || conditions_and_services !== undefined) {
+      const updates: string[] = ['updated_at = NOW()'];
+      const values: any[] = [];
+      let idx = 1;
+      if (insurance !== undefined) {
+        updates.push(`insurance = $${idx}`);
+        values.push(insurance);
+        idx++;
+      }
+      if (conditions_and_services !== undefined) {
+        updates.push(`conditions_and_services = $${idx}`);
+        values.push(conditions_and_services);
+        idx++;
+      }
+      values.push(doctorId);
+      await client.query(
+        `UPDATE doctors SET ${updates.join(', ')} WHERE id = $${idx}`,
+        values
+      );
+    }
   } else if (request.type === 'practice_edit_request') {
         // Update practice details
         const practiceId = request.practice_id || payload.practiceId;
@@ -764,6 +903,65 @@ async function applyApprovalSideEffects(client: any, request: any, payload: any)
               [practiceId, insuranceName, insuranceSlug]
             );
           }
+        }
+      } else if (request.type === 'practice_admin_practice_profile_edit') {
+        // Practice admin submitted practice profile edit; admin approved — apply payload.after
+        const practiceId = request.practice_id || payload.practiceId;
+        if (!practiceId) throw new Error('Practice ID required');
+        const after = payload.after || payload;
+        await client.query(
+          `UPDATE practices 
+           SET name = $1, description = $2, phone = $3, website = $4, logo_url = COALESCE($5, logo_url), updated_at = NOW()
+           WHERE id = $6`,
+          [
+            after.name ?? null,
+            after.description ?? null,
+            after.phone ?? null,
+            after.website ?? null,
+            after.logo_url ?? after.logo ?? null,
+            practiceId,
+          ]
+        );
+        if (after.services) {
+          await client.query('DELETE FROM practice_services WHERE practice_id = $1', [practiceId]);
+          for (const service of after.services) {
+            await client.query(
+              'INSERT INTO practice_services (practice_id, service) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+              [practiceId, service]
+            );
+          }
+        }
+        if (after.insurances) {
+          await client.query('DELETE FROM practice_insurance WHERE practice_id = $1', [practiceId]);
+          for (const insuranceName of after.insurances) {
+            const insuranceSlug = insuranceName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            await client.query(
+              `INSERT INTO practice_insurance (practice_id, name, slug) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+              [practiceId, insuranceName, insuranceSlug]
+            );
+          }
+        }
+      } else if (request.type === 'practice_admin_practice_locations_edit') {
+        // Practice admin submitted full locations list; admin approved — replace all locations
+        const practiceId = request.practice_id || payload.practiceId;
+        if (!practiceId || !payload.locations) throw new Error('Practice ID and locations required');
+        await client.query('DELETE FROM practice_locations WHERE practice_id = $1', [practiceId]);
+        for (const loc of payload.locations) {
+          const address = loc.address ?? loc.address_line1 ?? null;
+          await client.query(
+            `INSERT INTO practice_locations (id, practice_id, name, address, city, state, zip, phone, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+            [
+              loc.id,
+              practiceId,
+              loc.name || 'Location',
+              address,
+              loc.city ?? null,
+              loc.state ?? null,
+              loc.zip ?? null,
+              loc.phone ?? null,
+            ]
+          );
         }
       } else if (request.type === 'practice_location_add_request') {
         // Add location to practice
@@ -1039,7 +1237,19 @@ router.post('/:id/reject', authenticateToken, async (req: AuthRequest, res) => {
     const request = requestResult.rows[0];
     const historyId = `hist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    if (userRole === 'admin') {
+    // JWT has role='doctor' for all doctors; if this doctor is PA for the request's practice, treat as practice_admin
+    let effectiveRole = userRole;
+    if (userRole === 'doctor' && request.practice_id) {
+      const paCheck = await pool.query(
+        `SELECT 1 FROM practice_roles 
+         WHERE doctor_id IN (SELECT id FROM doctors WHERE user_id = $1) 
+         AND role = 'practice_admin' AND practice_id = $2`,
+        [userId, request.practice_id]
+      );
+      if (paCheck.rows.length > 0) effectiveRole = 'practice_admin';
+    }
+
+    if (effectiveRole === 'admin') {
       await pool.query(
         `UPDATE approval_requests 
          SET admin_status = 'rejected', rejection_reason = $1, rejected_by = 'admin', admin_reviewed_at = NOW(), updated_at = NOW()
@@ -1049,11 +1259,11 @@ router.post('/:id/reject', authenticateToken, async (req: AuthRequest, res) => {
 
       await pool.query(
         `INSERT INTO approval_history (
-          id, approval_request_id, action, performed_by, performed_by_type, actor_id, actor_type, notes
-        ) VALUES ($1, $2, 'rejected', $3, 'admin', $3, 'admin', $4)`,
+          id, approval_request_id, action, performed_by, performed_by_type, notes
+        ) VALUES ($1, $2, 'rejected', $3, 'admin', $4)`,
         [historyId, req.params.id, userId, reason]
       );
-    } else if (userRole === 'practice_admin') {
+    } else if (effectiveRole === 'practice_admin') {
       const practiceAdminCheck = await pool.query(
         `SELECT practice_id FROM practice_roles 
          WHERE doctor_id IN (SELECT id FROM doctors WHERE user_id = $1) 
@@ -1074,8 +1284,8 @@ router.post('/:id/reject', authenticateToken, async (req: AuthRequest, res) => {
 
       await pool.query(
         `INSERT INTO approval_history (
-          id, approval_request_id, action, performed_by, performed_by_type, actor_id, actor_type, notes
-        ) VALUES ($1, $2, 'rejected', $3, 'practice_admin', $3, 'practice_admin', $4)`,
+          id, approval_request_id, action, performed_by, performed_by_type, notes
+        ) VALUES ($1, $2, 'rejected', $3, 'practice_admin', $4)`,
         [historyId, req.params.id, userId, reason]
       );
     } else {

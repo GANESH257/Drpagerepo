@@ -1,7 +1,7 @@
 /**
  * Referral status
  */
-export type ReferralStatus = 'new' | 'attended' | 'removed';
+export type ReferralStatus = 'considering' | 'accepted' | 'no_show' | 'cancelled';
 
 /**
  * Referral - Doctor-to-doctor referral (V2)
@@ -53,8 +53,8 @@ export interface ReferralHistoryRecord {
   };
   timestamp: string;             // ISO string
   metadata?: {
-    fromStatus?: 'new' | 'attended' | 'removed';
-    toStatus?: 'new' | 'attended' | 'removed';
+    fromStatus?: ReferralStatus;
+    toStatus?: ReferralStatus;
     note?: string;               // for note_added
   };
 }

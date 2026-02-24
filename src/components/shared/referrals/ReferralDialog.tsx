@@ -76,7 +76,7 @@ export function ReferralDialog({ doctor, trigger, open: controlledOpen, onOpenCh
                 <DialogHeader>
                     <DialogTitle>Send Referral</DialogTitle>
                     <DialogDescription>
-                        Send a referral to {doctor.fullName}
+                        Send a referral to {doctor.fullName ?? (doctor as any).full_name ?? 'this physician'}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">

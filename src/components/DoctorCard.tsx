@@ -12,6 +12,7 @@ import { getInstitutionById } from '@/lib/institutionStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getAdminSession } from '@/lib/adminSession';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -146,7 +147,7 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
                 <div className="flex items-center text-sm text-brand-teal">
                   <Building className="h-4 w-4 mr-2 flex-shrink-0" />
                   <Link 
-                    href={`/practices/${practice.slug}`}
+                    href={`/practices/view?slug=${encodeURIComponent(practice.slug || practice.id)}`}
                     className="hover:underline font-medium"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -211,7 +212,7 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
               variant="outline"
               className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
             >
-              <Link href={isAdminLoggedIn ? `/admin/announcements?doctorId=${doctor.id}` : `/doctor/dashboard/messages/${doctor.id}`}>
+              <Link href={isAdminLoggedIn ? `/admin/announcements?doctorId=${doctor.id}` : `/doctor/dashboard/messages?otherDoctorId=${encodeURIComponent(doctor.id)}`}>
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Message
               </Link>
@@ -222,7 +223,7 @@ export function DoctorCard({ doctor, showInstitution = false }: DoctorCardProps)
             variant="gradient"
             className="w-full"
           >
-            <Link href={`/doctors/${doctor.slug}`}>View Profile</Link>
+            <Link href={getDoctorProfileUrl(doctor)}>View Profile</Link>
           </Button>
         </div>
       </CardContent>

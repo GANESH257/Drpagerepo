@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { Save, RotateCcw, Info, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Save, RotateCcw, Info, Upload, ChevronRight, ChevronLeft, Loader2, X } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,12 +15,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Doctor } from '@/types';
 import { cn } from '@/lib/utils';
 import { saveDoctorProfile, loadDoctorProfile, saveDoctorProfileToAPI } from '@/lib/doctorStorage';
+import { getAdminSession } from '@/lib/adminSession';
+import { createApprovalRequest, getApprovalRequests } from '@/lib/api/approval-requests';
+import { Badge } from '@/components/ui/badge';
 import { departments } from '@/data/departments';
 import { TagInput } from './TagInput';
 import { EditableList } from './EditableList';
 import { CredentialItemForm } from '@/components/shared/CredentialItemForm';
 import { toCertificationItems } from '@/lib/utils/credentialUtils';
 import { CertificationItem } from '@/types';
+import { uploadImage, getUploadFullUrl } from '@/lib/api/upload';
 
 interface EditProfileSectionProps {
   doctor: Doctor;
@@ -36,6 +40,95 @@ const US_STATES = [
 ];
 
 const CREDENTIALS_OPTIONS = ['M.D.', 'D.O.', 'D.P.M.', 'D.D.S.', 'D.M.D.', 'N.P.', 'P.A.'];
+
+function ProfileImageUpload({
+  doctor,
+  updateField,
+}: {
+  doctor: Doctor;
+  updateField: (k: keyof Doctor, v: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imgSrc = doctor.image
+    ? doctor.image.startsWith('http')
+      ? doctor.image
+      : getUploadFullUrl(doctor.image)
+    : null;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const path = await uploadImage(file);
+      updateField('image', getUploadFullUrl(path));
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>Profile Image</Label>
+      <div className="flex flex-col gap-4">
+        {imgSrc && (
+          <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200 group">
+            <Image
+              src={imgSrc}
+              alt={doctor.fullName}
+              fill
+              className="object-cover"
+              unoptimized
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+              }}
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => updateField('image', '')}
+              aria-label="Remove image"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            {uploading ? 'Uploading...' : imgSrc ? 'Change image' : 'Upload image'}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          JPEG, PNG, or WebP. Max 5 MB. Shown on your profile and directory listings.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 const COMMON_CERTIFICATIONS = [
   'American Board of Internal Medicine',
@@ -53,10 +146,13 @@ const COMMON_CERTIFICATIONS = [
 export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: EditProfileSectionProps) {
   const [doctor, setDoctor] = useState<Doctor>(initialDoctor);
   const [errors, setErrors] = useState<Partial<Record<keyof Doctor, string>>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [approvalMessage, setApprovalMessage] = useState<'admin' | 'practice_admin' | null>(null);
   const [originalDoctor, setOriginalDoctor] = useState<Doctor>(initialDoctor);
   const [tipsCollapsed, setTipsCollapsed] = useState(false);
+  const [hasPendingProfileEdit, setHasPendingProfileEdit] = useState(false);
 
   useEffect(() => {
     // Load from localStorage if available
@@ -69,6 +165,43 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
     }
     load();
   }, [doctor.id]);
+
+  // Check for pending profile-edit approval: refetch when doctor.id loads and when user switches back to this tab
+  const doctorIdRef = useRef(doctor.id);
+  doctorIdRef.current = doctor.id;
+
+  const fetchPendingProfileEdit = useCallback(() => {
+    if (getAdminSession() || !doctorIdRef.current) {
+      setHasPendingProfileEdit(false);
+      return;
+    }
+    const did = doctorIdRef.current;
+    getApprovalRequests({ status: 'pending' })
+      .then((requests) => {
+        const pending = requests.some(
+          (r) =>
+            r.target_doctor_id === did &&
+            (r.type === 'doctor_profile_edit' || r.type === 'practice_admin_profile_edit') &&
+            ((r.type === 'practice_admin_profile_edit' && r.admin_status === 'pending') ||
+              (r.type === 'doctor_profile_edit' && (r.practice_admin_status ?? 'pending') === 'pending'))
+        );
+        setHasPendingProfileEdit(pending);
+      })
+      .catch(() => setHasPendingProfileEdit(false));
+  }, []);
+
+  useEffect(() => {
+    if (getAdminSession() || !doctor.id) {
+      setHasPendingProfileEdit(false);
+      return;
+    }
+    fetchPendingProfileEdit();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchPendingProfileEdit();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [doctor.id, fetchPendingProfileEdit]);
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof Doctor, string>> = {};
@@ -94,42 +227,90 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
     setIsSaving(true);
     setSaveSuccess(false);
+    setSubmitError(null);
+    setApprovalMessage(null);
+
+    const profilePayload = {
+      firstName: doctor.firstName,
+      lastName: doctor.lastName,
+      fullName: doctor.fullName,
+      credentials: doctor.credentials,
+      specialty: doctor.specialty,
+      profileImageUrl: doctor.image,
+      bio: doctor.bio,
+      about: doctor.about,
+      phone: doctor.phone,
+      website: doctor.website,
+      medicalSchool: doctor.medicalSchool,
+      residency: doctor.residency,
+      internship: doctor.internship,
+      boardCertifications: doctor.boardCertifications ?? [],
+      hospitalPrivileges: doctor.hospitalPrivileges ?? [],
+      statesLicensedIn: doctor.statesLicensedIn ?? [],
+      npi: doctor.npi,
+      badgesAwards: doctor.badgesAwards ?? [],
+    };
 
     try {
-      // Try to save to API first (function checks for token internally)
-      const updated = await saveDoctorProfileToAPI(doctor.id, doctor);
-      if (updated) {
-        setDoctor(updated);
-        setOriginalDoctor(updated);
-        onProfileUpdate?.(updated);
+      // Admin: direct save (no approval)
+      if (getAdminSession()) {
+        const updated = await saveDoctorProfileToAPI(doctor.id, doctor);
+        if (updated) {
+          setDoctor(updated);
+          setOriginalDoctor(updated);
+          onProfileUpdate?.(updated);
+          setIsSaving(false);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 3000);
+          return;
+        }
+        saveDoctorProfile(doctor.id, doctor);
+        onProfileUpdate?.(doctor);
+        setOriginalDoctor(doctor);
         setIsSaving(false);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
         return;
       }
-      
-      // Fallback to localStorage if API fails or no token
-      saveDoctorProfile(doctor.id, doctor);
-      onProfileUpdate?.(doctor);
-      setOriginalDoctor(doctor);
-      setIsSaving(false);
+
+      // Practice admin: submit for admin approval
+      if (doctor.roleInPractice === 'practice_admin') {
+        await createApprovalRequest({
+          type: 'practice_admin_profile_edit',
+          target_doctor_id: doctor.id,
+          payload: { doctorId: doctor.id, doctor: profilePayload },
+        });
+        setSaveSuccess(true);
+        setApprovalMessage('admin');
+        setHasPendingProfileEdit(true);
+        setTimeout(() => { setSaveSuccess(false); setApprovalMessage(null); }, 5000);
+        setIsSaving(false);
+        return;
+      }
+
+      // Doctor: submit for practice admin approval
+      await createApprovalRequest({
+        type: 'doctor_profile_edit',
+        practice_id: doctor.practiceId ?? undefined,
+        target_doctor_id: doctor.id,
+        payload: { doctorId: doctor.id, doctor: profilePayload },
+      });
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setApprovalMessage('practice_admin');
+      setHasPendingProfileEdit(true);
+      setTimeout(() => { setSaveSuccess(false); setApprovalMessage(null); }, 5000);
+      setIsSaving(false);
     } catch (error) {
       console.error('Error saving profile:', error);
-      // Fallback to localStorage on error
-      saveDoctorProfile(doctor.id, doctor);
-      onProfileUpdate?.(doctor);
-      setOriginalDoctor(doctor);
+      setSubmitError((error as Error).message);
       setIsSaving(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
     }
   };
 
   const handleReset = () => {
     setDoctor(originalDoctor);
     setErrors({});
+    setSubmitError(null);
   };
 
   const updateField = useCallback(<K extends keyof Doctor>(field: K, value: Doctor[K]) => {
@@ -156,17 +337,40 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h2 className="text-3xl font-bold text-brand-dark-blue">Edit Profile</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-3xl font-bold text-brand-dark-blue">Edit Profile</h2>
+          {hasPendingProfileEdit && (
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+              Pending approval
+            </Badge>
+          )}
+        </div>
         <p className="text-muted-foreground mt-2">
           Update your professional information and credentials
         </p>
+        {hasPendingProfileEdit && (
+          <p className="text-sm text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+            You have pending profile changes awaiting approval. The form below shows your current
+            live profile. Submitting again will update the pending request instead of creating a new
+            one.
+          </p>
+        )}
       </div>
 
       {/* Save/Reset Actions */}
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-1">
           {saveSuccess && (
-            <span className="text-sm text-green-600">Profile saved successfully!</span>
+            <span className="text-sm text-green-600">
+              {approvalMessage === 'admin'
+                ? 'Submitted for admin approval. Changes will apply once approved.'
+                : approvalMessage === 'practice_admin'
+                  ? 'Submitted for practice admin approval. Changes will apply once approved.'
+                  : 'Profile saved successfully!'}
+            </span>
+          )}
+          {submitError && (
+            <span className="text-sm text-destructive">{submitError}</span>
           )}
         </div>
         <div className="flex gap-2">
@@ -205,40 +409,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                 <CardContent>
                 <div className="space-y-4">
                   {/* Profile Image */}
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Profile Image</Label>
-                    <div className="flex flex-col gap-4">
-                      {doctor.image && (
-                        <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200">
-                          <Image
-                            src={doctor.image}
-                            alt={doctor.fullName}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                            onError={(e) => {
-                              // Hide image on error
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <Input
-                          id="image"
-                          type="url"
-                          value={doctor.image || ''}
-                          onChange={(e) => updateField('image', e.target.value)}
-                          placeholder="https://example.com/image.jpg or /path/to/image.jpg"
-                          className="w-full"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Enter a URL or path to your profile image. This will be displayed on your profile page and directory listings.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <ProfileImageUpload doctor={doctor} updateField={updateField} />
 
                   <Separator />
 
@@ -456,7 +627,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Direct link to your booking or contact page. A "Book Directly" button will appear below "Request Appointment" on your profile.
+                      Direct link to your booking or contact page. A "Book Directly" button will appear on your profile when set.
                     </p>
                   </div>
                 </div>

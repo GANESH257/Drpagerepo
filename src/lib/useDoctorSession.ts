@@ -1,5 +1,6 @@
 'use client';
 
+
 export interface DoctorSession {
   email: string;
   role: string;
@@ -12,6 +13,8 @@ export interface UserInfo {
   email: string;
   role: string;
   doctorId?: string | null;
+  practiceId?: string | null;
+  roleInPractice?: 'doctor' | 'practice_admin' | null;
 }
 
 const TOKEN_KEY = 'aip_doctor_token';
@@ -79,6 +82,11 @@ export function useDoctorSession() {
     if (typeof window === 'undefined') return;
     
     try {
+      // When logging in as doctor, clear admin session so admin UI doesn't show with doctor token
+      if (user.role === 'doctor') {
+        localStorage.removeItem('aip_admin_session');
+      }
+
       localStorage.setItem(TOKEN_KEY, token);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       
@@ -151,6 +159,25 @@ export function useDoctorSession() {
     }
   };
 
+  /** Update session with doctor info from API (practiceId, roleInPractice). Call when doctor is loaded. */
+  const updateSessionWithDoctorInfo = (doctor: { practiceId?: string; roleInPractice?: 'doctor' | 'practice_admin' }): void => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const user = getUser();
+      if (user && user.role === 'doctor') {
+        const updatedUser: UserInfo = {
+          ...user,
+          practiceId: doctor.practiceId ?? user.practiceId ?? null,
+          roleInPractice: doctor.roleInPractice ?? user.roleInPractice ?? null,
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error('Error updating session with doctor info:', error);
+    }
+  };
+
   // Clear session and token from localStorage
   const clearSession = (): void => {
     if (typeof window === 'undefined') return;
@@ -177,6 +204,7 @@ export function useDoctorSession() {
     setToken, // New API-based method
     setSession, // Legacy compatibility
     updateSessionDoctorId,
+    updateSessionWithDoctorInfo,
     clearSession,
     isAuthenticated,
   };

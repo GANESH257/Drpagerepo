@@ -117,6 +117,8 @@ export function SearchAndFilterBar({
                 )}
               </SelectItem>
               <SelectItem value="practice_edit_request">Practice Edit</SelectItem>
+              <SelectItem value="practice_admin_practice_profile_edit">Practice Profile Edit</SelectItem>
+              <SelectItem value="practice_admin_practice_locations_edit">Practice Locations Edit</SelectItem>
               <SelectItem value="practice_doctor_add_request">Add Doctor</SelectItem>
               <SelectItem value="practice_doctor_remove_request">Remove Doctor</SelectItem>
               <SelectItem value="practice_location_add_request">Location Add</SelectItem>

@@ -8,7 +8,6 @@ import { doctors } from '@/data/doctors';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookingModal } from '@/components/BookingModal';
 import { GenericCTASection } from '@/components/GenericCTASection';
 import { DoctorCard } from '@/components/DoctorCard';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
@@ -22,6 +21,8 @@ import { useRouter } from 'next/navigation';
 import { practices } from '@/data/practices';
 import { getCreatedPractices, mergePractices } from '@/lib/storage/practiceStorage';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
+import { getPractice } from '@/lib/api/practices';
+import type { Location } from '@/types';
 import { getUploadFullUrl } from '@/lib/api/upload';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -33,7 +34,6 @@ import {
   CheckCircle2,
   MapPin,
   Phone,
-  Calendar,
   ExternalLink,
   GraduationCap,
   Building2,
@@ -170,29 +170,12 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
     loadVisibility();
   }, [doctor]);
 
-  // Generate realistic doctor image URL - use consistent seed based on name
-  const generateDoctorImage = (doctor: Doctor): string => {
-    if (doctor.image) return doctor.image;
-
-    // Create a hash from doctor's name for consistent image
-    let hash = 0;
-    const name = doctor.fullName.toLowerCase();
-    for (let i = 0; i < name.length; i++) {
-      hash = ((hash << 5) - hash) + name.charCodeAt(i);
-      hash = hash & hash; // Convert to 32bit integer
-    }
-
-    // Use hash to select from professional photo range (0-99)
-    const photoId = Math.abs(hash % 100);
-
-    // Use a professional medical photo service
-    // Using randomuser.me portraits which look more professional and realistic
-    const gender = Math.abs(hash) % 2 === 0 ? 'men' : 'women';
-    return `https://randomuser.me/api/portraits/${gender}/${photoId}.jpg`;
-  };
-
-  const imageUrl = generateDoctorImage(doctor);
-  const fallbackImageUrl = `https://i.pravatar.cc/400?img=${Math.abs(doctor.id.charCodeAt(0) % 70)}`;
+  // Only use profile image if provided (no seeded/random placeholder images)
+  const rawImage = doctor.image?.trim();
+  const profileImageUrl = rawImage
+    ? (rawImage.startsWith('http') ? rawImage : getUploadFullUrl(rawImage))
+    : undefined;
+  const initial = (doctor.fullName?.charAt(0) || doctor.firstName?.charAt(0) || '?').toUpperCase();
 
   // Get related doctors (same specialty, different doctor)
   const relatedDoctors = doctors
@@ -204,30 +187,73 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
     )
     .slice(0, 3);
 
-  // Get nearest 2 upcoming available slots, sorted by date and time
-  const availableSlots = doctor.availability
-    .filter((slot) => slot.available)
-    .sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.time.localeCompare(b.time);
-    })
-    .slice(0, 2);
-
   // Compute practice once (reused in Practice and Institution sections)
   const [practice, setPractice] = useState<any>(null);
-  
+  const [practiceLocations, setPracticeLocations] = useState<Location[]>([]);
+
+  /** Map API practice_locations row to frontend Location */
+  const mapApiLocationToLocation = (loc: any): Location => {
+    const address = loc.address ?? [loc.address_line1, loc.address_line2].filter(Boolean).join(', ').trim() ?? '';
+    const city = loc.city ?? '';
+    const state = loc.state ?? '';
+    const zip = loc.zip ?? '';
+    const addressString = [address, city, state, zip].filter(Boolean).join(', ');
+    const directionsUrl = addressString
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressString)}`
+      : undefined;
+    return {
+      name: loc.name ?? 'Office',
+      address,
+      city,
+      state,
+      zip,
+      phone: loc.phone ?? '',
+      directionsUrl,
+      hours: loc.hours,
+    };
+  };
+
   useEffect(() => {
+    let cancelled = false;
+    if (!doctor.practiceId) {
+      setPractice(null);
+      setPracticeLocations([]);
+      return;
+    }
     async function loadPractice() {
-      if (doctor.practiceId) {
-        const p = await getPracticeById(doctor.practiceId);
-        setPractice(p);
-      } else {
-        setPractice(null);
+      try {
+        const p = await getPractice(doctor.practiceId!);
+        if (cancelled) return;
+        const normalized = {
+          ...p,
+          address: p.address ?? {
+            line1: (p as any).address_line1 ?? '',
+            line2: (p as any).address_line2,
+            city: (p as any).city ?? '',
+            state: (p as any).state ?? '',
+            zip: (p as any).zip ?? '',
+            country: (p as any).country ?? 'USA',
+          },
+        };
+        setPractice(normalized);
+        const rawLocs = Array.isArray(p.locations) ? p.locations : [];
+        setPracticeLocations(rawLocs.map(mapApiLocationToLocation));
+      } catch {
+        if (cancelled) return;
+        const fallback = await getPracticeById(doctor.practiceId!);
+        setPractice(fallback);
+        const rawLocs = fallback?.locations && Array.isArray(fallback.locations) ? fallback.locations : [];
+        setPracticeLocations(rawLocs.map((loc: any) => mapApiLocationToLocation(loc)));
       }
     }
     loadPractice();
+    return () => { cancelled = true; };
   }, [doctor.practiceId]);
+
+  const displayLocations: Location[] =
+    doctor.locations?.length > 0
+      ? doctor.locations
+      : practiceLocations;
 
   return (
     <div ref={sectionRef} className="min-h-screen">
@@ -277,19 +303,6 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               </p>
             </div>
             <div className="flex flex-col gap-3 w-full md:w-auto">
-              <Button
-                size="lg"
-                onClick={() => setBookingOpen(true)}
-                className="w-full md:w-auto bg-brand-teal hover:bg-brand-teal/90 text-white transition-all duration-200 hover:scale-105 shadow-lg animate-pulse-subtle"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
-                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.4s, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s',
-                }}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Request Appointment
-              </Button>
               {doctor.bookingUrl && (
                 <Button
                   size="lg"
@@ -346,7 +359,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                       router.push(`/admin/announcements?doctorId=${doctor.id}`);
                     } else {
                       // Doctor goes to messages page
-                      router.push(`/doctor/dashboard/messages/${doctor.id}`);
+                      router.push(`/doctor/dashboard/messages?otherDoctorId=${encodeURIComponent(doctor.id)}`);
                     }
                   }}
                   className="w-full md:w-auto border-2 border-brand-dark-blue text-brand-dark-blue hover:bg-brand-dark-blue hover:text-white transition-all duration-200 hover:scale-105 shadow-md"
@@ -473,7 +486,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                             variant="gradient"
                             className="w-full sm:w-auto"
                           >
-                            <Link href={`/practices/${practice.slug}`}>
+                            <Link href={`/practices/view?slug=${encodeURIComponent(practice.slug || practice.id)}`}>
                               View Practice
                             </Link>
                           </Button>
@@ -793,55 +806,85 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 </Card>
               )}
 
-            {/* Specialties */}
-            {(doctor.specialties && doctor.specialties.length > 0) && (
-              <Card
-                className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
-                style={{
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
-                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.7s, transform 0.7s ease-out 0.7s',
-                }}
-              >
-                <CardHeader>
-                  <CardTitle className="text-brand-dark-blue">Specialties</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex flex-wrap gap-2">
-                    {doctor.specialties.map((spec, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-base py-1.5 px-3 bg-brand-teal/10 text-brand-teal border border-brand-teal/20 hover:bg-brand-teal/20 transition-colors"
-                      >
-                        {spec}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Specialties — show primary (specialty) and any additional (specialties array) */}
+            {(() => {
+              const list = (doctor.specialties && doctor.specialties.length > 0)
+                ? doctor.specialties
+                : (doctor.specialty ? [doctor.specialty] : []);
+              if (list.length === 0) return null;
+              return (
+                <Card
+                  className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
+                  style={{
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                    transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.7s, transform 0.7s ease-out 0.7s',
+                  }}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-brand-dark-blue">Specialties</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="flex flex-wrap gap-2">
+                      {list.map((spec, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-base py-1.5 px-3 bg-brand-teal/10 text-brand-teal border border-brand-teal/20 hover:bg-brand-teal/20 transition-colors"
+                        >
+                          {spec}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* Conditions & Services */}
-            {doctor.conditionsAndServices && doctor.conditionsAndServices.length > 0 && (
+            {((doctor.conditionServices && doctor.conditionServices.length > 0) || (doctor.conditionsAndServices && doctor.conditionsAndServices.length > 0)) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Conditions & Services</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
-                    {doctor.conditionsAndServices.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2 text-muted-foreground">
-                        <span className="text-primary mt-1">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {doctor.conditionServices && doctor.conditionServices.some((r) => r.condition || (r.services && r.services.length > 0)) ? (
+                    <div className="rounded-md border overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-muted/50 border-b">
+                            <th className="text-left font-medium p-2 w-[40%]">Condition</th>
+                            <th className="text-left font-medium p-2">Treatments / Services</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {doctor.conditionServices.map((row, i) => (
+                            <tr key={i} className="border-b last:border-b-0">
+                              <td className="p-2 text-muted-foreground">{row.condition || '—'}</td>
+                              <td className="p-2 text-muted-foreground">
+                                {row.services && row.services.length > 0 ? row.services.filter(Boolean).join(', ') : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <ul className="space-y-2">
+                      {doctor.conditionsAndServices!.map((item, index) => (
+                        <li key={index} className="flex items-start gap-2 text-muted-foreground">
+                          <span className="text-primary mt-1">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </CardContent>
               </Card>
             )}
 
             {/* Locations */}
+            {displayLocations.length > 0 && (
             <Card
               className="card-vibrant"
               style={{
@@ -855,7 +898,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {doctor.locations.map((location, index) => (
+                  {displayLocations.map((location, index) => (
                     <div
                       key={index}
                       className="border-l-4 border-brand-teal pl-4 transition-all duration-300 hover:border-brand-teal/70 hover:pl-5"
@@ -921,38 +964,57 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Accepted Insurance */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Accepted Insurance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {doctor.insurance.map((ins) => (
-                    <Badge key={ins.slug} variant="outline">
-                      {ins.name}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {doctor.insurance && doctor.insurance.length > 0 && (
+              <Card
+                className="border-2 border-transparent bg-white hover:border-brand-teal/30 hover:shadow-lg transition-all duration-300 hover-lift"
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible && !prefersReducedMotion ? 'translateY(0)' : 'translateY(20px)',
+                  transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 0.7s ease-out 0.75s, transform 0.7s ease-out 0.75s',
+                }}
+              >
+                <CardHeader>
+                  <CardTitle className="text-brand-dark-blue">Accepted Insurance</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Insurance plans this provider accepts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {doctor.insurance.map((ins) => (
+                      <Badge key={ins.slug || ins.name} variant="outline" className="text-sm py-1.5 px-3">
+                        {ins.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Doctor Image - Sidebar */}
+            {/* Doctor Image - Sidebar (only if image provided; otherwise initials) */}
             <Card className="overflow-hidden">
-              <div className="relative w-full h-48 sm:h-56 md:h-64 bg-gray-100">
-                <Image
-                  src={imageError ? fallbackImageUrl : imageUrl}
-                  alt={doctor.fullName}
-                  fill
-                  className="object-contain object-center"
-                  unoptimized
-                  onError={() => setImageError(true)}
-                />
+              <div className="relative w-full h-48 sm:h-56 md:h-64 bg-gray-100 flex items-center justify-center">
+                {profileImageUrl && !imageError ? (
+                  <Image
+                    src={profileImageUrl}
+                    alt={doctor.fullName}
+                    fill
+                    className="object-contain object-center"
+                    unoptimized
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-[var(--brand-dark-blue)]/15 flex items-center justify-center text-[var(--brand-dark-blue)] text-3xl font-bold" aria-hidden>
+                    {initial}
+                  </div>
+                )}
               </div>
               {/* Visit Personal Website - Prominent placement under image */}
               {doctor.website && (
@@ -970,60 +1032,8 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
               )}
             </Card>
 
-            {/* Booking Slots */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Available Appointments</CardTitle>
-                <CardDescription className="text-sm">
-                  Select a time slot to request an appointment
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {availableSlots.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    No available slots at this time. Please contact the office
-                    directly.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {availableSlots.map((slot, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start border-brand-teal/30 text-brand-dark-blue hover:bg-brand-teal hover:text-white transition-all duration-200 text-sm py-2 h-auto"
-                        onClick={() => setBookingOpen(true)}
-                        style={{
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible && !prefersReducedMotion ? 'translateX(0)' : 'translateX(-20px)',
-                          transition: prefersReducedMotion
-                            ? 'opacity 0.3s ease'
-                            : `opacity 0.5s ease-out ${0.7 + index * 0.05}s, transform 0.5s ease-out ${0.7 + index * 0.05}s`,
-                        }}
-                      >
-                        <Calendar className="h-3.5 w-3.5 mr-2" />
-                        {new Date(slot.date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}{' '}
-                        at {slot.time}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="w-full mt-3 text-xs text-brand-teal hover:text-brand-dark-blue hover:bg-brand-teal/10"
-                  onClick={() => setBookingOpen(true)}
-                >
-                  View All Times →
-                </Button>
-              </CardContent>
-            </Card>
-
             {/* Office Hours */}
-            {doctor.locations[0]?.hours && (
+            {displayLocations[0]?.hours && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -1033,7 +1043,7 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <p className="text-sm text-muted-foreground">
-                    {doctor.locations[0].hours}
+                    {displayLocations[0].hours}
                   </p>
                 </CardContent>
               </Card>
@@ -1115,13 +1125,6 @@ export function DoctorProfile({ doctor }: DoctorProfileProps) {
         )}
       </div>
 
-      {/* Modals */}
-      <BookingModal
-        open={bookingOpen}
-        onOpenChange={setBookingOpen}
-        doctorName={doctor.fullName}
-        slots={doctor.availability}
-      />
     </div>
   );
 }

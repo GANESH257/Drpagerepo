@@ -15,6 +15,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { getDoctor } from '@/lib/api/doctors';
+import { getToken } from '@/lib/api/config';
+import { getUploadFullUrl } from '@/lib/api/upload';
+import type { Doctor } from '@/types';
 
 /**
  * Resolve practiceId from multiple possible locations in request/payload
@@ -118,12 +122,14 @@ function LocationAddView({ request }: { request: ApprovalRequest }) {
     if (!practice || !location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
       return false;
     }
+    const lat = location.lat;
+    const lng = location.lng;
     return practice.locations.some((loc: PracticeLocation) => {
       if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return false;
       // Compare with 6 decimal precision
       return (
-        Math.abs(loc.lat - location.lat) < 0.000001 &&
-        Math.abs(loc.lng - location.lng) < 0.000001
+        Math.abs(loc.lat - lat) < 0.000001 &&
+        Math.abs(loc.lng - lng) < 0.000001
       );
     });
   }, [practice, location]);
@@ -378,12 +384,14 @@ function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
     if (!practice || !afterLocation || typeof afterLocation.lat !== 'number' || typeof afterLocation.lng !== 'number') {
       return false;
     }
+    const lat = afterLocation.lat;
+    const lng = afterLocation.lng;
     return practice.locations.some((loc: PracticeLocation) => {
       if (loc.id === payload.locationId) return false; // Exclude current
       if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return false;
       return (
-        Math.abs(loc.lat - afterLocation.lat) < 0.000001 &&
-        Math.abs(loc.lng - afterLocation.lng) < 0.000001
+        Math.abs(loc.lat - lat) < 0.000001 &&
+        Math.abs(loc.lng - lng) < 0.000001
       );
     });
   }, [practice, afterLocation, payload.locationId]);
@@ -464,13 +472,49 @@ function LocationEditDiffView({ request }: { request: ApprovalRequest }) {
 }
 
 /**
+ * Practice locations bulk edit view - shows the list of locations that will replace current ones
+ */
+function LocationsBulkEditView({ request }: { request: ApprovalRequest }) {
+  const payload = request.payload as { practiceId?: string; locations?: PracticeLocation[] };
+  const locations = payload?.locations ?? [];
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Practice admin submitted an update to practice locations. Approving will replace all current locations with the following ({locations.length} location{locations.length !== 1 ? 's' : ''}).
+      </p>
+      <div className="space-y-3">
+        {locations.map((loc, i) => (
+          <Card key={loc.id || i}>
+            <CardContent className="pt-4">
+              <LocationSummary
+                location={loc}
+                title={`Location ${i + 1}`}
+                fallbackName="Location"
+                showBadges={false}
+                showId={true}
+              />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Practice Edit Diff View - Shows Before/After comparison with changed fields
  */
 function PracticeEditDiffView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload as PracticeEditPayload;
   const practiceId = resolvePracticeId(request, payload);
   const [practice, setPractice] = React.useState<any>(null);
-  
+
+  // Must run unconditionally (Rules of Hooks) — before any early returns
+  const changedFields = React.useMemo(() => {
+    if (!payload?.before || !payload?.after) return [];
+    return diffPracticeChangedOnly(payload.before, payload.after);
+  }, [payload?.before, payload?.after]);
+
   React.useEffect(() => {
     async function loadPractice() {
       if (!practiceId) {
@@ -549,11 +593,6 @@ function PracticeEditDiffView({ request }: { request: ApprovalRequest }) {
       </div>
     );
   }
-
-  // Get changed fields
-  const changedFields = React.useMemo(() => {
-    return diffPracticeChangedOnly(payload.before, payload.after);
-  }, [payload.before, payload.after]);
 
   return (
     <div className="space-y-6">
@@ -766,7 +805,18 @@ function PAProfilePracticeCompletionView({ request }: { request: ApprovalRequest
             <div className="mt-4">
               <Label className="text-muted-foreground">Locations</Label>
               <ul className="mt-1 list-disc pl-4 space-y-1">
-                {locs.map((loc: any) => <li key={loc.id || loc.name}>{loc.name} {loc.city && `${loc.city}, ${loc.state || ''} ${loc.zip || ''}`}</li>)}
+                {locs.map((loc: any, idx: number) => {
+                  const parts = [loc.name];
+                  const street = (loc.address_line1 || (loc as any).address) && (loc.address_line1 || (loc as any).address) !== 'N/A'
+                    ? (loc.address_line1 || (loc as any).address)
+                    : (idx === 0 ? (prac.address_line1 || (prac as any).address?.line1) : null);
+                  if (street) parts.push(street);
+                  const zip = (loc.zip && loc.zip !== '00000') ? loc.zip : (prac.zip || (prac as any).address?.zip || '');
+                  const city = loc.city || (idx === 0 ? prac.city || (prac as any).address?.city : null);
+                  const state = loc.state || (idx === 0 ? prac.state || (prac as any).address?.state : null);
+                  if (city || state || zip) parts.push([city, state, zip].filter(Boolean).join(', '));
+                  return <li key={loc.id || loc.name}>{parts.filter(Boolean).join(' — ')}</li>;
+                })}
               </ul>
             </div>
           )}
@@ -776,25 +826,302 @@ function PAProfilePracticeCompletionView({ request }: { request: ApprovalRequest
   );
 }
 
+/** Keys used to detect scalar profile changes */
+const PROFILE_SCALAR_KEYS = ['fullName', 'npi', 'bio', 'about', 'phone', 'website', 'credentials', 'specialty', 'medicalSchool', 'residency', 'internship'] as const;
+
+/** Resolve image URL for approval view (path or full URL) */
+function approvalImageUrl(pathOrUrl: string | undefined): string {
+  if (!pathOrUrl) return '';
+  return getUploadFullUrl(pathOrUrl);
+}
+
 /**
  * Doctor Profile Completion View - Profile details submitted by doctor joining a practice
  */
 function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload || {};
   const doc = payload.doctor || {};
+  const requested = doc as Record<string, unknown>;
+  const doctorId = payload.doctorId ?? (request.target as { doctorId?: string })?.doctorId ?? (request as unknown as { target_doctor_id?: string }).target_doctor_id ?? '';
+  const [currentDoctor, setCurrentDoctor] = React.useState<Doctor | null>(null);
+  const [loadFailed, setLoadFailed] = React.useState(false);
+  const profileImageUrl = (requested.profileImageUrl ?? requested.profile_image_url) as string | undefined;
+
+  React.useEffect(() => {
+    if (!doctorId) {
+      setCurrentDoctor(null);
+      setLoadFailed(false);
+      return;
+    }
+    const token = getToken();
+    getDoctor(doctorId, token ?? undefined)
+      .then((d) => {
+        setCurrentDoctor(d);
+        setLoadFailed(false);
+      })
+      .catch(() => {
+        setCurrentDoctor(null);
+        setLoadFailed(true);
+      });
+  }, [doctorId]);
+
+  const currentImage = currentDoctor?.image ?? (currentDoctor as unknown as Record<string, unknown>)?.profileImageUrl ?? (currentDoctor as unknown as Record<string, unknown>)?.profile_image_url ?? '';
+  const requestedImage = requested.profileImageUrl ?? requested.profile_image_url ?? '';
+  const imageChanged = requestedImage && (currentImage !== requestedImage || !currentImage);
+  const currentCertsJson = JSON.stringify(currentDoctor?.boardCertifications ?? []);
+  const requestedCertsJson = JSON.stringify(requested.boardCertifications ?? []);
+  const certsChanged = requestedCertsJson !== currentCertsJson;
+  const currentBadgesJson = JSON.stringify(currentDoctor?.badgesAwards ?? []);
+  const requestedBadgesJson = JSON.stringify(requested.badgesAwards ?? []);
+  const badgesChanged = requestedBadgesJson !== currentBadgesJson;
+
+  const changedScalars = PROFILE_SCALAR_KEYS.filter((key) => {
+    const reqVal = requested[key];
+    const curVal = currentDoctor?.[key] ?? currentDoctor?.[key === 'fullName' ? 'fullName' : key];
+    const r = reqVal === undefined || reqVal === null ? '' : String(reqVal).trim();
+    const c = curVal === undefined || curVal === null ? '' : String(curVal).trim();
+    return r !== c;
+  });
+
+  const boardCerts = Array.isArray(requested.boardCertifications) ? requested.boardCertifications : [];
+  const badgesAwards = Array.isArray(requested.badgesAwards) ? requested.badgesAwards : [];
+  const hasAnyChanges = changedScalars.length > 0 || imageChanged || (certsChanged && boardCerts.length > 0) || (badgesChanged && badgesAwards.length > 0);
+
+  if (doctorId && currentDoctor === null && !loadFailed) {
+    return <p className="text-sm text-muted-foreground">Loading current profile to show changes…</p>;
+  }
+
+  if (loadFailed || (!hasAnyChanges && !currentDoctor)) {
+    const fallbackCerts = Array.isArray(requested.boardCertifications) ? requested.boardCertifications : [];
+    const fallbackBadges = Array.isArray(requested.badgesAwards) ? requested.badgesAwards : [];
+    const fallbackProfileImg = (requested.profileImageUrl ?? requested.profile_image_url) as string | undefined;
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h4 className="font-bold text-brand-dark-blue">Profile details (requested)</h4>
+            {fallbackProfileImg && (
+              <div>
+                <Label className="text-muted-foreground">Profile image</Label>
+                <div className="mt-1.5">
+                  <img
+                    src={approvalImageUrl(fallbackProfileImg)}
+                    alt="Profile"
+                    className="h-24 w-24 rounded-lg object-cover border border-gray-200"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+              </div>
+            )}
+            <div className="grid gap-2 text-sm">
+              {requested.fullName != null && String(requested.fullName) && <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{String(requested.fullName)}</div></div>}
+              {requested.npi != null && String(requested.npi) && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{String(requested.npi)}</div></div>}
+              {requested.bio != null && String(requested.bio) && <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5">{String(requested.bio)}</div></div>}
+              {requested.about != null && String(requested.about) && <div><Label className="text-muted-foreground">About</Label><div className="mt-0.5">{String(requested.about)}</div></div>}
+              {requested.phone != null && String(requested.phone) && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{String(requested.phone)}</div></div>}
+              {requested.website != null && String(requested.website) && <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5">{String(requested.website)}</div></div>}
+            </div>
+            {fallbackCerts.length > 0 && (
+              <div>
+                <Label className="text-muted-foreground">Board certifications</Label>
+                <div className="mt-1.5 flex flex-wrap gap-3">
+                  {fallbackCerts.map((c: { name?: string; year?: string; imageUrl?: string }, i: number) => (
+                    <div key={i} className="flex flex-col items-center gap-1">
+                      {c.imageUrl && (
+                        <img
+                          src={approvalImageUrl(c.imageUrl)}
+                          alt={c.name || 'Certification'}
+                          className="h-16 w-16 rounded object-cover border border-gray-200"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
+                      <span className="text-xs text-muted-foreground">{c.name}{c.year ? ` (${c.year})` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {fallbackBadges.length > 0 && (
+              <div>
+                <Label className="text-muted-foreground">Badges & awards</Label>
+                <div className="mt-1.5 flex flex-wrap gap-3">
+                  {fallbackBadges.map((b: { name?: string; year?: string; imageUrl?: string }, i: number) => (
+                    <div key={i} className="flex flex-col items-center gap-1">
+                      {b.imageUrl && (
+                        <img
+                          src={approvalImageUrl(b.imageUrl)}
+                          alt={b.name || 'Award'}
+                          className="h-16 w-16 rounded object-cover border border-gray-200"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
+                      <span className="text-xs text-muted-foreground">{b.name}{b.year ? ` (${b.year})` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-6 space-y-4">
           <h4 className="font-bold text-brand-dark-blue">Profile details</h4>
-          <div className="grid gap-2 text-sm">
-            <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{doc.fullName}</div></div>
-            {doc.npi && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{doc.npi}</div></div>}
-            {doc.bio && <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5">{doc.bio}</div></div>}
-            {doc.phone && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{doc.phone}</div></div>}
-            {doc.website && <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5">{doc.website}</div></div>}
-          </div>
+          {profileImageUrl && (
+            <div>
+              <Label className="text-muted-foreground">Profile image</Label>
+              <div className="mt-1.5">
+                <img
+                  src={approvalImageUrl(profileImageUrl)}
+                  alt="Profile"
+                  className="h-24 w-24 rounded-lg object-cover border border-gray-200"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {boardCerts.length > 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h4 className="font-bold text-brand-dark-blue">Board certifications</h4>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {boardCerts.map((item: { name?: string; year?: string; imageUrl?: string } | string, idx: number) => {
+                const name = typeof item === 'string' ? item : item?.name;
+                const year = typeof item === 'object' && item && 'year' in item ? item.year : undefined;
+                const imageUrl = typeof item === 'object' && item && 'imageUrl' in item ? item.imageUrl : undefined;
+                if (!name) return null;
+                return (
+                  <div key={idx} className="flex items-start gap-3 rounded-md border p-3">
+                    {imageUrl && (
+                      <img
+                        src={approvalImageUrl(imageUrl)}
+                        alt={name}
+                        className="h-12 w-12 flex-shrink-0 rounded object-cover border"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">{name}</div>
+                      {year && <div className="text-xs text-muted-foreground">{year}</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+      </Card>
+      )}
+
+      {badgesAwards.length > 0 && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <h4 className="font-bold text-brand-dark-blue">Badges & awards</h4>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {badgesAwards.map((item: { name?: string; year?: string; imageUrl?: string }, idx: number) => {
+                const name = item?.name;
+                const year = item?.year;
+                const imageUrl = item?.imageUrl;
+                if (!name) return null;
+                return (
+                  <div key={idx} className="flex items-start gap-3 rounded-md border p-3">
+                    {imageUrl && (
+                      <img
+                        src={approvalImageUrl(imageUrl)}
+                        alt={name}
+                        className="h-12 w-12 flex-shrink-0 rounded object-cover border"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">{name}</div>
+                      {year && <div className="text-xs text-muted-foreground">{year}</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Insurance & Services edit view - payload.insurance and payload.conditionServices (or legacy conditionsAndServices)
+ */
+function InsuranceEditView({ request }: { request: ApprovalRequest }) {
+  const payload = request.payload || {};
+  const insurance = Array.isArray(payload.insurance) ? payload.insurance : [];
+  const conditionServices = Array.isArray(payload.conditionServices) ? payload.conditionServices : [];
+  const conditionsAndServices = Array.isArray(payload.conditionsAndServices) ? payload.conditionsAndServices : [];
+
+  const hasConditionServices = conditionServices.length > 0 && conditionServices.some((r: any) => r.condition || (r.services && r.services.length > 0));
+  const hasLegacyList = !hasConditionServices && conditionsAndServices.length > 0;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h4 className="font-bold text-brand-dark-blue">Accepted insurance</h4>
+          {insurance.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {insurance.map((ins: { name?: string; slug?: string }) => (
+                <span key={ins.slug || ins.name} className="rounded-md bg-muted px-2 py-1 text-sm">
+                  {ins.name || ins.slug || '—'}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No insurance plans in this request.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <h4 className="font-bold text-brand-dark-blue">Conditions & services</h4>
+          {hasConditionServices ? (
+            <div className="rounded-md border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/50 border-b">
+                    <th className="text-left font-medium p-2 w-[40%]">Condition</th>
+                    <th className="text-left font-medium p-2">Treatments / Services</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conditionServices.map((row: { condition?: string; services?: string[] }, i: number) => (
+                    <tr key={i} className="border-b last:border-b-0">
+                      <td className="p-2">{row.condition || '—'}</td>
+                      <td className="p-2">
+                        {Array.isArray(row.services) && row.services.length > 0 ? (
+                          <span className="text-muted-foreground">{row.services.filter(Boolean).join(', ')}</span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : hasLegacyList ? (
+            <ul className="list-disc list-inside text-sm space-y-1">
+              {conditionsAndServices.map((s: string, i: number) => (
+                <li key={i}>{s}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No conditions/services in this request.</p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -820,7 +1147,11 @@ export function RequestedChangesRenderer({ request }: { request: ApprovalRequest
       content = <LocationRemoveView request={request} />;
       break;
     case 'practice_edit_request':
+    case 'practice_admin_practice_profile_edit':
       content = <PracticeEditDiffView request={request} />;
+      break;
+    case 'practice_admin_practice_locations_edit':
+      content = <LocationsBulkEditView request={request} />;
       break;
     case 'doctor_join_practice':
     case 'practice_doctor_add_request':
@@ -834,7 +1165,13 @@ export function RequestedChangesRenderer({ request }: { request: ApprovalRequest
       content = <PAProfilePracticeCompletionView request={request} />;
       break;
     case 'doctor_profile_completion':
+    case 'doctor_profile_edit':
+    case 'practice_admin_profile_edit':
       content = <DoctorProfileCompletionView request={request} />;
+      break;
+    case 'doctor_insurance_edit':
+    case 'practice_admin_insurance_edit':
+      content = <InsuranceEditView request={request} />;
       break;
     default:
       content = <RawJsonPayload payload={request.payload} />;

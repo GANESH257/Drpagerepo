@@ -5,6 +5,7 @@ import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GenericCTASection } from '@/components/GenericCTASection';
+import { getDoctorProfileUrlById } from '@/lib/doctorProfileUrl';
 import { studentArticles } from '@/data/medStudentArticles';
 import { StudentArticle } from '@/types';
 
@@ -125,7 +126,7 @@ export default function ArticleDetailPage({ params }: PageProps) {
               <>
                 {' '}
                 <Link
-                  href={`/doctors/${article.authorId}`}
+                  href={getDoctorProfileUrlById(article.authorId)}
                   className="text-brand-teal hover:underline"
                 >
                   View their profile

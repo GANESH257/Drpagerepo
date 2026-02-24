@@ -40,6 +40,7 @@ export default function CompleteProfilePage() {
   const [locations, setLocations] = useState<Array<{ id?: string; name: string; address?: string; address_line1?: string; city?: string; state?: string; zip?: string; phone?: string }>>([]);
 
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       const token = getToken();
       const user = getUser();
@@ -49,8 +50,8 @@ export default function CompleteProfilePage() {
       }
       try {
         const doc = await getDoctor(user.doctorId, token);
-        if (!doc) {
-          router.push('/join-us');
+        if (cancelled || !doc) {
+          if (!doc) router.push('/join-us');
           return;
         }
         setDoctor(doc);
@@ -71,6 +72,7 @@ export default function CompleteProfilePage() {
         });
         if (doc.practiceId) {
           const prac = await getPractice(doc.practiceId, token).catch(() => null);
+          if (cancelled) return;
           if (prac) {
             setPractice(prac);
             setPracticeName(prac.name || '');
@@ -90,15 +92,21 @@ export default function CompleteProfilePage() {
             setPracticeName('');
             setLocations([{ name: 'Main Office', address_line1: '', city: '', state: '', zip: '' }]);
           }
+        } else {
+          setPracticeName('');
+          setLocations([{ name: 'Main Office', address_line1: '', city: '', state: '', zip: '' }]);
         }
       } catch {
-        setError('Failed to load profile');
+        if (!cancelled) setError('Failed to load profile');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     load();
-  }, [getToken, getUser, router]);
+    return () => { cancelled = true; };
+    // Run only once on mount - getToken/getUser change every render and would reset form on every keystroke
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const validateProfile = () => {
@@ -193,21 +201,27 @@ export default function CompleteProfilePage() {
           }
         }
 
-        // Ensure at least one location: sync main practice address into first location if needed
+        // Ensure at least one location: sync main practice address into first location if needed.
+        // For the first location, prefer practiceAddress (what user typed in Primary location) over
+        // stale DB values (e.g. zip='00000' from join-application default).
         const locationsToSend =
           locations.length > 0
-            ? locations.map((loc, i) => ({
+            ? locations.map((loc, i) => {
+                const isFirst = i === 0;
+                const locZip = loc.zip && loc.zip !== '00000' ? loc.zip : '';
+                return {
                 id: loc.id,
                 name: loc.name || 'Main Office',
-                address_line1: loc.address_line1 ?? loc.address ?? practiceAddress.line1 ?? '',
+                address_line1: isFirst ? (practiceAddress.line1 || loc.address_line1 || loc.address || '') : (loc.address_line1 ?? loc.address ?? ''),
                 address_line2: undefined,
-                city: loc.city ?? practiceAddress.city ?? '',
-                state: loc.state ?? practiceAddress.state ?? '',
-                zip: loc.zip ?? practiceAddress.zip ?? '',
+                city: isFirst ? (practiceAddress.city || loc.city || '') : (loc.city ?? ''),
+                state: isFirst ? (practiceAddress.state || loc.state || '') : (loc.state ?? ''),
+                zip: isFirst ? (practiceAddress.zip || locZip || '') : (loc.zip ?? ''),
                 phone: loc.phone,
                 latitude: i === 0 ? primaryLat ?? undefined : undefined,
                 longitude: i === 0 ? primaryLng ?? undefined : undefined,
-              }))
+              };
+              })
             : [
                 {
                   id: undefined,

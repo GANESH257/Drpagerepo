@@ -21,8 +21,13 @@ import { getPractices } from '@/lib/api/practices';
 import { getDoctors } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
 
-const PRACTICE_TYPES = ['new_practice_with_admin_doctor', 'doctor_join_practice'];
-const DOCTOR_TYPES = ['doctor_profile_completion', 'practice_admin_profile_practice_completion'];
+const PRACTICE_TYPES = [
+  'new_practice_with_admin_doctor',
+  'doctor_join_practice',
+  'practice_admin_practice_profile_edit',
+  'practice_admin_practice_locations_edit',
+];
+const DOCTOR_TYPES = ['doctor_profile_completion', 'practice_admin_profile_practice_completion', 'practice_admin_profile_edit', 'doctor_profile_edit', 'doctor_insurance_edit', 'practice_admin_insurance_edit'];
 
 export default function AdminApprovalsPage() {
   const router = useRouter();
@@ -68,17 +73,43 @@ export default function AdminApprovalsPage() {
   const practiceRequests = requests.filter((r) => PRACTICE_TYPES.includes(r.type));
   const doctorRequests = requests.filter((r) => DOCTOR_TYPES.includes(r.type));
 
-  const getTargetDisplay = (request: ApprovalRequest): string => {
+  const getApplicantName = (request: ApprovalRequest): string => {
     try {
+      const doctor = request.payload?.doctor;
+      if (doctor?.fullName) return doctor.fullName;
+      if (doctor?.email) return doctor.email;
+      if (request.submittedBy?.email && !request.submittedBy.email.startsWith('user-')) {
+        return request.submittedBy.email;
+      }
+      const d = doctors.find((x: any) => x.id === request.target?.doctorId);
+      return d?.fullName || '—';
+    } catch {
+      return '—';
+    }
+  };
+
+  const getPracticeDisplay = (request: ApprovalRequest): string => {
+    try {
+      if (request.type === 'new_practice_with_admin_doctor') {
+        return request.payload?.practice?.name || 'New Practice';
+      }
       if (request.target?.practiceId) {
         const p = practices.find((x: any) => x.id === request.target?.practiceId);
         return p?.name || request.target.practiceId;
       }
-      if (request.target?.doctorId) {
-        const d = doctors.find((x: any) => x.id === request.target?.doctorId);
-        return d?.fullName || request.target.doctorId;
+    } catch {
+      return '—';
+    }
+    return '—';
+  };
+
+  const getApplicantEmail = (request: ApprovalRequest): string => {
+    try {
+      const doctor = request.payload?.doctor;
+      if (doctor?.email) return doctor.email;
+      if (request.submittedBy?.email && !request.submittedBy.email.startsWith('user-')) {
+        return request.submittedBy.email;
       }
-      if (request.submittedBy?.email) return request.submittedBy.email;
     } catch {
       return '—';
     }
@@ -101,7 +132,9 @@ export default function AdminApprovalsPage() {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Submitted</TableHead>
-                  <TableHead>Applicant / Target</TableHead>
+                  <TableHead>Applicant</TableHead>
+                  <TableHead>Practice / Institution</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -115,12 +148,14 @@ export default function AdminApprovalsPage() {
                       <ApprovalStatusBadge status={request.status} />
                     </TableCell>
                     <TableCell>{formatDateTime(request.submittedAt)}</TableCell>
-                    <TableCell>{getTargetDisplay(request)}</TableCell>
+                    <TableCell className="font-medium">{getApplicantName(request)}</TableCell>
+                    <TableCell>{getPracticeDisplay(request)}</TableCell>
+                    <TableCell className="text-muted-foreground">{getApplicantEmail(request)}</TableCell>
                     <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/admin/approvals/${request.id}`)}
+                        onClick={() => router.push(`/admin/approvals/detail?id=${request.id}`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
@@ -164,7 +199,7 @@ export default function AdminApprovalsPage() {
         </TabsList>
         <TabsContent value="practice" className="mt-6">
           <p className="text-sm text-gray-600 mb-4">
-            New practice registrations and doctors joining an existing practice.
+            New practice registrations, doctors joining a practice, and practice profile/location edits submitted by practice admins.
           </p>
           {renderTable(practiceRequests)}
         </TabsContent>

@@ -88,6 +88,8 @@ function requiresPracticeAdminApproval(type: ApprovalType): boolean {
     'practice_location_add_request',
     'practice_location_edit_request',
     'practice_location_remove_request',
+    'doctor_profile_edit',
+    'doctor_insurance_edit',
   ].includes(type);
 }
 
@@ -790,7 +792,9 @@ export async function decideAsPracticeAdmin(
     throw new PermissionDeniedError('Expected doctor actor');
   }
 
-  const requestPracticeId = request.approvals.practiceAdmin?.practiceId;
+  // Use target.practiceId when practiceAdmin not yet set (new requests have NULL practice_admin_status)
+  const requestPracticeId =
+    request.approvals.practiceAdmin?.practiceId ?? request.target?.practiceId;
   if (!requestPracticeId || requestPracticeId !== actor.practiceId) {
     throw new PermissionDeniedError(
       'Practice admin can only approve requests for their own practice'
@@ -1528,18 +1532,47 @@ export async function getPendingApprovalsForAdmin(): Promise<ApprovalRequest[]> 
 }
 
 /**
- * Get pending approvals for practice admin
+ * Get pending approvals for practice admin (only those needing a decision).
+ * Includes requests where practice_admin_status is NULL (not yet decided) or 'pending'.
  */
 export async function getPendingApprovalsForPracticeAdmin(
   practiceId: string
 ): Promise<ApprovalRequest[]> {
-  const apiRequests = await getApprovalRequestsAPI({ practiceId, status: 'pending' });
+  const all = await getApprovalsForPracticeAdmin(practiceId);
+  return all.filter((r) => {
+    const pa = r.approvals.practiceAdmin;
+    const needsPADecision = !pa || pa.status === 'pending';
+    return needsPADecision;
+  });
+}
+
+/**
+ * Get all approval requests for practice admin (pending, approved, rejected).
+ * Used so the list can show approved/rejected items for reference after deciding.
+ */
+export async function getApprovalsForPracticeAdmin(
+  practiceId: string
+): Promise<ApprovalRequest[]> {
+  // No status filter: backend returns all for this practice
+  const apiRequests = await getApprovalRequestsAPI({ practiceId });
   const requests = transformApprovalRequestsFromAPI(apiRequests);
-  return requests.filter(
-    (r) =>
-      r.approvals.practiceAdmin?.status === 'pending' &&
-      r.approvals.practiceAdmin?.practiceId === practiceId
-  );
+  const filtered = requests.filter((r) => {
+    const pa = r.approvals.practiceAdmin;
+    const practiceIdMatch = (pa?.practiceId ?? r.target?.practiceId) === practiceId;
+    return practiceIdMatch && requiresPracticeAdminApproval(r.type);
+  });
+  // Pending (needs PA decision) first, then by submitted date descending
+  const needsDecision = (r: ApprovalRequest) => {
+    const pa = r.approvals.practiceAdmin;
+    return !pa || pa.status === 'pending';
+  };
+  filtered.sort((a, b) => {
+    const aPending = needsDecision(a) ? 1 : 0;
+    const bPending = needsDecision(b) ? 1 : 0;
+    if (aPending !== bPending) return bPending - aPending; // pending first
+    return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+  });
+  return filtered;
 }
 
 /**

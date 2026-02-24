@@ -246,6 +246,14 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                 effects.push('Practice information will be updated with the requested changes');
                 effects.push('Changes will be reflected immediately in the directory');
                 break;
+            case 'practice_admin_practice_profile_edit':
+                effects.push('Practice profile (name, description, phone, website, services, insurance) will be updated');
+                effects.push('Changes will be reflected in the directory');
+                break;
+            case 'practice_admin_practice_locations_edit':
+                effects.push('All practice locations will be replaced with the submitted list');
+                effects.push('Changes will be reflected in the practice profile');
+                break;
             case 'practice_doctor_add_request':
                 effects.push('The invited doctor will be added to the practice');
                 effects.push('The practice roster will be updated');

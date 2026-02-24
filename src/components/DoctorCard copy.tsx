@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Star, CheckCircle2, MapPin, Calendar } from 'lucide-react';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 interface DoctorCardProps {
   doctor: Doctor;
@@ -69,7 +70,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
           <div className="flex items-start justify-between gap-3 flex-shrink-0">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-xl group-hover:text-brand-teal transition-colors break-words">
-                <Link href={`/doctors/${doctor.slug}`} className="focus-ring rounded-md px-1 -ml-1">
+                <Link href={getDoctorProfileUrl(doctor)} className="focus-ring rounded-md px-1 -ml-1">
                   {doctor.fullName}
                 </Link>
               </CardTitle>
@@ -140,7 +141,7 @@ export function DoctorCard({ doctor }: DoctorCardProps) {
             variant="gradient"
             className="w-full"
           >
-            <Link href={`/doctors/${doctor.slug}`}>View Profile</Link>
+            <Link href={getDoctorProfileUrl(doctor)}>View Profile</Link>
           </Button>
         </div>
       </CardContent>

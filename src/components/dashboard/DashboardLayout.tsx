@@ -100,8 +100,9 @@ const practiceAdminNavTree: PortalNavItem[] = [
     icon: Building,
     description: 'Edit and manage your practice',
     children: [
+      { label: 'Practice Approvals', href: `${baseUrl}/practice/approvals`, icon: FileCheck, description: 'Approve doctor join requests and other practice changes' },
       { label: 'Manage Doctors', href: `${baseUrl}/practice/doctors`, icon: Users, description: 'Invite, approve, view doctors in your practice' },
-      { label: 'Edit Practice Profile', href: `${baseUrl}/practice/profile`, icon: Building, description: 'Edit shared practice details' },
+      { label: 'Edit Practice Profile', href: `${baseUrl}/practice`, icon: Building, description: 'Edit practice details (Request Edit on the practice page)' },
       { label: 'Manage Practice Locations', href: `${baseUrl}/practice/locations`, icon: MapPin, description: 'Add, edit, or remove office locations' },
     ],
   },

@@ -10,8 +10,8 @@ export interface PracticeLocation {
   city: string;
   state: string;
   zip: string;
-  lat: number; // Required coordinates
-  lng: number; // Required coordinates
+  lat?: number | null; // Optional; used for maps when present
+  lng?: number | null;
   phone?: string;
   hours?: string;
   directionsUrl?: string;

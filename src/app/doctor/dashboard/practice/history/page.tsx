@@ -42,6 +42,8 @@ interface PracticeHistoryFilters {
 function getAllowedPracticeAdminTypes(): ApprovalType[] {
   return [
     'practice_edit_request',
+    'practice_admin_practice_profile_edit',
+    'practice_admin_practice_locations_edit',
     'practice_doctor_add_request',
     'practice_doctor_remove_request',
     'doctor_join_practice',

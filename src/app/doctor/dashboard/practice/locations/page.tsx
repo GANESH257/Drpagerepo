@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Practice, PracticeLocation } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
-import { submitApprovalRequest } from '@/lib/services/approvalEngine';
+import { getPractice } from '@/lib/api/practices';
+import { getToken } from '@/lib/api/config';
+import { createApprovalRequest, getApprovalRequests } from '@/lib/api/approval-requests';
 import { geocodeZip } from '@/lib/services/geocodingService';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +46,22 @@ function generateLocationId(practiceId: string): string {
   const ss = String(now.getSeconds()).padStart(2, '0');
   const random4 = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
   return `loc_${practiceId}_${yyyy}${MM}${dd}${HH}${mm}${ss}_${random4}`;
+}
+
+const PRACTICE_LOCATIONS_EDIT_TYPE = 'practice_admin_practice_locations_edit';
+
+/** Check for duplicate address in a list of locations (e.g. draft) */
+function checkDuplicateAddressInList(
+  locations: PracticeLocation[],
+  normalizedAddress: string,
+  excludeLocationId?: string
+): { hasDuplicate: boolean; warning?: string } {
+  const duplicate = locations.some((loc) => {
+    if (excludeLocationId && loc.id === excludeLocationId) return false;
+    const locAddr = normalizeAddress(loc.address, loc.city, loc.state, loc.zip);
+    return locAddr === normalizedAddress;
+  });
+  return duplicate ? { hasDuplicate: true, warning: 'Another location with this address already exists.' } : { hasDuplicate: false };
 }
 
 /**
@@ -137,18 +154,17 @@ function validateLocationForm(
   if (zipNormalized.length !== 5 || !/^\d{5}$/.test(zipNormalized)) {
     return { valid: false, error: 'ZIP must be a 5-digit code' };
   }
-  
-  if (formData.lat === null || formData.lng === null) {
-    return { valid: false, error: 'Coordinates are required. Please geocode ZIP or enter manually.' };
-  }
-  
-  const lat: number = formData.lat;
-  const lng: number = formData.lng;
-  if (lat < -90 || lat > 90) {
-    return { valid: false, error: 'Latitude must be between -90 and 90' };
-  }
-  if (lng < -180 || lng > 180) {
-    return { valid: false, error: 'Longitude must be between -180 and 180' };
+
+  // Coordinates are optional (backend stores address; coords used for maps when present)
+  if (formData.lat !== null && formData.lng !== null) {
+    const lat = formData.lat;
+    const lng = formData.lng;
+    if (lat < -90 || lat > 90) {
+      return { valid: false, error: 'Latitude must be between -90 and 90' };
+    }
+    if (lng < -180 || lng > 180) {
+      return { valid: false, error: 'Longitude must be between -180 and 180' };
+    }
   }
   
   // Validate directionsUrl if present
@@ -163,7 +179,11 @@ export default function PracticeLocationsPage() {
   const router = useRouter();
   const [practice, setPractice] = useState<Practice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+  /** Draft locations: add/edit/remove update this; "Submit for approval" sends this list. */
+  const [draftLocations, setDraftLocations] = useState<PracticeLocation[]>([]);
+  const [hasPendingLocationsEdit, setHasPendingLocationsEdit] = useState(false);
+  const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
+
   // Add dialog and form state
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -205,7 +225,6 @@ export default function PracticeLocationsPage() {
   // Remove dialog state
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [removingLocationId, setRemovingLocationId] = useState<string | null>(null);
-  const [isSubmittingRemove, setIsSubmittingRemove] = useState(false);
   
   const [formData, setFormData] = useState<{
     name: string;
@@ -241,14 +260,52 @@ export default function PracticeLocationsPage() {
           throw new PermissionDeniedError('Practice admin must have practiceId');
         }
         
-        const allPractices = await getAllPracticesForAdmin();
-        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-        
-        if (!foundPractice) {
-          throw new Error('Practice not found');
-        }
-        
-        setPractice(foundPractice);
+        const token = getToken();
+        const raw = await getPractice(actor.practiceId, token) as Record<string, unknown>;
+        const locs = Array.isArray(raw.locations) ? raw.locations : [];
+        const normalizedLocs = locs.map((loc: any) => ({
+          ...loc,
+          address: loc.address ?? loc.address_line1 ?? [loc.address_line1, loc.city, loc.state, loc.zip].filter(Boolean).join(', '),
+          lat: loc.lat ?? loc.latitude,
+          lng: loc.lng ?? loc.longitude,
+        }));
+        const addressObj = raw.address && typeof raw.address === 'object' && !Array.isArray(raw.address)
+          ? raw.address as { line1?: string; line2?: string; city?: string; state?: string; zip?: string; country?: string }
+          : {
+              line1: (raw.address_line1 as string) ?? '',
+              line2: raw.address_line2 as string | undefined,
+              city: (raw.city as string) ?? '',
+              state: (raw.state as string) ?? '',
+              zip: (raw.zip as string) ?? '',
+              country: (raw.country as string) ?? 'USA',
+            };
+        const practiceData: Practice = {
+          id: (raw.id as string) ?? actor.practiceId,
+          slug: (raw.slug as string) ?? (raw.id as string) ?? actor.practiceId,
+          name: (raw.name as string) ?? '',
+          description: (raw.description as string) ?? '',
+          phone: (raw.phone as string) ?? '',
+          address: {
+            line1: addressObj.line1 ?? '',
+            line2: addressObj.line2,
+            city: addressObj.city ?? '',
+            state: addressObj.state ?? '',
+            zip: addressObj.zip ?? '',
+            country: addressObj.country ?? 'USA',
+          },
+          locations: normalizedLocs as PracticeLocation[],
+          specialties: Array.isArray(raw.specialties) ? raw.specialties as string[] : [],
+          doctorIds: Array.isArray(raw.doctorIds) ? raw.doctorIds as string[] : (Array.isArray(raw.doctors) ? (raw.doctors as { id?: string }[]).map((d) => d.id ?? '').filter(Boolean) : []),
+          createdAt: (raw.createdAt as string) ?? (raw.created_at as string) ?? new Date().toISOString(),
+          updatedAt: (raw.updatedAt as string) ?? (raw.updated_at as string) ?? new Date().toISOString(),
+          ...(raw.email != null && { email: raw.email as string }),
+          ...(raw.website != null && { website: raw.website as string }),
+          ...(Array.isArray(raw.services) && { services: raw.services as string[] }),
+          ...(Array.isArray(raw.insurance) && { insurance: raw.insurance as Practice['insurance'] }),
+          ...(raw.logo != null && { logo: raw.logo as string }),
+        };
+        setPractice(practiceData);
+        setDraftLocations(normalizedLocs);
         setIsLoading(false);
       } catch (error) {
         if (error instanceof AuthRequiredError) {
@@ -261,7 +318,43 @@ export default function PracticeLocationsPage() {
     }
     loadPractice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount - router is stable, no need in deps
+  }, []);
+
+  // Pending locations edit badge: refetch when practice loads and when user switches back to this tab
+  const practiceIdRef = useRef(practice?.id);
+  practiceIdRef.current = practice?.id;
+
+  const fetchPendingLocationsEdit = useCallback(() => {
+    const pid = practiceIdRef.current;
+    if (!pid) {
+      setHasPendingLocationsEdit(false);
+      return;
+    }
+    getApprovalRequests({ status: 'pending' })
+      .then((requests) => {
+        const pending = requests.some(
+          (r) =>
+            r.practice_id === pid &&
+            r.type === PRACTICE_LOCATIONS_EDIT_TYPE &&
+            (r.admin_status ?? 'pending') === 'pending'
+        );
+        setHasPendingLocationsEdit(pending);
+      })
+      .catch(() => setHasPendingLocationsEdit(false));
+  }, []);
+
+  useEffect(() => {
+    if (!practice?.id) {
+      setHasPendingLocationsEdit(false);
+      return;
+    }
+    fetchPendingLocationsEdit();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchPendingLocationsEdit();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [practice?.id, fetchPendingLocationsEdit]);
 
   // Generate location ID and reset form when dialog opens
   useEffect(() => {
@@ -289,18 +382,12 @@ export default function PracticeLocationsPage() {
     return validateLocationForm(formData, false);
   };
 
-  // Duplicate detection (uses shared helpers)
+  // Duplicate detection against draft list
   const checkDuplicates = (): { hasDuplicate: boolean; warning?: string } => {
-    if (!practice) return { hasDuplicate: false };
-    
     const normalizedAddr = normalizeAddress(formData.address, formData.city, formData.state, formData.zip);
-    const addressCheck = checkDuplicateAddress(practice, normalizedAddr);
-    
-    if (addressCheck.hasDuplicate) {
-      return addressCheck;
-    }
-    
-    return checkDuplicateCoords(practice, formData.lat, formData.lng);
+    const addressCheck = checkDuplicateAddressInList(draftLocations, normalizedAddr);
+    if (addressCheck.hasDuplicate) return addressCheck;
+    return checkDuplicateCoords({ locations: draftLocations } as Practice, formData.lat, formData.lng);
   };
 
   // ZIP geocoding
@@ -342,9 +429,11 @@ export default function PracticeLocationsPage() {
     handleGeocodeZip();
   };
 
-  // Open edit dialog handler
+  // Open edit dialog handler; auto-geocode from ZIP if location has no coordinates (e.g. from API)
   const handleOpenEditDialog = (location: PracticeLocation) => {
     setEditingLocationId(location.id);
+    const hasCoords = location.lat != null && location.lng != null;
+    const zipValid = location.zip && /^\d{5}$/.test(String(location.zip).replace(/\D/g, ''));
     setEditFormData({
       name: location.name || '',
       address: location.address,
@@ -354,11 +443,19 @@ export default function PracticeLocationsPage() {
       phone: location.phone || '',
       hours: location.hours || '',
       directionsUrl: location.directionsUrl || '',
-      lat: location.lat,
-      lng: location.lng,
+      lat: location.lat ?? null,
+      lng: location.lng ?? null,
     });
     setManualCoordsModeEdit(false);
     setShowEditDialog(true);
+    // If we have ZIP but no coords, geocode in background so form is valid without user clicking "Get Coordinates"
+    if (!hasCoords && zipValid) {
+      geocodeZip(String(location.zip).trim())
+        .then((coords) => {
+          setEditFormData((prev) => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+        })
+        .catch(() => {});
+    }
   };
 
   // Edit dialog geocoding
@@ -409,211 +506,141 @@ export default function PracticeLocationsPage() {
     return { valid: true };
   };
 
-  // Edit duplicate detection
+  // Edit duplicate detection against draft list
   const checkEditDuplicates = (): { hasDuplicate: boolean; warning?: string } => {
-    if (!practice || !editingLocationId) return { hasDuplicate: false };
-    
+    if (!editingLocationId) return { hasDuplicate: false };
     const normalizedAddr = normalizeAddress(editFormData.address, editFormData.city, editFormData.state, editFormData.zip);
-    const addressCheck = checkDuplicateAddress(practice, normalizedAddr, editingLocationId);
-    
-    if (addressCheck.hasDuplicate) {
-      return addressCheck;
-    }
-    
-    return checkDuplicateCoords(practice, editFormData.lat, editFormData.lng, editingLocationId);
+    const addressCheck = checkDuplicateAddressInList(draftLocations, normalizedAddr, editingLocationId);
+    if (addressCheck.hasDuplicate) return addressCheck;
+    return checkDuplicateCoords({ locations: draftLocations } as Practice, editFormData.lat, editFormData.lng, editingLocationId);
   };
 
-  // Open remove dialog handler
+  // Open remove dialog handler (uses draft count)
   const handleOpenRemoveDialog = (locationId: string) => {
-    if (!practice) return;
-    
-    // Check if last location
-    if ((practice.locations ?? []).length <= 1) {
+    if (draftLocations.length <= 1) {
       toast.error('Cannot remove the last remaining location. Practice must retain at least one location.');
       return;
     }
-    
     setRemovingLocationId(locationId);
     setShowRemoveDialog(true);
   };
 
-  // Remove submit handler
-  const handleRemoveSubmit = async () => {
-    if (!practice || !removingLocationId) return;
-    
-    // Find location being removed
-    const removingLocation = (practice.locations ?? []).find(loc => loc.id === removingLocationId);
-    
-    if (!removingLocation) {
-      toast.error('Location not found');
-      setShowRemoveDialog(false);
-      setRemovingLocationId(null);
+  // Remove from draft only (no API until "Submit for approval")
+  const handleRemoveSubmit = () => {
+    if (!removingLocationId) return;
+    if (draftLocations.length <= 1) {
+      toast.error('Cannot remove the last remaining location.');
       return;
     }
-    
-    // Validate last location rule again (safety check)
-    if ((practice.locations ?? []).length <= 1) {
-      toast.error('Cannot remove the last remaining location. Practice must retain at least one location.');
-      setShowRemoveDialog(false);
-      setRemovingLocationId(null);
-      return;
-    }
-    
-    try {
-      setIsSubmittingRemove(true);
-      const actor = getActorFromSession();
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Must be practice admin');
-      }
-      
-      // Submit approval request
-      await submitApprovalRequest(actor, {
-        type: 'practice_location_remove_request',
-        payload: {
-          practiceId: practice.id,
-          locationId: removingLocationId,
-        },
-        target: {
-          practiceId: practice.id,
-        },
-      });
-      
-      toast.success('Removal request submitted. Waiting for admin approval.');
-      setShowRemoveDialog(false);
-      setRemovingLocationId(null);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit removal request');
-    } finally {
-      setIsSubmittingRemove(false);
-    }
+    setDraftLocations((prev) => prev.filter((loc) => loc.id !== removingLocationId));
+    setShowRemoveDialog(false);
+    setRemovingLocationId(null);
+    toast.success('Location removed from draft. Click "Submit for approval" to save changes.');
   };
 
-  // Edit submit handler
-  const handleEditSubmit = async () => {
-    if (!practice || !editingLocationId) return;
-    
+  // Edit: update draft only (no API until "Submit for approval")
+  const handleEditSubmit = () => {
+    if (!editingLocationId) return;
     const validation = validateEditForm();
     if (!validation.valid) {
       toast.error(validation.error ?? 'Please fix the form errors');
       return;
     }
-    
     const duplicateCheck = checkEditDuplicates();
     if (duplicateCheck.hasDuplicate) {
       toast.error(duplicateCheck.warning ?? 'A duplicate location was detected');
       return;
     }
-    
-    try {
-      setIsSubmittingEdit(true);
-      const actor = getActorFromSession();
-      if (actor.kind !== 'doctor' || !actor.practiceId) {
-        throw new PermissionDeniedError('Must be practice admin');
-      }
-      
-      // Ensure coordinates are set
-      if (editFormData.lat === null || editFormData.lng === null) {
-        throw new Error('Coordinates are required');
-      }
-      
-      const updatedLocation: PracticeLocation = {
-        id: editingLocationId, // CRITICAL: Must match original location ID
-        name: editFormData.name.trim() || undefined,
-        address: editFormData.address.trim(),
-        city: editFormData.city.trim(),
-        state: editFormData.state.trim().toUpperCase(),
-        zip: editFormData.zip.trim().replace(/\D/g, '').substring(0, 5),
-        lat: editFormData.lat,
-        lng: editFormData.lng,
-        phone: editFormData.phone.trim() || undefined,
-        hours: editFormData.hours.trim() || undefined,
-        directionsUrl: editFormData.directionsUrl.trim() || undefined,
-      };
-      
-      // Submit approval request
-      await submitApprovalRequest(actor, {
-        type: 'practice_location_edit_request',
-        payload: {
-          practiceId: practice.id,
-          locationId: editingLocationId,
-          updatedLocation,
-        },
-        target: {
-          practiceId: practice.id,
-        },
-      });
-      
-      toast.success('Edit request submitted. Waiting for admin approval.');
-      setShowEditDialog(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit edit request');
-    } finally {
-      setIsSubmittingEdit(false);
-    }
+    const updatedLocation: PracticeLocation = {
+      id: editingLocationId,
+      name: editFormData.name.trim() || undefined,
+      address: editFormData.address.trim(),
+      city: editFormData.city.trim(),
+      state: editFormData.state.trim().toUpperCase(),
+      zip: editFormData.zip.trim().replace(/\D/g, '').substring(0, 5),
+      lat: editFormData.lat,
+      lng: editFormData.lng,
+      phone: editFormData.phone.trim() || undefined,
+      hours: editFormData.hours.trim() || undefined,
+      directionsUrl: editFormData.directionsUrl.trim() || undefined,
+    };
+    setDraftLocations((prev) =>
+      prev.map((loc) => (loc.id === editingLocationId ? updatedLocation : loc))
+    );
+    setShowEditDialog(false);
+    setEditingLocationId(null);
+    toast.success('Location updated in draft. Click "Submit for approval" to save changes.');
   };
 
-  // Submit handler
-  const handleSubmit = async () => {
-    if (!practice) return;
-    
+  // Add: add to draft only (no API until "Submit for approval")
+  const handleSubmit = () => {
     const validation = validateForm();
     if (!validation.valid) {
       toast.error(validation.error ?? 'Please fix the form errors');
       return;
     }
-    
     const duplicateCheck = checkDuplicates();
     if (duplicateCheck.hasDuplicate) {
       toast.error(duplicateCheck.warning ?? 'A duplicate location was detected');
       return;
     }
-    
-    // Note: duplicateCheck.warning (for coordinates) is shown in UI below, not here
-    
+    const location: PracticeLocation = {
+      id: locationId,
+      name: formData.name.trim() || undefined,
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      state: formData.state.trim().toUpperCase(),
+      zip: formData.zip.trim().replace(/\D/g, '').substring(0, 5),
+      lat: formData.lat,
+      lng: formData.lng,
+      phone: formData.phone.trim() || undefined,
+      hours: formData.hours.trim() || undefined,
+      directionsUrl: formData.directionsUrl.trim() || undefined,
+    };
+    setDraftLocations((prev) => [...prev, location]);
+    setShowAddDialog(false);
+    toast.success('Location added to draft. Click "Submit for approval" to save changes.');
+  };
+
+  // Submit all draft locations for admin approval (one request)
+  const handleSubmitForApproval = async () => {
+    if (!practice) return;
+    if (draftLocations.length === 0) {
+      toast.error('Add at least one location before submitting.');
+      return;
+    }
     try {
-      setIsSubmitting(true);
+      setIsSubmittingBulk(true);
       const actor = getActorFromSession();
       if (actor.kind !== 'doctor' || !actor.practiceId) {
         throw new PermissionDeniedError('Must be practice admin');
       }
-      
-      // Ensure coordinates are set (validation already checked, but TypeScript needs this)
-      if (formData.lat === null || formData.lng === null) {
-        throw new Error('Coordinates are required');
-      }
-      
-      const location: PracticeLocation = {
-        id: locationId,
-        name: formData.name.trim() || undefined,
-        address: formData.address.trim(),
-        city: formData.city.trim(),
-        state: formData.state.trim().toUpperCase(),
-        zip: formData.zip.trim().replace(/\D/g, '').substring(0, 5),
-        lat: formData.lat,
-        lng: formData.lng,
-        phone: formData.phone.trim() || undefined,
-        hours: formData.hours.trim() || undefined,
-        directionsUrl: formData.directionsUrl.trim() || undefined,
-      };
-      
-      // Submit approval request (async)
-      await submitApprovalRequest(actor, {
-        type: 'practice_location_add_request',
+      await createApprovalRequest({
+        type: PRACTICE_LOCATIONS_EDIT_TYPE,
+        practice_id: practice.id,
         payload: {
           practiceId: practice.id,
-          location,
-        },
-        target: {
-          practiceId: practice.id,
+          locations: draftLocations.map((loc) => ({
+            id: loc.id,
+            name: loc.name,
+            address: loc.address,
+            city: loc.city,
+            state: loc.state,
+            zip: loc.zip,
+            phone: loc.phone,
+            lat: loc.lat,
+            lng: loc.lng,
+            latitude: loc.lat,
+            longitude: loc.lng,
+          })),
         },
       });
-      
-      toast.success('Location request submitted. Waiting for admin approval.');
-      setShowAddDialog(false);
+      setHasPendingLocationsEdit(true);
+      toast.success('Location changes submitted. They will apply once an admin approves.');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit location request');
+      toast.error(error.message || 'Failed to submit for approval');
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingBulk(false);
     }
   };
 
@@ -639,26 +666,48 @@ export default function PracticeLocationsPage() {
     );
   }
 
-  const locations = practice.locations || [];
+  const locations = draftLocations;
 
   return (
     <div className="space-y-6">
+      {hasPendingLocationsEdit && (
+        <div className="flex items-center gap-2 flex-wrap text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+            Pending approval
+          </Badge>
+          <span>You have pending location changes awaiting admin approval. Submitting again will update that request.</span>
+        </div>
+      )}
       <SectionHeader
         title="Practice Locations"
-        description="View all registered locations for your practice."
+        description="Add, edit, or remove locations in the draft below, then submit for admin approval."
         actions={
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Location
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              onClick={handleSubmitForApproval}
+              disabled={isSubmittingBulk || draftLocations.length === 0}
+            >
+              {isSubmittingBulk ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit for approval'
+              )}
+            </Button>
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Location
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Location</DialogTitle>
                 <DialogDescription>
-                  Submit a request to add a new location to your practice. This will require admin approval.
+                  Add a location to your draft. Click &quot;Submit for approval&quot; on the page when ready to send all changes to admin.
                 </DialogDescription>
               </DialogHeader>
               
@@ -901,6 +950,7 @@ export default function PracticeLocationsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </div>
         }
       />
 
@@ -908,9 +958,9 @@ export default function PracticeLocationsPage() {
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Request Location Edit</DialogTitle>
+            <DialogTitle>Edit Location</DialogTitle>
             <DialogDescription>
-              This submits an edit request for approval. Your location won't change until approved.
+              Update the location in your draft. Click &quot;Submit for approval&quot; on the page when ready to send all changes to admin.
             </DialogDescription>
           </DialogHeader>
           
@@ -1206,22 +1256,12 @@ export default function PracticeLocationsPage() {
           })()}
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmittingRemove}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveSubmit}
-              disabled={isSubmittingRemove}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isSubmittingRemove ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit Removal Request'
-              )}
+              Remove from draft
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -13,7 +13,13 @@ export const APPROVAL_TYPE_LABELS: Record<ApprovalType, string> = {
   new_practice_with_admin_doctor: 'Practice Create',
   practice_admin_profile_practice_completion: 'PA Profile & Practice Completion',
   doctor_profile_completion: 'Doctor Profile Completion',
+  doctor_profile_edit: 'Doctor Profile Edit',
+  practice_admin_profile_edit: 'Practice Admin Profile Edit',
+  doctor_insurance_edit: 'Doctor Insurance & Services',
+  practice_admin_insurance_edit: 'Practice Admin Insurance & Services',
   practice_edit_request: 'Practice Edit',
+  practice_admin_practice_profile_edit: 'Practice Profile Edit',
+  practice_admin_practice_locations_edit: 'Practice Locations Edit',
   doctor_join_practice: 'Doctor Join Practice',
   practice_doctor_add_request: 'Roster Change',
   practice_doctor_remove_request: 'Roster Change',
@@ -52,8 +58,12 @@ export function getApprovalTypeCategory(type: ApprovalType): ApprovalTypeCategor
     case 'practice_admin_profile_practice_completion':
       return 'practice_edit';
     case 'doctor_profile_completion':
+    case 'doctor_profile_edit':
+    case 'practice_admin_profile_edit':
       return 'doctor_edit';
     case 'practice_edit_request':
+    case 'practice_admin_practice_profile_edit':
+    case 'practice_admin_practice_locations_edit':
     case 'practice_location_change_request':
     case 'practice_insurance_services_change_request':
     case 'practice_location_add_request':
@@ -87,7 +97,13 @@ export function getApprovalTypeOptions(): ApprovalTypeOption[] {
     'new_practice_with_admin_doctor',
     'practice_admin_profile_practice_completion',
     'doctor_profile_completion',
+    'doctor_profile_edit',
+    'practice_admin_profile_edit',
+    'doctor_insurance_edit',
+    'practice_admin_insurance_edit',
     'practice_edit_request',
+    'practice_admin_practice_profile_edit',
+    'practice_admin_practice_locations_edit',
     'doctor_join_practice',
     'practice_doctor_add_request',
     'practice_doctor_remove_request',

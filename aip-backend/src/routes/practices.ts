@@ -237,6 +237,7 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     const allowed = new Set([
       'name', 'description', 'phone', 'email', 'website',
       'address_line1', 'address_line2', 'city', 'state', 'zip', 'country', 'status',
+      'logo_url',
     ]);
     const setParts: string[] = [];
     const values: unknown[] = [];

@@ -56,8 +56,10 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                     throw new NotFoundError('ApprovalRequest', requestId);
                 }
 
-                // Verify this request is for this practice admin
-                if (foundRequest.approvals.practiceAdmin?.practiceId !== actor.practiceId) {
+                // Verify this request is for this practice admin (use target when practiceAdmin not yet set)
+                const requestPracticeId =
+                    foundRequest.approvals.practiceAdmin?.practiceId ?? foundRequest.target?.practiceId;
+                if (requestPracticeId !== actor.practiceId) {
                     throw new PermissionDeniedError('This approval request is not for your practice');
                 }
 
@@ -170,8 +172,9 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
         );
     }
 
-    const canApprove = request.approvals.practiceAdmin?.status === 'pending';
-    const canReject = request.approvals.practiceAdmin?.status === 'pending';
+    const paStatus = request.approvals.practiceAdmin?.status ?? 'pending';
+    const canApprove = paStatus === 'pending';
+    const canReject = paStatus === 'pending';
 
     return (
         <div className="space-y-6">

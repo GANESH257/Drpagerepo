@@ -27,7 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getDoctors, getDoctor, updateDoctor, type Doctor } from '@/lib/api/doctors';
+import { getDoctors, getDoctor, updateDoctor } from '@/lib/api/doctors';
+import type { Doctor } from '@/types';
 import { getToken } from '@/lib/api/config';
 
 export default function AdminMembersDoctorsPage() {
@@ -96,7 +97,7 @@ export default function AdminMembersDoctorsPage() {
           lastName,
           email: email || undefined,
           specialty: specialty || undefined,
-          status: status as any,
+          status: status || undefined,
         },
         token
       );

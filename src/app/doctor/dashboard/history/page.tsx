@@ -171,7 +171,7 @@ export default function DoctorHistoryPage() {
     try {
       const actor = getActorFromSession();
       if (actor.kind === 'doctor') {
-        const history = getReferralTimeline(actor, referral.id);
+        const history = getReferralTimeline(actor, referral.id, referral);
         setTimeline(history);
       }
     } catch (error) {
@@ -182,9 +182,10 @@ export default function DoctorHistoryPage() {
 
   const getStatusBadge = (status: ReferralStatus) => {
     const variants: Record<ReferralStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      new: 'outline',
-      attended: 'default',
-      removed: 'destructive',
+      considering: 'outline',
+      accepted: 'default',
+      no_show: 'secondary',
+      cancelled: 'destructive',
     };
     return variants[status];
   };
@@ -266,9 +267,10 @@ export default function DoctorHistoryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="attended">Attended</SelectItem>
-                      <SelectItem value="removed">Removed</SelectItem>
+                      <SelectItem value="considering">Considering</SelectItem>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="no_show">No Show</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

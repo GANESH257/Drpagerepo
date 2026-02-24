@@ -6,6 +6,7 @@ import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Committee } from '@/lib/api/committees';
+import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 
 export default function LeadershipCommitteesPage() {
   const [committees, setCommittees] = useState<Committee[]>([]);
@@ -53,7 +54,7 @@ export default function LeadershipCommitteesPage() {
                   {(c.members || []).map((m) => (
                     <li key={m.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                       <div>
-                        <Link href={`/doctors/${m.doctor_slug || m.doctor_id}`} className="font-medium text-brand-teal hover:underline">
+                        <Link href={getDoctorProfileUrl({ slug: m.doctor_slug ?? undefined, id: m.doctor_id })} className="font-medium text-brand-teal hover:underline">
                           {m.full_name}
                         </Link>
                         {m.role && <span className="text-gray-600 text-sm ml-2">— {m.role}</span>}

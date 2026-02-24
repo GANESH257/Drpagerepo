@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
-import { getPendingApprovalsForPracticeAdmin } from '@/lib/services/approvalEngine';
+import { getApprovalsForPracticeAdmin } from '@/lib/services/approvalEngine';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
@@ -15,6 +15,35 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime } from '@/lib/dateUtils';
 import { Eye } from 'lucide-react';
+
+/** Applicant display name: prefer payload.doctor.fullName, else email, else role + id */
+function getApplicantDisplay(request: ApprovalRequest): { name: string; email: string } {
+  const payload = request.payload || {};
+  const doctor = payload.doctor || {};
+  const name =
+    (doctor.fullName && String(doctor.fullName).trim()) ||
+    (doctor.email && String(doctor.email)) ||
+    request.submittedBy.email ||
+    (request.submittedBy.role === 'doctor' && request.submittedBy.doctorId
+      ? `Doctor (${request.submittedBy.doctorId})`
+      : request.submittedBy.role === 'public'
+        ? 'Applicant'
+        : request.submittedBy.role);
+  const email =
+    doctor.email ||
+    request.submittedBy.email ||
+    request.target?.invitedDoctorEmail ||
+    '';
+  return { name: name || '—', email: email || '—' };
+}
+
+/** Practice name from payload if present */
+function getPracticeDisplay(request: ApprovalRequest): string {
+  const payload = request.payload || {};
+  const practice = payload.practice || {};
+  const name = practice.name && String(practice.name).trim();
+  return name || (request.target?.practiceId ? `Practice` : '—');
+}
 
 export default function PracticeAdminApprovalsPage() {
   const router = useRouter();
@@ -31,8 +60,8 @@ export default function PracticeAdminApprovalsPage() {
           throw new PermissionDeniedError('Practice admin must have practiceId');
         }
         
-        const pending = await getPendingApprovalsForPracticeAdmin(actor.practiceId);
-        setRequests(pending);
+        const list = await getApprovalsForPracticeAdmin(actor.practiceId);
+        setRequests(list);
         setIsLoading(false);
       } catch (error) {
         if (error instanceof AuthRequiredError) {
@@ -66,8 +95,8 @@ export default function PracticeAdminApprovalsPage() {
 
       {requests.length === 0 ? (
         <EmptyState
-          title="No pending approvals"
-          description="There are no approval requests requiring your decision at this time."
+          title="No approval requests"
+          description="There are no approval requests for your practice yet."
         />
       ) : (
         <Card>
@@ -77,43 +106,52 @@ export default function PracticeAdminApprovalsPage() {
                 <TableRow>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Applicant</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Practice</TableHead>
                   <TableHead>Submitted</TableHead>
-                  <TableHead>Submitted By</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <ApprovalTypeBadge type={request.type} />
-                    </TableCell>
-                    <TableCell>
-                      <ApprovalStatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell>
-                      {formatDateTime(request.submittedAt)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{request.submittedBy.role}</div>
-                        {request.submittedBy.email && (
-                          <div className="text-gray-500 text-xs">{request.submittedBy.email}</div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/doctor/dashboard/practice/approvals/${request.id}`)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Review
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {requests.map((request) => {
+                  const applicant = getApplicantDisplay(request);
+                  const practiceName = getPracticeDisplay(request);
+                  return (
+                    <TableRow key={request.id}>
+                      <TableCell>
+                        <ApprovalTypeBadge type={request.type} />
+                      </TableCell>
+                      <TableCell>
+                        <ApprovalStatusBadge status={request.status} />
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{applicant.name}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground text-sm">{applicant.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{practiceName}</span>
+                      </TableCell>
+                      <TableCell>
+                        {formatDateTime(request.submittedAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(`/doctor/dashboard/practice/approvals/detail?id=${encodeURIComponent(request.id)}`)
+                          }
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Review
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

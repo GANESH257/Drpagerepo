@@ -135,7 +135,7 @@ export function createReferral(
     patient: input.patient,
     condition: input.condition,
     notes: input.notes,
-    status: 'new',
+    status: 'considering',
   };
 
   // Append history (new structure)
@@ -204,7 +204,7 @@ export function setReferralStatus(
   updateReferral(referralId, {
     status,
     updatedAt: now,
-    ...(status === 'attended' ? { attendedAt: now } : {}),
+    ...(status === 'accepted' ? { attendedAt: now } : {}),
   });
 
   // Append history (new structure)
@@ -253,16 +253,22 @@ export function getReferralsForDoctor(
 }
 
 /**
- * Get referral timeline (history) for a referral
+ * Get referral timeline (history) for a referral.
+ * If referralFromCaller is provided (e.g. from API), it is used for lookup and permissions
+ * so that API-sourced referrals work even when not in localStorage.
  */
 export function getReferralTimeline(
   actor: Actor,
-  referralId: string
+  referralId: string,
+  referralFromCaller?: Referral
 ): ReferralHistoryRecord[] {
   assertAuthenticated(actor);
 
-  const referrals = getReferrals();
-  const referral = referrals.find((r) => r.id === referralId);
+  const referral =
+    referralFromCaller?.id === referralId
+      ? referralFromCaller
+      : getReferrals().find((r) => r.id === referralId);
+
   if (!referral) {
     throw new NotFoundError('Referral', referralId);
   }

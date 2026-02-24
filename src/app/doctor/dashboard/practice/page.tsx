@@ -1,23 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
-import { submitApprovalRequest } from '@/lib/services/approvalEngine';
+import { createApprovalRequest, getApprovalRequests } from '@/lib/api/approval-requests';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { practices } from '@/data/practices';
 import { getAllPracticesForAdmin, getDoctorsByPractice } from '@/lib/adminHelpers';
-import { doctors } from '@/data/doctors';
+import { uploadImage, getUploadFullUrl } from '@/lib/api/upload';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
-import { Edit } from 'lucide-react';
+import { Edit, Upload, Loader2, X } from 'lucide-react';
+
+const PRACTICE_PROFILE_EDIT_TYPE = 'practice_admin_practice_profile_edit';
 
 export default function PracticeDetailsPage() {
   const router = useRouter();
@@ -26,13 +29,15 @@ export default function PracticeDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [hasPendingProfileEdit, setHasPendingProfileEdit] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState({
     description: '',
     phone: '',
     email: '',
     website: '',
+    logo: '' as string,
     address: {
       line1: '',
       line2: '',
@@ -42,6 +47,8 @@ export default function PracticeDetailsPage() {
       country: 'USA',
     },
   });
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function loadPractice() {
@@ -67,19 +74,21 @@ export default function PracticeDetailsPage() {
         const doctorsInPractice = await getDoctorsByPractice(foundPractice.id);
         setPracticeDoctors(doctorsInPractice);
         
-        // Pre-fill form
+        // Pre-fill form (logo from practice.logo or API logo_url)
+        const logo = foundPractice.logo ?? (foundPractice as { logo_url?: string }).logo_url ?? '';
         setFormData({
           description: foundPractice.description || '',
           phone: foundPractice.phone || '',
           email: foundPractice.email || '',
           website: foundPractice.website || '',
+          logo: typeof logo === 'string' ? logo : '',
           address: {
-            line1: foundPractice.address.line1 || '',
-            line2: foundPractice.address.line2 || '',
-            city: foundPractice.address.city || '',
-            state: foundPractice.address.state || '',
-            zip: foundPractice.address.zip || '',
-            country: foundPractice.address.country || 'USA',
+            line1: foundPractice.address?.line1 || '',
+            line2: foundPractice.address?.line2 || '',
+            city: foundPractice.address?.city || '',
+            state: foundPractice.address?.state || '',
+            zip: foundPractice.address?.zip || '',
+            country: foundPractice.address?.country || 'USA',
           },
         });
         
@@ -96,6 +105,42 @@ export default function PracticeDetailsPage() {
     loadPractice();
   }, [router]);
 
+  // Pending approval badge: refetch when practice loads and when user switches back to this tab
+  const practiceIdRef = useRef(practice?.id);
+  practiceIdRef.current = practice?.id;
+
+  const fetchPendingProfileEdit = useCallback(() => {
+    const pid = practiceIdRef.current;
+    if (!pid) {
+      setHasPendingProfileEdit(false);
+      return;
+    }
+    getApprovalRequests({ status: 'pending' })
+      .then((requests) => {
+        const pending = requests.some(
+          (r) =>
+            r.practice_id === pid &&
+            r.type === PRACTICE_PROFILE_EDIT_TYPE &&
+            (r.admin_status ?? 'pending') === 'pending'
+        );
+        setHasPendingProfileEdit(pending);
+      })
+      .catch(() => setHasPendingProfileEdit(false));
+  }, []);
+
+  useEffect(() => {
+    if (!practice?.id) {
+      setHasPendingProfileEdit(false);
+      return;
+    }
+    fetchPendingProfileEdit();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchPendingProfileEdit();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [practice?.id, fetchPendingProfileEdit]);
+
   const handleSubmitEdit = async () => {
     if (!practice) return;
     
@@ -106,66 +151,67 @@ export default function PracticeDetailsPage() {
         throw new PermissionDeniedError('Must be practice admin');
       }
       
+      const currentLogo = practice.logo ?? (practice as { logo_url?: string }).logo_url ?? '';
       // Deep clone before snapshot (Engine Guard Requirement 1)
       const beforeSnapshot = (() => {
         try {
-          // Use structuredClone if available (modern browsers)
           if (typeof structuredClone !== 'undefined') {
             return structuredClone({
               name: practice.name,
               description: practice.description || '',
               phone: practice.phone || '',
               website: practice.website || '',
+              logo_url: currentLogo || undefined,
               insurances: practice.insurance?.map(i => i.name) || [],
               services: practice.services || [],
             });
           } else {
-            // Fallback to JSON parse/stringify
             return JSON.parse(JSON.stringify({
               name: practice.name,
               description: practice.description || '',
               phone: practice.phone || '',
               website: practice.website || '',
+              logo_url: currentLogo || undefined,
               insurances: practice.insurance?.map(i => i.name) || [],
               services: practice.services || [],
             }));
           }
         } catch (e) {
-          // Final fallback
           return {
             name: practice.name,
             description: practice.description || '',
             phone: practice.phone || '',
             website: practice.website || '',
+            logo_url: currentLogo || undefined,
             insurances: practice.insurance?.map(i => i.name) || [],
             services: practice.services || [],
           };
         }
       })();
-      
-      // Build after snapshot from formData (full object, not partial)
+
+      // Build after snapshot from formData; backend expects logo_url
       const afterSnapshot = {
-        name: practice.name, // name typically doesn't change in edit form
+        name: practice.name,
         description: formData.description || '',
         phone: formData.phone || '',
         website: formData.website || '',
-        insurances: practice.insurance?.map(i => i.name) || [], // preserve for now (not editable in form)
-        services: practice.services || [], // preserve for now (not editable in form)
+        logo_url: formData.logo || undefined,
+        insurances: practice.insurance?.map(i => i.name) || [],
+        services: practice.services || [],
       };
       
-      await submitApprovalRequest(actor, {
-        type: 'practice_edit_request',
+      await createApprovalRequest({
+        type: PRACTICE_PROFILE_EDIT_TYPE,
+        practice_id: practice.id,
         payload: {
           practiceId: practice.id,
           before: beforeSnapshot,
           after: afterSnapshot,
         },
-        target: {
-          practiceId: practice.id,
-        },
       });
-      
-      toast.success('Edit request submitted. Waiting for admin approval.');
+
+      setHasPendingProfileEdit(true);
+      toast.success('Practice profile changes submitted. They will apply once an admin approves.');
       setShowEditDialog(false);
     } catch (error: any) {
       toast.error(error.message || 'Failed to submit edit request');
@@ -198,6 +244,14 @@ export default function PracticeDetailsPage() {
 
   return (
     <div className="space-y-6">
+      {hasPendingProfileEdit && (
+        <div className="flex items-center gap-2 flex-wrap text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+            Pending approval
+          </Badge>
+          <span>You have pending practice profile changes awaiting admin approval. Submitting again will update that request.</span>
+        </div>
+      )}
       <SectionHeader
         title="Practice Details"
         description={practice.name}
@@ -225,6 +279,70 @@ export default function PracticeDetailsPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Practice description..."
                   />
+                </div>
+                <div>
+                  <Label>Practice logo</Label>
+                  <div className="flex flex-col gap-2 mt-1">
+                    {formData.logo && (
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200 inline-flex">
+                        <Image
+                          src={formData.logo.startsWith('http') ? formData.logo : getUploadFullUrl(formData.logo)}
+                          alt="Practice logo"
+                          fill
+                          className="object-contain"
+                          unoptimized
+                          onError={(e) => {
+                            const t = e.target as HTMLImageElement;
+                            if (t) t.style.display = 'none';
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-0.5 right-0.5 h-6 w-6 opacity-90 hover:opacity-100"
+                          onClick={() => setFormData({ ...formData, logo: '' })}
+                          aria-label="Remove logo"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setLogoUploading(true);
+                          try {
+                            const path = await uploadImage(file);
+                            setFormData((prev) => ({ ...prev, logo: path }));
+                          } catch (err) {
+                            console.error('Logo upload failed:', err);
+                            toast.error('Failed to upload logo');
+                          } finally {
+                            setLogoUploading(false);
+                            e.target.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={logoUploading}
+                      >
+                        {logoUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                        {logoUploading ? 'Uploading...' : formData.logo ? 'Change logo' : 'Upload logo'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">JPEG, PNG, or WebP. Max 5 MB. Shown on practice profile and directory.</p>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

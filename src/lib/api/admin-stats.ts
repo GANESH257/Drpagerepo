@@ -20,7 +20,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   const [practicesRes, doctorsRes, approvalList] = await Promise.all([
     getPractices({ limit: 1, includePending: true }, token).catch(() => ({ practices: [], pagination: { total: 0 } })),
     getDoctors({ limit: 1 }, token).catch(() => ({ doctors: [], pagination: { total: 0 } })),
-    getApprovalRequests(token).catch(() => []),
+    getApprovalRequests().catch(() => []),
   ]);
 
   const pending = Array.isArray(approvalList)
