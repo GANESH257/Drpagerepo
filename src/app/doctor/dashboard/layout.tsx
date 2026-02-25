@@ -10,6 +10,8 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { CompleteProfileGate } from '@/components/dashboard/CompleteProfileGate';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
+import { usePortalTheme } from '@/contexts/PortalThemeContext';
+import { cn } from '@/lib/utils';
 
 export default function DoctorDashboardLayout({
   children,
@@ -96,12 +98,15 @@ export default function DoctorDashboardLayout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const { theme } = usePortalTheme();
+  const darkClass = theme === 'dark' ? 'dark' : '';
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className={cn(darkClass, 'min-h-screen bg-background flex items-center justify-center')}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--aip-teal)] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+          <p className="text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -109,13 +114,13 @@ export default function DoctorDashboardLayout({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className={cn(darkClass, 'min-h-screen bg-background flex items-center justify-center')}>
         <div className="text-center max-w-md px-4">
           <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--aip-teal)' }}>
             Dashboard Access
           </h2>
-          <p className="text-gray-600 mb-2">{error}</p>
-          <p className="text-sm text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-2">{error}</p>
+          <p className="text-sm text-muted-foreground mb-6">
             Submit a join request to get started. Once approved, you'll have full access to your dashboard.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -155,15 +160,19 @@ export default function DoctorDashboardLayout({
 
   if (isPendingProfilePA || isPendingProfileDoctorOnly) {
     return (
-      <CompleteProfileGate doctor={doctor}>
-        {children}
-      </CompleteProfileGate>
+      <div className={cn(darkClass, 'min-h-screen')}>
+        <CompleteProfileGate doctor={doctor}>
+          {children}
+        </CompleteProfileGate>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
-      {children}
-    </DashboardLayout>
+    <div className={cn(darkClass, 'min-h-screen flex flex-col')}>
+      <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
+        {children}
+      </DashboardLayout>
+    </div>
   );
 }

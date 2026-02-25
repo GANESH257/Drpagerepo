@@ -26,6 +26,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { MessageBell } from '@/components/dashboard/MessageBell';
+import { PortalThemeToggle } from '@/components/portal/PortalThemeToggle';
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -100,6 +101,7 @@ export function AdminShell({ children }: AdminShellProps) {
         </div>
       </div>
       <div className="flex items-center gap-1 md:gap-2 mr-2 md:mr-4">
+        <PortalThemeToggle />
         <MessageBell userId="admin" href="/admin/messages" />
       </div>
       <Button

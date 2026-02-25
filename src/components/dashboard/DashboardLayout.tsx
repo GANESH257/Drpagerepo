@@ -15,6 +15,7 @@ import { AnnouncementBell } from './AnnouncementBell';
 import { NotificationBell } from './NotificationBell';
 import { cn } from '@/lib/utils';
 import type { PortalNavItem } from '@/components/portal/portalNavTypes';
+import { PortalThemeToggle } from '@/components/portal/PortalThemeToggle';
 
 interface DashboardLayoutProps {
   doctor: Doctor;
@@ -156,6 +157,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   const headerRight = (
     <>
       <div className="flex items-center gap-1 md:gap-2">
+        <PortalThemeToggle />
         <MessageBell userId={currentDoctor.id} />
         <AnnouncementBell doctorId={currentDoctor.id} practiceId={currentDoctor.practiceId} />
         <NotificationBell doctorId={currentDoctor.id} />
@@ -164,7 +166,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
         <button
           type="button"
           onClick={() => setUserMenuOpen((o) => !o)}
-          className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 text-left transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--aip-teal)]/20 focus:ring-offset-2"
+          className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 text-left transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-[var(--aip-teal)]/20 focus:ring-offset-2"
           aria-expanded={userMenuOpen}
           aria-haspopup="true"
           aria-label="User menu"
@@ -176,34 +178,34 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
             {initials}
           </div>
           <div className="hidden min-w-0 flex-col sm:flex">
-            <span className="truncate text-sm font-semibold text-gray-800">{currentDoctor.fullName}</span>
+            <span className="truncate text-sm font-semibold text-foreground">{currentDoctor.fullName}</span>
             {currentDoctor.verified && (
               <span className="flex items-center gap-1 text-[10px] font-medium text-[var(--aip-teal)]">
                 <span className="h-1 w-1 rounded-full bg-[var(--aip-teal)]" /> Verified
               </span>
             )}
             {isPracticeAdmin && (
-              <Badge variant="secondary" className="mt-0.5 w-fit text-[10px] bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="mt-0.5 w-fit text-[10px] bg-accent text-accent-foreground">
                 Practice Admin
               </Badge>
             )}
           </div>
           <ChevronDown
-            className={cn('h-4 w-4 flex-shrink-0 text-gray-500 transition-transform', userMenuOpen && 'rotate-180')}
+            className={cn('h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform', userMenuOpen && 'rotate-180')}
           />
         </button>
         {userMenuOpen && (
           <div
-            className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+            className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-lg border border-border bg-card py-1 shadow-lg"
             role="menu"
           >
             <Link
               href={`${baseUrl}/settings`}
               onClick={() => setUserMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent"
               role="menuitem"
             >
-              <Cog className="h-4 w-4 text-gray-400" />
+              <Cog className="h-4 w-4 text-muted-foreground" />
               Account Settings
             </Link>
           </div>

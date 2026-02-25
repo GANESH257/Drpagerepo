@@ -210,10 +210,10 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
       {/* Welcome + status */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {greeting}, {shortName} 👋
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">
+          <p className="text-muted-foreground mt-1 text-sm">
             {dateStr}
             &nbsp;·&nbsp;{doctor.specialty || 'Physician'}
             &nbsp;·&nbsp;{practiceName}
@@ -231,12 +231,12 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
             <>
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">Onboarding Progress</p>
-                  <h2 className="text-lg font-bold text-gray-900 mt-0.5">Complete Your Profile</h2>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Onboarding Progress</p>
+                  <h2 className="text-lg font-bold text-foreground mt-0.5">Complete Your Profile</h2>
                 </div>
                 <span className="text-2xl font-black" style={{ color: 'var(--aip-gold)' }}>{onboardingPct}%</span>
               </div>
-              <div className="w-full h-2 rounded-full bg-gray-200 mb-4">
+              <div className="w-full h-2 rounded-full bg-muted mb-4">
                 <div
                   className="h-2 rounded-full transition-all duration-700"
                   style={{ width: `${onboardingPct}%`, background: 'linear-gradient(90deg, var(--aip-teal), var(--aip-navy))' }}
@@ -251,7 +251,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
                       ) : (
                         <Clock className="w-4 h-4 text-amber-500" />
                       )}
-                      <span className={onboardingStepsComplete[i] ? 'text-gray-900' : 'text-gray-500'}>{step.label}</span>
+                      <span className={onboardingStepsComplete[i] ? 'text-foreground' : 'text-muted-foreground'}>{step.label}</span>
                     </span>
                   ))}
                 </div>
@@ -269,7 +269,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           {!isIncomplete && isSubmitted && !changesRequestedRequest && (
             <div className="flex items-center gap-3">
               <AlertCircle className="h-6 w-6 text-blue-600 shrink-0" />
-              <p className="text-sm text-blue-900">
+              <p className="text-sm text-foreground">
                 Your profile is under review by AIP Administration. We will notify you once it is approved.
               </p>
             </div>
@@ -278,9 +278,9 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <AlertCircle className="h-6 w-6 text-red-600 shrink-0" />
-                <h3 className="font-semibold text-red-900">Changes requested</h3>
+                <h3 className="font-semibold text-foreground">Changes requested</h3>
               </div>
-              <p className="text-sm text-red-800">
+              <p className="text-sm text-foreground">
                 {(changesRequestedRequest.admin_notes ?? changesRequestedRequest.adminNotes) || 'Please review feedback and update your profile.'}
               </p>
               <Button variant="destructive" size="sm" onClick={() => router.push('/doctor/dashboard/profile')}>
@@ -292,7 +292,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
-                <span className="font-medium text-gray-900">Your profile is live in the public directory.</span>
+                <span className="font-medium text-foreground">Your profile is live in the public directory.</span>
               </div>
               <Link href="/doctor/dashboard/profile/public">
                 <Button variant="outline" size="sm">View profile</Button>
@@ -302,7 +302,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           {expiresSoon && membershipExpiry && (
             <div className="flex items-center gap-3">
               <AlertCircle className="h-6 w-6 text-amber-600 shrink-0" />
-              <p className="text-sm text-amber-900">
+              <p className="text-sm text-foreground">
                 Membership expires soon ({membershipExpiry.toLocaleDateString()}). Renew to continue access.
               </p>
               <Link href="/doctor/dashboard/membership">
@@ -329,12 +329,12 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           >
             <div className="flex items-center gap-2 mb-3">
               <card.icon className="w-4 h-4" style={{ color: card.color }} />
-              <span className="text-xs text-gray-500 font-medium">{card.label}</span>
+              <span className="text-xs text-muted-foreground font-medium">{card.label}</span>
             </div>
-            <div className="text-3xl font-black text-gray-900">{card.value}</div>
+            <div className="text-3xl font-black text-foreground">{card.value}</div>
             <div className="flex items-center gap-1 mt-1">
               {card.trend === 'up' && <TrendingUp className="w-3 h-3 text-emerald-500" />}
-              <span className="text-xs text-gray-500">{card.sub}</span>
+              <span className="text-xs text-muted-foreground">{card.sub}</span>
             </div>
           </div>
         ))}
@@ -351,7 +351,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           </div>
           <div className="overflow-x-auto">
             {referrals.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">No referrals yet.</p>
+              <p className="text-sm text-muted-foreground py-4">No referrals yet.</p>
             ) : (
               <table className="w-full text-sm portal-table">
                 <thead>
@@ -398,23 +398,23 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           </div>
           <div className="space-y-3">
             {announcements.length === 0 ? (
-              <p className="text-sm text-gray-500">No announcements.</p>
+              <p className="text-sm text-muted-foreground">No announcements.</p>
             ) : (
               announcements.map((a) => (
                 <div key={a.id} className="border-l-2 pl-3" style={{ borderColor: 'var(--aip-teal)' }}>
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{a.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{formatDateTime(a.created_at)}</p>
-                  {a.body && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.body}</p>}
+                  <p className="text-sm font-semibold text-foreground leading-tight">{a.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{formatDateTime(a.created_at)}</p>
+                  {a.body && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.body}</p>}
                 </div>
               ))
             )}
           </div>
           {events.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Upcoming Events</p>
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Upcoming Events</p>
               <div className="flex flex-wrap gap-2">
                 {events.slice(0, 3).map((e) => (
-                  <span key={e.id} className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700 flex items-center gap-1">
+                  <span key={e.id} className="text-xs px-2 py-1 rounded-md bg-muted text-foreground flex items-center gap-1">
                     <MapPin className="w-3 h-3" /> {e.title}
                   </span>
                 ))}

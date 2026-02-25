@@ -174,6 +174,66 @@
   background-image: none;
 }
 
+/* Portal dark-mode compatibility layer:
+   Maps legacy hardcoded light classes to theme-safe colors inside portals. */
+.dark .doctor-portal-main .text-gray-900,
+.dark .doctor-portal-main .text-gray-800,
+.dark .doctor-portal-main .text-gray-700,
+.dark .doctor-portal-main .text-black,
+.dark .admin-main .text-gray-900,
+.dark .admin-main .text-gray-800,
+.dark .admin-main .text-gray-700,
+.dark .admin-main .text-black {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .doctor-portal-main .text-gray-600,
+.dark .doctor-portal-main .text-gray-500,
+.dark .doctor-portal-main .text-gray-400,
+.dark .admin-main .text-gray-600,
+.dark .admin-main .text-gray-500,
+.dark .admin-main .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .doctor-portal-main .bg-white,
+.dark .admin-main .bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark .doctor-portal-main .bg-gray-50,
+.dark .doctor-portal-main .bg-gray-100,
+.dark .doctor-portal-main .bg-gray-200,
+.dark .admin-main .bg-gray-50,
+.dark .admin-main .bg-gray-100,
+.dark .admin-main .bg-gray-200 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .doctor-portal-main .border-gray-100,
+.dark .doctor-portal-main .border-gray-200,
+.dark .doctor-portal-main .border-gray-300,
+.dark .admin-main .border-gray-100,
+.dark .admin-main .border-gray-200,
+.dark .admin-main .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .doctor-portal-main .text-blue-900,
+.dark .admin-main .text-blue-900 {
+  color: #bfdbfe !important;
+}
+
+.dark .doctor-portal-main .text-blue-800,
+.dark .admin-main .text-blue-800 {
+  color: #93c5fd !important;
+}
+
+.dark .doctor-portal-main .bg-blue-100,
+.dark .admin-main .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -1166,6 +1226,9 @@
 
 
   /* Admin dashboard: smaller section headings and card titles */
+  .admin-main {
+    background-color: var(--dashboard-main-bg);
+  }
   .admin-main .section-header h2 {
     @apply text-lg font-semibold;
   }

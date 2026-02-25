@@ -5,7 +5,7 @@
 
 const API_BASE_URL = 
   process.env.NEXT_PUBLIC_API_URL || 
-  'https://aip-backend-112180822704.us-central1.run.app';
+  'https://aip-backend-682175235100.us-central1.run.app';
 
 /**
  * Get token from localStorage (for use outside React components)

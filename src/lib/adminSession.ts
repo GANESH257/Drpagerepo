@@ -75,10 +75,3 @@ export function clearAdminSession(): void {
 export function isAdminAuthenticated(): boolean {
   return getAdminSession() !== null;
 }
-
-/**
- * Validate admin credentials
- */
-export function validateAdminCredentials(email: string, password: string): boolean {
-  return email === 'admin@aip.com' && password === 'Admin@12345';
-}

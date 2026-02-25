@@ -7,7 +7,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { setAdminSession, validateAdminCredentials } from '@/lib/adminSession';
+import { setAdminSession } from '@/lib/adminSession';
 import { login } from '@/lib/api/auth';
 import { useDarkMode } from '@/lib/useDarkMode';
 
@@ -37,25 +37,14 @@ export default function AdminLoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Try API first (backend auth)
-      try {
-        const response = await login(email, password);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('aip_doctor_token', response.token);
-          localStorage.setItem('aip_doctor_user', JSON.stringify(response.user));
-        }
-        setAdminSession(email);
-        router.replace('/admin');
-        return;
-      } catch (apiErr) {
-        // Fallback: allow documented admin credentials when API fails or is unavailable
-        if (validateAdminCredentials(email, password)) {
-          setAdminSession(email);
-          router.replace('/admin');
-          return;
-        }
-        throw apiErr;
+      const response = await login(email, password);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('aip_doctor_token', response.token);
+        localStorage.setItem('aip_doctor_user', JSON.stringify(response.user));
       }
+      setAdminSession(email);
+      setTimeout(() => router.replace('/admin'), 0);
+      return;
     } catch (err) {
       console.error('Login error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Invalid email or password';

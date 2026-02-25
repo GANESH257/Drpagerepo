@@ -37,6 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "public/aip-doctor-portal-ui"
+    "public/aip-doctor-portal-ui",
+    "out"
   ]
 }

@@ -76,7 +76,7 @@ function ProfileImageUpload({
       <Label>Profile Image</Label>
       <div className="flex flex-col gap-4">
         {imgSrc && (
-          <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200 group">
+          <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-border group">
             <Image
               src={imgSrc}
               alt={doctor.fullName}
@@ -419,11 +419,11 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                 </p>
               </div>
             </div>
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 bg-gray-100 p-1">
-              <TabsTrigger value="basic" className="data-[state=active]:bg-white">Basic Info</TabsTrigger>
-              <TabsTrigger value="bio" className="data-[state=active]:bg-white">Biography</TabsTrigger>
-              <TabsTrigger value="credentials" className="data-[state=active]:bg-white">Credentials</TabsTrigger>
-              <TabsTrigger value="status" className="data-[state=active]:bg-white">Status & Settings</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 bg-muted p-1">
+              <TabsTrigger value="basic" className="data-[state=active]:bg-background">Basic Info</TabsTrigger>
+              <TabsTrigger value="bio" className="data-[state=active]:bg-background">Biography</TabsTrigger>
+              <TabsTrigger value="credentials" className="data-[state=active]:bg-background">Credentials</TabsTrigger>
+              <TabsTrigger value="status" className="data-[state=active]:bg-background">Status & Settings</TabsTrigger>
             </TabsList>
 
             {/* Tab 1: Basic Info */}

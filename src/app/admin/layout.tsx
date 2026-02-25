@@ -6,6 +6,8 @@ import { isAdminAuthenticated } from '@/lib/adminSession';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
+import { usePortalTheme } from '@/contexts/PortalThemeContext';
+import { cn } from '@/lib/utils';
 
 export default function AdminLayout({
   children,
@@ -84,6 +86,8 @@ export default function AdminLayout({
   // Normalize pathname for comparison
   const normalizedPath = pathname.replace(/\/$/, '') || '/';
   const isLoginPage = normalizedPath === '/admin/login';
+  const { theme } = usePortalTheme();
+  const darkClass = theme === 'dark' ? 'dark' : '';
 
   // Show loading state during initial mount or auth check
   if (!isMounted || isLoading) {
@@ -91,9 +95,9 @@ export default function AdminLayout({
     if (isLoginPage) {
       return <>{children}</>;
     }
-    
+
     return (
-      <div className="dark min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div className={cn(darkClass, 'min-h-screen bg-background text-foreground flex items-center justify-center')}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--aip-teal)' }} />
           <p className="text-muted-foreground">Loading admin portal...</p>
@@ -104,11 +108,11 @@ export default function AdminLayout({
 
   // Don't wrap login page with shell
   if (isLoginPage) {
-    return <div className="dark min-h-screen bg-background text-foreground">{children}</div>;
+    return <div className={cn(darkClass, 'min-h-screen bg-background text-foreground')}>{children}</div>;
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className={cn(darkClass, 'min-h-screen bg-background text-foreground')}>
       <AdminShell>{children}</AdminShell>
     </div>
   );
