@@ -5,6 +5,8 @@ import { X, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Doctor, Insurance, ConditionServiceRow } from '@/types';
 import { saveDoctorProfile, loadDoctorProfile, saveDoctorProfileToAPI } from '@/lib/doctorStorage';
 import { getAdminSession } from '@/lib/adminSession';
@@ -14,6 +16,14 @@ interface InsuranceSectionProps {
   doctor: Doctor;
   onProfileUpdate?: (doctor: Doctor) => void;
 }
+
+/** Four options always shown with Yes/No toggle (same as practice). */
+const FIXED_INSURANCE_OPTIONS: { name: string; slug: string }[] = [
+  { name: 'Public', slug: 'public' },
+  { name: 'Medicare', slug: 'medicare' },
+  { name: 'Medicaid', slug: 'medicaid' },
+  { name: 'Cash pay', slug: 'cashpay' },
+];
 
 const COMMON_INSURANCE_PROVIDERS = [
   'Aetna PPO',
@@ -101,6 +111,24 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   }, [doctor.id, fetchPendingInsuranceEdit]);
 
   const insurance = doctor.insurance ?? [];
+
+  /** Insurance list without the 4 fixed options (for "other" display and add/remove). */
+  const otherInsurance = insurance.filter(
+    (i) => !FIXED_INSURANCE_OPTIONS.some((f) => f.slug === i.slug || f.name.toLowerCase() === (i.name ?? '').toLowerCase())
+  );
+
+  const setInsuranceToggled = (opt: { name: string; slug: string }, checked: boolean) => {
+    if (checked) {
+      if (!insurance.some((i) => i.slug === opt.slug || (i.name ?? '').toLowerCase() === opt.name.toLowerCase())) {
+        setDoctor({ ...doctor, insurance: [...insurance, { name: opt.name, slug: opt.slug }] });
+      }
+    } else {
+      setDoctor({
+        ...doctor,
+        insurance: insurance.filter((i) => i.slug !== opt.slug && (i.name ?? '').toLowerCase() !== opt.name.toLowerCase()),
+      });
+    }
+  };
 
   const submitInsuranceState = async (updatedDoctor: Doctor) => {
     setSubmitError(null);
@@ -410,65 +438,89 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
       {/* Section 2: Accepted Insurance Plans */}
       <section>
         <h2 className="text-lg font-bold text-gray-900">Accepted Insurance Plans</h2>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {insurance.length === 0 && (
-            <p className="text-sm text-gray-500 w-full">No insurance plans added yet.</p>
-          )}
-          {insurance.map((ins) => (
-            <span
-              key={ins.slug}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 text-sm text-gray-800"
-            >
-              <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-              {ins.name}
-              <button
-                type="button"
-                onClick={() => handleRemoveInsurance(ins)}
-                className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
-                aria-label={`Remove ${ins.name}`}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ))}
-          <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 mt-2 w-full">
-            <Select value={newInsuranceName} onValueChange={setNewInsuranceName}>
-              <SelectTrigger className="h-9 w-[180px] text-sm rounded-lg border-gray-200">
-                <SelectValue placeholder="Select plan" />
-              </SelectTrigger>
-              <SelectContent>
-                {COMMON_INSURANCE_PROVIDERS.filter(
-                  (provider) =>
-                    !insurance.some((ins) => ins.name.toLowerCase() === provider.toLowerCase())
-                ).map((provider) => (
-                  <SelectItem key={provider} value={provider}>
-                    {provider}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              value={newInsuranceName}
-              onChange={(e) => setNewInsuranceName(e.target.value)}
-              placeholder="Or type custom name"
-              className="h-9 w-40 text-sm rounded-lg border-gray-200"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddInsurance();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleAddInsurance}
-              disabled={!newInsuranceName.trim() || isSaving}
-              className="h-9 rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Plan
-            </Button>
+        <div className="mt-4 space-y-4">
+          {/* Four options always shown with Yes/No toggle */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Practice insurances and policies</p>
+            {FIXED_INSURANCE_OPTIONS.map((opt) => {
+              const isOn = insurance.some((i) => i.slug === opt.slug || (i.name ?? '').toLowerCase() === opt.name.toLowerCase());
+              return (
+                <div key={opt.slug} className="flex items-center justify-between py-1">
+                  <Label htmlFor={`ins-${opt.slug}`} className="font-medium text-gray-900">{opt.name}</Label>
+                  <Switch
+                    id={`ins-${opt.slug}`}
+                    checked={isOn}
+                    onCheckedChange={(checked) => setInsuranceToggled(opt, checked)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Other plans: list + add */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Other insurance plans</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {otherInsurance.length === 0 && (
+                <p className="text-sm text-gray-500">No other plans added.</p>
+              )}
+              {otherInsurance.map((ins) => (
+                <span
+                  key={ins.slug}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 text-sm text-gray-800"
+                >
+                  <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  {ins.name}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveInsurance(ins)}
+                    className="rounded p-0.5 hover:bg-emerald-200/50 text-gray-500 hover:text-red-600"
+                    aria-label={`Remove ${ins.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 mt-2 w-full">
+                <Select value={newInsuranceName} onValueChange={setNewInsuranceName}>
+                  <SelectTrigger className="h-9 w-[180px] text-sm rounded-lg border-gray-200">
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMON_INSURANCE_PROVIDERS.filter(
+                      (provider) =>
+                        !insurance.some((ins) => ins.name.toLowerCase() === provider.toLowerCase())
+                    ).map((provider) => (
+                      <SelectItem key={provider} value={provider}>
+                        {provider}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={newInsuranceName}
+                  onChange={(e) => setNewInsuranceName(e.target.value)}
+                  placeholder="Or type custom name"
+                  className="h-9 w-40 text-sm rounded-lg border-gray-200"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddInsurance();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddInsurance}
+                  disabled={!newInsuranceName.trim() || isSaving}
+                  className="h-9 rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Plan
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>

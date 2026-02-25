@@ -6,7 +6,6 @@ import { Practice, Insurance } from '@/types';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { practices } from '@/data/practices';
 import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,8 +13,17 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/lib/toast';
 import { Plus, X } from 'lucide-react';
+
+/** Fixed practice insurance options – always shown with Yes/No toggle. Sent as same insurance[] to backend. */
+const PRACTICE_INSURANCE_OPTIONS: { name: string; slug: string }[] = [
+  { name: 'Public', slug: 'public' },
+  { name: 'Medicare', slug: 'medicare' },
+  { name: 'Medicaid', slug: 'medicaid' },
+  { name: 'Cash pay', slug: 'cashpay' },
+];
 
 export default function PracticeServicesInsurancePage() {
   const router = useRouter();
@@ -27,7 +35,15 @@ export default function PracticeServicesInsurancePage() {
   
   const [services, setServices] = useState<string[]>([]);
   const [newService, setNewService] = useState('');
-  const [insurance, setInsurance] = useState<Insurance[]>([]);
+  /** Yes/No for each of the 4 practice insurance options (key = slug). */
+  const [insuranceToggles, setInsuranceToggles] = useState<Record<string, boolean>>({
+    public: false,
+    medicare: false,
+    medicaid: false,
+    cashpay: false,
+  });
+  /** Additional insurances (other than the 4 fixed options). */
+  const [otherInsurance, setOtherInsurance] = useState<Insurance[]>([]);
   const [newInsuranceName, setNewInsuranceName] = useState('');
   const [newInsuranceSlug, setNewInsuranceSlug] = useState('');
 
@@ -50,7 +66,15 @@ export default function PracticeServicesInsurancePage() {
         
         setPractice(foundPractice);
         setServices(foundPractice.services || []);
-        setInsurance(foundPractice.insurance || []);
+        const ins = foundPractice.insurance || [];
+        const fixedSlugs = new Set(PRACTICE_INSURANCE_OPTIONS.map((o) => o.slug));
+        setInsuranceToggles({
+          public: ins.some((i) => i.slug === 'public' || i.name?.toLowerCase() === 'public'),
+          medicare: ins.some((i) => i.slug === 'medicare' || i.name?.toLowerCase() === 'medicare'),
+          medicaid: ins.some((i) => i.slug === 'medicaid' || i.name?.toLowerCase() === 'medicaid'),
+          cashpay: ins.some((i) => i.slug === 'cashpay' || (i.name?.toLowerCase() ?? '').replace(/\s+/g, '') === 'cashpay'),
+        });
+        setOtherInsurance(ins.filter((i) => !fixedSlugs.has(i.slug) && !PRACTICE_INSURANCE_OPTIONS.some((o) => o.name.toLowerCase() === (i.name ?? '').toLowerCase())));
         setIsLoading(false);
       } catch (error) {
         if (error instanceof AuthRequiredError) {
@@ -93,6 +117,12 @@ export default function PracticeServicesInsurancePage() {
     }
   };
 
+  /** Build full insurance array from 4 toggles + other list (same format as before, no backend change). */
+  const getCurrentInsurance = (): Insurance[] => {
+    const fromToggles = PRACTICE_INSURANCE_OPTIONS.filter((o) => insuranceToggles[o.slug]).map((o) => ({ name: o.name, slug: o.slug }));
+    return [...fromToggles, ...otherInsurance];
+  };
+
   const handleSubmitInsurance = async () => {
     if (!practice) return;
     
@@ -106,7 +136,7 @@ export default function PracticeServicesInsurancePage() {
       await submitApprovalRequest(actor, {
         type: 'practice_insurance_services_change_request',
         payload: {
-          insurance,
+          insurance: getCurrentInsurance(),
         },
         target: {
           practiceId: practice.id,
@@ -135,20 +165,18 @@ export default function PracticeServicesInsurancePage() {
 
   const addInsurance = () => {
     if (newInsuranceName.trim() && newInsuranceSlug.trim()) {
-      const newIns: Insurance = {
-        name: newInsuranceName.trim(),
-        slug: newInsuranceSlug.trim(),
-      };
-      if (!insurance.find(i => i.slug === newIns.slug)) {
-        setInsurance([...insurance, newIns]);
+      const slug = newInsuranceSlug.trim().toLowerCase().replace(/\s+/g, '-');
+      const newIns: Insurance = { name: newInsuranceName.trim(), slug };
+      if (!otherInsurance.some((i) => i.slug === slug)) {
+        setOtherInsurance([...otherInsurance, newIns]);
         setNewInsuranceName('');
         setNewInsuranceSlug('');
       }
     }
   };
 
-  const removeInsurance = (slug: string) => {
-    setInsurance(insurance.filter(i => i.slug !== slug));
+  const removeOtherInsurance = (slug: string) => {
+    setOtherInsurance(otherInsurance.filter((i) => i.slug !== slug));
   };
 
   if (isLoading) {
@@ -267,7 +295,7 @@ export default function PracticeServicesInsurancePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Accepted Insurance</CardTitle>
+            <CardTitle>Practice insurances and policies</CardTitle>
             <Dialog open={showInsuranceDialog} onOpenChange={setShowInsuranceDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -279,41 +307,59 @@ export default function PracticeServicesInsurancePage() {
                 <DialogHeader>
                   <DialogTitle>Edit Insurance</DialogTitle>
                   <DialogDescription>
-                    Add or remove insurance providers. Changes require admin approval.
+                    Toggle the four options below and add any other insurance. Changes require admin approval.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      value={newInsuranceName}
-                      onChange={(e) => setNewInsuranceName(e.target.value)}
-                      placeholder="Insurance name..."
-                    />
-                    <Input
-                      value={newInsuranceSlug}
-                      onChange={(e) => setNewInsuranceSlug(e.target.value)}
-                      placeholder="Slug..."
-                    />
-                  </div>
-                  <Button onClick={addInsurance} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Insurance
-                  </Button>
-                  <div className="space-y-2">
-                    {insurance.map((ins) => (
-                      <div
-                        key={ins.slug}
-                        className="flex items-center justify-between p-2 bg-gray-50 rounded"
-                      >
-                        <span>{ins.name}</span>
-                        <button
-                          onClick={() => removeInsurance(ins.slug)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                  {/* 4 always-shown options with Yes/No toggle */}
+                  {PRACTICE_INSURANCE_OPTIONS.map((opt) => (
+                    <div key={opt.slug} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <Label htmlFor={`ins-${opt.slug}`} className="font-medium">{opt.name}</Label>
+                      <Switch
+                        id={`ins-${opt.slug}`}
+                        checked={!!insuranceToggles[opt.slug]}
+                        onCheckedChange={(checked) => setInsuranceToggles((prev) => ({ ...prev, [opt.slug]: checked }))}
+                      />
+                    </div>
+                  ))}
+                  {/* Add other insurances */}
+                  <div className="pt-2">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Add other insurance</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={newInsuranceName}
+                        onChange={(e) => setNewInsuranceName(e.target.value)}
+                        placeholder="Insurance name..."
+                      />
+                      <Input
+                        value={newInsuranceSlug}
+                        onChange={(e) => setNewInsuranceSlug(e.target.value)}
+                        placeholder="Slug..."
+                      />
+                    </div>
+                    <Button onClick={addInsurance} className="w-full mt-2" variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Insurance
+                    </Button>
+                    {otherInsurance.length > 0 && (
+                      <div className="space-y-2 mt-3">
+                        {otherInsurance.map((ins) => (
+                          <div
+                            key={ins.slug}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          >
+                            <span>{ins.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeOtherInsurance(ins.slug)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
                 <DialogFooter>
@@ -329,17 +375,24 @@ export default function PracticeServicesInsurancePage() {
           </div>
         </CardHeader>
         <CardContent>
-          {insurance.length === 0 ? (
-            <p className="text-gray-600">No insurance providers listed</p>
-          ) : (
-            <div className="space-y-2">
-              {insurance.map((ins) => (
-                <div key={ins.slug} className="p-2 bg-gray-50 rounded">
-                  {ins.name}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="space-y-3">
+            {PRACTICE_INSURANCE_OPTIONS.map((opt) => (
+              <div key={opt.slug} className="flex items-center justify-between py-1.5">
+                <span className="text-sm">{opt.name}</span>
+                <span className="text-xs font-medium text-muted-foreground">{insuranceToggles[opt.slug] ? 'Yes' : 'No'}</span>
+              </div>
+            ))}
+            {otherInsurance.length > 0 && (
+              <>
+                <div className="border-t border-border pt-2 mt-2" />
+                {otherInsurance.map((ins) => (
+                  <div key={ins.slug} className="p-2 bg-gray-50 rounded text-sm">
+                    {ins.name}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

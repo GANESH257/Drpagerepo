@@ -212,7 +212,7 @@ export function PlansEditor() {
         <div className="p-6 space-y-4">
           <div>
             <h3
-              className="text-2xl font-bold text-foreground"
+              className="text-xl font-bold text-foreground"
               style={{ color: 'var(--aip-teal)' }}
             >
               {plan.name}
@@ -224,11 +224,11 @@ export function PlansEditor() {
           <div className="space-y-4">
             <div>
               <div className="text-sm text-muted-foreground mb-1">Monthly</div>
-              <div className="text-2xl font-bold">{monthlyPrice}/mo</div>
+              <div className="text-xl font-bold">{monthlyPrice}/mo</div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">Annual</div>
-              <div className="text-2xl font-bold">{annualPrice}/yr</div>
+              <div className="text-xl font-bold">{annualPrice}/yr</div>
             </div>
             <div>
               <div className="text-sm font-medium mb-2">

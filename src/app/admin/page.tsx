@@ -77,7 +77,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalPractices ?? 0)}</span>
+            <span className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalPractices ?? 0)}</span>
             <Button asChild className="text-white border-0" style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}>
               <Link href="/admin/members/practices">
                 Manage Practices
@@ -97,7 +97,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalDoctors ?? 0)}</span>
+            <span className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.totalDoctors ?? 0)}</span>
             <Button asChild variant="outline" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
               <Link href="/admin/members/doctors">
                 Manage Doctors
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.pendingApprovals ?? 0)}</span>
+            <span className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.pendingApprovals ?? 0)}</span>
             <Button asChild variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
               <Link href="/admin/approvals">
                 Review
@@ -147,7 +147,7 @@ export default function AdminDashboardPage() {
       <div className="glass-card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-lg font-bold text-foreground">Recent Requests</h3>
+            <h3 className="text-base font-semibold text-foreground">Recent Requests</h3>
             <p className="text-sm text-muted-foreground">Latest membership requests requiring attention</p>
           </div>
           <Button asChild variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10 w-fit">

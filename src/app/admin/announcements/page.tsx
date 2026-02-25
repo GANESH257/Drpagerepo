@@ -124,7 +124,7 @@ export default function AdminAnnouncementsPage() {
             <div className="flex-1 flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6 min-h-0 overflow-hidden">
                 <div className="glass-card md:col-span-4 flex flex-col min-h-0 h-full overflow-hidden">
                     <div className="pb-4 border-b border-border shrink-0 p-6">
-                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2 mb-2">
+                        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-2">
                             <Users className="h-5 w-5" style={{ color: 'var(--aip-teal)' }} />
                             Targeting & Directory
                         </h2>
@@ -253,7 +253,7 @@ export default function AdminAnnouncementsPage() {
                                     {announcementType === 'broadcast' ? <Megaphone className="h-5 w-5 md:h-6 md:w-6" /> : announcementType === 'specialty' ? <Users className="h-5 w-5 md:h-6 md:w-6" /> : <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6" />}
                                 </div>
                                 <div>
-                                    <h2 className="text-lg md:text-xl font-bold text-foreground">
+                                    <h2 className="text-base md:text-lg font-semibold text-foreground">
                                         {announcementType === 'broadcast' ? "Global Broadcast" : announcementType === 'specialty' ? "Specialty Announcement" : "Group Announcement"}
                                     </h2>
                                     <p className="text-xs md:text-sm text-muted-foreground">
@@ -275,7 +275,7 @@ export default function AdminAnnouncementsPage() {
                                         {announcementType === 'broadcast' ? <Megaphone className="h-8 w-8 md:h-10 md:w-10" /> : announcementType === 'specialty' ? <Users className="h-8 w-8 md:h-10 md:w-10" /> : <CheckCircle2 className="h-8 w-8 md:h-10 md:w-10" />}
                                     </div>
                                     <div className="space-y-1">
-                                        <h3 className="text-xl md:text-2xl font-bold text-foreground">
+                                        <h3 className="text-lg md:text-xl font-semibold text-foreground">
                                             {announcementType === 'broadcast' ? "System-Wide Broadcast" : announcementType === 'specialty' ? "Department Targeting" : "Group Message"}
                                         </h3>
                                         <p className="text-sm text-muted-foreground">

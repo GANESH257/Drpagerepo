@@ -89,7 +89,7 @@ export function StatsCards() {
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <span className="text-sm font-medium text-muted-foreground">Loading...</span>
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>-</div>
+            <div className="text-xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>-</div>
             <p className="text-xs text-muted-foreground mt-1">Loading data...</p>
           </div>
         ))}
@@ -117,7 +117,7 @@ export function StatsCards() {
               <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
               <Icon className="h-4 w-4 text-[var(--aip-teal)]" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>{stat.value}</div>
+            <div className="text-xl font-bold mt-2" style={{ color: 'var(--aip-teal)' }}>{stat.value}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {stat.description}
             </p>

@@ -100,7 +100,7 @@ export function RequestDetailDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-full sm:w-[540px] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-2xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>
+            <SheetTitle className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>
               Membership Request Details
             </SheetTitle>
             <SheetDescription>

@@ -120,6 +120,7 @@ export function AdminShell({ children }: AdminShellProps) {
       sidebarItems={adminNavTree}
       headerTitle="Admin Portal"
       headerRight={headerRight}
+      mainClassName="admin-main"
     >
       {children}
     </PortalShell>
