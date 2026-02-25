@@ -4,12 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -19,7 +17,7 @@ import {
 import { getPractices, getPractice, updatePractice, type Practice } from '@/lib/api/practices';
 import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
-import { Search, X } from 'lucide-react';
+import { Search, X, Building2, MapPin, Users, Pencil, ArrowRight } from 'lucide-react';
 
 function firstLocation(p: Practice) {
   const locs = p.locations;
@@ -243,39 +241,57 @@ export default function AdminMembersPracticesPage() {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="uppercase tracking-wider text-muted-foreground">Name</TableHead>
-                  <TableHead className="uppercase tracking-wider text-muted-foreground">City</TableHead>
-                  <TableHead className="uppercase tracking-wider text-muted-foreground">State</TableHead>
-                  <TableHead className="uppercase tracking-wider text-muted-foreground">Doctors</TableHead>
-                  <TableHead className="uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                  <TableHead className="w-[160px] uppercase tracking-wider text-muted-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((p) => {
-                  const loc = firstLocation(p);
-                  const doctorCount = doctorCountByPracticeId[p.id] ?? (Array.isArray(p.doctors) ? p.doctors.length : 0);
-                  return (
-                    <TableRow key={p.id} className="hover:bg-accent/30">
-                      <TableCell className="font-medium">{p.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{loc?.city ?? (p as any).city ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{loc?.state ?? (p as any).state ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{doctorCount}</TableCell>
-                      <TableCell><StatusBadge status={(p as any).status ?? 'active'} /></TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => openEdit(p)}>Edit</Button>
-                        <Button asChild variant="ghost" size="sm" className="ml-1 text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
-                          <Link href={`/admin/members/doctors?practiceId=${p.id}`}>View doctors</Link>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map((p) => {
+                const loc = firstLocation(p);
+                const doctorCount = doctorCountByPracticeId[p.id] ?? (Array.isArray(p.doctors) ? p.doctors.length : 0);
+                const city = loc?.city ?? (p as any).city ?? '—';
+                const state = loc?.state ?? (p as any).state ?? '—';
+                const status = (p as any).status ?? 'active';
+                return (
+                  <Card key={p.id} className="overflow-hidden border-border hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2 pt-4 px-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="shrink-0 rounded-lg bg-[var(--aip-teal)]/10 p-2">
+                            <Building2 className="h-4 w-4 text-[var(--aip-teal)]" />
+                          </div>
+                          <h3 className="font-semibold text-foreground truncate" title={p.name}>{p.name}</h3>
+                        </div>
+                        <StatusBadge status={status} />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4 space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span>{city}, {state}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-3.5 w-3.5 shrink-0" />
+                        <span>{doctorCount} doctor{doctorCount !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 min-w-0 border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10"
+                          onClick={() => openEdit(p)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                          Edit
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <Button asChild variant="ghost" size="sm" className="text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
+                          <Link href={`/admin/members/doctors?practiceId=${p.id}`} className="inline-flex items-center">
+                            View doctors
+                            <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

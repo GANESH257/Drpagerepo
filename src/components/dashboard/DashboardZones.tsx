@@ -47,6 +47,8 @@ import {
 } from '@/lib/pendingProfileCompletion';
 import { formatDateTime } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
+import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
+import type { ReferralStatus } from '@/types/referrals';
 
 interface DashboardZonesProps {
   doctor: Doctor;
@@ -68,6 +70,17 @@ function getStatusBadgeClass(status: string): string {
   if (s.includes('live') || s === 'active') return 'badge-live';
   if (s.includes('review')) return 'badge-review';
   return 'badge-pending';
+}
+
+/** Match Referrals page pill styling for referral status */
+function referralStatusPillClass(status: ReferralStatus): string {
+  switch (status) {
+    case 'accepted': return 'bg-emerald-100 text-emerald-800';
+    case 'considering': return 'bg-amber-100 text-amber-800';
+    case 'no_show': return 'bg-gray-100 text-gray-700';
+    case 'cancelled': return 'bg-red-100 text-red-800';
+    default: return 'bg-gray-100 text-gray-700';
+  }
 }
 
 export function DashboardZones({ doctor }: DashboardZonesProps) {
@@ -554,15 +567,17 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
                     const toName = (r as any).to_doctor_name ?? (r as any).toDoctorName ?? '—';
                     const patient = (r as any).patient_name_or_initials ?? (r as any).patientNameOrInitials ?? '—';
                     const condition = (r as any).condition_summary ?? (r as any).conditionSummary ?? '—';
-                    const status = (r as any).status ?? '—';
+                    const rawStatus = (r as any).status ?? '';
+                    const normalizedStatus = normalizeReferralStatus(rawStatus);
+                    const statusLabel = getReferralStatusLabel(normalizedStatus);
                     return (
                       <tr key={(r as any).id}>
                         <td className="font-medium">{patient}</td>
                         <td>{toName}</td>
                         <td className="max-w-[120px] truncate" title={condition}>{condition}</td>
                         <td>
-                          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusBadgeClass(status))}>
-                            {status}
+                          <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', referralStatusPillClass(normalizedStatus))}>
+                            {statusLabel}
                           </span>
                         </td>
                         <td>{dateLabel}</td>
