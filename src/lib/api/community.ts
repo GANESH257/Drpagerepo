@@ -19,6 +19,8 @@ export interface CommunityPost {
   body: string;
   created_at: string;
   updated_at: string;
+  /** Number of answers (comments) - when returned by list API */
+  comment_count?: number;
 }
 
 export interface CommunityComment {

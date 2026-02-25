@@ -81,6 +81,27 @@ export default function NotificationsPage() {
     load();
   }, [load]);
 
+  // When user lands on this page (e.g. clicked nav/header bell), mark all as read so badge clears
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const actor = getActorFromSession();
+        if (actor?.kind !== 'doctor' || !actor?.doctorId) return;
+        await markAllNotificationsReadAPI();
+        if (mounted) {
+          setNotifications((prev) =>
+            prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() }))
+          );
+          window.dispatchEvent(new CustomEvent('notifications-marked-read'));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   const handleMarkRead = async (notificationId: string) => {
     try {
       await markNotificationReadAPI(notificationId);

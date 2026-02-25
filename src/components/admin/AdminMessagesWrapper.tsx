@@ -1,7 +1,6 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { MessagesSection } from '@/components/dashboard/MessagesSection';
 import { Doctor } from '@/types';
 
@@ -39,10 +38,6 @@ export function AdminMessagesWrapper({ otherDoctorId: otherDoctorIdProp }: Admin
 
   return (
     <div className="space-y-6">
-      <SectionHeader
-        title="Messages"
-        description="Chat with physicians across the alliance"
-      />
       <MessagesSection
         doctor={ADMIN_DOCTOR}
         otherDoctorId={otherDoctorId}

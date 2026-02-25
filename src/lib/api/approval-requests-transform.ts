@@ -12,10 +12,20 @@ import { ApprovalRequest as FrontendApprovalRequest } from '@/types/approvals';
 export function transformApprovalRequestFromAPI(
   apiRequest: ApiApprovalRequest
 ): FrontendApprovalRequest {
-  // Parse payload if it's a string
-  const payload = typeof apiRequest.payload === 'string' 
-    ? JSON.parse(apiRequest.payload) 
-    : apiRequest.payload;
+  // Parse payload if it's a string; ensure we never pass undefined (avoid data loss after approve/reject)
+  const rawPayload = apiRequest.payload;
+  const payload =
+    rawPayload === undefined || rawPayload === null
+      ? {}
+      : typeof rawPayload === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(rawPayload);
+            } catch {
+              return {};
+            }
+          })()
+        : rawPayload;
 
   // Map admin_status to nested approvals.admin.status
   let adminStatus: 'pending' | 'approved' | 'rejected' = 'pending';
@@ -90,13 +100,16 @@ export function transformApprovalRequestFromAPI(
   const submittedBy: FrontendApprovalRequest['submittedBy'] = {
     role: apiRequest.requested_by_type as 'public' | 'doctor' | 'practice_admin' | 'admin',
   };
+  const requestedByEmail = apiRequest.requested_by_email;
+  const payloadEmail = payload.email || payload.doctor?.email || payload.admin_doctor?.email;
   if (apiRequest.requested_by_type === 'doctor') {
     submittedBy.doctorId = apiRequest.requested_by;
+    submittedBy.email = requestedByEmail || payloadEmail || payload.doctor?.email || payload.admin_doctor?.email;
   } else if (apiRequest.requested_by_type === 'practice_admin') {
     submittedBy.practiceId = apiRequest.practice_id;
+    submittedBy.email = requestedByEmail || payloadEmail || payload.requested_by_email;
   } else {
-    // For public users, email might be in payload
-    submittedBy.email = payload.email || apiRequest.requested_by;
+    submittedBy.email = requestedByEmail || payloadEmail || apiRequest.requested_by;
   }
 
   // Build target object

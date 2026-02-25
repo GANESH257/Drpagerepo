@@ -10,6 +10,7 @@ import { getAllDoctorsArray, updateDoctor } from '@/lib/api/doctors';
 import { updatePractice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { saveDoctorOverride } from '@/lib/memberStorage';
+import { formatFullName } from '@/lib/nameUtils';
 import { addCreatedPractice } from '@/lib/storage/practiceStorage';
 import { getReferrals } from '@/lib/storage/referralStorage';
 import { getNotifications } from '@/lib/storage/notificationStorage';
@@ -107,12 +108,18 @@ export async function createNewDoctor(doctorData: Partial<Doctor>): Promise<stri
   }
   
   // Create full doctor object
-  const fullName = doctorData.fullName || `${doctorData.firstName} ${doctorData.lastName}, ${doctorData.credentials || ''}`.trim();
-  
+  const fullName = doctorData.fullName ?? formatFullName(
+    doctorData.firstName ?? '',
+    doctorData.middleName,
+    doctorData.lastName ?? '',
+    doctorData.credentials
+  );
+
   const newDoctor: Doctor = {
     id: newId,
     slug,
     firstName: doctorData.firstName || '',
+    middleName: doctorData.middleName,
     lastName: doctorData.lastName || '',
     fullName,
     specialty: doctorData.specialty || '',

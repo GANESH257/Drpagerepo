@@ -12,6 +12,7 @@ import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { ApprovalStatusBadge } from '@/components/shared/approvals/ApprovalStatusBadge';
 import { ApprovalTypeBadge } from '@/components/shared/approvals/ApprovalTypeBadge';
 import { Timeline } from '@/components/shared/approvals/Timeline';
+import { RequestedChangesRenderer } from '@/components/shared/approvals/RequestedChangesRenderer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -235,6 +236,12 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                                 </span>
                             )}
                         </div>
+                        {request.approvals.admin.notes && (
+                            <div className="mt-2 p-3 rounded-md bg-muted/60 border border-border">
+                                <p className="text-xs font-medium text-gray-600 mb-1">Note for you (from Admin)</p>
+                                <p className="text-sm text-foreground">{request.approvals.admin.notes}</p>
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -260,9 +267,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                     <CardTitle>Requested Changes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-auto">
-                        {JSON.stringify(request.payload, null, 2)}
-                    </pre>
+                    <RequestedChangesRenderer request={request} />
                 </CardContent>
             </Card>
 

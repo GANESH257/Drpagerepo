@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { departments } from '@/data/departments';
 import { ApplicationDraft } from '@/types';
+import { formatFullName } from '@/lib/nameUtils';
 import { getJoinEmail } from '@/lib/joinRequestStorage';
 import { PracticeSelectionSection, PracticeSelection } from '@/components/join-us/PracticeSelectionSection';
 import { useSearchParams } from 'next/navigation';
@@ -24,7 +25,9 @@ export function ApplicationBasicDetailsForm({
   initialData,
   onContinue,
 }: ApplicationBasicDetailsFormProps) {
-  const [fullName, setFullName] = useState(initialData?.fullName || '');
+  const [firstName, setFirstName] = useState(initialData?.firstName ?? '');
+  const [middleName, setMiddleName] = useState(initialData?.middleName ?? '');
+  const [lastName, setLastName] = useState(initialData?.lastName ?? '');
   const [selectedCredentials, setSelectedCredentials] = useState(
     initialData?.credentials || ''
   );
@@ -42,6 +45,20 @@ export function ApplicationBasicDetailsForm({
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Backward compat: old drafts had fullName only; parse into first/middle/last
+  useEffect(() => {
+    const legacy = initialData as { fullName?: string; firstName?: string; lastName?: string } | undefined;
+    if (!legacy?.fullName || legacy.firstName !== undefined) return;
+    const parts = legacy.fullName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      setFirstName(parts[0] ?? '');
+      setLastName(parts[parts.length - 1] ?? '');
+      if (parts.length > 2) setMiddleName(parts.slice(1, -1).join(' '));
+    } else if (parts.length === 1) {
+      setFirstName(parts[0] ?? '');
+    }
+  }, []);
 
   // Load email from localStorage on mount if not provided
   useEffect(() => {
@@ -73,7 +90,8 @@ export function ApplicationBasicDetailsForm({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!selectedCredentials) newErrors.credentials = 'Credentials are required';
     if (!specialty) newErrors.specialty = 'Primary specialty is required';
     if (!email.trim()) newErrors.email = 'Email is required';
@@ -100,7 +118,9 @@ export function ApplicationBasicDetailsForm({
     if (!validate()) return;
 
     onContinue({
-      fullName: fullName.trim(),
+      firstName: firstName.trim(),
+      middleName: middleName.trim() || undefined,
+      lastName: lastName.trim(),
       credentials: selectedCredentials,
       specialty,
       email: email.trim(),
@@ -117,28 +137,61 @@ export function ApplicationBasicDetailsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Full Name */}
-      <div className="space-y-2">
-        <Label htmlFor="fullName">
-          Full Name <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="fullName"
-          value={fullName}
-          onChange={(e) => {
-            setFullName(e.target.value);
-            if (errors.fullName) setErrors({ ...errors, fullName: '' });
-          }}
-          placeholder="Dr. John Smith"
-          aria-invalid={!!errors.fullName}
-          aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-          className={errors.fullName ? 'border-destructive' : ''}
-        />
-        {errors.fullName && (
-          <p id="fullName-error" className="text-sm text-destructive" role="alert">
-            {errors.fullName}
-          </p>
-        )}
+      {/* First, Middle, Last Name */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">
+            First Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="firstName"
+            value={firstName}
+            onChange={(e) => {
+              setFirstName(e.target.value);
+              if (errors.firstName) setErrors({ ...errors, firstName: '' });
+            }}
+            placeholder="John"
+            aria-invalid={!!errors.firstName}
+            aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+            className={errors.firstName ? 'border-destructive' : ''}
+          />
+          {errors.firstName && (
+            <p id="firstName-error" className="text-sm text-destructive" role="alert">
+              {errors.firstName}
+            </p>
+          )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="middleName">Middle Name</Label>
+          <Input
+            id="middleName"
+            value={middleName}
+            onChange={(e) => setMiddleName(e.target.value)}
+            placeholder="Optional"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="lastName">
+            Last Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="lastName"
+            value={lastName}
+            onChange={(e) => {
+              setLastName(e.target.value);
+              if (errors.lastName) setErrors({ ...errors, lastName: '' });
+            }}
+            placeholder="Smith"
+            aria-invalid={!!errors.lastName}
+            aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+            className={errors.lastName ? 'border-destructive' : ''}
+          />
+          {errors.lastName && (
+            <p id="lastName-error" className="text-sm text-destructive" role="alert">
+              {errors.lastName}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Credentials */}

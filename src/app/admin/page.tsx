@@ -64,9 +64,7 @@ export default function AdminDashboardPage() {
         description="Overview of membership requests, plans, and statistics"
       />
 
-      <StatsCards />
-
-      {/* Quick Access - glass-card style */}
+      {/* Quick Access — 3 primary tiles with actions (no duplication with stats below) */}
       <div className="grid gap-6 md:grid-cols-3">
         <div className="glass-card p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -129,6 +127,8 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      <StatsCards />
 
       {/* Analytics */}
       <div className="space-y-4">

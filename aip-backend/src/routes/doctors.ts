@@ -148,20 +148,45 @@ router.get('/slug/:slug', async (req, res) => {
 
 // --- Authenticated /me routes (must be before /:id) ---
 
-// GET /api/doctors/me/contacts - List my contacts (doctor summaries)
+// GET /api/doctors/me/contacts - List my contacts (doctor summaries with practice + insurance)
 router.get('/me/contacts', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const doctorId = req.doctorId;
     if (!doctorId) return res.status(403).json({ error: 'Doctor not found' });
     const result = await pool.query(
-      `SELECT d.id, d.full_name, d.slug, d.specialty, d.profile_image_url, dc.created_at as added_at
+      `SELECT
+        d.id,
+        d.full_name,
+        d.slug,
+        d.credentials,
+        d.specialty,
+        d.profile_image_url,
+        dc.created_at AS added_at,
+        p.name AS practice_name,
+        p.city,
+        p.state,
+        (SELECT COALESCE(json_agg(json_build_object('name', pi.name, 'slug', pi.slug)), '[]'::json)
+         FROM practice_insurance pi WHERE pi.practice_id = d.practice_id) AS insurance
        FROM doctor_contacts dc
        JOIN doctors d ON d.id = dc.contact_doctor_id
+       LEFT JOIN practices p ON d.practice_id = p.id
        WHERE dc.doctor_id = $1
        ORDER BY dc.created_at DESC`,
       [doctorId]
     );
-    res.json(result.rows);
+    // Ensure insurance is always an array (pg may return parsed JSON or string)
+    const rows = result.rows.map((row) => {
+      let insurance = row.insurance;
+      if (!Array.isArray(insurance)) {
+        try {
+          insurance = typeof insurance === 'string' ? JSON.parse(insurance) : [];
+        } catch {
+          insurance = [];
+        }
+      }
+      return { ...row, insurance: insurance || [] };
+    });
+    res.json(rows);
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ error: 'Internal server error' });

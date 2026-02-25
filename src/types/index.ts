@@ -46,6 +46,7 @@ export interface Doctor {
   id: string;
   slug: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   fullName: string;
   specialty: string;
@@ -393,6 +394,7 @@ export interface OnboardingDraft {
   step: 1 | 2 | 3 | 4;
   basicDetails?: {
     firstName: string;
+    middleName?: string;
     lastName: string;
     credentials: string;
     specialty: string;
@@ -416,7 +418,9 @@ export interface OnboardingDraft {
 export interface ApplicationDraft {
   step: 1 | 2 | 3 | 4;
   basicDetails?: {
-    fullName: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     credentials: string;
     specialty: string;
     email: string;

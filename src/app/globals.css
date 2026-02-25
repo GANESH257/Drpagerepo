@@ -163,6 +163,18 @@
 .dark .doctor-portal-main div.rounded-lg.border.bg-card:hover {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25);
 }
+/* Dark: card-vibrant must not force white (fixes white text on white card on Edit Profile) */
+.dark .card-vibrant,
+.dark .doctor-portal-main .card-vibrant {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+}
+.dark .doctor-portal-main .card-vibrant:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  border-color: hsl(217 33% 28%) !important;
+}
 .dark .page-glow::before {
   background: radial-gradient(ellipse 70% 100% at 70% 0%,
     rgba(26, 140, 122, 0.22) 0%,

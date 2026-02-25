@@ -7,6 +7,14 @@ export interface AuthRequest extends Request {
   doctorId?: string;
 }
 
+interface JwtPayload {
+  userId?: string;
+  user_id?: string;
+  role?: string;
+  doctorId?: string | null;
+  doctor_id?: string | null;
+}
+
 export const authenticateToken = (
   req: AuthRequest,
   res: Response,
@@ -24,11 +32,11 @@ export const authenticateToken = (
     if (!jwtSecret) {
       return res.status(500).json({ error: 'Server configuration error' });
     }
-    
-    const decoded = jwt.verify(token, jwtSecret) as any;
+
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
     req.userId = decoded.userId ?? decoded.user_id;
     req.userRole = decoded.role;
-    req.doctorId = decoded.doctorId ?? decoded.doctor_id;
+    req.doctorId = decoded.doctorId ?? decoded.doctor_id ?? undefined;
     next();
   } catch (error) {
     return res.status(403).json({ error: 'Invalid or expired token' });

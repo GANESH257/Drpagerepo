@@ -90,35 +90,57 @@ export default function AdminApprovalsPage() {
 
   const getApplicantName = (request: ApprovalRequest): string => {
     try {
-      const doctor = request.payload?.doctor;
-      if (doctor?.fullName) return doctor.fullName;
+      const payload = request.payload || {};
+      const doctor = payload.doctor || payload.admin_doctor;
+      if (doctor && (doctor.fullName || doctor.name)) return doctor.fullName || doctor.name;
       if (doctor?.email) return doctor.email;
-      if (request.submittedBy?.email && !request.submittedBy.email.startsWith('user-'))
+      if (request.submittedBy?.email && !String(request.submittedBy.email).startsWith('user-'))
         return request.submittedBy.email;
-      const d = doctors.find((x: any) => x.id === request.target?.doctorId);
-      return d?.fullName || '—';
+      const d = doctors.find((x: any) => x.id === (request.target?.doctorId || request.submittedBy?.doctorId));
+      if (d?.fullName) return d.fullName;
+      if (d?.email) return d.email;
+      // Fallback: payload top-level name fields
+      if (payload.fullName) return payload.fullName;
+      if (payload.name && payload.name !== payload.practice?.name) return payload.name;
+      if (payload.requested_by_name) return payload.requested_by_name;
+      return '—';
     } catch { return '—'; }
   };
 
   const getPracticeDisplay = (request: ApprovalRequest): string => {
     try {
+      const payload = request.payload || {};
       if (request.type === 'new_practice_with_admin_doctor')
-        return request.payload?.practice?.name || 'New Practice';
-      if (request.target?.practiceId) {
-        const p = practices.find((x: any) => x.id === request.target?.practiceId);
-        return p?.name || request.target.practiceId;
+        return payload.practice?.name || payload.practice_name || payload.practiceName || 'New Practice';
+      const practiceId = request.target?.practiceId || payload.practiceId || payload.practice_id;
+      if (practiceId) {
+        const p = practices.find((x: any) => x.id === practiceId);
+        if (p?.name) return p.name;
+        if (payload.practice?.name) return payload.practice.name;
+        if (payload.practice_name) return payload.practice_name;
+        if (payload.practiceName) return payload.practiceName;
+        return practiceId;
       }
-    } catch { return '—'; }
+      if (payload.practice?.name) return payload.practice.name;
+      if (payload.practice_name) return payload.practice_name;
+      if (payload.practiceName) return payload.practiceName;
+    } catch { /* ignore */ }
     return '—';
   };
 
   const getApplicantEmail = (request: ApprovalRequest): string => {
     try {
-      const doctor = request.payload?.doctor;
+      const payload = request.payload || {};
+      const doctor = payload.doctor || payload.admin_doctor;
       if (doctor?.email) return doctor.email;
-      if (request.submittedBy?.email && !request.submittedBy.email.startsWith('user-'))
+      if (request.submittedBy?.email && !String(request.submittedBy.email).startsWith('user-'))
         return request.submittedBy.email;
-    } catch { return '—'; }
+      if (payload.email) return payload.email;
+      if (payload.requested_by_email) return payload.requested_by_email;
+      if (request.target?.invitedDoctorEmail) return request.target.invitedDoctorEmail;
+      const d = doctors.find((x: any) => x.id === (request.target?.doctorId || request.submittedBy?.doctorId));
+      if (d?.email) return d.email;
+    } catch { /* ignore */ }
     return '—';
   };
 
@@ -141,7 +163,22 @@ export default function AdminApprovalsPage() {
   const applyFilters = (list: ApprovalRequest[]): ApprovalRequest[] => {
     const q = search.trim().toLowerCase();
     return list.filter((r) => {
-      if (statusFilter !== 'all' && r.status?.toLowerCase() !== statusFilter) return false;
+      if (statusFilter !== 'all') {
+        const status = (r.status || '').toLowerCase();
+        if (statusFilter === 'pending') {
+          if (status !== 'submitted' && status !== 'under_review') return false;
+        } else if (statusFilter === 'under_review') {
+          if (status !== 'under_review') return false;
+        } else if (statusFilter === 'submitted') {
+          if (status !== 'submitted') return false;
+        } else if (statusFilter === 'approved') {
+          if (status !== 'approved') return false;
+        } else if (statusFilter === 'denied' || statusFilter === 'rejected') {
+          if (status !== 'rejected') return false;
+        } else if (status !== statusFilter) {
+          return false;
+        }
+      }
       if (typeFilter !== 'all' && r.type !== typeFilter) return false;
       if (q) {
         const name = getApplicantName(r).toLowerCase();
@@ -185,10 +222,11 @@ export default function AdminApprovalsPage() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="pending">Pending</SelectItem>
-          <SelectItem value="approved">Approved</SelectItem>
-          <SelectItem value="denied">Denied</SelectItem>
           <SelectItem value="submitted">Submitted</SelectItem>
+          <SelectItem value="pending">Pending (all)</SelectItem>
+          <SelectItem value="under_review">Under Review</SelectItem>
+          <SelectItem value="approved">Approved</SelectItem>
+          <SelectItem value="rejected">Rejected</SelectItem>
         </SelectContent>
       </Select>
       {/* Type */}
@@ -242,14 +280,18 @@ export default function AdminApprovalsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {list.map((request) => (
+              {list.map((request) => {
+                const applicantName = getApplicantName(request);
+                const applicantEmail = getApplicantEmail(request);
+                const displayApplicant = applicantName !== '—' ? applicantName : applicantEmail !== '—' ? applicantEmail : '—';
+                return (
                 <TableRow key={request.id} className="hover:bg-accent/30">
                   <TableCell><ApprovalTypeBadge type={request.type} /></TableCell>
                   <TableCell><StatusBadge status={request.status} /></TableCell>
                   <TableCell>{formatDateTime(request.submittedAt)}</TableCell>
-                  <TableCell className="font-medium">{getApplicantName(request)}</TableCell>
+                  <TableCell className="font-medium">{displayApplicant}</TableCell>
                   <TableCell>{getPracticeDisplay(request)}</TableCell>
-                  <TableCell className="text-muted-foreground">{getApplicantEmail(request)}</TableCell>
+                  <TableCell className="text-muted-foreground">{applicantEmail}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -262,7 +304,8 @@ export default function AdminApprovalsPage() {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         </div>

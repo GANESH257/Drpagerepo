@@ -3,6 +3,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -74,14 +75,26 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFoo
         isCollapsed ? 'w-20' : 'w-64'
       )}
     >
-      {/* Logo — reference design */}
+      {/* Logo — actual AIP/DRP logo */}
       <div className="flex-shrink-0 p-5 border-b border-[var(--sidebar-border)]">
         <div className="flex items-center gap-2">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-black text-sm flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+            className={cn(
+              'flex items-center justify-center flex-shrink-0 overflow-hidden rounded-lg bg-white',
+              isCollapsed ? 'w-9 h-9' : 'h-10 w-auto max-w-[140px]'
+            )}
           >
-            AIP
+            <Image
+              src="/logodrpnew.png"
+              alt="Alliance of Independent Physicians"
+              width={160}
+              height={64}
+              className={cn(
+                'object-contain',
+                isCollapsed ? 'h-9 w-9' : 'h-10 w-auto'
+              )}
+              priority
+            />
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
@@ -133,6 +146,11 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFoo
                   {href && href !== '#' ? (
                     <Link
                       href={href}
+                      onClick={() => {
+                        if (!openGroups.has(item.label)) {
+                          toggleGroup(item.label);
+                        }
+                      }}
                       className={cn(
                         'flex-1 flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all min-w-0',
                         active
@@ -144,7 +162,14 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFoo
                       <span className="truncate">{item.label}</span>
                     </Link>
                   ) : (
-                    <span className="flex-1 flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-[var(--sidebar-foreground)]">
+                    <span
+                      className="flex-1 flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-[var(--sidebar-foreground)] cursor-pointer"
+                      onClick={() => {
+                        if (!openGroups.has(item.label)) {
+                          toggleGroup(item.label);
+                        }
+                      }}
+                    >
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">{item.label}</span>
                     </span>
@@ -169,9 +194,11 @@ export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFoo
                   <div className="ml-3 mt-0.5 space-y-0.5 border-l border-[var(--sidebar-border)] pl-3">
                     {item.children!.map((child) => {
                       const childHref = child.href ?? '#';
+                      const isParentHref = childHref === href;
                       const childActive =
                         childHref !== '#' &&
-                        (pathname === childHref || pathname.startsWith(childHref + '/'));
+                        (pathname === childHref ||
+                          (!isParentHref && pathname.startsWith(childHref + '/')));
                       const ChildIcon = child.icon;
                       return (
                         <Link

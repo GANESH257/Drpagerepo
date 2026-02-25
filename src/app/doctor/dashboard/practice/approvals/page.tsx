@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
 import { getApprovalsForPracticeAdmin } from '@/lib/services/approvalEngine';
@@ -12,9 +12,18 @@ import { ApprovalTypeBadge } from '@/components/shared/approvals/ApprovalTypeBad
 import { EmptyState } from '@/components/shared/approvals/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatDateTime } from '@/lib/dateUtils';
-import { Eye, ArrowRight } from 'lucide-react';
+import { getApprovalTypeLabel } from '@/lib/utils/approvalTypeLabels';
+import { Eye, ArrowRight, Search, X } from 'lucide-react';
 
 /** Applicant display name: prefer payload.doctor.fullName, else email, else role + id */
 function getApplicantDisplay(request: ApprovalRequest): { name: string; email: string } {
@@ -49,6 +58,9 @@ export default function PracticeAdminApprovalsPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     async function loadRequests() {
@@ -74,6 +86,38 @@ export default function PracticeAdminApprovalsPage() {
     }
     loadRequests();
   }, [router]);
+
+  const typeOptions = useMemo(() => {
+    const types = Array.from(new Set(requests.map((r) => r.type))).sort();
+    return [
+      { value: 'all', label: 'All Types' },
+      ...types.map((t) => ({ value: t, label: getApprovalTypeLabel(t as any) })),
+    ];
+  }, [requests]);
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter((request) => {
+      if (typeFilter !== 'all' && request.type !== typeFilter) return false;
+      if (statusFilter !== 'all' && request.status !== statusFilter) return false;
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        const applicant = getApplicantDisplay(request);
+        const nameMatch = applicant.name.toLowerCase().includes(q);
+        const emailMatch = applicant.email.toLowerCase().includes(q);
+        const practiceName = getPracticeDisplay(request).toLowerCase().includes(q);
+        if (!nameMatch && !emailMatch && !practiceName) return false;
+      }
+      return true;
+    });
+  }, [requests, typeFilter, statusFilter, search]);
+
+  const hasActiveFilters = typeFilter !== 'all' || statusFilter !== 'all' || search.trim() !== '';
+
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setStatusFilter('all');
+    setSearch('');
+  };
 
   if (isLoading) {
     return (
@@ -102,6 +146,52 @@ export default function PracticeAdminApprovalsPage() {
         />
       ) : (
         <Card className="card-practice-accent">
+          <div className="flex flex-wrap items-center gap-3 border-b border-border bg-muted/30 p-4">
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search applicant, email, practice..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9 text-sm bg-background"
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[200px] h-9 bg-background text-sm">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px] h-9 bg-background text-sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="under_review">Under Review</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {filteredRequests.length} of {requests.length}
+              </span>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 gap-1.5 text-muted-foreground">
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -116,7 +206,16 @@ export default function PracticeAdminApprovalsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.map((request) => {
+                {filteredRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                      {hasActiveFilters
+                        ? 'No requests match your filters. Try clearing filters.'
+                        : 'No approval requests.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredRequests.map((request) => {
                   const applicant = getApplicantDisplay(request);
                   const practiceName = getPracticeDisplay(request);
                   return (
@@ -153,7 +252,8 @@ export default function PracticeAdminApprovalsPage() {
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                })
+                )}
               </TableBody>
             </Table>
           </CardContent>

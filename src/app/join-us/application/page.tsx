@@ -51,7 +51,9 @@ function ApplicationContent() {
         basicDetails: email
           ? {
               email,
-              fullName: '',
+              firstName: '',
+              middleName: '',
+              lastName: '',
               credentials: '',
               specialty: '',
               phone: '',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Crown, FileText, CheckCircle2 } from 'lucide-react';
+import { Crown, CheckCircle2 } from 'lucide-react';
 import { getJoinRequests } from '@/lib/api/join-requests';
 import { getDoctors } from '@/lib/api/doctors';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
@@ -45,31 +45,16 @@ export function StatsCards() {
     loadData();
   }, []);
 
-  const pendingRequests = joinRequests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
-  const totalDoctors = totalDoctorsFromApi;
   const planSum = planDistribution.basic + planDistribution.professional + planDistribution.premier;
 
+  // Only non-duplicate stats: Doctors per Plan and Active Plans (Total Doctors and Pending are in the 3 button cards above)
   const stats = [
-    {
-      title: 'Total Doctors',
-      value: totalDoctors.toString(),
-      description: `${totalDoctorsFromApi} in directory`,
-      icon: Users,
-      color: 'text-[var(--aip-teal)]',
-    },
     {
       title: 'Doctors per Plan',
       value: planSum.toString(),
       description: `Basic: ${planDistribution.basic}, Pro: ${planDistribution.professional}, Premier: ${planDistribution.premier}`,
       icon: Crown,
       color: 'text-[var(--aip-teal)]',
-    },
-    {
-      title: 'Pending Requests',
-      value: pendingRequests.length.toString(),
-      description: 'Awaiting review',
-      icon: FileText,
-      color: 'text-accent-amber',
     },
     {
       title: 'Active Plans',
@@ -82,8 +67,8 @@ export function StatsCards() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[1, 2].map((i) => (
           <div key={i} className="glass-card p-6">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2">
               <span className="text-sm font-medium text-muted-foreground">Loading...</span>
@@ -98,8 +83,8 @@ export function StatsCards() {
 
   if (error) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="glass-card p-6 col-span-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="glass-card p-6 col-span-2">
           <p className="text-destructive">{error}</p>
         </div>
       </div>
@@ -107,7 +92,7 @@ export function StatsCards() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (

@@ -82,13 +82,33 @@ export async function getAllPracticesArray(
 
 /**
  * Get single practice by ID with related data.
+ * Returns practice with normalized address/specialties (works for any status).
  * Pass token for auth-required access (e.g. pending_profile practice).
  */
 export async function getPractice(id: string, token?: string | null): Promise<Practice> {
   try {
     const authToken = token ?? getToken();
-    const response = await apiClient.get<Practice>(`/api/practices/${id}`, authToken ?? undefined);
-    return response;
+    const raw = await apiClient.get<Practice & Record<string, unknown>>(`/api/practices/${id}`, authToken ?? undefined);
+    // Normalize flat API shape to Practice shape (address object, arrays)
+    const address = (raw.address && typeof raw.address === 'object' && (raw.address.city != null || raw.address.line1 != null))
+      ? raw.address
+      : {
+          line1: (raw.address_line1 ?? '') as string,
+          line2: raw.address_line2 as string | undefined,
+          city: (raw.city ?? '') as string,
+          state: (raw.state ?? '') as string,
+          zip: (raw.zip ?? '') as string,
+          country: (raw.country ?? 'USA') as string,
+        };
+    return {
+      ...raw,
+      address,
+      specialties: Array.isArray(raw.specialties) ? raw.specialties : (raw.specialty ? [raw.specialty] : []),
+      locations: raw.locations ?? [],
+      doctors: raw.doctors ?? [],
+      insurance: raw.insurance ?? [],
+      services: raw.services ?? [],
+    } as Practice;
   } catch (error) {
     const apiError = error as ApiError;
     if (apiError.status === 404) {

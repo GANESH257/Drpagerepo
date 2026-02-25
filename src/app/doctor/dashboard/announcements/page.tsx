@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/lib/api/announcements';
@@ -18,6 +18,7 @@ export default function AnnouncementsPage() {
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const didMarkAllReadOnVisit = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -45,6 +46,29 @@ export default function AnnouncementsPage() {
       setIsLoading(false);
     }
   }, [router, load]);
+
+  // When user lands on this page (e.g. clicked nav/header bell), mark all as read so badge clears (once per visit)
+  useEffect(() => {
+    if (isLoading || didMarkAllReadOnVisit.current) return;
+    const unread = announcements.filter((a) => a.read !== true);
+    if (unread.length === 0) return;
+    didMarkAllReadOnVisit.current = true;
+    let mounted = true;
+    (async () => {
+      try {
+        await Promise.all(unread.map((a) => markAnnouncementRead(a.id)));
+        if (mounted) {
+          setAnnouncements((prev) =>
+            prev.map((a) => ({ ...a, read: true }))
+          );
+          window.dispatchEvent(new CustomEvent('announcements-marked-read'));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, [isLoading, announcements]);
 
   const handleMarkAsRead = async (announcementId: string) => {
     try {

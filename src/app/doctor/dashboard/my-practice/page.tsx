@@ -5,14 +5,24 @@ import { useRouter } from 'next/navigation';
 import { getPractice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { useDoctorContext } from '@/components/dashboard/DoctorContext';
+import { Phone, Mail, Globe, Users, MapPin, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Phone, Mail, Globe, Users } from 'lucide-react';
-import Link from 'next/link';
 
 function practiceInitials(name: string): string {
   const parts = (name || '').trim().split(/\s+/);
   if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   return (name || 'P').charAt(0).toUpperCase();
+}
+
+function formatAddress(loc: any): string {
+  const parts: string[] = [];
+  const line1 = loc.address ?? loc.address_line1;
+  if (line1) parts.push(line1);
+  if (loc.address_line2) parts.push(loc.address_line2);
+  if (loc.city || loc.state || loc.zip) {
+    parts.push([loc.city, loc.state, loc.zip].filter(Boolean).join(', '));
+  }
+  return parts.join(', ');
 }
 
 export default function MyPracticePage() {
@@ -73,7 +83,7 @@ export default function MyPracticePage() {
   if (!practice) {
     return (
       <div className="text-center py-12 space-y-3">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           {loadError ? loadError : 'No practice associated with your profile.'}
         </p>
         <div className="flex items-center justify-center gap-3">
@@ -112,33 +122,27 @@ export default function MyPracticePage() {
     );
   }
 
+  const locations = practice.locations || [];
+  const doctors = practice.doctors || [];
   const specializationLine = practice.specialties?.length
     ? practice.specialties.join(' · ')
     : practice.description
       ? null
       : null;
-  const memberCount = practice.doctors?.length ?? 0;
 
   return (
-    <div className="space-y-5 relative z-10 max-w-4xl">
+    <div className="space-y-6 relative z-10 max-w-4xl">
       <header>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Practice Profile</h1>
-        <p className="mt-0.5 text-xs text-gray-600">
-          View your practice&apos;s information on the AIP network
+        <h1 className="text-xl font-bold tracking-tight text-foreground">My Practice</h1>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Your practice details, contact info, locations, and physicians
         </p>
       </header>
 
-      <div className="flex justify-end">
-        <Link href="/doctor/dashboard/my-practice/locations">
-          <Button variant="outline" size="sm" className="rounded-lg h-8 text-xs border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/5">
-            View Practice Locations
-          </Button>
-        </Link>
-      </div>
-
-      <div className="glass-card rounded-2xl overflow-hidden shadow-sm">
-        {/* Top: identity */}
-        <div className="p-5">
+      {/* Generic Details */}
+      <section className="glass-card rounded-2xl overflow-hidden shadow-sm">
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Generic Details</h2>
           <div className="flex gap-4">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
@@ -147,72 +151,114 @@ export default function MyPracticePage() {
               {practiceInitials(practice.name)}
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-gray-900">{practice.name}</h2>
+              <h3 className="text-lg font-bold text-foreground">{practice.name}</h3>
               {specializationLine && (
-                <p className="text-sm text-gray-600 mt-0.5">{specializationLine}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{specializationLine}</p>
+              )}
+              {practice.description && (
+                <p className="text-sm text-muted-foreground mt-2">{practice.description}</p>
               )}
               <div className="flex items-center gap-1.5 mt-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden />
-                <span className="text-xs font-semibold text-emerald-700">Active Member</span>
+                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Active Member</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-100" />
-
-        {/* Bottom: contact & details in two columns */}
-        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+        {/* Contact Info */}
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Contact Info</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {practice.phone && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5" />
-                  Phone
-                </p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5">{practice.phone}</p>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm text-foreground">{practice.phone}</span>
               </div>
             )}
             {practice.email && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5" />
-                  Email
-                </p>
-                <p className="text-sm font-medium text-gray-900 mt-0.5">{practice.email}</p>
-              </div>
-            )}
-          </div>
-          <div className="space-y-4">
-            {practice.website && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5" />
-                  Website
-                </p>
-                <a
-                  href={practice.website.startsWith('http') ? practice.website : `https://${practice.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium mt-0.5 block hover:underline"
-                  style={{ color: 'var(--aip-teal)' }}
-                >
-                  {practice.website.replace(/^https?:\/\//i, '')}
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                <a href={`mailto:${practice.email}`} className="text-sm text-[var(--aip-teal)] hover:underline">
+                  {practice.email}
                 </a>
               </div>
             )}
-            <div>
-              <p className="text-xs font-medium text-gray-500 flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Physicians
-              </p>
-              <p className="text-sm font-medium text-gray-900 mt-0.5">
-                {memberCount} member{memberCount !== 1 ? 's' : ''}
-              </p>
-            </div>
+            {!practice.phone && !practice.email && (
+              <p className="text-sm text-muted-foreground">No contact info on file.</p>
+            )}
           </div>
         </div>
-      </div>
+
+        {/* Practice Website */}
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Practice Website</h2>
+          {practice.website ? (
+            <a
+              href={practice.website.startsWith('http') ? practice.website : `https://${practice.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium hover:underline"
+              style={{ color: 'var(--aip-teal)' }}
+            >
+              <Globe className="h-4 w-4" />
+              {practice.website.replace(/^https?:\/\//i, '')}
+            </a>
+          ) : (
+            <p className="text-sm text-muted-foreground">No website on file.</p>
+          )}
+        </div>
+
+        {/* Location list */}
+        <div className="p-5 border-b border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Location list
+          </h2>
+          {locations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No locations on file for this practice.</p>
+          ) : (
+            <ul className="space-y-4">
+              {locations.map((loc: any, index: number) => {
+                const address = formatAddress(loc);
+                return (
+                  <li key={loc.id || index} className="rounded-lg border border-border bg-card p-4">
+                    <p className="font-medium text-foreground text-sm">
+                      {loc.name || 'Office'}
+                      {index === 0 && (
+                        <span className="ml-2 text-xs font-normal text-emerald-700 dark:text-emerald-400">Primary</span>
+                      )}
+                    </p>
+                    {address && <p className="text-sm text-muted-foreground mt-1">{address}</p>}
+                    {loc.phone && <p className="text-sm text-muted-foreground mt-0.5">{loc.phone}</p>}
+                    {loc.hours && <p className="text-xs text-muted-foreground mt-0.5">{loc.hours}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Doctor List */}
+        <div className="p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Doctor list
+          </h2>
+          {doctors.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No physicians listed for this practice.</p>
+          ) : (
+            <ul className="space-y-2">
+              {doctors.map((d: any) => (
+                <li key={d.id} className="flex items-center gap-2 text-sm text-foreground">
+                  <span className="font-medium">{d.fullName ?? d.full_name ?? '—'}</span>
+                  {d.specialty && <span className="text-muted-foreground">· {d.specialty}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

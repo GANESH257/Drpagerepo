@@ -199,10 +199,11 @@ export async function getPracticeById(id: string): Promise<Practice | null> {
 /**
  * Get doctors for a practice
  * Filters by practiceId and sorts: practice_admin first, then by lastName, firstName
+ * Uses public doctors API so count works for unauthenticated users (e.g. practice directory).
  */
 export async function getDoctorsForPractice(practiceId: string): Promise<Doctor[]> {
   const token = getToken();
-  const allDoctors = token ? await getAllDoctorsArray(token) : [];
+  const allDoctors = await getAllDoctorsArray(token ?? undefined, { limit: 2000 });
 
   const practiceDoctors = allDoctors.filter((d) => d.practiceId === practiceId);
   

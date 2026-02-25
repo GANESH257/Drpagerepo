@@ -17,10 +17,12 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Search, UserPlus, BookUser, Loader2, Stethoscope, Star } from 'lucide-react';
+import { Search, UserPlus, BookUser, Loader2, Stethoscope, Star, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { showToast } from '@/lib/toast';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
+import { getUploadFullUrl } from '@/lib/api/upload';
 
 export default function FindPhysicianPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -90,16 +92,69 @@ export default function FindPhysicianPage() {
     return Array.from(set).sort();
   }, [doctors]);
 
+  // Derive available cities and states from current results (using locations or practice_city/state)
+  const locationOptions = useMemo(() => {
+    const cities = new Set<string>();
+    const states = new Set<string>();
+    doctors.forEach((d) => {
+      (d.locations || []).forEach((loc) => {
+        const cityVal = (loc as { city?: string }).city?.trim();
+        const stateVal = (loc as { state?: string }).state?.trim();
+        if (cityVal) cities.add(cityVal);
+        if (stateVal) states.add(stateVal);
+      });
+      if (!d.locations?.length) {
+        const raw: any = d;
+        const cityVal = (raw.practice_city || raw.city || '').trim();
+        const stateVal = (raw.practice_state || raw.state || '').trim();
+        if (cityVal) cities.add(cityVal);
+        if (stateVal) states.add(stateVal);
+      }
+    });
+    return {
+      cities: Array.from(cities).sort(),
+      states: Array.from(states).sort(),
+    };
+  }, [doctors]);
+
+  // Apply client-side filters on top of API results so specialty/location/insurance always work
   const filteredDoctors = useMemo(() => {
     return doctors.filter((d) => {
       if (acceptingOnly && !d.acceptsNewPatients) return false;
+
+      // Insurance filter (client-side)
       if (insuranceFilter && insuranceFilter !== 'all') {
         const has = (d.insurance || []).some((i) => i.name === insuranceFilter);
         if (!has) return false;
       }
+
+      // Specialty filter (support both primary specialty and specialties[])
+      if (specialty) {
+        const specs = (d.specialties && d.specialties.length > 0 ? d.specialties : [d.specialty]).filter(
+          Boolean
+        ) as string[];
+        const match = specs.some(
+          (s) => s.toLowerCase() === specialty.toLowerCase()
+        );
+        if (!match) return false;
+      }
+
+      // Location filters (state/city) using locations or practice_city/state
+      const raw: any = d;
+      const primaryLoc =
+        (d.locations && d.locations[0]) ||
+        (raw.practice_city || raw.practice_state
+          ? { city: raw.practice_city, state: raw.practice_state }
+          : null);
+      const docCity = (primaryLoc as any)?.city as string | undefined;
+      const docState = (primaryLoc as any)?.state as string | undefined;
+
+      if (state && docState && state !== '' && docState !== state) return false;
+      if (city && docCity && city !== '' && docCity !== city) return false;
+
       return true;
     });
-  }, [doctors, acceptingOnly, insuranceFilter]);
+  }, [doctors, acceptingOnly, insuranceFilter, specialty, city, state]);
 
   const handleAddContact = async (doctorId: string) => {
     setAddingId(doctorId);
@@ -130,14 +185,24 @@ export default function FindPhysicianPage() {
   };
 
   const locationLine = (d: Doctor) => {
-    if (d.practiceName && d.locations?.length) {
-      const loc = d.locations[0];
-      return `${d.practiceName} ${loc.city || ''} ${loc.state || ''}`.trim();
+    const raw: any = d;
+    const primaryLoc =
+      (d.locations && d.locations[0]) ||
+      (raw.practice_city || raw.practice_state
+        ? { city: raw.practice_city, state: raw.practice_state }
+        : null);
+
+    if (d.practiceName && primaryLoc) {
+      const city = (primaryLoc as any).city || '';
+      const stateVal = (primaryLoc as any).state || '';
+      return `${d.practiceName} ${city} ${stateVal}`.trim();
     }
     if (d.practiceName) return d.practiceName;
-    if (d.locations?.length) {
-      const loc = d.locations[0];
-      return [loc.city, loc.state].filter(Boolean).join(', ');
+    if (primaryLoc) {
+      const city = (primaryLoc as any).city || '';
+      const stateVal = (primaryLoc as any).state || '';
+      const line = [city, stateVal].filter(Boolean).join(', ');
+      return line || null;
     }
     return null;
   };
@@ -154,52 +219,87 @@ export default function FindPhysicianPage() {
 
       {/* Search and filter bar - single row */}
       <div className="glass-card p-3">
-        <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:gap-2">
-          <div className="flex-1 min-w-0 relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <Input
-              placeholder="Search by name, specialty, or condition..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white"
-            />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:gap-2">
+            <div className="flex-1 min-w-0 relative">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Input
+                placeholder="Search by name, specialty, or condition..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && load()}
+                className="pl-9 h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white dark:border-border dark:bg-muted/50 dark:focus:bg-background"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => load()}
+              className="h-9 px-4 rounded-lg text-white shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+            >
+              Search
+            </Button>
           </div>
-          <Select value={specialty || 'all'} onValueChange={(v) => setSpecialty(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white">
-              <SelectValue placeholder="All Specialties" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Specialties</SelectItem>
-              {departments.map((dept) => (
-                <SelectItem key={dept.slug} value={dept.slug}>
-                  {dept.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={insuranceFilter} onValueChange={setInsuranceFilter}>
-            <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white">
-              <SelectValue placeholder="All Insurance Plans" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Insurance Plans</SelectItem>
-              {insuranceOptions.map((name) => (
-                <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex items-center gap-2 shrink-0">
-            <Switch
-              id="accepting"
-              checked={acceptingOnly}
-              onCheckedChange={setAcceptingOnly}
-              className="data-[state=checked]:bg-[var(--aip-teal)] h-5 w-9"
-            />
-            <Label htmlFor="accepting" className="text-xs font-medium text-gray-700 whitespace-nowrap cursor-pointer">
-              Accepting New Patients
-            </Label>
+          <div className="flex flex-wrap gap-2 lg:items-center">
+            <Select value={specialty || 'all'} onValueChange={(v) => setSpecialty(v === 'all' ? '' : v)}>
+              <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white dark:border-border dark:bg-muted/50">
+                <SelectValue placeholder="All Specialties" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Specialties</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.slug} value={dept.name}>
+                    {dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={state || 'all'} onValueChange={(v) => setState(v === 'all' ? '' : v)}>
+              <SelectTrigger className="w-full lg:w-[140px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white dark:border-border dark:bg-muted/50">
+                <SelectValue placeholder="All States" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All States</SelectItem>
+                {locationOptions.states.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={city || 'all'} onValueChange={(v) => setCity(v === 'all' ? '' : v)}>
+              <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white dark:border-border dark:bg-muted/50">
+                <SelectValue placeholder="All Cities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Cities</SelectItem>
+                {locationOptions.cities.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={insuranceFilter} onValueChange={setInsuranceFilter}>
+              <SelectTrigger className="w-full lg:w-[160px] h-9 text-sm rounded-lg border-gray-200 bg-gray-50/50 focus:bg-white dark:border-border dark:bg-muted/50">
+                <SelectValue placeholder="All Insurance Plans" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Insurance Plans</SelectItem>
+                {insuranceOptions.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 shrink-0">
+              <Switch
+                id="accepting"
+                checked={acceptingOnly}
+                onCheckedChange={setAcceptingOnly}
+                className="data-[state=checked]:bg-[var(--aip-teal)] h-5 w-9"
+              />
+              <Label htmlFor="accepting" className="text-xs font-medium text-gray-700 dark:text-foreground whitespace-nowrap cursor-pointer">
+                Accepting New Patients
+              </Label>
+            </div>
           </div>
         </div>
       </div>
@@ -265,12 +365,25 @@ export default function FindPhysicianPage() {
                   <div className="glass-card rounded-xl overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
                     <div className="p-4 flex flex-col flex-1">
                       <div className="flex gap-3">
-                        <div
-                          className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm text-white"
-                          style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
-                          aria-hidden
-                        >
-                          {initials(d)}
+                        <div className="flex-shrink-0 w-11 h-11 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                          {d.image ? (
+                            <Image
+                              src={d.image.startsWith('http') ? d.image : getUploadFullUrl(d.image)}
+                              alt=""
+                              width={44}
+                              height={44}
+                              className="w-full h-full object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <span
+                              className="w-full h-full flex items-center justify-center font-semibold text-sm text-white"
+                              style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+                              aria-hidden
+                            >
+                              {initials(d)}
+                            </span>
+                          )}
                         </div>
                         <div className="min-w-0 flex-1 relative">
                           {(() => {
@@ -298,7 +411,10 @@ export default function FindPhysicianPage() {
                             {d.specialty}
                           </p>
                           {locationLine(d) && (
-                            <p className="text-[11px] text-gray-500 mt-1 truncate">{locationLine(d)}</p>
+                            <p className="text-[11px] text-gray-500 dark:text-muted-foreground mt-1 truncate flex items-center gap-1">
+                              <MapPin className="h-3 w-3 flex-shrink-0 text-muted-foreground" aria-hidden />
+                              {locationLine(d)}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -328,7 +444,7 @@ export default function FindPhysicianPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full rounded-lg h-8 text-xs border-gray-200 text-gray-700 hover:bg-gray-50"
+                          className="w-full rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
                         >
                           View Profile
                         </Button>

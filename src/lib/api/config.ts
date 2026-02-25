@@ -82,6 +82,7 @@ class ApiClient {
       method: 'GET',
       headers: this.getHeaders(token),
       credentials: 'include',
+      cache: 'no-store', // avoid serving stale list data (e.g. admin practices)
     });
 
     return this.handleResponse<T>(response);

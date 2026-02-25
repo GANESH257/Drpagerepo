@@ -32,46 +32,46 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const userRole = req.userRole;
     const userId = req.userId;
 
-    let query = 'SELECT * FROM approval_requests WHERE 1=1';
+    let query = `SELECT ar.*, u.email AS requested_by_email
+      FROM approval_requests ar
+      LEFT JOIN users u ON u.id = ar.requested_by
+      WHERE 1=1`;
     const params: any[] = [];
     let paramCount = 0;
 
-    // Apply filters
+    // Apply filters (use ar. for approval_requests columns after JOIN)
     if (type) {
       paramCount++;
-      query += ` AND type = $${paramCount}`;
+      query += ` AND ar.type = $${paramCount}`;
       params.push(type);
     }
 
     if (status) {
       paramCount++;
-      query += ` AND (admin_status = $${paramCount} OR practice_admin_status = $${paramCount})`;
+      query += ` AND (ar.admin_status = $${paramCount} OR ar.practice_admin_status = $${paramCount})`;
       params.push(status);
     }
 
     if (practiceId) {
       paramCount++;
-      query += ` AND practice_id = $${paramCount}`;
+      query += ` AND ar.practice_id = $${paramCount}`;
       params.push(practiceId);
     }
 
     if (requestedBy) {
       paramCount++;
-      query += ` AND requested_by = $${paramCount}`;
+      query += ` AND ar.requested_by = $${paramCount}`;
       params.push(requestedBy);
     }
 
     // Role-based filtering
     if (userRole === 'admin') {
-      // Admin sees requests that need practice admin only after practice admin has approved
       const practiceAdminTypesList = TYPES_REQUIRING_PRACTICE_ADMIN.map((t) => `'${t.replace(/'/g, "''")}'`).join(',');
       query += ` AND (
-        type NOT IN (${practiceAdminTypesList})
-        OR practice_admin_status = 'approved'
+        ar.type NOT IN (${practiceAdminTypesList})
+        OR ar.practice_admin_status = 'approved'
       )`;
     } else if (userRole === 'practice_admin' || userRole === 'doctor') {
-      // Practice admin sees their practice's requests. JWT has role='doctor' for all doctors;
-      // check if this doctor is a PA for any practice and use PA filter if so.
       const practiceAdminResult = await pool.query(
         `SELECT practice_id FROM practice_roles 
          WHERE doctor_id IN (SELECT id FROM doctors WHERE user_id = $1) 
@@ -82,24 +82,22 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
       if (practiceAdminResult.rows.length > 0) {
         const practiceIds = practiceAdminResult.rows.map(r => r.practice_id);
         paramCount++;
-        query += ` AND practice_id = ANY($${paramCount})`;
+        query += ` AND ar.practice_id = ANY($${paramCount})`;
         params.push(practiceIds);
       } else if (userRole === 'practice_admin') {
         return res.json([]);
       } else {
-        // Doctor but not PA: only their own submitted requests
         paramCount++;
-        query += ` AND requested_by = $${paramCount}`;
+        query += ` AND ar.requested_by = $${paramCount}`;
         params.push(userId);
       }
     } else {
-      // Applicant/public: only their own requests
       paramCount++;
-      query += ` AND requested_by = $${paramCount}`;
+      query += ` AND ar.requested_by = $${paramCount}`;
       params.push(userId);
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY ar.created_at DESC';
 
     const result = await pool.query(query, params);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -122,7 +120,10 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
 router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM approval_requests WHERE id = $1',
+      `SELECT ar.*, u.email AS requested_by_email
+       FROM approval_requests ar
+       LEFT JOIN users u ON u.id = ar.requested_by
+       WHERE ar.id = $1`,
       [req.params.id]
     );
 
@@ -322,6 +323,40 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error updating approval request:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PATCH /api/approval-requests/:id
+ * Update only admin notes (e.g. "Mark Under Review"). Does NOT touch payload.
+ * Admin only. Prevents overwriting request data when marking under review.
+ */
+router.patch('/:id', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      return res.status(403).json({ error: 'Admin only' });
+    }
+    const { admin_notes } = req.body;
+
+    const existing = await pool.query(
+      'SELECT * FROM approval_requests WHERE id = $1',
+      [req.params.id]
+    );
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Approval request not found' });
+    }
+
+    const result = await pool.query(
+      `UPDATE approval_requests 
+       SET admin_notes = $1, updated_at = NOW() 
+       WHERE id = $2 
+       RETURNING *`,
+      [admin_notes ?? null, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error patching approval request notes:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

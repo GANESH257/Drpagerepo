@@ -13,16 +13,30 @@ router.get('/', async (req, res) => {
     let statusFilter = "p.status = 'active'";
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    let debugPath = 'default-active'; // visible in Response Headers as X-Practices-Debug
+
     if (token && includePending === 'true') {
       try {
         const secret = process.env.JWT_SECRET;
-        if (secret) {
+        if (!secret) {
+          debugPath = 'no-secret';
+        } else {
           const decoded = jwt.verify(token, secret) as { role?: string };
-          if (decoded.role === 'admin') statusFilter = "(p.status = 'active' OR p.status = 'pending_profile')";
+          if (decoded.role === 'admin') {
+            statusFilter = '1=1';
+            debugPath = 'admin-all';
+          } else {
+            statusFilter = "(p.status = 'active' OR p.status = 'pending_profile')";
+            debugPath = 'non-admin-pending';
+          }
         }
-      } catch {
-        // ignore invalid token
+      } catch (err) {
+        debugPath = `jwt-failed: ${(err as Error).message}`;
       }
+    } else if (!token) {
+      debugPath = 'no-token';
+    } else if (includePending !== 'true') {
+      debugPath = 'no-include-pending';
     }
 
     let query = `
@@ -121,6 +135,7 @@ router.get('/', async (req, res) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
+    res.setHeader('X-Practices-Debug', debugPath);
     res.json({
       practices: result.rows,
       pagination: {

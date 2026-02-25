@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { getMyContacts, removeContact, ContactDoctor } from '@/lib/api/contacts';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookUser, UserMinus, ExternalLink, Loader2, Send, AlertCircle, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
+import { BookUser, UserMinus, Loader2, Send, AlertCircle, RefreshCw } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
+import { getUploadFullUrl } from '@/lib/api/upload';
 import type { Doctor } from '@/types';
 
 function contactToDoctor(c: ContactDoctor): Doctor {
@@ -18,6 +20,18 @@ function contactToDoctor(c: ContactDoctor): Doctor {
     slug: c.slug ?? '',
     email: (c as any).email ?? '',
   } as Doctor;
+}
+
+function contactInitials(c: ContactDoctor): string {
+  const name = (c.full_name || '').trim();
+  const parts = name.split(/\s+/);
+  if (parts.length >= 2) return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  return (name.charAt(0) || '?').toUpperCase();
+}
+
+function contactNameWithTitle(c: ContactDoctor): string {
+  const name = (c.full_name || '').trim();
+  return name.match(/^Dr\./i) ? name : `Dr. ${name}`;
 }
 
 export default function MyContactsPage() {
@@ -54,9 +68,6 @@ export default function MyContactsPage() {
     }
   };
 
-  const displayName = (c: ContactDoctor) =>
-    (c.full_name && c.full_name.trim()) || c.specialty || 'Physician';
-
   return (
     <div className="space-y-8 max-w-6xl relative z-10">
       {/* Page header */}
@@ -84,7 +95,7 @@ export default function MyContactsPage() {
               className="rounded-lg"
               style={{ borderColor: 'var(--aip-teal)', color: 'var(--aip-teal)' }}
             >
-              Send a Referral
+              Referral
             </Button>
           </Link>
         </div>
@@ -128,64 +139,106 @@ export default function MyContactsPage() {
           <p className="text-sm text-gray-500">
             {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
           </p>
-          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 list-none p-0 m-0">
             {contacts.map((c) => (
               <li key={c.id}>
                 <div className="glass-card rounded-xl overflow-hidden h-full flex flex-col hover:shadow-md transition-all duration-200">
-                  <div className="p-0 flex flex-col flex-1">
-                    <div className="p-5 flex gap-4 flex-1">
-                      <div
-                        className="flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl text-white"
-                        style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
-                        aria-hidden
-                      >
-                        {(displayName(c).charAt(0) || '?').toUpperCase()}
+                  <div className="p-4 flex flex-col flex-1">
+                    <div className="flex gap-3">
+                      {/* Profile image or initials */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {c.profile_image_url ? (
+                          <Image
+                            src={c.profile_image_url.startsWith('http') ? c.profile_image_url : getUploadFullUrl(c.profile_image_url)}
+                            alt=""
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <span
+                            className="w-full h-full flex items-center justify-center font-semibold text-sm text-white"
+                            style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+                            aria-hidden
+                          >
+                            {contactInitials(c)}
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-gray-900 leading-tight">
-                          {displayName(c)}
+                        <h3 className="text-xs font-semibold text-gray-900 leading-tight">
+                          {contactNameWithTitle(c)}
+                          {c.credentials && (
+                            <span className="font-normal text-gray-600">, {c.credentials}</span>
+                          )}
                         </h3>
-                        <p className="text-sm font-medium mt-1.5" style={{ color: 'var(--aip-teal)' }}>
-                          {c.specialty}
+                        <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--aip-teal)' }}>
+                          {c.specialty || '—'}
                         </p>
+                        {c.practice_name && (
+                          <p className="text-[11px] text-gray-600 mt-1 truncate" title={c.practice_name}>
+                            {c.practice_name}
+                          </p>
+                        )}
+                        {(c.city || c.state) && (
+                          <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                            {[c.city, c.state].filter(Boolean).join(', ')}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="flex border-t border-gray-100 bg-gray-50/60 px-5 py-3 gap-2 mt-auto flex-wrap">
-                      <Link
-                        href={getDoctorProfileUrl({ slug: c.slug, id: c.id })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 min-w-0"
-                      >
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full rounded-lg border-gray-200 text-gray-700 hover:bg-white hover:border-gray-300"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                          View profile
-                        </Button>
-                      </Link>
-                      <Button
-                        size="sm"
-                        onClick={() => setReferralTarget(c)}
-                        className="rounded-lg text-white shrink-0"
-                        style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
-                        title="Send referral"
-                      >
-                        <Send className="h-3.5 w-3.5 mr-1.5 shrink-0" />
-                        Refer
-                      </Button>
+                    {c.insurance && c.insurance.length > 0 && (
+                      <div className="mt-3 flex flex-wrap items-center gap-1">
+                        <span className="text-[11px] text-gray-500 font-medium mr-0.5">Insurance:</span>
+                        {c.insurance.slice(0, 5).map((ins) => (
+                          <span
+                            key={ins.slug || ins.name}
+                            className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[11px] text-gray-700"
+                          >
+                            {ins.name}
+                          </span>
+                        ))}
+                        {c.insurance.length > 5 && (
+                          <span className="text-[11px] text-gray-500">+{c.insurance.length - 5} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex border-t border-gray-100 p-3 gap-1.5 flex-wrap">
+                    <Link
+                      href={getDoctorProfileUrl({ slug: c.slug, id: c.id })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 min-w-0"
+                    >
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRemove(c.id)}
-                        className="rounded-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shrink-0"
-                        title="Remove from contacts"
+                        className="w-full rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
                       >
-                        <UserMinus className="h-3.5 w-3.5" />
+                        View Profile
                       </Button>
-                    </div>
+                    </Link>
+                    <Button
+                      size="sm"
+                      onClick={() => setReferralTarget(c)}
+                      className="rounded-lg h-8 text-xs shrink-0 text-white"
+                      style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
+                      title="Send referral"
+                    >
+                      <Send className="h-3.5 w-3.5 mr-1 shrink-0" />
+                      Refer
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemove(c.id)}
+                      className="rounded-lg h-8 text-xs border-red-200 text-red-600 hover:bg-red-50 shrink-0"
+                      title="Remove from contacts"
+                    >
+                      <UserMinus className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </li>

@@ -24,6 +24,7 @@ import {
   ClipboardList,
   Stethoscope,
   Settings,
+  CalendarDays,
 } from 'lucide-react';
 import { MessageBell } from '@/components/dashboard/MessageBell';
 import { PortalThemeToggle } from '@/components/portal/PortalThemeToggle';
@@ -50,9 +51,10 @@ const adminNavTree: PortalNavItem[] = [
   {
     label: 'Content Management',
     icon: Megaphone,
-    description: 'Announcements, policies, leadership',
+    description: 'Announcements, events, policies, leadership',
     children: [
-      { label: 'Announcements & Events', href: `${base}/content/announcements`, icon: Megaphone, description: 'Create and publish news and events' },
+      { label: 'Announcements', href: `${base}/content/announcements`, icon: Megaphone, description: 'Create and publish news' },
+      { label: 'Events', href: `${base}/content/events`, icon: CalendarDays, description: 'Manage meetings and events' },
       { label: 'Policy Documents', href: `${base}/content/policies`, icon: FileCode2, description: 'Bylaws and key documents' },
       { label: 'Leadership & Committees', href: `${base}/content/leadership`, icon: ClipboardList, description: 'Public leadership directory' },
     ],

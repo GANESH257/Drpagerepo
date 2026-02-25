@@ -57,7 +57,7 @@ function PracticesPageContent() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPracticeId, setSelectedPracticeId] = useState<string | undefined>();
-  const [practicesWithDerivedSpecialties, setPracticesWithDerivedSpecialties] = useState<Array<Practice & { derivedSpecialties: string[]; distanceMiles?: number }>>([]);
+  const [practicesWithDerivedSpecialties, setPracticesWithDerivedSpecialties] = useState<Array<Practice & { derivedSpecialties: string[]; distanceMiles?: number; doctorCount?: number }>>([]);
 
   const getSearchParam = (key: string, defaultValue: string = '') => {
     try {
@@ -134,7 +134,7 @@ function PracticesPageContent() {
     performSearch();
   }, [filters, currentPage]);
 
-  // Compute derived specialties for each practice in results
+  // Compute derived specialties and doctor count for each practice in results
   useEffect(() => {
     async function computeDerivedSpecialties() {
       const practicesWithSpecialties = await Promise.all(
@@ -143,7 +143,11 @@ function PracticesPageContent() {
           const derivedSpecialties = practiceDoctors.length > 0
             ? deriveSpecialtiesFromDoctors(practiceDoctors)
             : (practice.specialties || []); // Fallback to practice.specialties
-          return { ...practice, derivedSpecialties };
+          return {
+            ...practice,
+            derivedSpecialties,
+            doctorCount: practiceDoctors.length,
+          };
         })
       );
       setPracticesWithDerivedSpecialties(practicesWithSpecialties);
@@ -337,6 +341,7 @@ function PracticesPageContent() {
                         >
                           <PracticeCard 
                             practice={practice} 
+                            doctorCount={practice.doctorCount}
                             distanceMiles={practice.distanceMiles}
                             originLabel={origin?.label}
                             derivedSpecialties={practice.derivedSpecialties}

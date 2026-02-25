@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { getAnnouncements, markAnnouncementRead, Announcement } from '@/lib/api/announcements';
 import { getEvents } from '@/lib/api/events';
 import { Button } from '@/components/ui/button';
@@ -27,12 +27,19 @@ function eventIcon(title: string, isOnline: boolean) {
   return FileText;
 }
 
+/**
+ * Doctor dashboard: Community → Announcements & Events.
+ * Read-only: doctors see announcements and upcoming events only.
+ * Admins create/edit events in Admin → Events (/admin/events).
+ */
 export default function AnnouncementsEventsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [annError, setAnnError] = useState<string | null>(null);
   const [evError, setEvError] = useState<string | null>(null);
+
+  const didMarkAnnouncementsReadOnVisit = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,7 +52,22 @@ export default function AnnouncementsEventsPage() {
     ]);
 
     if (annResult.status === 'fulfilled') {
-      setAnnouncements(Array.isArray(annResult.value) ? annResult.value : []);
+      const list = Array.isArray(annResult.value) ? annResult.value : [];
+      setAnnouncements(list);
+      // When user landed here by clicking announcement nav/bell, mark all read so badge goes to 0 (once per visit)
+      if (!didMarkAnnouncementsReadOnVisit.current && list.length > 0) {
+        const unread = list.filter((a) => a.read !== true);
+        if (unread.length > 0) {
+          didMarkAnnouncementsReadOnVisit.current = true;
+          try {
+            await Promise.all(unread.map((a) => markAnnouncementRead(a.id)));
+            setAnnouncements((prev) => prev.map((a) => ({ ...a, read: true })));
+            if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('announcements-marked-read'));
+          } catch {
+            didMarkAnnouncementsReadOnVisit.current = false;
+          }
+        }
+      }
     } else {
       console.error('[AnnouncementsPage] announcements error:', annResult.reason);
       setAnnError(annResult.reason?.message || 'Failed to load announcements');
@@ -181,7 +203,7 @@ export default function AnnouncementsEventsPage() {
           )}
         </main>
 
-        {/* Sidebar: Upcoming Events */}
+        {/* Sidebar: Upcoming Events (read-only for doctors) */}
         <aside className="lg:w-72 shrink-0">
           <div className="glass-card rounded-xl border border-gray-200 p-5 shadow-sm">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">

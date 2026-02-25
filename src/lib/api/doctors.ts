@@ -24,12 +24,20 @@ function normalizeConditionServices(raw: any): { conditionServices: ConditionSer
 
 /** Normalize API doctor (snake_case) to frontend Doctor (camelCase) */
 function normalizeDoctorFromAPI(raw: any): Doctor {
+  const firstName = raw.first_name ?? raw.firstName ?? '';
+  const middleName = raw.middle_name ?? raw.middleName ?? undefined;
+  const lastName = raw.last_name ?? raw.lastName ?? '';
+  const fullNameRaw = raw.full_name ?? raw.fullName;
+  const fullName = fullNameRaw && String(fullNameRaw).trim()
+    ? String(fullNameRaw).trim()
+    : [firstName, middleName, lastName].filter(Boolean).join(' ').trim() || '';
   const { conditionServices, conditionsAndServices } = normalizeConditionServices(raw);
   return {
     ...raw,
-    firstName: raw.first_name ?? raw.firstName ?? '',
-    lastName: raw.last_name ?? raw.lastName ?? '',
-    fullName: (raw.full_name ?? raw.fullName ?? [raw.first_name ?? raw.firstName, raw.last_name ?? raw.lastName].filter(Boolean).join(' ').trim()) || '',
+    firstName,
+    middleName: middleName || undefined,
+    lastName,
+    fullName,
     practiceId: raw.practice_id ?? raw.practiceId,
     practiceName: raw.practice_name ?? raw.practiceName,
     roleInPractice: raw.role_in_practice ?? raw.roleInPractice,
@@ -116,10 +124,12 @@ export async function getDoctors(
 
 /**
  * Get all doctors - legacy function for backward compatibility
- * Returns just the doctors array
+ * Returns just the doctors array.
+ * @param token - Optional auth token
+ * @param options.limit - Optional limit (e.g. 2000 for directory/counts); default uses API default (100)
  */
-export async function getAllDoctorsArray(token?: string): Promise<Doctor[]> {
-  const response = await getDoctors({}, token);
+export async function getAllDoctorsArray(token?: string, options?: { limit?: number }): Promise<Doctor[]> {
+  const response = await getDoctors({ limit: options?.limit }, token);
   return response.doctors;
 }
 

@@ -1,4 +1,5 @@
 import { Doctor, OnboardingDraft, MembershipData } from '@/types';
+import { formatFullName } from './nameUtils';
 import { saveDoctorProfile } from './doctorStorage';
 import { saveMembership, completeMembershipPayment } from './membershipStorage';
 
@@ -42,14 +43,20 @@ export function createDoctorFromOnboarding(
   const slug = generateSlug(basicDetails.firstName, basicDetails.lastName);
   const now = new Date().toISOString();
 
-  // Build full name
-  const fullName = `${basicDetails.firstName} ${basicDetails.lastName}, ${basicDetails.credentials}`;
+  // Build full name from first, middle, last + credentials
+  const fullName = formatFullName(
+    basicDetails.firstName,
+    basicDetails.middleName,
+    basicDetails.lastName,
+    basicDetails.credentials
+  );
 
   // Create doctor object
   const doctor: Doctor = {
     id: doctorId,
     slug,
     firstName: basicDetails.firstName,
+    middleName: basicDetails.middleName,
     lastName: basicDetails.lastName,
     fullName,
     specialty: basicDetails.specialty,

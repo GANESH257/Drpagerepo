@@ -53,6 +53,7 @@ const baseDoctorNavTree: PortalNavItem[] = [
     icon: Search,
     description: 'Search for any physician in the AIP network',
     children: [
+      { label: 'Find a Physician', href: `${baseUrl}/find-physician`, icon: Search, description: 'Search the AIP network' },
       { label: 'My Contacts', href: `${baseUrl}/find-physician/contacts`, icon: BookUser, description: 'Your saved contacts for referrals and messages' },
     ],
   },
@@ -60,11 +61,7 @@ const baseDoctorNavTree: PortalNavItem[] = [
     label: 'My Practice',
     href: `${baseUrl}/my-practice`,
     icon: Building,
-    description: 'View your practice profile',
-    children: [
-      { label: 'View Practice Profile', href: `${baseUrl}/my-practice`, icon: Building, description: 'Read-only practice profile' },
-      { label: 'View Practice Locations', href: `${baseUrl}/my-practice/locations`, icon: MapPin, description: 'Read-only list of office locations' },
-    ],
+    description: 'View your practice profile, contact info, locations, and physicians',
   },
   {
     label: 'My Profile',
@@ -91,8 +88,10 @@ const baseDoctorNavTree: PortalNavItem[] = [
   },
   { label: 'Messages', href: `${baseUrl}/messages`, icon: MessageCircle, description: 'Secure direct messaging' },
   { label: 'Membership', href: `${baseUrl}/membership`, icon: Crown, description: 'Your membership details and renewals' },
-  { label: 'Account Settings', href: `${baseUrl}/settings`, icon: Cog, description: 'Login and notification preferences' },
 ];
+
+// Always last in sidebar
+const accountSettingsNavItem: PortalNavItem = { label: 'Account Settings', href: `${baseUrl}/settings`, icon: Cog, description: 'Login and notification preferences' };
 
 // Practice Admin only (9–10) — hierarchical
 const practiceAdminNavTree: PortalNavItem[] = [
@@ -131,7 +130,9 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   };
 
   const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
-  const navTree = isPracticeAdmin ? [...baseDoctorNavTree, ...practiceAdminNavTree] : baseDoctorNavTree;
+  const navTree = isPracticeAdmin
+    ? [...baseDoctorNavTree, ...practiceAdminNavTree, accountSettingsNavItem]
+    : [...baseDoctorNavTree, accountSettingsNavItem];
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);

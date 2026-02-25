@@ -38,10 +38,13 @@ export function NotificationBell({
         refresh();
         const interval = setInterval(refresh, 30_000);
         const onFocus = () => refresh();
+        const onMarkedRead = () => refresh();
         window.addEventListener('focus', onFocus);
+        window.addEventListener('notifications-marked-read', onMarkedRead);
         return () => {
             clearInterval(interval);
             window.removeEventListener('focus', onFocus);
+            window.removeEventListener('notifications-marked-read', onMarkedRead);
         };
     }, [refresh]);
 
@@ -56,9 +59,11 @@ export function NotificationBell({
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
                 <span
-                    className="absolute top-0 right-0 h-2 w-2 rounded-full bg-[var(--aip-teal)] ring-2 ring-white"
+                    className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--aip-teal)] text-[10px] font-bold text-white leading-none min-w-[1rem] ring-2 ring-white"
                     aria-hidden
-                />
+                >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
             )}
         </Button>
     );

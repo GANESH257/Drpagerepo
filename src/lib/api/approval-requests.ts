@@ -9,6 +9,8 @@ export interface ApprovalRequest {
   type: string;
   requested_by: string;
   requested_by_type: string;
+  /** Present when backend JOINs users table (GET list / GET single) */
+  requested_by_email?: string | null;
   practice_id?: string;
   target_doctor_id?: string;
   payload: any;
@@ -117,7 +119,7 @@ export async function createApprovalRequest(data: {
 }
 
 /**
- * Update approval request
+ * Update approval request (full payload – do not use for "Mark Under Review")
  */
 export async function updateApprovalRequest(
   id: string,
@@ -138,6 +140,32 @@ export async function updateApprovalRequest(
   } catch (error) {
     const apiError = error as ApiError;
     throw new Error(apiError.error || 'Failed to update approval request');
+  }
+}
+
+/**
+ * Update only admin notes (e.g. "Mark Under Review"). Does not touch payload.
+ * Use this so request data is not overwritten.
+ */
+export async function updateApprovalRequestNotes(
+  id: string,
+  admin_notes: string | null
+): Promise<ApprovalRequest> {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await apiClient.patch<ApprovalRequest>(
+      `/api/approval-requests/${id}`,
+      { admin_notes },
+      token
+    );
+    return response;
+  } catch (error) {
+    const apiError = error as ApiError;
+    throw new Error(apiError.error || 'Failed to update notes');
   }
 }
 

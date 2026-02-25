@@ -9,7 +9,12 @@ export interface ContactDoctor {
   full_name: string;
   slug: string;
   specialty?: string;
+  credentials?: string;
   profile_image_url?: string;
+  practice_name?: string;
+  city?: string;
+  state?: string;
+  insurance?: { name: string; slug?: string }[];
   added_at?: string;
 }
 

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ApprovalRequest } from '@/types/approvals';
 import { Practice } from '@/types/practice';
 import { Doctor } from '@/types';
-import { getApprovalRequest as getApprovalRequestAPI, approveRequest, rejectRequest, updateApprovalRequest } from '@/lib/api/approval-requests';
+import { getApprovalRequest as getApprovalRequestAPI, approveRequest, rejectRequest, updateApprovalRequestNotes } from '@/lib/api/approval-requests';
 import { transformApprovalRequestFromAPI } from '@/lib/api/approval-requests-transform';
 import { getApprovalTimeline } from '@/lib/services/approvalEngine';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
@@ -33,6 +33,90 @@ interface ApprovalRequestDetailClientProps {
 }
 
 const DEFAULT_BACK_HREF = '/admin/requests-v2';
+
+/** Card that shows notes for the next reviewer; admin can add or edit the note. */
+function NotesForReviewersCard({
+    request,
+    onSaved,
+}: {
+    request: ApprovalRequest;
+    onSaved: () => void | Promise<void>;
+}) {
+    const [note, setNote] = useState(request.approvals.admin.notes ?? '');
+    const [isSaving, setIsSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+
+    useEffect(() => {
+        setNote(request.approvals.admin.notes ?? '');
+    }, [request.approvals.admin.notes]);
+
+    const hasNote = !!request.approvals.admin.notes?.trim();
+    const showPracticeAdminNote = request.approvals.practiceAdmin?.notes?.trim();
+
+    const handleSave = async () => {
+        try {
+            setIsSaving(true);
+            await updateApprovalRequestNotes(request.id, note.trim() || null);
+            toast.success('Note saved. The next reviewer will see it.');
+            setIsEditing(false);
+            await onSaved();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save note');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="glass-card overflow-hidden">
+            <div className="p-6 border-b border-border">
+                <h3 className="text-lg font-semibold text-foreground">Notes for reviewers</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Add a note for the next person who reviews this request. They will see it here and in Approval Status.
+                </p>
+            </div>
+            <div className="p-6 space-y-4">
+                {hasNote && !isEditing && (
+                    <div>
+                        <Label className="text-muted-foreground mb-1 block">Current note (Admin)</Label>
+                        <p className="text-sm text-foreground bg-muted/50 rounded-md p-3">{request.approvals.admin.notes}</p>
+                    </div>
+                )}
+                {showPracticeAdminNote && (
+                    <div>
+                        <Label className="text-muted-foreground mb-1 block">Note from Practice Admin</Label>
+                        <p className="text-sm text-foreground bg-muted/50 rounded-md p-3">{request.approvals.practiceAdmin!.notes}</p>
+                    </div>
+                )}
+                {isEditing ? (
+                    <div className="space-y-2">
+                        <Label htmlFor="reviewer-note">Add or edit note</Label>
+                        <Textarea
+                            id="reviewer-note"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="e.g. Verified NPI with CMS. Ready for practice admin review."
+                            rows={3}
+                            className="resize-none"
+                        />
+                        <div className="flex gap-2">
+                            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save note'}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); setNote(request.approvals.admin.notes ?? ''); }}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                        {hasNote ? 'Edit note' : 'Add note for next reviewer'}
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK_HREF }: ApprovalRequestDetailClientProps) {
     const router = useRouter();
@@ -96,13 +180,12 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
 
         try {
             setIsSubmitting(true);
-            // Update approval request with notes (marks as under review)
-            await updateApprovalRequest(request.id, {
-                payload: request.payload,
-            });
+            // Update only admin notes – do NOT send payload, so request data is never overwritten
+            await updateApprovalRequestNotes(request.id, underReviewNotes.trim() || null);
             toast.success('Request marked as under review');
             setShowUnderReviewDialog(false);
-            // Reload request
+            setUnderReviewNotes('');
+            // Reload request (payload unchanged on server)
             const apiRequest = await getApprovalRequestAPI(request.id);
             const updated = transformApprovalRequestFromAPI(apiRequest);
             setRequest(updated);
@@ -136,38 +219,20 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
 
         try {
             setIsSubmitting(true);
-            // Get the updated request from the approval response
-            const approvedRequest = await approveRequest(request.id, approveNotes || undefined);
-            console.log('Approval response:', {
-                id: approvedRequest.id,
-                admin_status: approvedRequest.admin_status,
-                practice_admin_status: approvedRequest.practice_admin_status,
-                admin_reviewed_at: approvedRequest.admin_reviewed_at
-            });
-            
+            await approveRequest(request.id, approveNotes || undefined);
             toast.success('Request approved successfully!');
             setShowApproveDialog(false);
             setApproveNotes('');
-            
-            // Transform the response immediately
-            const updated = transformApprovalRequestFromAPI(approvedRequest);
-            console.log('Transformed from approval response:', {
-                status: updated.status,
-                adminStatus: updated.approvals.admin.status,
-                practiceAdminStatus: updated.approvals.practiceAdmin?.status
-            });
-            
-            // Update state immediately with the response (this is the source of truth)
+            // Refetch request from server so payload and all data stay intact (don't rely on approve response)
+            const apiRequest = await getApprovalRequestAPI(request.id);
+            const updated = transformApprovalRequestFromAPI(apiRequest);
             setRequest(updated);
-            
-            // Update timeline
             try {
                 const history = await getApprovalTimeline(request.id);
                 setTimeline(history);
             } catch (timelineError) {
                 console.error('Error loading timeline:', timelineError);
             }
-            
         } catch (error: any) {
             console.error('Approval error:', error);
             toast.error(error.message || 'Failed to approve request');
@@ -425,6 +490,16 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                     )}
                 </div>
             </div>
+
+            {/* Notes for next reviewer – visible to next person; admin can add/edit */}
+            <NotesForReviewersCard
+                request={request}
+                onSaved={async () => {
+                    const apiRequest = await getApprovalRequestAPI(request.id);
+                    const updated = transformApprovalRequestFromAPI(apiRequest);
+                    setRequest(updated);
+                }}
+            />
 
             {/* Requested Changes */}
             <div className="glass-card overflow-hidden">

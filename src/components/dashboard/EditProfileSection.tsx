@@ -25,6 +25,7 @@ import { CredentialItemForm } from '@/components/shared/CredentialItemForm';
 import { toCertificationItems } from '@/lib/utils/credentialUtils';
 import { CertificationItem } from '@/types';
 import { uploadImage, getUploadFullUrl } from '@/lib/api/upload';
+import { formatFullName } from '@/lib/nameUtils';
 
 interface EditProfileSectionProps {
   doctor: Doctor;
@@ -338,9 +339,9 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="text-3xl font-bold text-brand-dark-blue">Edit Profile</h2>
+          <h2 className="text-3xl font-bold text-foreground">Edit Profile</h2>
           {hasPendingProfileEdit && (
-            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700">
               Pending approval
             </Badge>
           )}
@@ -349,7 +350,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
           Update your professional information and credentials
         </p>
         {hasPendingProfileEdit && (
-          <p className="text-sm text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          <p className="text-sm text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 dark:text-amber-200 dark:bg-amber-900/30 dark:border-amber-800">
             You have pending profile changes awaiting approval. The form below shows your current
             live profile. Submitting again will update the pending request instead of creating a new
             one.
@@ -361,7 +362,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           {saveSuccess && (
-            <span className="text-sm text-green-600">
+            <span className="text-sm text-green-600 dark:text-green-400">
               {approvalMessage === 'admin'
                 ? 'Submitted for admin approval. Changes will apply once approved.'
                 : approvalMessage === 'practice_admin'
@@ -411,7 +412,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
               )}
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-foreground text-sm truncate">
-                  {doctor.fullName || [doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}
+                  {doctor.fullName || formatFullName(doctor.firstName, doctor.middleName, doctor.lastName, doctor.credentials)}
                   {doctor.credentials && <span className="font-normal text-muted-foreground"> · {doctor.credentials}</span>}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
@@ -440,50 +441,43 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
 
                   <Separator />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">First Name <span className="text-destructive">*</span></Label>
                       <Input
                         id="firstName"
                         value={doctor.firstName ?? ''}
                         onChange={(e) => {
-                          updateField('firstName', e.target.value);
-                          // Auto-update fullName
-                          updateField('fullName', `${e.target.value} ${doctor.lastName}, ${doctor.credentials}`);
+                          const v = e.target.value;
+                          updateField('firstName', v);
+                          updateField('fullName', formatFullName(v, doctor.middleName, doctor.lastName ?? '', doctor.credentials));
                         }}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="middleName">Middle Name</Label>
+                      <Input
+                        id="middleName"
+                        value={doctor.middleName ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          updateField('middleName', v);
+                          updateField('fullName', formatFullName(doctor.firstName ?? '', v || undefined, doctor.lastName ?? '', doctor.credentials));
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name <span className="text-destructive">*</span></Label>
                       <Input
                         id="lastName"
                         value={doctor.lastName ?? ''}
                         onChange={(e) => {
-                          updateField('lastName', e.target.value);
-                          // Auto-update fullName
-                          updateField('fullName', `${doctor.firstName} ${e.target.value}, ${doctor.credentials}`);
+                          const v = e.target.value;
+                          updateField('lastName', v);
+                          updateField('fullName', formatFullName(doctor.firstName ?? '', doctor.middleName, v, doctor.credentials));
                         }}
                       />
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">
-                      Full Name <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="fullName"
-                      value={doctor.fullName ?? ''}
-                      onChange={(e) => updateField('fullName', e.target.value)}
-                      aria-invalid={!!errors.fullName}
-                      aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-                      className={errors.fullName ? 'border-destructive' : ''}
-                    />
-                    {errors.fullName && (
-                      <p id="fullName-error" className="text-sm text-destructive" role="alert">
-                        {errors.fullName}
-                      </p>
-                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -492,9 +486,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                       value={doctor.credentials ?? ''}
                       onValueChange={(value) => {
                         updateField('credentials', value);
-                        // Auto-update fullName
-                        const nameParts = doctor.fullName.split(',');
-                        updateField('fullName', `${nameParts[0]}, ${value}`);
+                        updateField('fullName', formatFullName(doctor.firstName ?? '', doctor.middleName, doctor.lastName ?? '', value));
                       }}
                     >
                       <SelectTrigger>
@@ -644,6 +636,20 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="doctorPhone">Contact Phone (Optional)</Label>
+                    <Input
+                      id="doctorPhone"
+                      type="tel"
+                      value={doctor.phone || ''}
+                      onChange={(e) => updateField('phone', e.target.value)}
+                      placeholder="e.g., (314) 555-0123"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your direct contact phone. Separate from location phones; used when a single number is shown for you.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="bookingUrl">Direct Booking/Contact Page URL (Optional)</Label>
                     <Input
                       id="bookingUrl"
@@ -779,7 +785,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                     </div>
                     <div className="flex items-center gap-2">
                       {doctor.verified ? (
-                        <span className="text-sm text-green-600 font-medium">Verified</span>
+                        <span className="text-sm text-green-600 font-medium dark:text-green-400">Verified</span>
                       ) : (
                         <span className="text-sm text-muted-foreground">Pending</span>
                       )}
@@ -816,7 +822,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                 {!tipsCollapsed && (
                   <>
                     <div className="flex items-center gap-2 min-w-0">
-                      <Info className="h-5 w-5 text-brand-teal shrink-0" />
+                      <Info className="h-5 w-5 text-[var(--aip-teal)] shrink-0" />
                       <CardTitle className="text-lg truncate">Profile Tips</CardTitle>
                     </div>
                     <Button

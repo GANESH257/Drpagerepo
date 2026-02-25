@@ -42,10 +42,13 @@ export function AnnouncementBell({
         refresh();
         const interval = setInterval(refresh, 60_000);
         const onFocus = () => refresh();
+        const onMarkedRead = () => refresh();
         window.addEventListener('focus', onFocus);
+        window.addEventListener('announcements-marked-read', onMarkedRead);
         return () => {
             clearInterval(interval);
             window.removeEventListener('focus', onFocus);
+            window.removeEventListener('announcements-marked-read', onMarkedRead);
         };
     }, [refresh]);
 

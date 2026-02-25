@@ -72,8 +72,25 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
     setLoading(true);
     try {
       const res = await getCommunityPosts(section, 1, 100);
-      setPosts(res.posts);
+      const postsFromApi = res.posts;
+      setPosts(postsFromApi);
       setPagination(res.pagination);
+      // Fetch real comment counts so list shows correct "X answers" before opening
+      if (postsFromApi.length > 0) {
+        const results = await Promise.allSettled(
+          postsFromApi.map((p) => getCommunityPost(p.id))
+        );
+        const counts = new Map<string, number>();
+        results.forEach((outcome, i) => {
+          if (outcome.status === 'fulfilled' && outcome.value?.id) {
+            const count = outcome.value.comments?.length ?? 0;
+            counts.set(outcome.value.id, count);
+          }
+        });
+        setPosts((prev) =>
+          prev.map((p) => (counts.has(p.id) ? { ...p, comment_count: counts.get(p.id)! } : p))
+        );
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to load posts');
       setPosts([]);
@@ -107,6 +124,11 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       setPostDetail(data);
       setNewCommentBody('');
       setDetailOpen(true);
+      // Sync real answer count into list so "X answers" is correct
+      const count = data.comments?.length ?? 0;
+      setPosts((prev) =>
+        prev.map((p) => (p.id === data.id ? { ...p, comment_count: count } : p))
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to load post');
     }
@@ -144,6 +166,11 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       setNewCommentBody('');
       const updated = await getCommunityPost(postDetail.id);
       setPostDetail(updated);
+      // Keep list answer count in sync
+      const count = updated.comments?.length ?? 0;
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postDetail.id ? { ...p, comment_count: count } : p))
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to add answer');
     } finally {
@@ -156,7 +183,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Community Forum</h1>
+          <h1 className="text-lg font-bold tracking-tight text-foreground">Community Forum</h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Connect, discuss, and share knowledge with your AIP colleagues
           </p>
@@ -180,7 +207,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
       <div className="flex flex-col gap-5 lg:flex-row">
         {/* Section filter - compact */}
         <aside className="lg:w-48 shrink-0">
-          <div className="hidden lg:block rounded-xl border border-border bg-white p-3 shadow-sm">
+          <div className="hidden lg:block rounded-xl border border-border bg-card p-3 shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <LayoutGrid className="h-3.5 w-3.5" />
               Section
@@ -285,7 +312,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                         {initials}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-foreground">{post.title}</h3>
+                        <h3 className="text-base font-semibold text-foreground">{post.title}</h3>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {post.author_display_name}
                           {sectionName && ` · ${sectionName}`}
@@ -301,7 +328,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
                         </div>
                       </div>
                       <div className="shrink-0 text-xs text-muted-foreground">
-                        <span>— replies</span>
+                        <span>{post.comment_count ?? 0} {((post.comment_count ?? 0) === 1) ? 'answer' : 'answers'}</span>
                       </div>
                     </button>
                   </li>
@@ -374,7 +401,7 @@ export function CommunityView({ canPost = true }: CommunityViewProps) {
           {postDetail && (
             <>
               <DialogHeader>
-                <DialogTitle className="pr-8 text-lg">{postDetail.title}</DialogTitle>
+                <DialogTitle className="pr-8 text-base">{postDetail.title}</DialogTitle>
                 <CardDescription>
                   {postDetail.author_display_name} · {formatDateTime(postDetail.created_at)}
                 </CardDescription>

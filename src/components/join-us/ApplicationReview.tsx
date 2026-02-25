@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ApplicationDraft } from '@/types';
+import { formatFullName } from '@/lib/nameUtils';
 import { clearApplicationDraft, clearJoinEmail } from '@/lib/joinRequestStorage';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
 import { transformMembershipPlansFromAPI } from '@/lib/api/membership-plans-transform';
@@ -117,7 +118,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
           doctorId: tempDoctorId,
           doctor: {
             email: basicDetails.email,
-            fullName: basicDetails.fullName,
+            fullName: formatFullName(basicDetails.firstName, basicDetails.middleName, basicDetails.lastName, basicDetails.credentials),
             credentials: basicDetails.credentials,
             specialty: basicDetails.specialty,
             phone: basicDetails.phone,
@@ -151,7 +152,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
           },
           doctor: {
             email: basicDetails.email,
-            fullName: basicDetails.fullName,
+            fullName: formatFullName(basicDetails.firstName, basicDetails.middleName, basicDetails.lastName, basicDetails.credentials),
             credentials: basicDetails.credentials,
             specialty: basicDetails.specialty,
             phone: basicDetails.phone,
@@ -206,7 +207,7 @@ export function ApplicationReview({ draft }: ApplicationReviewProps) {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Full Name:</span>
-                <span className="font-medium">{basicDetails.fullName}</span>
+                <span className="font-medium">{formatFullName(basicDetails.firstName, basicDetails.middleName, basicDetails.lastName, basicDetails.credentials)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Credentials:</span>

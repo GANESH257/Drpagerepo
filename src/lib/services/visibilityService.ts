@@ -71,7 +71,7 @@ export function getContactCard(
   if (canViewPrivate) {
     // Logged-in doctor or admin: show doctor's personal contact if available
     const doctorPhone =
-      doctor.locations?.[0]?.phone || practice.phone;
+      doctor.phone || doctor.locations?.[0]?.phone || practice.phone;
     const doctorEmail = doctor.email || practice.email;
 
     return {
@@ -80,7 +80,7 @@ export function getContactCard(
       phone: doctorPhone,
       email: doctorEmail,
       website: doctor.website || practice.website,
-      source: doctorPhone === practice.phone ? 'practice' : 'doctor',
+      source: doctorPhone === practice.phone && !doctor.phone ? 'practice' : 'doctor',
     };
   }
 

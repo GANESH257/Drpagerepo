@@ -6,7 +6,8 @@ import { Practice, Insurance } from '@/types';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getAllPracticesForAdmin } from '@/lib/adminHelpers';
+import { getPractice } from '@/lib/api/practices';
+import { getToken } from '@/lib/api/config';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,13 +57,8 @@ export default function PracticeServicesInsurancePage() {
         if (actor.kind !== 'doctor' || !actor.practiceId) {
           throw new PermissionDeniedError('Practice admin must have practiceId');
         }
-        
-        const allPractices = await getAllPracticesForAdmin();
-        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-        
-        if (!foundPractice) {
-          throw new Error('Practice not found');
-        }
+
+        const foundPractice = await getPractice(actor.practiceId, getToken());
         
         setPractice(foundPractice);
         setServices(foundPractice.services || []);

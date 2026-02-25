@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { getPractices, getPractice, updatePractice, type Practice } from '@/lib/api/practices';
+import { getAllDoctorsArray } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
 import { Search, X } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export default function AdminMembersPracticesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [practices, setPractices] = useState<Practice[]>([]);
+  const [doctorCountByPracticeId, setDoctorCountByPracticeId] = useState<Record<string, number>>({});
 
   // Edit dialog
   const [editOpen, setEditOpen] = useState(false);
@@ -51,8 +53,19 @@ export default function AdminMembersPracticesPage() {
     try {
       const token = getToken();
       if (!token) { setError('Authentication required'); return; }
-      const res = await getPractices({ includePending: true, limit: 500 }, token);
+      const [res, allDoctors] = await Promise.all([
+        getPractices({ includePending: true, limit: 500 }, token),
+        getAllDoctorsArray(token, { limit: 2000 }),
+      ]);
       setPractices(res.practices || []);
+      const counts: Record<string, number> = {};
+      for (const d of allDoctors) {
+        const pid = d.practiceId ?? (d as any).practice_id;
+        if (pid) {
+          counts[pid] = (counts[pid] ?? 0) + 1;
+        }
+      }
+      setDoctorCountByPracticeId(counts);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load practices');
     } finally {
@@ -244,7 +257,7 @@ export default function AdminMembersPracticesPage() {
               <TableBody>
                 {filtered.map((p) => {
                   const loc = firstLocation(p);
-                  const doctorCount = Array.isArray(p.doctors) ? p.doctors.length : 0;
+                  const doctorCount = doctorCountByPracticeId[p.id] ?? (Array.isArray(p.doctors) ? p.doctors.length : 0);
                   return (
                     <TableRow key={p.id} className="hover:bg-accent/30">
                       <TableCell className="font-medium">{p.name}</TableCell>

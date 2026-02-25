@@ -6,9 +6,10 @@ import { Doctor } from '@/types';
 import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
-import { getPracticeInvitations as getPracticeInvitationsAPI, createPracticeInvitation } from '@/lib/api/practices';
+import { getPracticeInvitations as getPracticeInvitationsAPI, createPracticeInvitation, getPractice } from '@/lib/api/practices';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getAllPracticesForAdmin, getDoctorsByPractice } from '@/lib/adminHelpers';
+import { getDoctorsByPractice } from '@/lib/adminHelpers';
+import { getToken } from '@/lib/api/config';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,14 +48,9 @@ export default function PracticeRosterPage() {
         if (actor.kind !== 'doctor' || !actor.practiceId) {
           throw new PermissionDeniedError('Practice admin must have practiceId');
         }
-        
-        // Load practice using helper
-        const allPractices = await getAllPracticesForAdmin();
-        const foundPractice = allPractices.find(p => p.id === actor.practiceId);
-        
-        if (!foundPractice) {
-          throw new Error('Practice not found');
-        }
+
+        // Load practice by ID so it works regardless of status (list API only returns active/pending_profile)
+        const foundPractice = await getPractice(actor.practiceId, getToken());
         
         setPractice(foundPractice);
         
