@@ -242,6 +242,7 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
         headerTitle="Doctor Dashboard"
         headerRight={headerRight}
         sidebarFooter={sidebarFooter}
+        mainClassName="doctor-portal-main"
       >
         {children}
       </PortalShell>

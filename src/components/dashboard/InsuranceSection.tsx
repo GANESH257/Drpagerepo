@@ -240,7 +240,7 @@ export function InsuranceSection({ doctor: initialDoctor, onProfileUpdate }: Ins
   };
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-4xl doctor-portal-form">
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-2 flex-wrap">

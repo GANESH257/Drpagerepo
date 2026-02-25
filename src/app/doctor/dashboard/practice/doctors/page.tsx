@@ -198,7 +198,7 @@ export default function PracticeRosterPage() {
         actions={
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
             <DialogTrigger asChild>
-              <Button variant="dashboard">
+              <Button variant="portal-primary">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Invite Doctor
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -234,7 +234,7 @@ export default function PracticeRosterPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="dashboard" onClick={() => {
+                    <Button variant="portal-primary" onClick={() => {
                       setShowInviteDialog(false);
                       setLastCreatedInvitation(null);
                       setInviteEmail('');
@@ -269,10 +269,10 @@ export default function PracticeRosterPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowInviteDialog(false)}>
+                    <Button variant="portal-secondary" onClick={() => setShowInviteDialog(false)}>
                       Cancel
                     </Button>
-                    <Button variant="dashboard" onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
+                    <Button variant="portal-primary" onClick={handleInviteDoctor} disabled={isSubmitting || !inviteEmail.trim()}>
                       {isSubmitting ? 'Submitting...' : 'Create Invitation'}
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>

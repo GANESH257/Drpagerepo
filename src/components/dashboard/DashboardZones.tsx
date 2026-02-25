@@ -256,7 +256,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
                   ))}
                 </div>
                 <Button
-                  variant="dashboard"
+                  variant="portal-primary"
                   size="sm"
                   onClick={() => router.push('/doctor/dashboard/complete-profile')}
                 >
@@ -306,7 +306,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
                 Membership expires soon ({membershipExpiry.toLocaleDateString()}). Renew to continue access.
               </p>
               <Link href="/doctor/dashboard/membership">
-                <Button size="sm" variant="dashboard">Renew</Button>
+                <Button size="sm" variant="portal-primary">Renew</Button>
               </Link>
             </div>
           )}
@@ -353,11 +353,11 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
             {referrals.length === 0 ? (
               <p className="text-sm text-gray-500 py-4">No referrals yet.</p>
             ) : (
-              <table className="w-full text-sm">
+              <table className="w-full text-sm portal-table">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr>
                     {['Patient', 'Referred To', 'Condition', 'Status', 'Date'].map((h) => (
-                      <th key={h} className="text-left py-2 px-2 text-xs font-semibold uppercase tracking-wider text-gray-500">{h}</th>
+                      <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -370,16 +370,16 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
                     const condition = (r as any).condition_summary ?? (r as any).conditionSummary ?? '—';
                     const status = (r as any).status ?? '—';
                     return (
-                      <tr key={(r as any).id} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                        <td className="py-2.5 px-2 font-medium text-gray-900">{patient}</td>
-                        <td className="py-2.5 px-2 text-gray-600">{toName}</td>
-                        <td className="py-2.5 px-2 text-gray-600 max-w-[120px] truncate" title={condition}>{condition}</td>
-                        <td className="py-2.5 px-2">
+                      <tr key={(r as any).id}>
+                        <td className="font-medium">{patient}</td>
+                        <td>{toName}</td>
+                        <td className="max-w-[120px] truncate" title={condition}>{condition}</td>
+                        <td>
                           <span className={cn('inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusBadgeClass(status))}>
                             {status}
                           </span>
                         </td>
-                        <td className="py-2.5 px-2 text-gray-500">{dateLabel}</td>
+                        <td>{dateLabel}</td>
                       </tr>
                     );
                   })}

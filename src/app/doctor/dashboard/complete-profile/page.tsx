@@ -305,7 +305,7 @@ export default function CompleteProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6 doctor-portal-form">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-brand-dark-blue">Complete your profile</h1>
           <p className="text-muted-foreground mt-1">
@@ -376,7 +376,7 @@ export default function CompleteProfilePage() {
               ) : (
                 <>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button variant="dashboard" onClick={handleSubmit} disabled={submitting} className="w-full">
+                  <Button variant="portal-primary" onClick={handleSubmit} disabled={submitting} className="w-full">
                     {submitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -445,10 +445,10 @@ export default function CompleteProfilePage() {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(1)}>
+                <Button variant="portal-secondary" onClick={() => setStep(1)}>
                   Back
                 </Button>
-                <Button variant="dashboard" onClick={handleSubmit} disabled={submitting} className="flex-1">
+                <Button variant="portal-primary" onClick={handleSubmit} disabled={submitting} className="flex-1">
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />

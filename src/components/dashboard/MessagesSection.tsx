@@ -384,7 +384,7 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                   className="min-h-[44px] max-h-[120px] flex-1 resize-none border-0 bg-transparent py-3 focus-visible:ring-0 text-sm"
                 />
                 <Button
-                  variant="dashboard"
+                  variant="portal-primary"
                   onClick={handleSend}
                   disabled={!composer.trim()}
                   className="shrink-0 gap-2"

@@ -15,6 +15,10 @@ const buttonVariants = cva(
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
           "border-2 border-brand-teal/30 text-brand-teal bg-background hover:bg-brand-teal hover:text-white hover:border-brand-teal transition-all duration-200 hover:scale-105",
+        "portal-primary":
+          "btn-portal-primary rounded-lg px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none",
+        "portal-secondary":
+          "btn-portal-secondary rounded-lg border border-input bg-background text-muted-foreground hover:bg-accent",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",

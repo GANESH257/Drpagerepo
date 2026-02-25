@@ -243,7 +243,7 @@ export function ReferralsSection({ doctorId }: ReferralsSectionProps) {
                         {referral.status === 'New' && (
                           <Button
                             size="sm"
-                            variant="dashboard"
+                            variant="portal-primary"
                             onClick={() => handleStatusChange(referral.id, 'In Progress')}
                           >
                             <PlayCircle className="h-4 w-4 mr-1" />
@@ -253,7 +253,7 @@ export function ReferralsSection({ doctorId }: ReferralsSectionProps) {
                         {referral.status === 'In Progress' && (
                           <Button
                             size="sm"
-                            variant="dashboard"
+                            variant="portal-primary"
                             onClick={() => handleStatusChange(referral.id, 'Closed')}
                           >
                             <CheckCircle2 className="h-4 w-4 mr-1" />

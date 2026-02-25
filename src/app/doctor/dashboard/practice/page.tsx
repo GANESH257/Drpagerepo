@@ -259,7 +259,7 @@ export default function PracticeDetailsPage() {
         actions={
           <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
             <DialogTrigger asChild>
-              <Button variant="dashboard">
+              <Button variant="portal-primary">
                 <Edit className="h-4 w-4 mr-2" />
                 Request Edit
                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -441,10 +441,10 @@ export default function PracticeDetailsPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                <Button variant="portal-secondary" onClick={() => setShowEditDialog(false)}>
                   Cancel
                 </Button>
-                <Button variant="dashboard" onClick={handleSubmitEdit} disabled={isSubmitting}>
+                <Button variant="portal-primary" onClick={handleSubmitEdit} disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>

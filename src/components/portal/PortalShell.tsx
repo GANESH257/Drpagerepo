@@ -22,6 +22,8 @@ interface PortalShellProps {
   mobileSidebarTitle?: string;
   /** Optional footer block for sidebar (e.g. user avatar + logout) */
   sidebarFooter?: ReactNode;
+  /** Optional class for main content area (e.g. doctor-portal-main for grey bg) */
+  mainClassName?: string;
 }
 
 function isActive(href: string | undefined, pathname: string, basePaths: string[]) {
@@ -39,6 +41,7 @@ export function PortalShell({
   headerRight,
   mobileSidebarTitle = 'Navigation',
   sidebarFooter,
+  mainClassName,
 }: PortalShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -60,7 +63,7 @@ export function PortalShell({
           onMenuClick={() => setMobileSidebarOpen(true)}
           isCollapsed={sidebarCollapsed}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background page-glow relative px-6 py-6">
+        <main className={cn('flex-1 overflow-y-auto overflow-x-hidden bg-background page-glow relative px-6 py-6', mainClassName)}>
           <div className="mx-auto w-full max-w-7xl space-y-6 relative z-10">
             {children}
           </div>

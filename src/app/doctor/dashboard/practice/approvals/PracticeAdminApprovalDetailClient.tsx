@@ -184,7 +184,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                     title="Approval Request Details"
                     description={`Request ID: ${request.id}`}
                 />
-                <Button variant="outline" onClick={() => router.push('/doctor/dashboard/practice/approvals')}>
+                <Button variant="portal-secondary" onClick={() => router.push('/doctor/dashboard/practice/approvals')}>
                     Back to Queue
                 </Button>
             </div>
@@ -276,7 +276,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                         <div className="flex gap-2">
                             {canApprove && (
                                 <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-                                    <Button variant="dashboard" onClick={() => setShowApproveDialog(true)}>
+                                    <Button variant="portal-primary" onClick={() => setShowApproveDialog(true)}>
                                         Approve
                                         <ArrowRight className="h-4 w-4 ml-2" />
                                     </Button>
@@ -299,10 +299,10 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                                             </div>
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={() => setShowApproveDialog(false)}>
+                                            <Button variant="portal-secondary" onClick={() => setShowApproveDialog(false)}>
                                                 Cancel
                                             </Button>
-                                            <Button variant="dashboard" onClick={handleApprove} disabled={isSubmitting}>
+                                            <Button variant="portal-primary" onClick={handleApprove} disabled={isSubmitting}>
                                                 {isSubmitting ? 'Processing...' : 'Approve'}
                                             </Button>
                                         </DialogFooter>
@@ -342,7 +342,7 @@ export function PracticeAdminApprovalDetailClient({ requestId }: PracticeAdminAp
                                             </div>
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+                                            <Button variant="portal-secondary" onClick={() => setShowRejectDialog(false)}>
                                                 Cancel
                                             </Button>
                                             <Button

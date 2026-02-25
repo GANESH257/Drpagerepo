@@ -310,7 +310,7 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
               <Button
                 onClick={handleMarkAsPaid}
                 disabled={isProcessing}
-                variant="dashboard"
+                variant="portal-primary"
               >
                 {isProcessing ? 'Processing...' : 'Mark as Paid (Demo)'}
               </Button>
@@ -450,38 +450,22 @@ export function MembershipSection({ doctorId }: MembershipSectionProps) {
         <CardContent>
           {membership.history && membership.history.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full portal-table">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-semibold">
-                      Date
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold">
-                      Plan
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold">
-                      Amount
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold">
-                      Status
-                    </th>
+                  <tr>
+                    <th>Date</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {membership.history.slice(0, 6).map((transaction) => (
-                    <tr key={transaction.id} className="border-b">
-                      <td className="py-3 px-4 text-sm">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td className="py-3 px-4 text-sm capitalize">
-                        {transaction.plan}
-                      </td>
-                      <td className="py-3 px-4 text-sm font-medium">
-                        ${transaction.amount.toLocaleString()}
-                      </td>
-                      <td className="py-3 px-4">
-                        {getStatusBadge(transaction.status)}
-                      </td>
+                    <tr key={transaction.id}>
+                      <td>{formatDate(transaction.date)}</td>
+                      <td className="capitalize">{transaction.plan}</td>
+                      <td className="font-medium">${transaction.amount.toLocaleString()}</td>
+                      <td>{getStatusBadge(transaction.status)}</td>
                     </tr>
                   ))}
                 </tbody>

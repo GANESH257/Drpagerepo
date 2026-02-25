@@ -378,7 +378,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset
           </Button>
-          <Button onClick={handleSave} disabled={isSaving} variant="dashboard">
+          <Button onClick={handleSave} disabled={isSaving} variant="portal-primary">
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
@@ -407,7 +407,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>Name, specialty, profile image, and primary office hours</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 doctor-portal-form">
                   {/* Profile Image */}
                   <ProfileImageUpload doctor={doctor} updateField={updateField} />
 
@@ -568,7 +568,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>Short bio, detailed about, and links</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 doctor-portal-form">
                   <div className="space-y-2">
                     <Label htmlFor="bio">
                       Short Bio <span className="text-destructive">*</span>
@@ -643,7 +643,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>Education, certifications, and privileges</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 doctor-portal-form">
                   <div className="space-y-2">
                     <Label htmlFor="medicalSchool">Medical School</Label>
                     <Input
@@ -726,7 +726,7 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
                   <CardDescription>New patients and profile visibility</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 doctor-portal-form">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label htmlFor="acceptsNewPatients">Accepts New Patients</Label>

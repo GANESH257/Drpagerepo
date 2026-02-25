@@ -685,7 +685,7 @@ export default function PracticeLocationsPage() {
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <Button
-              variant="dashboard"
+              variant="portal-primary"
               onClick={handleSubmitForApproval}
               disabled={isSubmittingBulk || draftLocations.length === 0}
             >
@@ -703,7 +703,7 @@ export default function PracticeLocationsPage() {
             </Button>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
-                <Button variant="dashboard">
+                <Button variant="portal-primary">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Location
                   <ArrowRight className="h-4 w-4 ml-2" />

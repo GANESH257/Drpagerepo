@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
+import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 
 export default function ReferralsV2Page() {
   const router = useRouter();
@@ -258,21 +259,17 @@ export default function ReferralsV2Page() {
   }
 
   return (
-    <div className="space-y-5 relative z-10 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-gray-900">Referrals</h1>
-          <p className="mt-0.5 text-xs text-gray-600">Manage all incoming and outgoing patient referrals</p>
-        </div>
-        <Button
-          onClick={() => setShowNewReferralDialog(true)}
-          className="rounded-lg bg-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/90 text-white h-9 text-sm shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          New Referral
-        </Button>
-      </div>
+    <div className="space-y-6 relative z-10 max-w-6xl">
+      <SectionHeader
+        title="Referrals"
+        description="Manage all incoming and outgoing patient referrals"
+        actions={
+          <Button variant="portal-primary" size="sm" onClick={() => setShowNewReferralDialog(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            New Referral
+          </Button>
+        }
+      />
 
       {/* Filter pills */}
       <div className="flex flex-wrap gap-1">
@@ -296,32 +293,32 @@ export default function ReferralsV2Page() {
       {/* Table */}
       <div className="glass-card rounded-xl overflow-hidden border border-gray-200">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="portal-table w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/80">
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">PATIENT</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">PHYSICIAN</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">SPECIALTY</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">TYPE</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">STATUS</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">DATE</th>
-                <th className="text-left font-semibold text-gray-900 py-3 px-4">VIEW</th>
+              <tr>
+                <th>PATIENT</th>
+                <th>PHYSICIAN</th>
+                <th>SPECIALTY</th>
+                <th>TYPE</th>
+                <th>STATUS</th>
+                <th>DATE</th>
+                <th>VIEW</th>
               </tr>
             </thead>
             <tbody>
               {tableRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-gray-500">
+                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
                     No referrals match this filter.
                   </td>
                 </tr>
               ) : (
                 tableRows.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                    <td className="py-3 px-4 text-gray-900">{row.patient?.name || '—'}</td>
-                    <td className="py-3 px-4 text-gray-900">{row.physicianName}</td>
-                    <td className="py-3 px-4 text-gray-600">{row.physicianSpecialty}</td>
-                    <td className="py-3 px-4">
+                  <tr key={row.id}>
+                    <td>{row.patient?.name || '—'}</td>
+                    <td>{row.physicianName}</td>
+                    <td>{row.physicianSpecialty}</td>
+                    <td>
                       <span
                         className={cn(
                           'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -331,13 +328,13 @@ export default function ReferralsV2Page() {
                         {row.type === 'sent' ? 'Sent' : 'Received'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td>
                       <span className={cn('inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium', statusPillClass(row.status))}>
                         {getReferralStatusLabel(row.status)}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{formatShortDate(row.createdAt)}</td>
-                    <td className="py-3 px-4">
+                    <td>{formatShortDate(row.createdAt)}</td>
+                    <td>
                       <button
                         type="button"
                         onClick={() => handleViewDetail(row)}

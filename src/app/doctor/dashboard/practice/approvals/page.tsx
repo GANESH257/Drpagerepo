@@ -141,7 +141,7 @@ export default function PracticeAdminApprovalsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="dashboard"
+                          variant="portal-primary"
                           size="sm"
                           onClick={() =>
                             router.push(`/doctor/dashboard/practice/approvals/detail?id=${encodeURIComponent(request.id)}`)

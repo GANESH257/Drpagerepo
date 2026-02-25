@@ -103,10 +103,12 @@
     --portal-ring: #0F5FA8;
     --portal-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 
-    /* AIP Dashboard Sidebar (reference design) */
+    /* AIP Dashboard Sidebar (reference design - aip-doctor-portal-ui) */
     --aip-teal: #1A8C7A;
     --aip-navy: #1B3A6B;
     --aip-gold: #B8973A;
+    --aip-silver: #C0C8D8;
+    --aip-radius: 0.65rem;
     --sidebar: #1a2332;
     --sidebar-foreground: #e5e7eb;
     --sidebar-border: rgba(255, 255, 255, 0.08);
@@ -1053,6 +1055,71 @@
   .portal-tab-active {
     background: linear-gradient(135deg, var(--aip-teal), var(--aip-navy)) !important;
     color: white !important;
+  }
+
+  /* Doctor portal main content - light grey so cards pop (aip-doctor-portal-ui) */
+  .doctor-portal-main {
+    background-color: var(--dashboard-main-bg);
+  }
+
+  /* Portal form field (reference pattern) */
+  .portal-field-label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5;
+  }
+  .portal-field-input {
+    @apply w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring;
+  }
+
+  /* Scoped portal form: apply reference label/input styles to all form fields */
+  .doctor-portal-form label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5;
+  }
+  .doctor-portal-form input:not([type="file"]):not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+  .doctor-portal-form textarea {
+    @apply rounded-lg border border-input px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring;
+  }
+
+  /* Portal table (reference pattern) */
+  .portal-table thead tr {
+    @apply border-b border-border;
+  }
+  .portal-table th {
+    @apply text-left py-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+  .portal-table tbody tr {
+    @apply border-b border-border/50 transition-colors hover:bg-accent/30;
+  }
+  .portal-table td {
+    @apply py-2.5 px-3 text-sm;
+  }
+
+  /* Portal primary button (aip-doctor-portal-ui) */
+  .btn-portal-primary {
+    background: linear-gradient(135deg, var(--aip-teal), var(--aip-navy));
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-portal-primary:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  .btn-portal-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn-portal-secondary {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid hsl(var(--input));
+    color: hsl(var(--muted-foreground));
+    transition: background-color 0.2s;
+  }
+  .btn-portal-secondary:hover:not(:disabled) {
+    background-color: hsl(var(--accent));
   }
 
   /* Page glow (aip-doctor-portal-ui style) - optional for portal pages */

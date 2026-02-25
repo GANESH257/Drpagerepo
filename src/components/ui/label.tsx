@@ -5,7 +5,16 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  {
+    variants: {
+      variant: {
+        default: "",
+        portal: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  }
 )
 
 const Label = React.forwardRef<
