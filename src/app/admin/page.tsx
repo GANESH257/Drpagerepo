@@ -42,6 +42,8 @@ export default function AdminDashboardPage() {
   const recentRequests = requests
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
     .slice(0, 5);
+  // Pending from same source as charts so quick card matches Request Status chart and StatsCards
+  const pendingFromRequests = requests.filter((r) => r.status === 'submitted' || r.status === 'under_review').length;
 
   const getStatusBadge = (status: AdminJoinRequest['status']) => (
     <StatusBadge status={status} />
@@ -117,7 +119,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (stats?.pendingApprovals ?? 0)}</span>
+            <span className="text-xl font-bold text-foreground" style={{ color: 'var(--aip-teal)' }}>{loading ? '—' : (pendingFromRequests ?? stats?.pendingApprovals ?? 0)}</span>
             <Button asChild variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10">
               <Link href="/admin/approvals">
                 Review

@@ -4,6 +4,12 @@ import { getToken } from '@/lib/api/config';
 import { getDepartments } from '@/lib/api/departments';
 import { Doctor } from '@/types';
 
+/**
+ * Admin dashboard analytics. Doctors per Plan and Doctors per Department both
+ * use the doctors API only (getAllDoctorsArray), so their totals match "Total Doctors".
+ * Request status and growth charts use join-request data only (no double-counting).
+ */
+
 export interface MonthlyJoinData {
   month: string;
   count: number;
@@ -58,30 +64,7 @@ export function getDoctorsJoinedPerMonth(requests: AdminJoinRequest[]): MonthlyJ
     }
   });
 
-  // Generate demo data if we have very few or no approved requests
-  const totalApproved = approvedRequests.length;
-  const hasData = Object.values(monthlyData).some(count => count > 0);
-  
-  if (!hasData || totalApproved < 3) {
-    // Generate realistic demo data across multiple months
-    const baseCount = Math.max(2, Math.floor(totalApproved / 6) || 3);
-    const months = Object.keys(monthlyData);
-    
-    months.forEach((monthKey, index) => {
-      // Create a trend: lower in older months, higher in recent months
-      const trendFactor = (index + 1) / months.length;
-      const variation = Math.random() * 0.4 - 0.2; // -20% to +20% variation
-      const count = Math.max(0, Math.floor(baseCount * trendFactor * (1 + variation)));
-      monthlyData[monthKey] = count;
-    });
-    
-    // Ensure current month has some data
-    const currentMonthKey = months[months.length - 1];
-    if (monthlyData[currentMonthKey] === 0) {
-      monthlyData[currentMonthKey] = Math.max(1, baseCount);
-    }
-  }
-
+  // No fake data: show only real counts so chart matches stats
   // Convert to array format
   return Object.keys(monthlyData).map((month) => ({
     month,
@@ -140,25 +123,14 @@ export async function getDoctorsPerDepartment(): Promise<DepartmentData[]> {
 }
 
 /**
- * Get doctors per membership plan
+ * Get doctors per membership plan (from doctors API only so sum = total doctors).
  */
-export async function getDoctorsPerPlan(requests: AdminJoinRequest[]): Promise<PlanData[]> {
+export async function getDoctorsPerPlan(_requests: AdminJoinRequest[]): Promise<PlanData[]> {
   const planCounts: Record<string, number> = {
     basic: 0,
     professional: 0,
     premier: 0,
   };
-
-  // Count from approved join requests
-  const approvedRequests = requests.filter((r) => r.status === 'approved');
-  approvedRequests.forEach((request) => {
-    const planId = request.plan.planId;
-    if (planCounts.hasOwnProperty(planId)) {
-      planCounts[planId]++;
-    } else {
-      planCounts.basic++; // Default to basic if unknown
-    }
-  });
 
   const token = getToken();
   const doctors = token ? await getAllDoctorsArray(token) : [];
@@ -171,28 +143,6 @@ export async function getDoctorsPerPlan(requests: AdminJoinRequest[]): Promise<P
     planCounts[key]++;
   });
 
-  // Generate demo data if distribution is too skewed
-  const total = Object.values(planCounts).reduce((sum, count) => sum + count, 0);
-  const hasGoodDistribution = Object.values(planCounts).filter(c => c > 0).length >= 2;
-  
-  if (!hasGoodDistribution && total > 0) {
-    // Distribute existing doctors across plans realistically
-    // Professional is most popular, then basic, then premier
-    const professionalCount = Math.floor(total * 0.5);
-    const basicCount = Math.floor(total * 0.35);
-    const premierCount = total - professionalCount - basicCount;
-    
-    planCounts.professional = Math.max(planCounts.professional, professionalCount);
-    planCounts.basic = Math.max(planCounts.basic, basicCount);
-    planCounts.premier = Math.max(planCounts.premier, premierCount);
-  } else if (total === 0) {
-    // Demo data when no doctors
-    planCounts.professional = 45;
-    planCounts.basic = 35;
-    planCounts.premier = 20;
-  }
-
-  // Convert to array format with proper names
   const planNames: Record<string, string> = {
     basic: 'Basic',
     professional: 'Professional',
@@ -228,16 +178,7 @@ export function getRequestStatusDistribution(requests: AdminJoinRequest[]): Stat
     }
   });
 
-  // Generate demo data if we have very few requests
-  const total = Object.values(statusCounts).reduce((sum, count) => sum + count, 0);
-  if (total < 5) {
-    // Realistic distribution: most approved, some pending, few rejected
-    statusCounts.approved = Math.max(statusCounts.approved, 12);
-    statusCounts.submitted = Math.max(statusCounts.submitted, 3);
-    statusCounts.under_review = Math.max(statusCounts.under_review, 2);
-    statusCounts.rejected = Math.max(statusCounts.rejected, 1);
-  }
-
+  // No fake data: show only real request counts so chart matches stats
   const statusLabels: Record<string, string> = {
     submitted: 'Submitted',
     under_review: 'Under Review',
@@ -296,20 +237,7 @@ export async function getGrowthTrendData(requests: AdminJoinRequest[]): Promise<
     });
   });
 
-  // Generate demo growth trend if we have very few requests
-  const hasGrowth = approvedRequests.length > 0;
-  if (!hasGrowth || approvedRequests.length < 5) {
-    // Generate realistic growth trend
-    const months = Object.keys(monthlyTotals);
-    const startCount = baseCount;
-    const growthPerMonth = 2 + Math.random() * 3; // 2-5 doctors per month
-    
-    months.forEach((monthKey, index) => {
-      const growth = Math.floor(growthPerMonth * (index + 1));
-      monthlyTotals[monthKey] = startCount + growth;
-    });
-  }
-
+  // No fake data: use only real cumulative counts so chart matches total doctors
   return Object.entries(monthlyTotals).map(([month, total]) => ({
     month,
     total,

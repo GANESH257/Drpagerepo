@@ -15,34 +15,21 @@ interface MonthlyData {
   count: number;
 }
 
-// Generate sample monthly data for the past 6 months
+// Use only real referral counts per month so chart matches dashboard data
 function generateMonthlyReferralsData(referrals: Referral[]): MonthlyData[] {
   const now = new Date();
   const months: MonthlyData[] = [];
 
-  // Get current month count from actual data
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const currentMonthCount = referrals.filter((ref) => {
-    const refDate = new Date(ref.date);
-    return refDate.getMonth() === currentMonth && refDate.getFullYear() === currentYear;
-  }).length;
-
-  // Generate data for the past 6 months
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).getTime();
 
-    let count: number;
-    if (i === 0) {
-      // Current month - use actual data
-      count = currentMonthCount || Math.floor(Math.random() * 5) + 2;
-    } else {
-      // Past months - generate realistic sample data
-      const baseCount = currentMonthCount || 6;
-      const variation = Math.floor(Math.random() * 4) - 2; // -2 to +2 variation
-      count = Math.max(1, baseCount + variation);
-    }
+    const count = referrals.filter((ref) => {
+      const refDate = new Date((ref as any).created_at ?? (ref as any).date ?? ref.createdAt).getTime();
+      return refDate >= monthStart && refDate <= monthEnd;
+    }).length;
 
     months.push({ month: monthName, count });
   }

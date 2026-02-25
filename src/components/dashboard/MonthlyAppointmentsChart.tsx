@@ -15,34 +15,21 @@ interface MonthlyData {
   count: number;
 }
 
-// Generate sample monthly data for the past 6 months
+// Use only real appointment counts per month so chart matches dashboard data
 function generateMonthlyAppointmentsData(appointments: AppointmentRequest[]): MonthlyData[] {
   const now = new Date();
   const months: MonthlyData[] = [];
 
-  // Get current month count from actual data
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-  const currentMonthCount = appointments.filter((apt) => {
-    const aptDate = new Date(apt.createdAt);
-    return aptDate.getMonth() === currentMonth && aptDate.getFullYear() === currentYear;
-  }).length;
-
-  // Generate data for the past 6 months
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).getTime();
 
-    let count: number;
-    if (i === 0) {
-      // Current month - use actual data
-      count = currentMonthCount || Math.floor(Math.random() * 10) + 5;
-    } else {
-      // Past months - generate realistic sample data
-      const baseCount = currentMonthCount || 12;
-      const variation = Math.floor(Math.random() * 8) - 4; // -4 to +4 variation
-      count = Math.max(3, baseCount + variation);
-    }
+    const count = appointments.filter((apt) => {
+      const aptTime = new Date(apt.createdAt).getTime();
+      return aptTime >= monthStart && aptTime <= monthEnd;
+    }).length;
 
     months.push({ month: monthName, count });
   }

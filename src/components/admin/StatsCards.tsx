@@ -6,10 +6,12 @@ import { getJoinRequests } from '@/lib/api/join-requests';
 import { getDoctors } from '@/lib/api/doctors';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
 import { getToken } from '@/lib/api/config';
+import { getDoctorsPerPlan } from '@/lib/adminAnalytics';
 
 export function StatsCards() {
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [totalDoctorsFromApi, setTotalDoctorsFromApi] = useState(0);
+  const [planDistribution, setPlanDistribution] = useState<{ basic: number; professional: number; premier: number }>({ basic: 0, professional: 0, premier: 0 });
   const [membershipPlans, setMembershipPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +21,19 @@ export function StatsCards() {
       try {
         setLoading(true);
         const token = getToken();
-        const [requestsData, doctorsRes, plansData] = await Promise.all([
+        const [requestsData, doctorsRes, plansData, planData] = await Promise.all([
           getJoinRequests().catch(() => []),
           token ? getDoctors({ limit: 1 }, token).catch(() => ({ doctors: [], pagination: { total: 0 } })) : Promise.resolve({ doctors: [], pagination: { total: 0 } }),
           getMembershipPlans().catch(() => []),
+          getDoctorsPerPlan([]).catch(() => []),
         ]);
         setJoinRequests(requestsData);
         setTotalDoctorsFromApi(doctorsRes.pagination?.total ?? 0);
         setMembershipPlans(plansData);
+        const basic = planData.find((p) => p.plan === 'Basic')?.count ?? 0;
+        const professional = planData.find((p) => p.plan === 'Professional')?.count ?? 0;
+        const premier = planData.find((p) => p.plan === 'Premier')?.count ?? 0;
+        setPlanDistribution({ basic, professional, premier });
         setError(null);
       } catch (err) {
         console.error('Error loading stats:', err);
@@ -38,17 +45,9 @@ export function StatsCards() {
     loadData();
   }, []);
 
-  const acceptedRequests = joinRequests.filter((r) => r.status === 'approved');
   const pendingRequests = joinRequests.filter((r) => r.status === 'submitted' || r.status === 'under_review');
-  // totalDoctorsFromApi is the authoritative count from the doctors table (already includes accepted ones)
   const totalDoctors = totalDoctorsFromApi;
-
-  // Calculate doctors per plan from join request data
-  const planDistribution = {
-    basic: acceptedRequests.filter((r) => r.plan?.planId === 'basic').length,
-    professional: acceptedRequests.filter((r) => r.plan?.planId === 'professional').length,
-    premier: acceptedRequests.filter((r) => r.plan?.planId === 'premier').length,
-  };
+  const planSum = planDistribution.basic + planDistribution.professional + planDistribution.premier;
 
   const stats = [
     {
@@ -60,7 +59,7 @@ export function StatsCards() {
     },
     {
       title: 'Doctors per Plan',
-      value: `${planDistribution.basic + planDistribution.professional + planDistribution.premier}`,
+      value: planSum.toString(),
       description: `Basic: ${planDistribution.basic}, Pro: ${planDistribution.professional}, Premier: ${planDistribution.premier}`,
       icon: Crown,
       color: 'text-[var(--aip-teal)]',
