@@ -209,7 +209,7 @@ export default function PracticeServicesInsurancePage() {
       />
 
       {/* Services */}
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Services</CardTitle>
@@ -292,7 +292,7 @@ export default function PracticeServicesInsurancePage() {
       </Card>
 
       {/* Insurance */}
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Practice insurances and policies</CardTitle>
