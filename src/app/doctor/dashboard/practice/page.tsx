@@ -2,15 +2,17 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { createApprovalRequest, getApprovalRequests } from '@/lib/api/approval-requests';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { getDoctorsByPractice } from '@/lib/adminHelpers';
-import { getPractice } from '@/lib/api/practices';
+import { getPractice, updatePractice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { uploadImage, getUploadFullUrl } from '@/lib/api/upload';
+import { useDoctorContext } from '@/components/dashboard/DoctorContext';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,21 +22,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/lib/toast';
-import { Edit, Upload, Loader2, X, ArrowRight } from 'lucide-react';
+import { Edit, Upload, Loader2, X, ArrowRight, MapPin } from 'lucide-react';
 
 const PRACTICE_PROFILE_EDIT_TYPE = 'practice_admin_practice_profile_edit';
 
 export default function PracticeDetailsPage() {
   const router = useRouter();
+  const { doctor } = useDoctorContext();
   const [practice, setPractice] = useState<Practice | null>(null);
   const [practiceDoctors, setPracticeDoctors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasPendingProfileEdit, setHasPendingProfileEdit] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
+    name: '',
     description: '',
     phone: '',
     email: '',
@@ -74,6 +79,7 @@ export default function PracticeDetailsPage() {
         // Pre-fill form (logo from practice.logo or API logo_url)
         const logo = foundPractice.logo ?? (foundPractice as { logo_url?: string }).logo_url ?? '';
         setFormData({
+          name: foundPractice.name || '',
           description: foundPractice.description || '',
           phone: foundPractice.phone || '',
           email: foundPractice.email || '',
@@ -235,6 +241,163 @@ export default function PracticeDetailsPage() {
         <Button onClick={() => router.push('/doctor/dashboard')} className="mt-4">
           Back to Dashboard
         </Button>
+      </div>
+    );
+  }
+
+  const isPendingPA = doctor && (doctor.profileStatus === 'pending_profile' || doctor.verified !== true) && doctor.roleInPractice === 'practice_admin';
+
+  const handleSaveDraft = async () => {
+    if (!practice) return;
+    setSavingDraft(true);
+    try {
+      await updatePractice(
+        practice.id,
+        {
+          name: formData.name,
+          description: formData.description || null,
+          phone: formData.phone || null,
+          website: formData.website || null,
+          address_line1: formData.address.line1 || null,
+          address_line2: formData.address.line2 || null,
+          city: formData.address.city || null,
+          state: formData.address.state || null,
+          zip: formData.address.zip || null,
+        },
+        getToken()
+      );
+      const updated = await getPractice(practice.id, getToken());
+      setPractice(updated);
+      toast.success('Practice details saved. Submit for approval from the dashboard when ready.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  if (isPendingPA) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Edit practice info</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Add practice details and at least one location. Save your changes, then submit for approval from the dashboard.</p>
+        </div>
+        <Card className="card-practice-accent">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-foreground">Practice details</CardTitle>
+            <p className="text-sm text-muted-foreground">Required: name, phone, and primary address (ZIP required).</p>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            <div>
+              <Label htmlFor="pending-name">Practice name *</Label>
+              <Input
+                id="pending-name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Practice name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pending-phone">Phone *</Label>
+              <Input
+                id="pending-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div>
+              <Label htmlFor="pending-description">Description (optional)</Label>
+              <Textarea
+                id="pending-description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief practice description"
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pending-website">Website (optional)</Label>
+              <Input
+                id="pending-website"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                placeholder="https://"
+              />
+            </div>
+            <div className="rounded-md border bg-muted/30 p-3 space-y-2">
+              <Label className="text-sm font-medium">Primary location address *</Label>
+              <p className="text-xs text-muted-foreground">ZIP is required. At least address line or city and state.</p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="col-span-2">
+                  <Label className="text-muted-foreground text-xs">Address line 1</Label>
+                  <Input
+                    value={formData.address.line1}
+                    onChange={(e) => setFormData({ ...formData, address: { ...formData.address, line1: e.target.value } })}
+                    placeholder="Street address"
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">City</Label>
+                  <Input
+                    value={formData.address.city}
+                    onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })}
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">State</Label>
+                  <Input
+                    value={formData.address.state}
+                    onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })}
+                    placeholder="e.g. MO"
+                    maxLength={2}
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">ZIP *</Label>
+                  <Input
+                    value={formData.address.zip}
+                    onChange={(e) => setFormData({ ...formData, address: { ...formData.address, zip: e.target.value } })}
+                    placeholder="e.g. 63101"
+                  />
+                </div>
+              </div>
+            </div>
+            <Button variant="portal-primary" onClick={handleSaveDraft} disabled={savingDraft}>
+              {savingDraft ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</> : 'Save'}
+            </Button>
+          </CardContent>
+        </Card>
+        <Card className="card-practice-accent">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+              <MapPin className="h-5 w-5" /> Locations
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Add or edit practice locations. At least one location with address is required before you can submit for approval.</p>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {practice.locations?.length > 0 ? (
+              <ul className="space-y-2 mb-4">
+                {practice.locations.map((loc: any) => (
+                  <li key={loc.id || loc.name} className="text-sm text-foreground">
+                    {loc.name || 'Location'}: {[loc.address_line1 || loc.address, loc.city, loc.state, loc.zip].filter(Boolean).join(', ')}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">No locations yet. Add at least one location.</p>
+            )}
+            <Link href="/doctor/dashboard/practice/locations">
+              <Button variant="outline">
+                <MapPin className="h-4 w-4 mr-2" />
+                Manage locations
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

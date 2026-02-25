@@ -55,6 +55,12 @@ export default function CompleteProfilePage() {
           return;
         }
         setDoctor(doc);
+        // Phase 2: Pending doctors use the dashboard flow instead of this page.
+        const isPending = doc.profileStatus === 'pending_profile' || doc.verified !== true;
+        if (isPending) {
+          router.replace('/doctor/dashboard');
+          return;
+        }
         setProfile({
           fullName: doc.fullName,
           bio: doc.bio || '',

@@ -44,6 +44,21 @@ import {
 
 const baseUrl = '/doctor/dashboard';
 
+// Pending PA: only Edit Profile, Edit Practice, Account Settings
+const pendingPANavTree: PortalNavItem[] = [
+  { label: 'Dashboard', href: baseUrl, icon: LayoutDashboard, description: 'Complete your profile and practice' },
+  { label: 'Edit Profile', href: `${baseUrl}/profile`, icon: User, description: 'Profile, services & insurance' },
+  { label: 'Edit Practice', href: `${baseUrl}/practice`, icon: Building, description: 'Practice details & locations' },
+  { label: 'Account Settings', href: `${baseUrl}/settings`, icon: Settings, description: 'Login and preferences' },
+];
+
+// Pending doctor-only: only Edit Profile, Account Settings
+const pendingDoctorOnlyNavTree: PortalNavItem[] = [
+  { label: 'Dashboard', href: baseUrl, icon: LayoutDashboard, description: 'Complete your profile' },
+  { label: 'Edit Profile', href: `${baseUrl}/profile`, icon: User, description: 'Profile, services & insurance' },
+  { label: 'Account Settings', href: `${baseUrl}/settings`, icon: Settings, description: 'Login and preferences' },
+];
+
 // Core nav (1–8) — hierarchical per reference: ↳ = children
 const baseDoctorNavTree: PortalNavItem[] = [
   { label: 'Dashboard', href: baseUrl, icon: LayoutDashboard, description: 'Your personal landing page with profile status and quick links' },
@@ -130,9 +145,16 @@ export function DashboardLayout({ doctor, children, onProfileUpdate }: Dashboard
   };
 
   const isPracticeAdmin = currentDoctor.roleInPractice === 'practice_admin';
-  const navTree = isPracticeAdmin
-    ? [...baseDoctorNavTree, ...practiceAdminNavTree, accountSettingsNavItem]
-    : [...baseDoctorNavTree, accountSettingsNavItem];
+  const isPending =
+    currentDoctor.profileStatus === 'pending_profile' || currentDoctor.verified !== true;
+
+  const navTree = (() => {
+    if (isPending && isPracticeAdmin) return pendingPANavTree;
+    if (isPending && !isPracticeAdmin) return pendingDoctorOnlyNavTree;
+    return isPracticeAdmin
+      ? [...baseDoctorNavTree, ...practiceAdminNavTree, accountSettingsNavItem]
+      : [...baseDoctorNavTree, accountSettingsNavItem];
+  })();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);

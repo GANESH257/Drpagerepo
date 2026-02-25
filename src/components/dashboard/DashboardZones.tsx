@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   User,
@@ -18,6 +18,8 @@ import {
   Clock,
   MapPin,
   TrendingUp,
+  Building2,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
@@ -31,6 +33,18 @@ import { subscribeToTotalUnreadCount } from '@/lib/messageStorage';
 import { getDoctors } from '@/lib/api/doctors';
 import { getToken } from '@/lib/api/config';
 import { getApprovalRequests } from '@/lib/api/approval-requests';
+import { getDoctor } from '@/lib/api/doctors';
+import { getPractice } from '@/lib/api/practices';
+import { createApprovalRequest } from '@/lib/api/approval-requests';
+import { geocodeZip } from '@/lib/services/geocodingService';
+import {
+  validateProfileForCompletion,
+  validatePracticeForCompletion,
+  buildDoctorPayloadForCompletion,
+  buildPracticePayloadForCompletion,
+  buildLocationsFromPractice,
+  type PracticeForValidation,
+} from '@/lib/pendingProfileCompletion';
 import { formatDateTime } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +72,7 @@ function getStatusBadgeClass(status: string): string {
 
 export function DashboardZones({ doctor }: DashboardZonesProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [profileViews, setProfileViews] = useState(0);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -69,6 +84,142 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
   const [changesRequestedRequest, setChangesRequestedRequest] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const isIncomplete = doctor.profileStatus === 'pending_profile' || !doctor.verified;
+  const submittedFromUrl = searchParams.get('submitted') === '1';
+
+  const isPendingPA = isIncomplete && doctor.roleInPractice === 'practice_admin';
+  const isPendingDoctorOnly = isIncomplete && doctor.roleInPractice !== 'practice_admin';
+
+  const profileValid = !validateProfileForCompletion(doctor);
+  const [practice, setPractice] = useState<PracticeForValidation | null>(null);
+  const [practiceLoaded, setPracticeLoaded] = useState(false);
+  useEffect(() => {
+    if (!isPendingPA || !doctor.practiceId) {
+      setPracticeLoaded(true);
+      return;
+    }
+    getPractice(doctor.practiceId, getToken())
+      .then((p) => {
+        const addr = p.address && typeof p.address === 'object' ? p.address : {};
+        setPractice({
+          id: p.id,
+          name: p.name,
+          phone: p.phone,
+          description: (p as { description?: string }).description,
+          website: (p as { website?: string }).website,
+          address: addr as { line1?: string; line2?: string; city?: string; state?: string; zip?: string },
+          address_line1: (p as { address_line1?: string }).address_line1 ?? (addr as { line1?: string }).line1,
+          city: (p as { city?: string }).city ?? (addr as { city?: string }).city,
+          state: (p as { state?: string }).state ?? (addr as { state?: string }).state,
+          zip: (p as { zip?: string }).zip ?? (addr as { zip?: string }).zip,
+          locations: Array.isArray(p.locations) ? p.locations : [],
+        });
+      })
+      .catch(() => setPractice(null))
+      .finally(() => setPracticeLoaded(true));
+  }, [isPendingPA, doctor.practiceId]);
+
+  const practiceValid = !isPendingPA || (practice !== null && !validatePracticeForCompletion(practice));
+
+  const handleSubmitDoctorOnly = async () => {
+    const err = validateProfileForCompletion(doctor);
+    if (err) {
+      setSubmitError(err);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const token = getToken();
+      const latestDoctor = await getDoctor(doctor.id, token ?? undefined);
+      if (!latestDoctor) throw new Error('Could not load profile');
+      const doctorPayload = buildDoctorPayloadForCompletion(latestDoctor);
+      await createApprovalRequest({
+        type: 'doctor_profile_completion',
+        practice_id: latestDoctor.practiceId ?? undefined,
+        target_doctor_id: latestDoctor.id,
+        payload: { doctorId: latestDoctor.id, doctor: doctorPayload },
+      });
+      setSubmitted(true);
+      router.push('/doctor/dashboard?submitted=1');
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Submit failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitPA = async () => {
+    const profileErr = validateProfileForCompletion(doctor);
+    if (profileErr) {
+      setSubmitError(profileErr);
+      return;
+    }
+    if (!practice || !doctor.practiceId) {
+      setSubmitError('Practice information is required.');
+      return;
+    }
+    const practiceErr = validatePracticeForCompletion(practice);
+    if (practiceErr) {
+      setSubmitError(practiceErr);
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const token = getToken();
+      const [latestDoctor, _] = await Promise.all([
+        getDoctor(doctor.id, token ?? undefined),
+        Promise.resolve(),
+      ]);
+      if (!latestDoctor) throw new Error('Could not load profile');
+      let primaryLat: number | null = null;
+      let primaryLng: number | null = null;
+      const addr = practice.address ?? {};
+      const zip5 = (practice.zip ?? addr.zip ?? '').toString().trim().replace(/\D/g, '').slice(0, 5);
+      if (zip5.length === 5) {
+        try {
+          const coords = await geocodeZip(zip5);
+          primaryLat = coords.lat;
+          primaryLng = coords.lng;
+        } catch {
+          // continue without coords
+        }
+      }
+      const locationsToSend = buildLocationsFromPractice(
+        practice as PracticeForValidation & { id: string },
+        primaryLat,
+        primaryLng
+      );
+      const doctorPayload = buildDoctorPayloadForCompletion(latestDoctor);
+      const practicePayload = buildPracticePayloadForCompletion(
+        practice as PracticeForValidation & { id: string },
+        locationsToSend
+      );
+      await createApprovalRequest({
+        type: 'practice_admin_profile_practice_completion',
+        practice_id: latestDoctor.practiceId!,
+        target_doctor_id: latestDoctor.id,
+        payload: {
+          doctorId: latestDoctor.id,
+          practiceId: latestDoctor.practiceId,
+          doctor: doctorPayload,
+          practice: practicePayload,
+          locations: locationsToSend,
+        },
+      });
+      setSubmitted(true);
+      router.push('/doctor/dashboard?submitted=1');
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'Submit failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     const doctorId = doctor.id;
@@ -154,7 +305,6 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
   const sentLastMonth = lastMonth.filter((r) => (r as any).from_doctor_id === doctor.id || (r as any).fromDoctorId === doctor.id);
   const referralTrend = sentLastMonth.length > 0 || sentThisMonth.length > 0 ? sentThisMonth.length - sentLastMonth.length : 0;
 
-  const isIncomplete = doctor.profileStatus === 'pending_profile' || !doctor.verified;
   const isSubmitted = doctor.profileStatus === 'submitted' || (doctor.verified === false && !changesRequestedRequest);
   const isLive = doctor.verified === true && doctor.profileStatus !== 'pending_profile';
   const membershipExpiry = membership?.expiry_date
@@ -227,43 +377,79 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
       {/* Onboarding / status card — single card in reference style */}
       {(isIncomplete || isSubmitted || changesRequestedRequest || isLive || expiresSoon) && (
         <div className="glass-card p-5">
-          {isIncomplete && (
+          {isIncomplete && (submitted || submittedFromUrl) && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
+                <h3 className="font-semibold text-foreground">Submission received</h3>
+              </div>
+              <p className="text-sm text-foreground">
+                {doctor.roleInPractice === 'practice_admin'
+                  ? 'Your profile and practice details have been sent for admin approval. You will get full dashboard access once approved.'
+                  : 'Your profile has been sent for admin approval. You will get full dashboard access once approved.'}
+              </p>
+            </div>
+          )}
+          {isIncomplete && !(submitted || submittedFromUrl) && isPendingPA && (
             <>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Onboarding Progress</p>
-                  <h2 className="text-lg font-bold text-foreground mt-0.5">Complete Your Profile</h2>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Complete your profile and practice</p>
+              <h2 className="text-lg font-bold text-foreground mt-0.5 mb-3">Add your details, then submit once for admin approval.</h2>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">1</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Edit your profile</p>
+                    <p className="text-xs text-muted-foreground">Add your details, services, and insurance.</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/doctor/dashboard/profile')}>
+                    Edit profile <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
-                <span className="text-2xl font-black" style={{ color: 'var(--aip-gold)' }}>{onboardingPct}%</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-muted mb-4">
-                <div
-                  className="h-2 rounded-full transition-all duration-700"
-                  style={{ width: `${onboardingPct}%`, background: 'linear-gradient(90deg, var(--aip-teal), var(--aip-navy))' }}
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-4 justify-between">
-                <div className="flex flex-wrap gap-3">
-                  {ONBOARDING_STEPS.map((step, i) => (
-                    <span key={step.label} className="flex items-center gap-1.5 text-sm">
-                      {onboardingStepsComplete[i] ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <Clock className="w-4 h-4 text-amber-500" />
-                      )}
-                      <span className={onboardingStepsComplete[i] ? 'text-foreground' : 'text-muted-foreground'}>{step.label}</span>
-                    </span>
-                  ))}
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">2</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Edit practice info</p>
+                    <p className="text-xs text-muted-foreground">Add practice details and at least one location.</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => router.push('/doctor/dashboard/practice')}>
+                    Edit practice <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
-                <Button
-                  variant="portal-primary"
-                  size="sm"
-                  onClick={() => router.push('/doctor/dashboard/complete-profile')}
-                >
-                  Continue Setup
-                  <ArrowRight className="h-4 w-4 ml-2" />
+              </div>
+              {submitError && <p className="text-sm text-destructive mb-2">{submitError}</p>}
+              <Button
+                variant="portal-primary"
+                size="sm"
+                disabled={!profileValid || !practiceValid || submitting || !practiceLoaded || (isPendingPA && !practice)}
+                onClick={handleSubmitPA}
+              >
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...</> : <>Submit for approval <ArrowRight className="h-4 w-4 ml-2" /></>}
+              </Button>
+            </>
+          )}
+          {isIncomplete && !(submitted || submittedFromUrl) && isPendingDoctorOnly && (
+            <>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Complete your profile</p>
+              <h2 className="text-lg font-bold text-foreground mt-0.5 mb-3">Add your details and services/insurance, then submit for admin approval.</h2>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">1</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">Edit your profile</p>
+                  <p className="text-xs text-muted-foreground">Includes profile fields, services, and insurance.</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => router.push('/doctor/dashboard/profile')}>
+                  Edit profile <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>
+              {submitError && <p className="text-sm text-destructive mb-2">{submitError}</p>}
+              <Button
+                variant="portal-primary"
+                size="sm"
+                disabled={!profileValid || submitting}
+                onClick={handleSubmitDoctorOnly}
+              >
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...</> : <>Submit for approval <ArrowRight className="h-4 w-4 ml-2" /></>}
+              </Button>
             </>
           )}
           {!isIncomplete && isSubmitted && !changesRequestedRequest && (

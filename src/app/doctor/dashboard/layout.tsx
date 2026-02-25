@@ -4,10 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoctorSession } from '@/lib/useDoctorSession';
 import { getDoctor } from '@/lib/api/doctors';
-import { getActorFromSession, assertDoctor } from '@/lib/services/permissionService';
-import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { CompleteProfileGate } from '@/components/dashboard/CompleteProfileGate';
+import { PendingRouteGuard } from '@/components/dashboard/PendingRouteGuard';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
 import { usePortalTheme } from '@/contexts/PortalThemeContext';
@@ -151,27 +149,13 @@ export default function DoctorDashboardLayout({
 
   const handleProfileUpdate = (_updatedDoctor: Doctor) => {};
 
-  // Newly approved doctors must ONLY see: Add profile data + Add practice data (2 screens).
-  // Show gate when: profile_status is pending_profile, OR verified is not true (false/undefined).
-  const isPendingProfile =
-    doctor.profileStatus === 'pending_profile' || doctor.verified !== true;
-  const isPendingProfilePA = isPendingProfile && doctor.roleInPractice === 'practice_admin';
-  const isPendingProfileDoctorOnly = isPendingProfile && doctor.roleInPractice !== 'practice_admin';
-
-  if (isPendingProfilePA || isPendingProfileDoctorOnly) {
-    return (
-      <div className={cn(darkClass, 'min-h-screen')}>
-        <CompleteProfileGate doctor={doctor}>
-          {children}
-        </CompleteProfileGate>
-      </div>
-    );
-  }
-
+  // All authenticated doctors (including pending) use the same dashboard with restricted nav and route guard.
   return (
     <div className={cn(darkClass, 'min-h-screen flex flex-col')}>
       <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
-        {children}
+        <PendingRouteGuard doctor={doctor}>
+          {children}
+        </PendingRouteGuard>
       </DashboardLayout>
     </div>
   );
