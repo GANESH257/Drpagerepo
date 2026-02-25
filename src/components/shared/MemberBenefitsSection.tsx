@@ -66,8 +66,10 @@ export function MemberBenefitsSection() {
       id="member-benefits"
       className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]"
     >
-      {/* 3D animated hexagons + stars background */}
-      <div className="member-benefits-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D animated hexagons + stars background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .member-benefits-3d-bg, .member-benefits-hex, .member-benefits-star
+          lives in globals.css (search "member-benefits-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="member-benefits-3d-bg" aria-hidden>
         <div className="member-benefits-3d-inner">
           <div className="member-benefits-hex member-benefits-hex-1" />
           <div className="member-benefits-hex member-benefits-hex-2" />
@@ -78,7 +80,7 @@ export function MemberBenefitsSection() {
           <Star className="member-benefits-star member-benefits-star-3" strokeWidth={2} fill="currentColor" />
           <Star className="member-benefits-star member-benefits-star-4" strokeWidth={2} fill="currentColor" />
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Header – same style as JoinSteps (Mission-style, light background) */}
@@ -143,9 +145,9 @@ export function MemberBenefitsSection() {
                       <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-dark-blue/15 group-hover:bg-brand-dark-blue/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
 
                       <div className="relative z-10 flex flex-col items-center text-center gap-2">
-                        <div className={cn('w-24 h-24 rounded-3xl flex items-center justify-center mb-2 shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal', isVisible && !prefersReducedMotion && 'pulsate-bck-normal')}>
+                        <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center mb-2 shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal', isVisible && !prefersReducedMotion && 'pulsate-bck-normal')}>
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                          <IconComponent className="h-12 w-12 relative z-10" aria-hidden="true" />
+                          <IconComponent className="h-8 w-8 relative z-10" aria-hidden="true" />
                         </div>
                         <h3 className="text-lg md:text-xl font-semibold text-brand-dark-blue mb-1 transition-colors duration-300">{benefit.title}</h3>
                         <p className="text-sm md:text-base text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors duration-300">{benefit.description}</p>

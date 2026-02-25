@@ -247,8 +247,10 @@ export function ContactForm() {
 
   return (
     <section className="py-16 md:py-24 bg-white relative overflow-hidden" data-scroll-exclude>
-      {/* 3D animated phone/calling shapes background */}
-      <div className="contact-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D animated phone/message/email shapes background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .contact-3d-bg and .contact-3d-icon
+          lives in globals.css (search "contact-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="contact-3d-bg" aria-hidden>
         <div className="contact-3d-inner">
           <PhoneCall className="contact-3d-icon contact-icon-1" strokeWidth={3} />
           <MessageCircle className="contact-3d-icon contact-icon-2" strokeWidth={3} />
@@ -261,7 +263,7 @@ export function ContactForm() {
           <PhoneCall className="contact-3d-icon contact-icon-9" strokeWidth={3} />
           <MessageCircle className="contact-3d-icon contact-icon-10" strokeWidth={3} />
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto">
           <Card className="bg-white border border-gray-200 shadow-lg" data-scroll-exclude>

@@ -315,15 +315,15 @@ export function BenefitsJumbledGrid() {
                         </Link>
                       </Button>
                     ) : (
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-2 text-sm font-semibold w-fit',
-                          isTeal ? 'text-brand-teal' : 'text-brand-dark-blue'
-                        )}
+                      <Button
+                        asChild
+                        className="w-fit rounded-md px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-brand-dark-blue to-brand-teal text-white hover:from-brand-dark-blue/90 hover:to-brand-teal/90 shadow-md hover:shadow-lg transition-all duration-300 focus-ring hover:scale-105"
                       >
-                        Learn more
-                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                      </span>
+                        <Link href="/practices">
+                          Find a Practice
+                          <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      </Button>
                     )}
                   </div>
                   {/* Right: image */}

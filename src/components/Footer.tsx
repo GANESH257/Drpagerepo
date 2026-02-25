@@ -65,7 +65,7 @@ export function Footer() {
               }}
             >
               <Image
-                src="/logodrpnew.png"
+                src="/logodrnew.png"
                 alt="Alliance of Independent Physicians"
                 width={200}
                 height={200}

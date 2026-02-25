@@ -148,8 +148,10 @@ export function DepartmentsSection() {
       id="departments" 
       className="py-16 md:py-24 relative skin-gridline overflow-hidden"
     >
-      {/* 3D animated stethoscope shapes background */}
-      <div className="departments-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D animated stethoscope shapes background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .departments-3d-bg and .departments-stethoscope
+          lives in globals.css (search "departments-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="departments-3d-bg" aria-hidden>
         <div className="departments-3d-inner">
           <Stethoscope className="departments-stethoscope departments-stethoscope-center-top" strokeWidth={2} />
           <Stethoscope className="departments-stethoscope departments-stethoscope-1" strokeWidth={2} />
@@ -165,7 +167,7 @@ export function DepartmentsSection() {
           <Stethoscope className="departments-stethoscope departments-stethoscope-11" strokeWidth={2} />
           <Stethoscope className="departments-stethoscope departments-stethoscope-12" strokeWidth={2} />
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         {/* Section Header – same text design as MissionStatementNewHome */}
         <div

@@ -60,7 +60,10 @@ export function PatientsFAQ() {
       id="faq"
       className="py-6 md:py-8 relative overflow-hidden skin-paper"
     >
-      <div className="faq-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D animated question-mark shapes background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .faq-3d-bg and .faq-3d-q
+          lives in globals.css (search "faq-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="faq-3d-bg" aria-hidden>
         <div className="faq-3d-bg-inner">
           <span className="faq-3d-q faq-3d-q-1">?</span>
           <span className="faq-3d-q faq-3d-q-2">?</span>
@@ -75,7 +78,7 @@ export function PatientsFAQ() {
           <span className="faq-3d-q faq-3d-q-11">?</span>
           <span className="faq-3d-q faq-3d-q-12">?</span>
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-3xl mx-auto">
           {/* Header – same text design as MissionStatementNewHome */}

@@ -45,17 +45,19 @@ export function BoardCertifiedBadge() {
       ref={sectionRef}
       className="py-16 md:py-24 relative overflow-hidden bg-white"
     >
-      {/* 3D animated medallion/badge shapes background */}
-      <div className="board-badge-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): Animated medallion/badge shapes background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .board-badge-3d-bg and .board-badge-medal
+          lives in globals.css (search "board-badge-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="board-badge-3d-bg" aria-hidden>
         <div className="board-badge-3d-inner">
           <Award className="board-badge-medal board-badge-medal-1" strokeWidth={2} fill="currentColor" />
           <Award className="board-badge-medal board-badge-medal-2" strokeWidth={2} fill="currentColor" />
           <Award className="board-badge-medal board-badge-medal-3" strokeWidth={2} fill="currentColor" />
           <Award className="board-badge-medal board-badge-medal-4" strokeWidth={2} fill="currentColor" />
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div
             style={{
               opacity: isVisible ? 1 : 0,
@@ -82,30 +84,30 @@ export function BoardCertifiedBadge() {
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-teal/15 group-hover:bg-brand-teal/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
               <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-dark-blue/15 group-hover:bg-brand-dark-blue/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
 
-              <CardContent className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-8">
+              <CardContent className="relative z-10 p-4 md:p-5 flex flex-col md:flex-row items-center gap-3 md:gap-4">
                 {/* Icon – standard gradient box */}
                 <div className="flex-shrink-0">
-                  <div className={`w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal ${isVisible && !prefersReducedMotion ? 'pulsate-bck-normal' : ''}`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal ${isVisible && !prefersReducedMotion ? 'pulsate-bck-normal' : ''}`}>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                    <ShieldCheck className="h-12 w-12 relative z-10" aria-hidden="true" />
+                    <ShieldCheck className="h-6 w-6 relative z-10" aria-hidden="true" />
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl md:text-3xl font-bold mb-3 text-brand-dark-blue">
+                <div className="flex-1 text-center">
+                  <h3 className="text-xl md:text-2xl font-bold mb-2 text-brand-dark-blue">
                     Board-Certified Guarantee
                   </h3>
-                  <p className="text-base md:text-lg text-gray-700 leading-relaxed group-hover:text-gray-800 transition-colors duration-300">
+                  <p className="text-sm md:text-base text-gray-700 leading-relaxed group-hover:text-gray-800 transition-colors duration-300">
                     Every physician in our network is board-certified and has been vetted by our membership committee.
                   </p>
                 </div>
 
                 {/* Badge Icon – same standard style */}
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl flex items-center justify-center shadow-2xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_24px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-xl text-white relative overflow-hidden transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_24px_rgba(15,95,168,0.4)] bg-gradient-to-br from-brand-dark-blue to-brand-teal">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                    <Award className="h-10 w-10 md:h-12 md:w-12 relative z-10" aria-hidden="true" />
+                    <Award className="h-5 w-5 md:h-6 md:w-6 relative z-10" aria-hidden="true" />
                   </div>
                 </div>
               </CardContent>

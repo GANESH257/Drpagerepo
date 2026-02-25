@@ -129,7 +129,7 @@ export default function AdminLoginPage() {
                    transition: 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
                  }}>
               <Image
-                src="/logodrpnew.png"
+                src="/logodrnew.png"
                 alt="Alliance of Independent Physicians"
                 width={300}
                 height={100}

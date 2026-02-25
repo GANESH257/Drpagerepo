@@ -205,17 +205,16 @@ export function LoadingScreen({ onComplete, onExitStart, minDisplayTime = 2000 }
               {/* Glow effect behind logo */}
               <div className="absolute inset-0 blur-3xl bg-brand-teal/30 animate-pulse-glow" />
               
-              {/* Logo - facing viewer, subtle scale/glow pulse only */}
+              {/* Logo - facing viewer, subtle scale/glow pulse only; circular crop */}
               <div className="relative flex items-center justify-center logo-float-perpendicular">
-                <div className="relative inline-flex items-center justify-center">
+                <div className="relative inline-flex items-center justify-center rounded-full overflow-hidden w-[220px] h-[220px] sm:w-[280px] sm:h-[280px] md:w-[350px] md:h-[350px]">
                   <Image
-                    src="/logodrpnew.png"
+                    src="/aip%20white%20.png"
                     alt="Alliance of Independent Physicians"
                     width={400}
                     height={400}
-                    className="w-auto object-contain drop-shadow-2xl"
+                    className="w-full h-full object-cover drop-shadow-2xl"
                     style={{ 
-                      height: '350px',
                       filter: 'drop-shadow(0 0 30px rgba(29, 212, 196, 0.5)) drop-shadow(0 0 60px rgba(29, 212, 196, 0.3))',
                     }}
                     priority

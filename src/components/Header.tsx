@@ -164,16 +164,24 @@ export function Header() {
     <header className={headerClasses}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between transition-all duration-300 flex-nowrap h-20 md:h-24">
-          {/* Logo */}
-          <Link href={homeLink} className="flex items-center space-x-2 flex-shrink-0 mr-4 lg:mr-6">
+          {/* Logo + org name + St. Louis */}
+          <Link href={homeLink} className="flex items-center gap-2 sm:gap-3 flex-shrink-0 mr-4 lg:mr-6">
             <Image
-              src="/logodrpnew.png"
-              alt="Alliance of Independent Physicians"
+              src="/logodrnew.png"
+              alt=""
               width={200}
               height={200}
               className="h-12 md:h-16 lg:h-20 w-auto object-contain"
               priority
             />
+            <span className="hidden sm:flex flex-col items-center leading-tight">
+              <span className="text-brand-dark-blue font-bold tracking-tight text-sm sm:text-base md:text-lg lg:text-xl">
+                Alliance of Independent Physicians
+              </span>
+              <span className="text-yellow-500 font-semibold tracking-tight text-xs sm:text-sm md:text-base">
+                St. Louis
+              </span>
+            </span>
           </Link>
 
           {/* Desktop Navigation - Right Side */}

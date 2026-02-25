@@ -107,9 +107,8 @@ export function DepartmentsMarquee() {
           : 'opacity 1.5s ease-out 0.4s, transform 1.5s ease-out 0.4s',
       }}
     >
-      <div className="container mx-auto px-4">
-        {/* Marquee Container */}
-        <div className="overflow-hidden relative w-full">
+      {/* Marquee edge-to-edge */}
+      <div className="overflow-hidden relative w-full">
           <div
             className={`flex gap-8 md:gap-12 items-center w-max ${prefersReducedMotion ? '' : 'animate-marquee'}`}
           >
@@ -150,7 +149,6 @@ export function DepartmentsMarquee() {
             ))}
           </div>
         </div>
-      </div>
     </section>
   );
 }

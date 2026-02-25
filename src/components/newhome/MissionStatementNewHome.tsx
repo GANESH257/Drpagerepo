@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Playfair_Display } from 'next/font/google';
 import { FileText } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 const playfairDisplay = Playfair_Display({ 
   subsets: ['latin'],
@@ -66,8 +67,10 @@ export function MissionStatementNewHome() {
     <section ref={sectionRef} className="pt-24 md:pt-28 pb-12 md:pb-16 relative overflow-hidden">
       {/* Background: white */}
       <div className="absolute inset-0 z-0 bg-white" aria-hidden />
-      {/* 3D shapes background (same theme as loading rings, different shape & motion) */}
-      <div className="mission-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): Animated 3D shapes background was commented out – animation was "too much".
+          To restore or change the background: uncomment the block below. CSS for .mission-3d-bg and .mission-cube
+          lives in globals.css (search "mission-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="mission-3d-bg" aria-hidden>
         <div className="mission-3d-bg-inner">
           <div className="mission-cube mission-cube-1">
             <div className="mission-cube-inner">
@@ -110,7 +113,7 @@ export function MissionStatementNewHome() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-7xl mx-auto">
@@ -124,18 +127,33 @@ export function MissionStatementNewHome() {
             </h2>
           </div>
 
-          {/* Mission Statement */}
-          <div className="max-w-5xl mx-auto">
-            <div
-              className="p-8 md:p-10 lg:p-12 bg-gray-50 rounded-2xl border border-gray-200 shadow-lg shadow-gray-200/50"
-              style={animationStyle(200)}
+          {/* Mission Statement – same card style as Board-Certified Guarantee */}
+          <div className="max-w-5xl mx-auto" style={animationStyle(200)}>
+            <Card
+              className="group relative overflow-hidden rounded-lg transition-all duration-500 ease-out data-scroll-exclude bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02] hover:bg-white/75"
             >
-              <p className="text-lg md:text-xl lg:text-2xl text-gray-800 font-normal leading-relaxed text-center tracking-normal relative">
-                <span className="absolute -left-4 md:-left-6 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&ldquo;</span>
-                <span className="relative z-10">Our mission is to empower the community by connecting patients with Independent Physicians who provide <span className="text-brand-teal font-medium">accessible, affordable, and high-quality healthcare</span> through patient empowerment and education.</span>
-                <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&rdquo;</span>
-              </p>
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-brand-teal/10 pointer-events-none group-hover:opacity-80 transition-opacity duration-500 z-0" aria-hidden />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/5 via-transparent to-brand-teal/5 pointer-events-none z-0" aria-hidden />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/15 via-brand-teal/10 to-brand-dark-blue/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" aria-hidden />
+              <div className="absolute inset-0 pointer-events-none z-0" aria-hidden>
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/10 via-brand-teal/5 to-transparent animate-gradient-shift" />
+                <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-brand-teal/5 to-brand-dark-blue/10 animate-gradient-shift-reverse" />
+              </div>
+              <div className="absolute inset-0 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity duration-500 z-0" aria-hidden>
+                <div className="absolute inset-0 floating" style={{ backgroundImage: 'radial-gradient(circle, rgba(15, 95, 168, 0.15) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+              </div>
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-teal/15 group-hover:bg-brand-teal/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
+              <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-brand-dark-blue/15 group-hover:bg-brand-dark-blue/30 group-hover:scale-150 rounded-full blur-3xl pointer-events-none transition-all duration-500 z-0" aria-hidden />
+              {/* Button-style shine sweep on hover (same as Board-Certified Guarantee card) */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out pointer-events-none z-0" aria-hidden />
+              <CardContent className="relative z-10 p-8 md:p-10 lg:p-12">
+                <p className="text-lg md:text-xl lg:text-2xl text-gray-800 font-normal leading-relaxed text-center tracking-normal relative">
+                  <span className="absolute -left-4 md:-left-6 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&ldquo;</span>
+                  <span className="relative z-10">Our mission is to empower the community by connecting patients with Independent Physicians who provide <span className="text-brand-teal font-medium">accessible, affordable, and high-quality healthcare</span> through patient empowerment and education.</span>
+                  <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/30 font-serif leading-none" aria-hidden="true">&rdquo;</span>
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* View Governance Bylaws */}

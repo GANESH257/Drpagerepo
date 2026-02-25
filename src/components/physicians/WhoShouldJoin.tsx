@@ -53,8 +53,10 @@ export function WhoShouldJoin() {
       ref={sectionRef}
       className="py-16 md:py-24 relative overflow-hidden bg-gradient-to-br from-gray-50 to-white"
     >
-      {/* 3D plus signs + diamonds background (different from other sections) */}
-      <div className="who-join-3d-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D plus signs + diamonds background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .who-join-3d-bg, .who-join-plus, .who-join-diamond
+          lives in globals.css (search "who-join-3d-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="who-join-3d-bg" aria-hidden>
         <div className="who-join-3d-inner">
           <Plus className="who-join-plus who-join-plus-1" strokeWidth={2.75} />
           <Plus className="who-join-plus who-join-plus-2" strokeWidth={2.75} />
@@ -64,7 +66,7 @@ export function WhoShouldJoin() {
           <div className="who-join-diamond who-join-diamond-2" />
           <div className="who-join-diamond who-join-diamond-3" />
         </div>
-      </div>
+      </div> */}
       <div className="container mx-auto px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto">
           {/* Header – same text design as MissionStatementNewHome */}

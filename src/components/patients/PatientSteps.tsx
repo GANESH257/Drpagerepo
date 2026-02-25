@@ -76,8 +76,10 @@ export function PatientSteps() {
 
   return (
     <section ref={sectionRef} className="py-20 md:py-32 relative overflow-hidden bg-[#e9f8f8]">
-      {/* 3D animated cog shapes background */}
-      <div className="patient-steps-cogs-bg" aria-hidden>
+      {/* NOTE (client feedback): 3D animated cog shapes background commented out – animation was "too much".
+          To restore or change: uncomment the block below. CSS for .patient-steps-cogs-bg and .patient-cog
+          lives in globals.css (search "patient-steps-cogs-bg"); shapes/opacity/speed can be adjusted there. */}
+      {/* <div className="patient-steps-cogs-bg" aria-hidden>
         <div className="patient-steps-cogs-inner">
           <Cog className="patient-cog patient-cog-1" strokeWidth={2.25} />
           <Cog className="patient-cog patient-cog-2" strokeWidth={2.25} />
@@ -88,7 +90,7 @@ export function PatientSteps() {
           <Cog className="patient-cog patient-cog-7" strokeWidth={2.25} />
           <Cog className="patient-cog patient-cog-8" strokeWidth={2.25} />
         </div>
-      </div>
+      </div> */}
       {/* Background Shapes */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[10%] left-[5%] w-64 h-64 opacity-60">
