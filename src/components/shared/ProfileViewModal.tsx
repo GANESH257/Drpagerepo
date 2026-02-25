@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
-import type { Location } from '@/types';
+import type { Location, Practice } from '@/types';
 import { getDoctor, getDoctorBySlug } from '@/lib/api/doctors';
 import { getPractice } from '@/lib/api/practices';
 import { getPracticeById } from '@/lib/services/practiceDirectoryService';
@@ -100,11 +100,11 @@ export function ProfileViewModal({
       setDoctor(preloaded);
       if (preloaded.practiceId) {
         try {
-          const p = await getPractice(preloaded.practiceId, getToken()).catch(() => getPracticeById(preloaded.practiceId!));
+          const p = await getPractice(preloaded.practiceId, getToken() ?? undefined).catch(() => getPracticeById(preloaded.practiceId!));
           if (p) {
             setPractice(p);
             const actor = getActorFromSession();
-            const card = getContactCard(actor, preloaded, p);
+            const card = getContactCard(actor, preloaded, p as Practice);
             setContactCard(card);
             const rawLocs = Array.isArray(p.locations) ? p.locations : [];
             setLocations(rawLocs.map(mapApiLocationToLocation));
@@ -119,12 +119,12 @@ export function ProfileViewModal({
       let d: Doctor;
       if (preloaded && !skipRefetch) {
         d = preloaded.slug
-          ? await getDoctorBySlug(preloaded.slug, getToken())
-          : await getDoctor(preloaded.id, getToken());
+          ? await getDoctorBySlug(preloaded.slug, getToken() ?? undefined)
+          : await getDoctor(preloaded.id, getToken() ?? undefined);
       } else if ('slug' in input && input.slug) {
-        d = await getDoctorBySlug(input.slug, getToken());
+        d = await getDoctorBySlug(input.slug, getToken() ?? undefined);
       } else if ('id' in input && input.id) {
-        d = await getDoctor(input.id, getToken());
+        d = await getDoctor(input.id, getToken() ?? undefined);
       } else {
         setError('Missing profile identifier');
         setLoading(false);
@@ -135,7 +135,7 @@ export function ProfileViewModal({
 
       if (d.practiceId) {
         try {
-          const p = await getPractice(d.practiceId, getToken()).catch(() => getPracticeById(d.practiceId!));
+          const p = await getPractice(d.practiceId, getToken() ?? undefined).catch(() => getPracticeById(d.practiceId!));
           if (p) {
             const normalized = {
               ...p,
@@ -150,7 +150,7 @@ export function ProfileViewModal({
             };
             setPractice(normalized);
             const actor = getActorFromSession();
-            setContactCard(getContactCard(actor, d, normalized));
+            setContactCard(getContactCard(actor, d, normalized as Practice));
             const rawLocs = Array.isArray(p.locations) ? p.locations : [];
             setLocations(rawLocs.map(mapApiLocationToLocation));
           }
@@ -160,7 +160,7 @@ export function ProfileViewModal({
             if (fallback) {
               setPractice(fallback);
               const actor = getActorFromSession();
-              setContactCard(getContactCard(actor, d, fallback));
+              setContactCard(getContactCard(actor, d, fallback as Practice));
               const rawLocs = fallback?.locations && Array.isArray(fallback.locations) ? fallback.locations : [];
               setLocations(rawLocs.map((loc: any) => mapApiLocationToLocation(loc)));
             }
@@ -180,7 +180,7 @@ export function ProfileViewModal({
           };
           setPractice(practiceLike);
           const actor = getActorFromSession();
-          setContactCard(getContactCard(actor, d, practiceLike));
+          setContactCard(getContactCard(actor, d, practiceLike as Practice));
         }
       }
     } catch (e) {

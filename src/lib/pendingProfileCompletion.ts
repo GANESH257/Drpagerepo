@@ -75,7 +75,7 @@ function asArray<T>(value: unknown): T[] {
 
 export function buildDoctorPayloadForCompletion(doctor: Doctor): Record<string, unknown> {
   const boardCerts = toCertificationItems(asArray(doctor.boardCertifications)).filter(withName);
-  const badges = asArray(doctor.badgesAwards).filter(withName);
+  const badges = toCertificationItems(doctor.badgesAwards).filter(withName);
   return {
     fullName: doctor.fullName,
     bio: doctor.bio,
