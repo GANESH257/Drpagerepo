@@ -76,7 +76,7 @@ export function AudienceSwitchFloating() {
       data-3d-reveal-rotate-x="8"
     >
       <div className="flex flex-col md:flex-row min-h-[400px] md:min-h-[500px]">
-        {/* Left: For Patients - Background covers whole half */}
+        {/* Left: For Patients - COMMENTED OUT (hero bars used instead)
         <div
           className={cn(
             'relative overflow-hidden group cursor-pointer transition-all duration-500 ease-in-out',
@@ -89,7 +89,6 @@ export function AudienceSwitchFloating() {
           tabIndex={0}
           aria-label="For Patients - Find independent physicians"
         >
-          {/* Background Image - covers entire left half */}
           <div className="absolute inset-0 z-0">
             <Image
               src="/for_pt.png"
@@ -102,50 +101,21 @@ export function AudienceSwitchFloating() {
               priority
             />
           </div>
-          
-          {/* Green Overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#10B981]/80 via-[#10B981]/70 to-[#059669]/85 z-10 group-hover:from-[#10B981]/75 group-hover:via-[#10B981]/65 group-hover:to-[#059669]/80 transition-all duration-300" />
-          
-          {/* Content */}
           <div className="relative z-20 flex flex-col items-center justify-center text-center h-full p-6 md:p-8 lg:p-10">
-            <h3
-              className="text-sm md:text-base font-medium text-white mb-2 uppercase tracking-wide"
-              style={animationStyle(0.2)}
-            >
-              For Patients
-            </h3>
-            <h4
-              className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 leading-tight max-w-md"
-              style={animationStyle(0.3)}
-            >
-              Find your provider
-            </h4>
-            <p
-              className="text-base md:text-lg text-white/90 mb-6 md:mb-8 leading-relaxed max-w-md"
-              style={animationStyle(0.4)}
-            >
-              Experience excellence. Personal Care
-            </p>
+            <h3 className="text-sm md:text-base font-medium text-white mb-2 uppercase tracking-wide" style={animationStyle(0.2)}>For Patients</h3>
+            <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 leading-tight max-w-md" style={animationStyle(0.3)}>Find your provider</h4>
+            <p className="text-base md:text-lg text-white/90 mb-6 md:mb-8 leading-relaxed max-w-md" style={animationStyle(0.4)}>Experience excellence. Personal Care</p>
             <div style={animationStyle(0.5)}>
-              <Button
-                asChild
-                className={cn(
-                  'w-full sm:w-auto bg-white text-[#059669] border-2 border-white hover:bg-white/90 hover:border-white/80',
-                  'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2',
-                  'transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-semibold'
-                )}
-                size="lg"
-              >
-                <Link href="/patients">
-                  Access Care
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
+              <Button asChild className={cn('w-full sm:w-auto bg-white text-[#059669] border-2 border-white hover:bg-white/90 hover:border-white/80', 'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2', 'transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 font-semibold')} size="lg">
+                <Link href="/patients">Access Care <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
               </Button>
             </div>
           </div>
         </div>
+        */}
 
-        {/* Right: For Physicians - Background covers whole half */}
+        {/* Right: For Physicians - COMMENTED OUT (hero bars used instead)
         <div
           className={cn(
             'relative overflow-hidden group cursor-pointer transition-all duration-500 ease-in-out',
@@ -158,7 +128,6 @@ export function AudienceSwitchFloating() {
           tabIndex={0}
           aria-label="For Physicians - Join a trusted alliance"
         >
-          {/* Background Image - covers entire right half */}
           <div className="absolute inset-0 z-0">
             <Image
               src="/for_dr.png"
@@ -171,48 +140,19 @@ export function AudienceSwitchFloating() {
               priority
             />
           </div>
-          
-          {/* Blue Overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/80 via-brand-dark-blue/70 to-brand-dark-blue/85 z-10 group-hover:from-brand-dark-blue/75 group-hover:via-brand-dark-blue/65 group-hover:to-brand-dark-blue/80 transition-all duration-300" />
-          
-          {/* Content */}
           <div className="relative z-20 flex flex-col items-center justify-center text-center h-full p-6 md:p-8 lg:p-10">
-            <h3
-              className="text-sm md:text-base font-medium text-white mb-2 uppercase tracking-wide"
-              style={animationStyle(0.2)}
-            >
-              For Physicians
-            </h3>
-            <h4
-              className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 leading-tight max-w-md"
-              style={animationStyle(0.3)}
-            >
-              Empower your practice
-            </h4>
-            <p
-              className="text-base md:text-lg text-white/90 mb-6 md:mb-8 leading-relaxed max-w-md"
-              style={animationStyle(0.4)}
-            >
-              Connect with peers. Lead with autonomy
-            </p>
+            <h3 className="text-sm md:text-base font-medium text-white mb-2 uppercase tracking-wide" style={animationStyle(0.2)}>For Physicians</h3>
+            <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 leading-tight max-w-md" style={animationStyle(0.3)}>Empower your practice</h4>
+            <p className="text-base md:text-lg text-white/90 mb-6 md:mb-8 leading-relaxed max-w-md" style={animationStyle(0.4)}>Connect with peers. Lead with autonomy</p>
             <div style={animationStyle(0.5)}>
-              <Button
-                asChild
-                className={cn(
-                  'w-full sm:w-auto bg-white text-brand-dark-blue border-2 border-white hover:bg-white/90 hover:border-white/80',
-                  'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2',
-                  'transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105'
-                )}
-                size="lg"
-              >
-                <Link href="/physicians">
-                  Join Us
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
+              <Button asChild className={cn('w-full sm:w-auto bg-white text-brand-dark-blue border-2 border-white hover:bg-white/90 hover:border-white/80', 'focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2', 'transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105')} size="lg">
+                <Link href="/physicians">Join Us <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link>
               </Button>
             </div>
           </div>
         </div>
+        */}
       </div>
     </section>
   );

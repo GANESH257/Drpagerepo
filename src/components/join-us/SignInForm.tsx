@@ -157,18 +157,26 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
               className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
               data-scroll-speed="0"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-0 top-0 bottom-0 flex items-center justify-end pr-2 w-10 text-muted-foreground hover:text-foreground"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            <span
+              className="password-toggle-wrapper absolute right-1 inline-flex items-center justify-center shrink-0"
+              style={{ width: 36, height: 36, minWidth: 36, maxWidth: 36, top: '50%', marginTop: -18 }}
+              data-scroll-exclude
+              data-scroll-speed="0"
+              aria-hidden
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="password-toggle-btn w-full h-full flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-gray-100/80"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 shrink-0 size-4" aria-hidden />
+                ) : (
+                  <Eye className="h-4 w-4 shrink-0 size-4" aria-hidden />
+                )}
+              </button>
+            </span>
           </div>
           {passwordError && (
             <p

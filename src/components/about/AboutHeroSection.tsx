@@ -71,11 +71,11 @@ export function AboutHeroSection() {
             {/* Logo */}
             <div className="mb-6 flex justify-center">
               <Image
-                src="/logodrnew.png"
+                src="/aip%20white%20.png"
                 alt="Alliance of Independent Physicians"
                 width={180}
                 height={180}
-                className="h-24 md:h-28 lg:h-32 w-auto object-contain brightness-0 invert drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
+                className="h-24 md:h-28 lg:h-32 w-24 md:w-28 lg:w-32 rounded-full object-cover drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
                 priority
               />
             </div>

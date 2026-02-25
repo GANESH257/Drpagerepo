@@ -113,7 +113,7 @@ export function MemberBenefitsSection() {
         {/* Slider */}
         <div className="flex flex-col items-center justify-center">
           <div className="w-full max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
               {currentBenefits.map((benefit, idx) => {
                 const IconName = benefit.icon as keyof typeof LucideIcons;
                 const IconComponent = LucideIcons[IconName] as React.ComponentType<{ className?: string }> || LucideIcons.HelpCircle;
@@ -125,10 +125,10 @@ export function MemberBenefitsSection() {
                       transform: isVisible && !prefersReducedMotion ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
                       transition: prefersReducedMotion ? 'opacity 0.3s ease' : 'opacity 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                     }}
-                    className="h-full"
+                    className="h-full min-h-[25rem]"
                   >
                     <div
-                      className="group relative overflow-hidden h-full cursor-pointer rounded-2xl p-6 flex flex-col gap-2 transition-all duration-500 ease-out data-scroll-exclude bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02] hover:bg-white/75"
+                      className="group relative overflow-hidden h-full min-h-full cursor-pointer rounded-2xl p-6 flex flex-col gap-2 transition-all duration-500 ease-out data-scroll-exclude bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02] hover:bg-white/75"
                     >
                       {/* Standard card layers (same as Contact/Benefits) */}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-brand-teal/10 pointer-events-none group-hover:opacity-80 transition-opacity duration-500 z-0" aria-hidden />

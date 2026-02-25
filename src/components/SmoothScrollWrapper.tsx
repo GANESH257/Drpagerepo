@@ -41,14 +41,26 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
     handleWheel = (e: WheelEvent) => {
       // Get the element at the pointer position (most accurate for hover detection)
       const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
-      
-      // Find the closest scrollable excluded element
+
+      // Only when pointer is over an open dropdown (Radix Select listbox): prevent page scroll so the list can be used
+      const isOverOpenDropdown =
+        elementAtPoint?.closest('[data-radix-select-content]') ||
+        elementAtPoint?.closest('[role="listbox"]');
+      if (isOverOpenDropdown) {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return;
+      }
+
+      // Find the closest scrollable excluded element (must have overflow that creates a scroll container, not just be tall)
       let scrollableExcludedElement: HTMLElement | null = null;
       let current: HTMLElement | null = elementAtPoint;
-      
+
       while (current && current !== document.body) {
         if (current.hasAttribute('data-scroll-exclude')) {
-          const isScrollable = current.scrollHeight > current.clientHeight;
+          const overflowY = window.getComputedStyle(current).overflowY;
+          const hasScrollOverflow = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
+          const isScrollable = hasScrollOverflow && current.scrollHeight > current.clientHeight;
           if (isScrollable) {
             scrollableExcludedElement = current;
             break;
@@ -56,7 +68,7 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
         }
         current = current.parentElement;
       }
-      
+
       // Only handle if we found a scrollable excluded element
       if (scrollableExcludedElement) {
         // Check if we can scroll in the direction of the wheel event

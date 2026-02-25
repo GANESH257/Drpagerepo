@@ -127,7 +127,7 @@ export function DoctorBenefitsPanel() {
           }}
         >
           <Image
-            src="/logodrnew.png"
+            src="/aip%20white%20.png"
             alt="Alliance of Independent Physicians"
             width={280}
             height={80}

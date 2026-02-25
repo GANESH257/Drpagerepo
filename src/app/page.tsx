@@ -7,7 +7,7 @@ export default function HomePage() {
       <NewHomeHeroDocumented 
         subheadline="A trusted network connecting independent physicians and the communities they serve."
       />
-      <AudienceSwitchFloating />
+      {/* <AudienceSwitchFloating /> */}
     </>
   );
 }

@@ -3720,7 +3720,27 @@ body {
     -webkit-transform: translate3d(0, 0, 0) scale(0.95) !important;
     background-color: rgb(55, 65, 81) !important;
   }
-  
+
+  /* Password visibility toggle: lock size so click area is not stretched (override [data-scroll-exclude] .flex.items-center width:100%) */
+  [data-scroll-exclude] .password-toggle-wrapper,
+  [data-scroll-exclude] span.password-toggle-wrapper,
+  .password-toggle-wrapper {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+  button.password-toggle-btn {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    max-width: 36px !important;
+    flex: none !important;
+    box-sizing: border-box !important;
+  }
+
   /* Dark Mode Toggle Icons - prevent spinning and size changes */
   .dark-mode-toggle-button svg,
   .dark-mode-toggle-button .lucide,

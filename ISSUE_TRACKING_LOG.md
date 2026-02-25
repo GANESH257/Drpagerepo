@@ -2,7 +2,78 @@
 
 This document tracks all issues reported, investigations performed, and fixes applied throughout the project.
 
-**Last Updated**: 2026-02-23
+**Last Updated**: 2026-02-25
+
+---
+
+### Issue: Contact form area — page scroll when using dropdowns vs. scroll over form
+
+**Reported**: (1) “I can scroll up and down around this area” — page was scrolling when interacting with the contact form dropdowns (“I am…”, “Subject”). (2) After blocking scroll over form: “then the entire area can’t scroll” — whole contact section blocked page scroll. (3) “at these 2 I can’t scroll?” — still couldn’t scroll the page when cursor over the two select fields.  
+**Component**: ContactForm (contact page), SmoothScrollWrapper (Locomotive Scroll wheel handler).  
+**Location**: `src/components/SmoothScrollWrapper.tsx`, `src/components/contact/ContactForm.tsx`
+
+**Investigation**:
+1. Goal: prevent page scroll when using the Select dropdowns (so list doesn’t close / page doesn’t move), but allow page scroll when cursor is over the rest of the contact section.
+2. First fix: block wheel when pointer over any `[data-scroll-exclude]` that contains a form → entire contact section (full height) blocked scroll → reverted.
+3. Second fix: block wheel only when pointer over open dropdown (`[data-radix-select-content]`, `[role="listbox"]`) → good for dropdown use, but user still couldn’t scroll when over the two select fields.
+4. Root cause: contact section has `data-scroll-exclude` and is very tall (1377px). Code treated any `data-scroll-exclude` with `scrollHeight > clientHeight` as “scrollable excluded element” and blocked wheel. Section is not a scroll container (no `overflow-y: auto`), so it was wrongly blocking page scroll when cursor was over “I am…” or “Subject” rows.
+
+**Fix Applied**:
+- File: `src/components/SmoothScrollWrapper.tsx`
+  - **Dropdown-only block**: Only block Locomotive scroll when pointer is over an open dropdown (`[data-radix-select-content]` or `[role="listbox"]`). Removed broad “form area” check so the whole section does not block scroll.
+  - **Scrollable-excluded definition**: “Scrollable excluded element” now requires (a) `data-scroll-exclude`, (b) computed `overflow-y` is `auto`, `scroll`, or `overlay` (real scroll container), and (c) `scrollHeight > clientHeight`. Tall sections without overflow (e.g. contact section) are no longer treated as scrollable, so page scroll works over the form; only true scroll containers (e.g. modal with overflow) get the special handling.
+
+**Verification**:
+- Contact page: cursor over “I am…” or “Subject” (or anywhere in contact section) → page scrolls up/down normally.
+- Open “I am…” or “Subject” dropdown → cursor over the options list → page does not scroll; dropdown list is usable.
+- Modals/panels with `overflow-y: auto` and `data-scroll-exclude` still scroll internally without moving the page.
+
+---
+
+### Issue: Password visibility (eye) toggle buttons affected by Locomotive Scroll
+
+**Reported**: Issue with eye icons on sign-in/signup forms (password show/hide toggles).  
+**Component**: SignInForm, SignUpForm (ForwardRef for Eye/EyeOff SVG).  
+**Location**: `src/components/join-us/SignInForm.tsx`, `src/components/join-us/SignUpForm.tsx`
+
+**Investigation**:
+1. DOM path pointed to `button.absolute... > svg` (lucide-eye) inside signin/signup forms.
+2. Forms already had `data-scroll-exclude` on form and field wrappers; the toggle button itself did not.
+3. Root cause: Locomotive Scroll can still apply transforms to the button/icon, causing wrong size or visual glitches.
+
+**Fix Applied**:
+- File: `src/components/join-us/SignInForm.tsx`
+  - Added `data-scroll-exclude` and `data-scroll-speed="0"` to the password visibility toggle button.
+  - Added `min-w-[2.5rem]` for consistent hit area; `shrink-0 size-4` and `aria-hidden` on Eye/EyeOff icons.
+- File: `src/components/join-us/SignUpForm.tsx`
+  - Same changes for both password and confirm-password visibility toggle buttons (two buttons).
+
+**Verification**:
+- Open join-us (or page with AuthCard signin/signup). Focus or scroll; confirm eye icons do not spin, scale, or misbehave.
+
+---
+
+### Issue: Member Benefits cards inconsistent height across slides
+
+**Reported**: Benefit boxes should have the same height as the boxes in the previous slide; cards had varying heights (271px, 324px, 398px) within and across slides.  
+**Component**: MemberBenefitsSection  
+**Location**: `src/components/shared/MemberBenefitsSection.tsx`, `src/components/MemberBenefitsSection.tsx`
+
+**Investigation**:
+1. Located MemberBenefitsSection in shared and components; both use a grid with `grid-cols-1 md:grid-cols-2 lg:grid-cols-4` and card wrappers with `h-full`.
+2. Grid row height was content-based, so cards with less text were shorter; changing slides changed row height.
+3. Root cause: no minimum height and stretch behavior not guaranteed, so cards did not match height within a row or across slides.
+
+**Fix Applied**:
+- File: `src/components/shared/MemberBenefitsSection.tsx`
+  - Added `items-stretch` to the grid.
+  - Set wrapper to `min-h-[25rem]` so all cards share a consistent minimum height.
+  - Set inner card to `min-h-full` so it fills the cell.
+- File: `src/components/MemberBenefitsSection.tsx`
+  - Same changes as above.
+
+**Verification**:
+- Open a page with Member Benefits (e.g. physicians, homedemo, homenew); confirm all four cards in a row have equal height and height is consistent when switching slides.
 
 ---
 

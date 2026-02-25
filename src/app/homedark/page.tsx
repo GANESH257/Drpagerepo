@@ -10,7 +10,7 @@ export default function HomeDarkPage() {
         darkOverlay={true}
       />
       <MissionStatementDark />
-      <AudienceSwitchFloating />
+      {/* <AudienceSwitchFloating /> */}
     </>
   );
 }

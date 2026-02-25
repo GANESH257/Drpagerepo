@@ -65,11 +65,11 @@ export function Footer() {
               }}
             >
               <Image
-                src="/logodrnew.png"
+                src="/aip%20white%20.png"
                 alt="Alliance of Independent Physicians"
                 width={200}
                 height={200}
-                className="h-16 md:h-20 lg:h-24 w-auto object-contain brightness-0 invert opacity-95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+                className="h-16 md:h-20 lg:h-24 w-16 md:w-20 lg:w-24 rounded-full object-cover opacity-95 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
               />
             </Link>
             <p className="text-sm md:text-base text-white/80 max-w-md leading-relaxed mb-6">
