@@ -392,6 +392,33 @@ export function EditProfileSection({ doctor: initialDoctor, onProfileUpdate }: E
         {/* Main Form - widens when tips collapsed */}
         <div className={cn('space-y-6 min-w-0', !tipsCollapsed && 'lg:col-span-2')}>
           <Tabs defaultValue="basic" className="space-y-4">
+            {/* Compact profile summary (reference: aip-doctor-portal-ui Edit Profile header) */}
+            <div className="glass-card p-4 flex items-center gap-4 border-b border-border rounded-b-none">
+              {doctor.image ? (
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                  <Image
+                    src={doctor.image.startsWith('http') ? doctor.image : getUploadFullUrl(doctor.image)}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-muted-foreground font-semibold text-sm flex-shrink-0">
+                  {(doctor.firstName?.[0] ?? '') + (doctor.lastName?.[0] ?? '')}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-foreground text-sm truncate">
+                  {doctor.fullName || [doctor.firstName, doctor.lastName].filter(Boolean).join(' ')}
+                  {doctor.credentials && <span className="font-normal text-muted-foreground"> · {doctor.credentials}</span>}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {[doctor.specialty, doctor.practiceName || (doctor.hospitalPrivileges && doctor.hospitalPrivileges[0])].filter(Boolean).join(' · ')}
+                </p>
+              </div>
+            </div>
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 bg-gray-100 p-1">
               <TabsTrigger value="basic" className="data-[state=active]:bg-white">Basic Info</TabsTrigger>
               <TabsTrigger value="bio" className="data-[state=active]:bg-white">Biography</TabsTrigger>

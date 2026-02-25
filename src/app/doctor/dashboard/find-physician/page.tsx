@@ -273,12 +273,21 @@ export default function FindPhysicianPage() {
                           {initials(d)}
                         </div>
                         <div className="min-w-0 flex-1 relative">
-                          {(d.featured || (d.badgesAwards && d.badgesAwards.length > 0)) && (
-                            <div className="absolute top-0 right-0 flex items-center gap-0.5 rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 text-[10px] font-semibold">
-                              <Star className="h-3 w-3 fill-current" />
-                              Top Doctor 2024
-                            </div>
-                          )}
+                          {(() => {
+                            const badgeLabel = (d.badgesAwards && d.badgesAwards.length > 0)
+                              ? (typeof d.badgesAwards[0] === 'object' && d.badgesAwards[0]?.name)
+                                ? d.badgesAwards[0].name
+                                : String(d.badgesAwards[0])
+                              : d.featured
+                                ? 'Top Doctor 2024'
+                                : null;
+                            return badgeLabel ? (
+                              <div className="absolute top-0 right-0 flex items-center gap-0.5 rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 text-[10px] font-semibold">
+                                <Star className="h-3 w-3 fill-current" />
+                                {badgeLabel}
+                              </div>
+                            ) : null;
+                          })()}
                           <h3 className="text-sm font-semibold text-gray-900 leading-tight pr-20">
                             {nameWithTitle(d)}
                             {d.credentials && (

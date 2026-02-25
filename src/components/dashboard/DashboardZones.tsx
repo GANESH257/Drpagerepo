@@ -344,7 +344,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
       <div className="grid lg:grid-cols-5 gap-4">
         <div className="glass-card p-5 lg:col-span-3">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900">Recent Referrals</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent Referrals</h3>
             <Link href="/doctor/dashboard/referrals" className="text-xs font-medium flex items-center gap-1 text-[var(--aip-teal)] hover:underline">
               View All <ArrowRight className="w-3 h-3" />
             </Link>
@@ -391,7 +391,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
 
         <div className="glass-card p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-900">Latest Announcements</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Latest Announcements</h3>
             <Link href="/doctor/dashboard/community/announcements" className="text-xs font-medium flex items-center gap-1 text-[var(--aip-teal)] hover:underline">
               View All <ArrowRight className="w-3 h-3" />
             </Link>
@@ -426,7 +426,7 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
 
       {/* Quick Actions */}
       <div className="glass-card p-5">
-        <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Quick Actions</h3>
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={() => router.push('/doctor/dashboard/profile')} className="rounded-lg">
             <User className="h-4 w-4 mr-2" />

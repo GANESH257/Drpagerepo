@@ -10,11 +10,12 @@ import Link from 'next/link';
 import { Committee } from '@/lib/api/committees';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { FileText, Users, Shield, ExternalLink } from 'lucide-react';
+import { boardOfDirectorsFallback } from '@/data/boardOfDirectorsFallback';
 
 interface BoardData {
   introText: string;
   bylawsUrl: string;
-  directors: { fullName: string; role: string }[];
+  directors: { fullName: string; role: string; photo?: string }[];
 }
 
 export default function LeadershipCommitteesPage() {
@@ -29,19 +30,26 @@ export default function LeadershipCommitteesPage() {
     Promise.all([getBoardOfDirectors(), getCommittees()])
       .then(([boardRes, committeesList]) => {
         if (cancelled) return;
+        const directors = Array.isArray(boardRes.directors) && boardRes.directors.length > 0
+          ? boardRes.directors
+          : boardOfDirectorsFallback.directors;
         setBoard({
-          introText: boardRes.introText,
-          bylawsUrl: boardRes.bylawsUrl || '/policies/governance-bylaws.pdf',
-          directors: boardRes.directors || [],
+          introText: boardRes.introText || boardOfDirectorsFallback.introText,
+          bylawsUrl: boardRes.bylawsUrl || boardOfDirectorsFallback.bylawsUrl,
+          directors,
         });
         setCommittees(Array.isArray(committeesList) ? committeesList : []);
         setError(null);
       })
-      .catch((e) => {
+      .catch(() => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load leadership');
-          setBoard(null);
+          setBoard({
+            introText: boardOfDirectorsFallback.introText,
+            bylawsUrl: boardOfDirectorsFallback.bylawsUrl,
+            directors: boardOfDirectorsFallback.directors,
+          });
           setCommittees([]);
+          setError(null);
         }
       })
       .finally(() => {

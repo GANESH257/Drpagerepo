@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { getCommittees } from '@/lib/api/committees';
+import { boardOfDirectorsFallback } from '@/data/boardOfDirectorsFallback';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AdminContentLeadershipPage() {
   const [loading, setLoading] = useState(true);
@@ -30,16 +32,6 @@ export default function AdminContentLeadershipPage() {
       </div>
     );
   }
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <SectionHeader title="Leadership & Committees" description="Manage the public-facing leadership directory." />
-        <div className="glass-card p-6">
-          <p className="text-destructive">{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -47,9 +39,37 @@ export default function AdminContentLeadershipPage() {
         title="Leadership & Committees"
         description="Manage the public-facing leadership directory (committees and members)."
       />
+      {error && (
+        <div className="glass-card p-6">
+          <p className="text-destructive">{error}</p>
+          <p className="text-sm text-muted-foreground mt-2">Showing stored board data below.</p>
+        </div>
+      )}
+
+      {/* Stored Board of Directors (used when API is unavailable or in doctor portal fallback) */}
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="text-lg">Board of Directors (stored)</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            This list is shown on the doctor portal when the API is unavailable. It matches the bylaws seed data.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            {boardOfDirectorsFallback.directors.map((d, i) => (
+              <li key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <span className="font-medium">{d.fullName}</span>
+                <span className="text-sm rounded-md px-2.5 py-1 bg-muted text-muted-foreground">{d.role}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+
+      {/* Committees from API */}
       <div className="glass-card p-6">
         <p className="text-muted-foreground">
-          {committees.length} committee{committees.length !== 1 ? 's' : ''} loaded. Full CRUD UI for committees and members will be implemented here (API-only).
+          {committees.length} committee{committees.length !== 1 ? 's' : ''} loaded from API. Full CRUD UI for committees and members will be implemented here (API-only).
         </p>
       </div>
     </div>
