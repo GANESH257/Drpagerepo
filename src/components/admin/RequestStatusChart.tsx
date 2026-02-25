@@ -53,11 +53,13 @@ export function RequestStatusChart({ requests }: RequestStatusChartProps) {
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'var(--card)',
-                  border: '1px solid var(--border)',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '8px 12px',
+                  color: '#0f172a',
                 }}
+                itemStyle={{ color: '#0f172a' }}
                 formatter={(value: number | undefined) => [value ?? 0, 'Requests']}
               />
               <Legend

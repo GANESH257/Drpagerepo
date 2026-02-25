@@ -61,12 +61,14 @@ export function MonthlyAppointmentsChart({ appointments }: MonthlyAppointmentsCh
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
                 borderRadius: '8px',
-                padding: '8px 12px'
+                padding: '8px 12px',
+                color: '#0f172a',
               }}
-              labelStyle={{ fontWeight: 600, color: '#1f2937' }}
+              labelStyle={{ fontWeight: 600, color: '#0f172a' }}
+              itemStyle={{ color: '#0f172a' }}
               formatter={(value: number | undefined) => [value ?? 0, 'Appointments']}
             />
             <Bar
@@ -75,6 +77,7 @@ export function MonthlyAppointmentsChart({ appointments }: MonthlyAppointmentsCh
               radius={[8, 8, 0, 0]}
               stroke="#2EC4B6"
               strokeWidth={1}
+              activeBar={{ fill: '#2EC4B6', stroke: '#0f172a', strokeWidth: 1 }}
             />
           </BarChart>
         </ResponsiveContainer>

@@ -33,7 +33,7 @@ function hasActiveChild(item: PortalNavItem, pathname: string, basePaths: string
 
 export function PortalSidebar({ items, isCollapsed, onToggleCollapse, sidebarFooter }: PortalSidebarProps) {
   const pathname = usePathname();
-  const basePaths = ['/admin', '/doctor/dashboard'];
+  const basePaths = ['/admin', '/doctor/dashboard', '/doctor/onboard'];
 
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
     const set = new Set<string>();

@@ -350,15 +350,30 @@ export function MessagesSection({ doctor, otherDoctorId, basePath }: MessagesSec
                         <div
                           key={m.id}
                           className={cn(
-                            'rounded-lg border border-border bg-card px-4 py-3 shadow-sm',
-                            mine && 'bg-[var(--aip-teal)]/10'
+                            'flex',
+                            mine ? 'justify-end' : 'justify-start'
                           )}
                         >
-                          <div className="mb-1 text-xs font-medium text-muted-foreground">
-                            {senderName} – {formatMessageTime(m.sentAt)}
-                          </div>
-                          <div className="whitespace-pre-wrap text-sm text-foreground">
-                            {m.content}
+                          <div
+                            className={cn(
+                              'max-w-[85%] rounded-xl px-4 py-3 shadow-sm',
+                              mine
+                                ? 'bg-[var(--aip-teal)] text-white border border-[var(--aip-teal)]'
+                                : 'rounded-lg border border-border bg-card text-foreground'
+                            )}
+                          >
+                            <div className={cn(
+                              'mb-1 text-xs font-medium',
+                              mine ? 'text-white/90' : 'text-muted-foreground'
+                            )}>
+                              {senderName} – {formatMessageTime(m.sentAt)}
+                            </div>
+                            <div className={cn(
+                              'whitespace-pre-wrap text-sm',
+                              mine ? 'text-white' : 'text-foreground'
+                            )}>
+                              {m.content}
+                            </div>
                           </div>
                         </div>
                       );

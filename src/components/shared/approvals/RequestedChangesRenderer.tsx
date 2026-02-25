@@ -836,7 +836,8 @@ function approvalImageUrl(pathOrUrl: string | undefined): string {
 }
 
 /**
- * Doctor Profile Completion View - Profile details submitted by doctor joining a practice
+ * Doctor Profile Completion View - Profile details submitted by doctor joining a practice.
+ * Always shows submitted profile data in a readable format; optionally shows diff when current profile is loaded.
  */
 function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) {
   const payload = request.payload || {};
@@ -868,11 +869,11 @@ function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) 
   const currentImage = currentDoctor?.image ?? (currentDoctor as unknown as Record<string, unknown>)?.profileImageUrl ?? (currentDoctor as unknown as Record<string, unknown>)?.profile_image_url ?? '';
   const requestedImage = requested.profileImageUrl ?? requested.profile_image_url ?? '';
   const imageChanged = requestedImage && (currentImage !== requestedImage || !currentImage);
-  const currentCertsJson = JSON.stringify(currentDoctor?.boardCertifications ?? []);
-  const requestedCertsJson = JSON.stringify(requested.boardCertifications ?? []);
+  const currentCertsJson = JSON.stringify(Array.isArray(currentDoctor?.boardCertifications) ? currentDoctor.boardCertifications : []);
+  const requestedCertsJson = JSON.stringify(Array.isArray(requested.boardCertifications) ? requested.boardCertifications : []);
   const certsChanged = requestedCertsJson !== currentCertsJson;
-  const currentBadgesJson = JSON.stringify(currentDoctor?.badgesAwards ?? []);
-  const requestedBadgesJson = JSON.stringify(requested.badgesAwards ?? []);
+  const currentBadgesJson = JSON.stringify(Array.isArray(currentDoctor?.badgesAwards) ? currentDoctor.badgesAwards : []);
+  const requestedBadgesJson = JSON.stringify(Array.isArray(requested.badgesAwards) ? requested.badgesAwards : []);
   const badgesChanged = requestedBadgesJson !== currentBadgesJson;
 
   const changedScalars = PROFILE_SCALAR_KEYS.filter((key) => {
@@ -887,106 +888,134 @@ function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) 
   const badgesAwards = Array.isArray(requested.badgesAwards) ? requested.badgesAwards : [];
   const hasAnyChanges = changedScalars.length > 0 || imageChanged || (certsChanged && boardCerts.length > 0) || (badgesChanged && badgesAwards.length > 0);
 
-  if (doctorId && currentDoctor === null && !loadFailed) {
-    return <p className="text-sm text-muted-foreground">Loading current profile to show changes…</p>;
-  }
+  const isLoading = !!doctorId && currentDoctor === null && !loadFailed;
 
-  if (loadFailed || (!hasAnyChanges && !currentDoctor)) {
-    const fallbackCerts = Array.isArray(requested.boardCertifications) ? requested.boardCertifications : [];
-    const fallbackBadges = Array.isArray(requested.badgesAwards) ? requested.badgesAwards : [];
-    const fallbackProfileImg = (requested.profileImageUrl ?? requested.profile_image_url) as string | undefined;
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <h4 className="font-bold text-brand-dark-blue">Profile details (requested)</h4>
-            {fallbackProfileImg && (
-              <div>
-                <Label className="text-muted-foreground">Profile image</Label>
-                <div className="mt-1.5">
-                  <img
-                    src={approvalImageUrl(fallbackProfileImg)}
-                    alt="Profile"
-                    className="h-24 w-24 rounded-lg object-cover border border-gray-200"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                </div>
-              </div>
-            )}
-            <div className="grid gap-2 text-sm">
-              {requested.fullName != null && String(requested.fullName) && <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{String(requested.fullName)}</div></div>}
-              {requested.npi != null && String(requested.npi) && <div><Label className="text-muted-foreground">NPI</Label><div className="mt-0.5 font-medium">{String(requested.npi)}</div></div>}
-              {requested.bio != null && String(requested.bio) && <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5">{String(requested.bio)}</div></div>}
-              {requested.about != null && String(requested.about) && <div><Label className="text-muted-foreground">About</Label><div className="mt-0.5">{String(requested.about)}</div></div>}
-              {requested.phone != null && String(requested.phone) && <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{String(requested.phone)}</div></div>}
-              {requested.website != null && String(requested.website) && <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5">{String(requested.website)}</div></div>}
+  /** Always show submitted profile data in a readable card (what we collect in onboarding) */
+  const submittedProfileCard = (
+    <Card>
+      <CardContent className="pt-6 space-y-4">
+        <h4 className="font-bold text-brand-dark-blue">Profile details</h4>
+        <p className="text-sm text-muted-foreground">Submitted by the doctor for approval.</p>
+        {profileImageUrl && (
+          <div>
+            <Label className="text-muted-foreground">Profile image</Label>
+            <div className="mt-1.5">
+              <img
+                src={approvalImageUrl(profileImageUrl)}
+                alt="Profile"
+                className="h-24 w-24 rounded-lg object-cover border border-gray-200"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
             </div>
-            {fallbackCerts.length > 0 && (
-              <div>
-                <Label className="text-muted-foreground">Board certifications</Label>
-                <div className="mt-1.5 flex flex-wrap gap-3">
-                  {fallbackCerts.map((c: { name?: string; year?: string; imageUrl?: string }, i: number) => (
-                    <div key={i} className="flex flex-col items-center gap-1">
-                      {c.imageUrl && (
-                        <img
-                          src={approvalImageUrl(c.imageUrl)}
-                          alt={c.name || 'Certification'}
-                          className="h-16 w-16 rounded object-cover border border-gray-200"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      )}
-                      <span className="text-xs text-muted-foreground">{c.name}{c.year ? ` (${c.year})` : ''}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          </div>
+        )}
+        <div className="grid gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+            {requested.fullName != null && String(requested.fullName) && (
+              <div><Label className="text-muted-foreground">Full name</Label><div className="mt-0.5 font-medium">{String(requested.fullName)}</div></div>
             )}
-            {fallbackBadges.length > 0 && (
-              <div>
-                <Label className="text-muted-foreground">Badges & awards</Label>
-                <div className="mt-1.5 flex flex-wrap gap-3">
-                  {fallbackBadges.map((b: { name?: string; year?: string; imageUrl?: string }, i: number) => (
-                    <div key={i} className="flex flex-col items-center gap-1">
-                      {b.imageUrl && (
-                        <img
-                          src={approvalImageUrl(b.imageUrl)}
-                          alt={b.name || 'Award'}
-                          className="h-16 w-16 rounded object-cover border border-gray-200"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      )}
-                      <span className="text-xs text-muted-foreground">{b.name}{b.year ? ` (${b.year})` : ''}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {requested.phone != null && String(requested.phone) && (
+              <div><Label className="text-muted-foreground">Phone</Label><div className="mt-0.5">{String(requested.phone)}</div></div>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+            {requested.website != null && String(requested.website) && (
+              <div><Label className="text-muted-foreground">Website</Label><div className="mt-0.5 break-all">{String(requested.website)}</div></div>
+            )}
+            {requested.npi != null && String(requested.npi) && (
+              <div><Label className="text-muted-foreground">NPI (10 digits)</Label><div className="mt-0.5 font-medium">{String(requested.npi)}</div></div>
+            )}
+          </div>
+          {requested.bio != null && String(requested.bio) && (
+            <div><Label className="text-muted-foreground">Bio</Label><div className="mt-0.5 whitespace-pre-wrap">{String(requested.bio)}</div></div>
+          )}
+          {requested.medicalSchool != null && String(requested.medicalSchool) && (
+            <div><Label className="text-muted-foreground">Medical school</Label><div className="mt-0.5">{String(requested.medicalSchool)}</div></div>
+          )}
+          {requested.about != null && String(requested.about) && (
+            <div><Label className="text-muted-foreground">About</Label><div className="mt-0.5 whitespace-pre-wrap">{String(requested.about)}</div></div>
+          )}
+          {requested.credentials != null && String(requested.credentials) && (
+            <div><Label className="text-muted-foreground">Credentials</Label><div className="mt-0.5">{String(requested.credentials)}</div></div>
+          )}
+          {requested.specialty != null && String(requested.specialty) && (
+            <div><Label className="text-muted-foreground">Specialty</Label><div className="mt-0.5">{String(requested.specialty)}</div></div>
+          )}
+        </div>
+        {/* Arrays from payload (insurance, conditions/services) if present */}
+        {Array.isArray(requested.insurance) && requested.insurance.length > 0 && (
+          <div>
+            <Label className="text-muted-foreground">Accepted insurance</Label>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {(requested.insurance as { name?: string; slug?: string }[]).map((ins, i) => (
+                <span key={i} className="text-xs rounded-md bg-muted px-2 py-1">{ins.name ?? ins.slug ?? '—'}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {Array.isArray(requested.conditions_and_services) && requested.conditions_and_services.length > 0 && (
+          <div>
+            <Label className="text-muted-foreground">Conditions & procedures</Label>
+            <ul className="mt-1.5 list-disc pl-4 space-y-1 text-sm">
+              {(requested.conditions_and_services as { condition?: string; services?: string[] }[]).map((row: { condition?: string; services?: string[] }, i: number) => (
+                <li key={i}>
+                  {row.condition || 'Condition'}
+                  {Array.isArray(row.services) && row.services.length > 0 && (
+                    <span className="text-muted-foreground"> — {row.services.filter(Boolean).join(', ')}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {Array.isArray(requested.conditionServices) && requested.conditionServices.length > 0 && (
+          <div>
+            <Label className="text-muted-foreground">Conditions & procedures</Label>
+            <ul className="mt-1.5 list-disc pl-4 space-y-1 text-sm">
+              {(requested.conditionServices as { condition?: string; services?: string[] }[]).map((row: { condition?: string; services?: string[] }, i: number) => (
+                <li key={i}>
+                  {row.condition || 'Condition'}
+                  {Array.isArray(row.services) && row.services.length > 0 && (
+                    <span className="text-muted-foreground"> — {row.services.filter(Boolean).join(', ')}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <h4 className="font-bold text-brand-dark-blue">Profile details</h4>
-          {profileImageUrl && (
-            <div>
-              <Label className="text-muted-foreground">Profile image</Label>
-              <div className="mt-1.5">
-                <img
-                  src={approvalImageUrl(profileImageUrl)}
-                  alt="Profile"
-                  className="h-24 w-24 rounded-lg object-cover border border-gray-200"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {submittedProfileCard}
+
+      {isLoading && (
+        <p className="text-sm text-muted-foreground">Loading current profile to compare…</p>
+      )}
+
+      {currentDoctor && (hasAnyChanges ? (
+        <Card>
+          <CardContent className="pt-6 space-y-2">
+            <h4 className="font-bold text-brand-dark-blue">Changes from current profile</h4>
+            <p className="text-sm text-muted-foreground">The submitted data differs from the current profile.</p>
+            {changedScalars.length > 0 && (() => {
+              const withValues = changedScalars.filter((key) => String(requested[key] ?? '').trim() !== '');
+              return withValues.length > 0 ? (
+                <ul className="list-disc pl-4 text-sm">
+                  {withValues.map((key) => (
+                    <li key={key}>{key}: requested &quot;{String(requested[key] ?? '')}&quot;</li>
+                  ))}
+                </ul>
+              ) : null;
+            })()}
+            {imageChanged && <p className="text-sm">Profile image updated</p>}
+            {certsChanged && boardCerts.length > 0 && <p className="text-sm">Board certifications updated</p>}
+            {badgesChanged && badgesAwards.length > 0 && <p className="text-sm">Badges & awards updated</p>}
+          </CardContent>
+        </Card>
+      ) : (
+        <p className="text-sm text-muted-foreground">Submitted data matches current profile.</p>
+      ))}
 
       {boardCerts.length > 0 && (
         <Card>
@@ -1017,7 +1046,7 @@ function DoctorProfileCompletionView({ request }: { request: ApprovalRequest }) 
               })}
             </div>
           </CardContent>
-      </Card>
+        </Card>
       )}
 
       {badgesAwards.length > 0 && (

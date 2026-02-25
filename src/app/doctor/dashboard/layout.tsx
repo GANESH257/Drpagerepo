@@ -1,15 +1,45 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDoctorSession } from '@/lib/useDoctorSession';
+import type { UserInfo } from '@/lib/useDoctorSession';
 import { getDoctor } from '@/lib/api/doctors';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PendingRouteGuard } from '@/components/dashboard/PendingRouteGuard';
+import { ProfileViewProvider } from '@/contexts/ProfileViewContext';
 import { Button } from '@/components/ui/button';
 import { Doctor } from '@/types';
 import { usePortalTheme } from '@/contexts/PortalThemeContext';
 import { cn } from '@/lib/utils';
+
+/** Build a minimal Doctor from session so we can show the dashboard without waiting for GET /api/doctors/:id */
+function minimalDoctorFromSession(doctorId: string, user: UserInfo): Doctor {
+  const fullName = user.email ? user.email.split('@')[0] : 'Doctor';
+  const isPending = user.profileStatus === 'pending_profile';
+  return {
+    id: doctorId,
+    slug: '',
+    firstName: '',
+    lastName: '',
+    fullName,
+    specialty: '',
+    credentials: '',
+    bio: '',
+    locations: [],
+    insurance: [],
+    rating: 0,
+    reviewCount: 0,
+    reviews: [],
+    featured: false,
+    verified: !isPending,
+    availability: [],
+    acceptsNewPatients: false,
+    practiceId: user.practiceId ?? undefined,
+    roleInPractice: user.roleInPractice ?? 'doctor',
+    profileStatus: isPending ? 'pending_profile' : 'active',
+  };
+}
 
 export default function DoctorDashboardLayout({
   children,
@@ -21,10 +51,38 @@ export default function DoctorDashboardLayout({
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [backgroundLoadError, setBackgroundLoadError] = useState<string | null>(null);
+
+  const loadFullDoctorInBackground = useCallback((doctorId: string, token: string, user: UserInfo) => {
+    const timeoutMs = 20000;
+    const loadWithTimeout = Promise.race([
+      getDoctor(doctorId, token),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+      ),
+    ]);
+    loadWithTimeout
+      .then((loadedDoctor) => {
+        if (!loadedDoctor) return;
+        updateSessionWithDoctorInfo(loadedDoctor);
+        setDoctor(loadedDoctor);
+        setBackgroundLoadError(null);
+        if (loadedDoctor.profileStatus === 'pending_profile') {
+          router.replace('/doctor/onboard');
+        }
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Failed to load profile';
+        if (msg.includes('Unauthorized') || msg.includes('token')) {
+          router.push('/join-us');
+          return;
+        }
+        setBackgroundLoadError('Profile details are still loading. You can continue; we’ll retry in the background.');
+      });
+  }, [router, updateSessionWithDoctorInfo]);
 
   useEffect(() => {
     const checkAuthAndLoadDoctor = async () => {
-      // Check authentication
       if (!isAuthenticated()) {
         router.push('/join-us');
         return;
@@ -38,61 +96,37 @@ export default function DoctorDashboardLayout({
         return;
       }
 
-      // Check if user is a doctor
       if (user.role !== 'doctor') {
         setError('Dashboard access is available after your membership is approved.');
         setIsLoading(false);
         return;
       }
 
-      // Get doctorId from user or session
       const doctorId = user.doctorId;
       if (!doctorId) {
-        setError('Doctor profile not found. Please contact support.');
+        setError('Doctor profile not found. If you were just approved, log out and sign in again to refresh your access.');
         setIsLoading(false);
         return;
       }
 
-      try {
-        // Load doctor profile from API
-        const loadedDoctor = await getDoctor(doctorId, token);
-        
-        // Check if profile exists
-        if (!loadedDoctor) {
-          setError('Dashboard access is available after approval.');
-          setIsLoading(false);
-          return;
-        }
-        
-        // Update session with doctorId if not present
-        if (!user.doctorId) {
-          updateSessionDoctorId(doctorId);
-        }
-        // Store practiceId and roleInPractice for API-created doctors (getActorFromSession needs these)
-        updateSessionWithDoctorInfo(loadedDoctor);
-        
-        setDoctor(loadedDoctor);
-        setIsLoading(false);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load doctor profile';
-        
-        // Handle 401 (unauthorized) - token expired or invalid
-        if (errorMessage.includes('Unauthorized') || errorMessage.includes('token')) {
-          router.push('/join-us');
-          return;
-        }
-        
-        // Handle 404 (not found)
-        if (errorMessage.includes('not found')) {
-          setError('Dashboard access is available after approval.');
-        } else {
-          setError('Failed to load dashboard. Please try again.');
-        }
-        setIsLoading(false);
+      // Show dashboard immediately from session so we never block on a slow API.
+      const minimal = minimalDoctorFromSession(doctorId, user);
+      if (!user.doctorId) updateSessionDoctorId(doctorId);
+      setDoctor(minimal);
+      setIsLoading(false);
+
+      // Only send to onboard when we explicitly know they're pending (join-approved, not yet approved for portal).
+      if (minimal.profileStatus === 'pending_profile') {
+        router.replace('/doctor/onboard');
+        return;
       }
+
+      // Load full doctor in background; layout and dashboard work with minimal data until then.
+      loadFullDoctorInBackground(doctorId, token, user);
     };
 
     checkAuthAndLoadDoctor();
+    // Run once on mount; session and auth are read at that time.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -119,16 +153,11 @@ export default function DoctorDashboardLayout({
           </h2>
           <p className="text-muted-foreground mb-2">{error}</p>
           <p className="text-sm text-muted-foreground mb-6">
-            Submit a join request to get started. Once approved, you'll have full access to your dashboard.
+            {error.includes('just approved')
+              ? 'Log out and sign in again so your session includes your doctor profile. If the problem continues, contact support.'
+              : 'Submit a join request to get started. Once approved, you\'ll have full access to your dashboard.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              onClick={() => router.push('/join-us/application')}
-              className="text-white rounded-lg"
-              style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))' }}
-            >
-              Submit Join Request
-            </Button>
             <Button
               onClick={() => router.push('/join-us')}
               variant="outline"
@@ -137,6 +166,15 @@ export default function DoctorDashboardLayout({
             >
               Return to Login
             </Button>
+            {!error.includes('just approved') && (
+              <Button
+                onClick={() => router.push('/join-us/application')}
+                className="text-white rounded-lg"
+                style={{ background: 'linear-gradient(135deg, var(--aip-teal), var(--aip-navy))', color: 'white' }}
+              >
+                Submit Join Request
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -149,14 +187,33 @@ export default function DoctorDashboardLayout({
 
   const handleProfileUpdate = (_updatedDoctor: Doctor) => {};
 
+  const handleRetryBackgroundLoad = () => {
+    setBackgroundLoadError(null);
+    const token = getToken();
+    const user = getUser();
+    if (doctor && token && user?.doctorId) {
+      loadFullDoctorInBackground(user.doctorId, token, user);
+    }
+  };
+
   // All authenticated doctors (including pending) use the same dashboard with restricted nav and route guard.
   return (
-    <div className={cn(darkClass, 'min-h-screen flex flex-col')}>
-      <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
-        <PendingRouteGuard doctor={doctor}>
-          {children}
-        </PendingRouteGuard>
-      </DashboardLayout>
-    </div>
+    <ProfileViewProvider>
+      <div className={cn(darkClass, 'min-h-screen flex flex-col')}>
+        {backgroundLoadError && (
+          <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-amber-800 dark:text-amber-200">{backgroundLoadError}</p>
+            <Button size="sm" variant="outline" onClick={handleRetryBackgroundLoad} className="shrink-0">
+              Retry
+            </Button>
+          </div>
+        )}
+        <DashboardLayout doctor={doctor} onProfileUpdate={handleProfileUpdate}>
+          <PendingRouteGuard doctor={doctor}>
+            {children}
+          </PendingRouteGuard>
+        </DashboardLayout>
+      </div>
+    </ProfileViewProvider>
   );
 }

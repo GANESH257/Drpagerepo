@@ -19,9 +19,11 @@ import {
 import { getDoctors, getDoctor, updateDoctor } from '@/lib/api/doctors';
 import type { Doctor } from '@/types';
 import { getToken } from '@/lib/api/config';
-import { Search, X } from 'lucide-react';
+import { Search, X, User } from 'lucide-react';
+import { useProfileView } from '@/contexts/ProfileViewContext';
 
 export default function AdminMembersDoctorsPage() {
+  const { openProfile } = useProfileView();
   const searchParams = useSearchParams();
   const practiceIdParam = searchParams.get('practiceId') ?? '';
 
@@ -256,7 +258,7 @@ export default function AdminMembersDoctorsPage() {
                   <TableHead className="uppercase tracking-wider text-muted-foreground">Practice</TableHead>
                   <TableHead className="uppercase tracking-wider text-muted-foreground">Specialty</TableHead>
                   <TableHead className="uppercase tracking-wider text-muted-foreground">Status</TableHead>
-                  <TableHead className="w-[200px] uppercase tracking-wider text-muted-foreground">Actions</TableHead>
+                  <TableHead className="w-[240px] uppercase tracking-wider text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -270,7 +272,11 @@ export default function AdminMembersDoctorsPage() {
                     <TableCell className="text-muted-foreground">{d.specialty ?? '—'}</TableCell>
                     <TableCell><StatusBadge status={(d as any).status ?? 'active'} /></TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => openEdit(d)}>Edit</Button>
+                      <Button variant="outline" size="sm" className="border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => openProfile({ doctor: d })}>
+                        <User className="h-3.5 w-3.5 mr-1" />
+                        View Profile
+                      </Button>
+                      <Button variant="outline" size="sm" className="ml-1 border-[var(--aip-teal)] text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => openEdit(d)}>Edit</Button>
                       <Button variant="ghost" size="sm" className="ml-1 text-[var(--aip-teal)] hover:bg-[var(--aip-teal)]/10" onClick={() => handleResetPassword(d)}>Reset password</Button>
                     </TableCell>
                   </TableRow>

@@ -347,6 +347,17 @@ export function ApprovalRequestDetailClient({ requestId, backHref = DEFAULT_BACK
                 effects.push('Practice insurance and services will be updated');
                 effects.push('Changes will be reflected in search filters');
                 break;
+            case 'doctor_profile_completion':
+            case 'doctor_profile_edit':
+            case 'practice_admin_profile_edit':
+                effects.push('The doctor\'s profile will be updated with the submitted details (name, contact, bio, NPI, insurance, conditions & procedures, etc.)');
+                effects.push('The doctor will get full access to the doctor portal');
+                effects.push('Profile will be visible in the directory according to practice settings');
+                break;
+            case 'practice_admin_profile_practice_completion':
+                effects.push('The doctor\'s profile and practice details will be updated');
+                effects.push('The doctor will get full access to the doctor portal');
+                break;
             default:
                 effects.push('Approval will apply the requested changes');
         }

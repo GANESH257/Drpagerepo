@@ -23,9 +23,11 @@ import { UserPlus, UserMinus, Copy, Mail, ExternalLink, Phone, ArrowRight } from
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { PracticeInvitation } from '@/types/invitations';
 import { getMembershipPlans } from '@/lib/api/membership-plans';
+import { useProfileView } from '@/contexts/ProfileViewContext';
 
 export default function PracticeRosterPage() {
   const router = useRouter();
+  const { openProfile } = useProfileView();
   const [practice, setPractice] = useState<Practice | null>(null);
   const [practiceDoctors, setPracticeDoctors] = useState<Doctor[]>([]);
   const [invitations, setInvitations] = useState<PracticeInvitation[]>([]);
@@ -391,7 +393,7 @@ export default function PracticeRosterPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => router.push(getDoctorProfileUrl(doctor))}
+                      onClick={() => openProfile({ doctor: doctor })}
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                       View Profile

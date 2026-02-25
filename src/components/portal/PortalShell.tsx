@@ -46,7 +46,7 @@ export function PortalShell({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const basePaths = ['/admin', '/doctor/dashboard'];
+  const basePaths = ['/admin', '/doctor/dashboard', '/doctor/onboard'];
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

@@ -100,14 +100,11 @@ export function AdminSidebar({ isCollapsed, onToggleCollapse }: AdminSidebarProp
   return (
     <aside
       className={cn(
-        'fixed left-0 top-40 md:top-44 z-30 h-[calc(100vh-10rem)] md:h-[calc(100vh-11rem)] border-r-2 border-[var(--aip-teal)]/20 bg-background transition-all duration-300 overflow-y-auto',
-        'bg-gradient-to-b from-white to-var(--skin-vibrant-teal)/30',
+        'admin-sidebar fixed left-0 top-40 md:top-44 z-30 h-[calc(100vh-10rem)] md:h-[calc(100vh-11rem)] border-r-2 transition-all duration-300 overflow-y-auto',
+        'border-[var(--sidebar-border)]',
         isCollapsed ? 'w-16' : 'w-64',
         'hidden lg:block'
       )}
-      style={{
-        background: 'linear-gradient(to bottom, white 0%, var(--skin-vibrant-teal) 100%)',
-      }}
     >
       <div className="flex h-full flex-col">
         {/* Collapse toggle button */}

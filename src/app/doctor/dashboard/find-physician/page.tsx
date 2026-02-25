@@ -23,8 +23,10 @@ import Image from 'next/image';
 import { showToast } from '@/lib/toast';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { getUploadFullUrl } from '@/lib/api/upload';
+import { useProfileView } from '@/contexts/ProfileViewContext';
 
 export default function FindPhysicianPage() {
+  const { openProfile } = useProfileView();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [search, setSearch] = useState('');
   const [specialty, setSpecialty] = useState('');
@@ -440,15 +442,14 @@ export default function FindPhysicianPage() {
                       )}
                     </div>
                     <div className="flex border-t border-gray-100 p-3 gap-1.5">
-                      <Link href={getDoctorProfileUrl(d)} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
-                        >
-                          View Profile
-                        </Button>
-                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-0 rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => openProfile({ doctor: d })}
+                      >
+                        View Profile
+                      </Button>
                       {contactIds.has(d.id) ? (
                         <Button
                           variant="outline"

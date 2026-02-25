@@ -9,7 +9,7 @@ export function TopBar() {
   const pathname = usePathname();
 
   // Hide on dashboard / admin portal pages
-  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/admin')) {
+  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/doctor/onboard') || pathname.startsWith('/admin')) {
     return null;
   }
 

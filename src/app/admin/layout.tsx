@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { isAdminAuthenticated } from '@/lib/adminSession';
 import { AdminShell } from '@/components/admin/AdminShell';
+import { ProfileViewProvider } from '@/contexts/ProfileViewContext';
 import { getActorFromSession, assertAdmin } from '@/lib/services/permissionService';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { usePortalTheme } from '@/contexts/PortalThemeContext';
@@ -113,7 +114,9 @@ export default function AdminLayout({
 
   return (
     <div className={cn(darkClass, 'min-h-screen bg-background text-foreground')}>
-      <AdminShell>{children}</AdminShell>
+      <ProfileViewProvider>
+        <AdminShell>{children}</AdminShell>
+      </ProfileViewProvider>
     </div>
   );
 }

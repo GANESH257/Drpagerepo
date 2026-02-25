@@ -19,14 +19,14 @@ import { Eye, CheckCircle, XCircle, ArrowRight, User, Plus } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
-import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { normalizeReferralStatus, getReferralStatusLabel } from '@/lib/utils/referralStatusLabels';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
+import { useProfileView } from '@/contexts/ProfileViewContext';
 
 export default function ReferralsV2Page() {
   const router = useRouter();
+  const { openProfile } = useProfileView();
   const searchParams = useSearchParams();
   const referralIdParam = searchParams.get('referralId');
   const tabParam = searchParams.get('tab') as 'sent' | 'received' | null;
@@ -492,20 +492,23 @@ export default function ReferralsV2Page() {
                   filteredDoctors.map((doc) => {
                     const displayName = doc.fullName ?? (doc as any).full_name ?? '—';
                     const displaySpecialty = doc.specialty ?? (doc as any).specialties?.[0] ?? '—';
-                    const profileHref = getDoctorProfileUrl(doc);
                     return (
                       <div key={doc.id} className="flex items-center gap-3 rounded-xl border p-3 hover:border-[var(--aip-teal)]/50 hover:bg-[var(--aip-teal)]/5">
                         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--aip-teal)]/20 text-[var(--aip-teal)] text-sm font-bold">
                           {displayName.charAt(0)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-gray-900 truncate">{displayName}</div>
-                          <div className="text-xs text-gray-500 truncate">{displaySpecialty}</div>
+                          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">{displayName}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{displaySpecialty}</div>
                           <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <Link href={profileHref} className="text-xs font-medium text-[var(--aip-teal)] hover:underline">
+                            <button
+                              type="button"
+                              onClick={() => openProfile({ doctor: doc })}
+                              className="text-xs font-medium text-[var(--aip-teal)] hover:underline inline-flex items-center"
+                            >
                               <User className="mr-1 h-3 w-3 inline" />
                               View Profile
-                            </Link>
+                            </button>
                             <ReferralDialog
                               doctor={doc}
                               trigger={

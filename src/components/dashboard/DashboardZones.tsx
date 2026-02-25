@@ -107,6 +107,12 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
   const isPendingPA = isIncomplete && doctor.roleInPractice === 'practice_admin';
   const isPendingDoctorOnly = isIncomplete && doctor.roleInPractice !== 'practice_admin';
 
+  /** Pending (just-approved) doctors: show dashboard immediately; don't block on referrals/announcements. */
+  const showMinimalForPending = isIncomplete;
+  useEffect(() => {
+    if (showMinimalForPending) setLoading(false);
+  }, [showMinimalForPending]);
+
   const profileValid = !validateProfileForCompletion(doctor);
   const [practice, setPractice] = useState<PracticeForValidation | null>(null);
   const [practiceLoaded, setPracticeLoaded] = useState(false);
@@ -115,7 +121,8 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
       setPracticeLoaded(true);
       return;
     }
-    getPractice(doctor.practiceId, getToken())
+    const timeoutMs = 8000;
+    const practicePromise = getPractice(doctor.practiceId, getToken())
       .then((p) => {
         const addr = p.address && typeof p.address === 'object' ? p.address : {};
         setPractice({
@@ -132,8 +139,9 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
           locations: Array.isArray(p.locations) ? p.locations : [],
         });
       })
-      .catch(() => setPractice(null))
-      .finally(() => setPracticeLoaded(true));
+      .catch(() => setPractice(null));
+    const timeoutPromise = new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
+    Promise.race([practicePromise, timeoutPromise]).finally(() => setPracticeLoaded(true));
   }, [isPendingPA, doctor.practiceId]);
 
   const practiceValid = !isPendingPA || (practice !== null && !validatePracticeForCompletion(practice));
@@ -236,19 +244,29 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
 
   const load = useCallback(async () => {
     const doctorId = doctor.id;
-    setLoading(true);
+    if (!isIncomplete) {
+      setLoading(true);
+    }
     setLoadError(null);
+    const timeoutMs = 15000; // 15s max wait so one slow API doesn't hang the dashboard
+    const withTimeout = <T,>(p: Promise<T>): Promise<T> =>
+      Promise.race([
+        p,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error('Dashboard data timed out')), timeoutMs)
+        ),
+      ]);
     try {
       const [refs, apps, stats, ann, ev, unread, membershipRes, approvalList, doctorsRes] = await Promise.all([
-        getReferrals(doctorId).catch(() => []),
-        loadAppointmentRequests(doctorId).catch(() => []),
-        getProfileStats().catch(() => ({ profile_views_this_month: 0 })),
-        getAnnouncements().catch(() => []),
-        getEvents().catch(() => []),
+        withTimeout(getReferrals(doctorId).catch(() => [])),
+        withTimeout(loadAppointmentRequests(doctorId).catch(() => [])),
+        withTimeout(getProfileStats().catch(() => ({ profile_views_this_month: 0 }))),
+        withTimeout(getAnnouncements().catch(() => [])),
+        withTimeout(getEvents().catch(() => [])),
         Promise.resolve(0), // unread count handled by Firestore subscription below
-        getMyMembership().catch(() => null),
-        getApprovalRequests().catch(() => []),
-        getDoctors({ limit: 1 }, getToken() ?? undefined).catch(() => ({ doctors: [], pagination: { total: 0 } })),
+        withTimeout(getMyMembership().catch(() => null)),
+        withTimeout(getApprovalRequests().catch(() => [])),
+        withTimeout(getDoctors({ limit: 1 }, getToken() ?? undefined).catch(() => ({ doctors: [], pagination: { total: 0 } }))),
       ]);
       setReferrals(Array.isArray(refs) ? refs : []);
       setAppointments(Array.isArray(apps) ? apps : []);
@@ -269,14 +287,21 @@ export function DashboardZones({ doctor }: DashboardZonesProps) {
       setChangesRequestedRequest(withNotes || null);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Failed to load dashboard');
+      setReferrals([]);
+      setAnnouncements([]);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
-  }, [doctor.id]);
+  }, [doctor.id, isIncomplete]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (showMinimalForPending) {
+      load(); // run in background so data is there when they become verified
+    } else {
+      load();
+    }
+  }, [load, showMinimalForPending]);
 
   // Real-time Firestore unread message count — replaces the REST API poll which
   // always returned 0 because messages are stored in Firestore, not PostgreSQL.

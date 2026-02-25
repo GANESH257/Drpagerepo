@@ -116,8 +116,8 @@ export function Header() {
     };
   }, [isHomePage]);
 
-  // Hide public navbar on dashboard / admin pages (after all hooks)
-  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/admin')) {
+  // Hide public navbar on dashboard, onboard, and admin pages (after all hooks)
+  if (pathname.startsWith('/doctor/dashboard') || pathname.startsWith('/doctor/onboard') || pathname.startsWith('/admin')) {
     return null;
   }
 
@@ -132,7 +132,12 @@ export function Header() {
   const handleSignInClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (canAccessDashboard) {
-      router.push('/doctor/dashboard');
+      const user = getUser();
+      if (user?.profileStatus === 'pending_profile') {
+        router.push('/doctor/onboard');
+      } else {
+        router.push('/doctor/dashboard');
+      }
     } else {
       router.push('/join-us');
     }

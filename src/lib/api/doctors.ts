@@ -166,26 +166,78 @@ export async function getDoctorBySlug(slug: string, token?: string): Promise<Doc
 }
 
 /**
- * Update doctor profile (requires authentication)
+ * Update doctor profile (requires authentication).
+ * Converts camelCase payload to snake_case for the backend and normalizes the response.
  */
+function doctorPayloadToSnakeCase(data: Partial<Doctor>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (data.firstName !== undefined) out.first_name = data.firstName;
+  if (data.middleName !== undefined) out.middle_name = data.middleName;
+  if (data.lastName !== undefined) out.last_name = data.lastName;
+  if (data.fullName !== undefined) {
+    out.full_name = data.fullName;
+    // Some backends require first_name/last_name; derive if we only have fullName
+    if (data.firstName === undefined && data.lastName === undefined && data.fullName.trim()) {
+      const parts = data.fullName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        out.last_name = parts.pop() ?? '';
+        out.first_name = parts.join(' ');
+      } else {
+        out.first_name = data.fullName.trim();
+        out.last_name = '';
+      }
+    }
+  }
+  if (data.bio !== undefined) out.bio = data.bio;
+  if (data.credentials !== undefined) out.credentials = data.credentials;
+  if (data.specialty !== undefined) out.specialty = data.specialty;
+  if (data.specialties !== undefined) out.specialties = data.specialties;
+  if (data.phone !== undefined) out.phone = data.phone;
+  if (data.website !== undefined) out.website = data.website;
+  if (data.bookingUrl !== undefined) out.booking_url = data.bookingUrl;
+  if (data.npi !== undefined) out.npi = data.npi;
+  if (data.medicalSchool !== undefined) out.medical_school = data.medicalSchool;
+  if (data.residency !== undefined) out.residency = data.residency;
+  if (data.internship !== undefined) out.internship = data.internship;
+  if (data.about !== undefined) out.about = data.about;
+  if (data.acceptsNewPatients !== undefined) out.accepts_new_patients = data.acceptsNewPatients;
+  if (data.locations !== undefined) out.locations = data.locations;
+  if (data.insurance !== undefined) out.insurance = data.insurance;
+  if (data.conditionServices !== undefined) {
+    out.conditions_and_services = data.conditionServices;
+  }
+  if (data.conditionsAndServices !== undefined && !(data.conditionServices !== undefined)) {
+    out.conditions_and_services = data.conditionsAndServices;
+  }
+  if (data.boardCertifications !== undefined) out.board_certifications = data.boardCertifications;
+  if (data.badgesAwards !== undefined) out.badges_awards = data.badgesAwards;
+  if (data.image !== undefined) out.profile_image_url = data.image;
+  if (data.featured !== undefined) out.featured = data.featured;
+  return out;
+}
+
 export async function updateDoctor(
   id: string,
   data: Partial<Doctor>,
   token: string
 ): Promise<Doctor> {
   try {
-    const response = await apiClient.put<Doctor>(
+    const payload = Object.keys(data).length > 0 ? doctorPayloadToSnakeCase(data) : (data as Record<string, unknown>);
+    const response = await apiClient.put<any>(
       `/api/doctors/${id}`,
-      data,
+      payload,
       token
     );
-    return response;
+    return normalizeDoctorFromAPI(response);
   } catch (error) {
     const apiError = error as ApiError;
     if (apiError.status === 403) {
       throw new Error('Unauthorized to update this doctor');
     }
-    throw new Error(apiError.error || 'Failed to update doctor');
+    const message = apiError.detail
+      ? `${apiError.error}: ${apiError.detail}`
+      : (apiError.error || 'Failed to update doctor');
+    throw new Error(message);
   }
 }
 

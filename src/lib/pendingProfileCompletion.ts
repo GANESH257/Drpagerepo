@@ -69,9 +69,13 @@ export function validatePracticeForCompletion(practice: PracticeForValidation | 
 
 const withName = (item: CertificationItem) => (item?.name ?? '').trim().length > 0;
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 export function buildDoctorPayloadForCompletion(doctor: Doctor): Record<string, unknown> {
-  const boardCerts = toCertificationItems(doctor.boardCertifications ?? []).filter(withName);
-  const badges = (doctor.badgesAwards ?? []).filter(withName);
+  const boardCerts = toCertificationItems(asArray(doctor.boardCertifications)).filter(withName);
+  const badges = asArray(doctor.badgesAwards).filter(withName);
   return {
     fullName: doctor.fullName,
     bio: doctor.bio,

@@ -10,6 +10,7 @@ import { showToast } from '@/lib/toast';
 import { getDoctorProfileUrl } from '@/lib/doctorProfileUrl';
 import { ReferralDialog } from '@/components/shared/referrals/ReferralDialog';
 import { getUploadFullUrl } from '@/lib/api/upload';
+import { useProfileView } from '@/contexts/ProfileViewContext';
 import type { Doctor } from '@/types';
 
 function contactToDoctor(c: ContactDoctor): Doctor {
@@ -35,6 +36,7 @@ function contactNameWithTitle(c: ContactDoctor): string {
 }
 
 export default function MyContactsPage() {
+  const { openProfile } = useProfileView();
   const [contacts, setContacts] = useState<ContactDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -206,20 +208,14 @@ export default function MyContactsPage() {
                     )}
                   </div>
                   <div className="flex border-t border-gray-100 p-3 gap-1.5 flex-wrap">
-                    <Link
-                      href={getDoctorProfileUrl({ slug: c.slug, id: c.id })}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 min-w-0"
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 min-w-0 rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => openProfile({ slug: c.slug ?? undefined, id: c.id })}
                     >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full rounded-lg h-8 text-xs border-border text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
-                      >
-                        View Profile
-                      </Button>
-                    </Link>
+                      View Profile
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() => setReferralTarget(c)}

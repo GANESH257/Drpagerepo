@@ -84,10 +84,16 @@ export function SignInForm({ onSuccess }: SignInFormProps) {
       // Store token and user info
       setToken(response.token, response.user);
       
-      // Redirect based on role
+      // Redirect: pending (join-approved, not yet approved for portal) → onboard. Only explicit 'active' → dashboard. Missing = assume pending → onboard.
       if (response.user.role === 'doctor' && response.user.doctorId) {
         onSuccess?.();
-        router.push('/doctor/dashboard');
+        const u = response.user as { profile_status?: string; profileStatus?: string };
+        const profileStatus = u.profile_status ?? u.profileStatus;
+        if (profileStatus === 'active') {
+          router.push('/doctor/dashboard');
+        } else {
+          router.push('/doctor/onboard');
+        }
       } else {
         // Applicant or other roles
         setGeneralError('Access is available after your membership is approved. Please submit a join request if you haven\'t already.');

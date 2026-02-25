@@ -61,12 +61,14 @@ export function MonthlyReferralsChart({ referrals }: MonthlyReferralsChartProps)
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fff',
-                border: '1px solid #e5e7eb',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
                 borderRadius: '8px',
-                padding: '8px 12px'
+                padding: '8px 12px',
+                color: '#0f172a',
               }}
-              labelStyle={{ fontWeight: 600, color: '#1f2937' }}
+              labelStyle={{ fontWeight: 600, color: '#0f172a' }}
+              itemStyle={{ color: '#0f172a' }}
               formatter={(value: number | undefined) => [value ?? 0, 'Referrals']}
             />
             <Bar
@@ -75,6 +77,7 @@ export function MonthlyReferralsChart({ referrals }: MonthlyReferralsChartProps)
               radius={[8, 8, 0, 0]}
               stroke="#1A4B7F"
               strokeWidth={1}
+              activeBar={{ fill: '#1A4B7F', stroke: '#0f172a', strokeWidth: 1 }}
             />
           </BarChart>
         </ResponsiveContainer>

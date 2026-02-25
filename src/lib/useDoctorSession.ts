@@ -15,6 +15,8 @@ export interface UserInfo {
   doctorId?: string | null;
   practiceId?: string | null;
   roleInPractice?: 'doctor' | 'practice_admin' | null;
+  /** From backend login; 'pending_profile' = needs to complete onboard, 'active' = full access */
+  profileStatus?: string | null;
 }
 
 const TOKEN_KEY = 'aip_doctor_token';
@@ -78,7 +80,7 @@ export function useDoctorSession() {
   };
 
   // Set token and user info (new API-based authentication)
-  const setToken = (token: string, user: UserInfo): void => {
+  const setToken = (token: string, user: UserInfo | (UserInfo & { profile_status?: string })): void => {
     if (typeof window === 'undefined') return;
     
     try {
@@ -87,14 +89,18 @@ export function useDoctorSession() {
         localStorage.removeItem('aip_admin_session');
       }
 
+      const normalizedUser: UserInfo = {
+        ...user,
+        profileStatus: user.profileStatus ?? (user as { profile_status?: string }).profile_status ?? null,
+      };
       localStorage.setItem(TOKEN_KEY, token);
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
       
       // Also set legacy session for backward compatibility
       const session: DoctorSession = {
-        email: user.email,
-        role: user.role,
-        doctorId: user.doctorId || undefined,
+        email: normalizedUser.email,
+        role: normalizedUser.role,
+        doctorId: normalizedUser.doctorId || undefined,
         loginAt: new Date().toISOString(),
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));

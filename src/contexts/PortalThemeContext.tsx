@@ -50,6 +50,17 @@ export function PortalThemeProvider({ children }: { children: ReactNode }) {
     setMounted(true);
   }, [pathname]);
 
+  // Sync theme to <html> so :root:not(.dark) and .dark sidebar CSS work correctly
+  useEffect(() => {
+    if (!mounted || typeof document === 'undefined') return;
+    const isPortal = pathname.startsWith('/admin') || pathname.startsWith('/doctor');
+    if (isPortal && theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [mounted, theme, pathname]);
+
   const setTheme = useCallback((next: PortalTheme) => {
     setThemeState(next);
     if (typeof window !== 'undefined') {
