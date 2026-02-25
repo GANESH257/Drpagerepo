@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Practice, Insurance } from '@/types';
+import { Insurance } from '@/types';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
-import { getPractice } from '@/lib/api/practices';
+import { getPractice, type Practice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { SectionHeader } from '@/components/shared/approvals/SectionHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -4,12 +4,11 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { createApprovalRequest, getApprovalRequests } from '@/lib/api/approval-requests';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { getDoctorsByPractice } from '@/lib/adminHelpers';
-import { getPractice, updatePractice } from '@/lib/api/practices';
+import { getPractice, updatePractice, type Practice } from '@/lib/api/practices';
 import { getToken } from '@/lib/api/config';
 import { uploadImage, getUploadFullUrl } from '@/lib/api/upload';
 import { useDoctorContext } from '@/components/dashboard/DoctorContext';
@@ -378,7 +377,7 @@ export default function PracticeDetailsPage() {
             <p className="text-sm text-muted-foreground">Add or edit practice locations. At least one location with address is required before you can submit for approval.</p>
           </CardHeader>
           <CardContent className="pt-0">
-            {practice.locations?.length > 0 ? (
+            {practice.locations && practice.locations.length > 0 ? (
               <ul className="space-y-2 mb-4">
                 {practice.locations.map((loc: any) => (
                   <li key={loc.id || loc.name} className="text-sm text-foreground">
@@ -670,7 +669,7 @@ export default function PracticeDetailsPage() {
         </Card>
         <Card className="card-practice-accent">
           <CardContent className="pt-6 pb-6">
-            <div className="text-3xl font-bold text-gray-900">{practice.specialties.length}</div>
+            <div className="text-3xl font-bold text-gray-900">{practice.specialties?.length ?? 0}</div>
             <div className="text-sm font-medium text-gray-500 mt-1">Specialties</div>
           </CardContent>
         </Card>
@@ -683,7 +682,7 @@ export default function PracticeDetailsPage() {
       </div>
 
       {/* Specialties */}
-      {practice.specialties.length > 0 && (
+      {practice.specialties && practice.specialties.length > 0 && (
         <Card className="card-practice-accent">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-bold text-gray-900">Specialties</CardTitle>

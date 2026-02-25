@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Doctor } from '@/types';
-import { Practice } from '@/types/practice';
 import { getActorFromSession, assertPracticeAdmin } from '@/lib/services/permissionService';
 import { submitApprovalRequest } from '@/lib/services/approvalEngine';
-import { getPracticeInvitations as getPracticeInvitationsAPI, createPracticeInvitation, getPractice } from '@/lib/api/practices';
+import { getPracticeInvitations as getPracticeInvitationsAPI, createPracticeInvitation, getPractice, type Practice } from '@/lib/api/practices';
 import { AuthRequiredError, PermissionDeniedError } from '@/lib/services/errors';
 import { getDoctorsByPractice } from '@/lib/adminHelpers';
 import { getToken } from '@/lib/api/config';

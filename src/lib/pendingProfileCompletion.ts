@@ -19,8 +19,11 @@ export function validateProfileForCompletion(doctor: Doctor): string {
 }
 
 export interface PracticeForValidation {
+  id?: string;
   name?: string;
   phone?: string;
+  description?: string;
+  website?: string;
   address?: { line1?: string; line2?: string; city?: string; state?: string; zip?: string };
   address_line1?: string;
   city?: string;
@@ -34,6 +37,7 @@ export interface PracticeForValidation {
     city?: string;
     state?: string;
     zip?: string;
+    phone?: string;
   }>;
 }
 
