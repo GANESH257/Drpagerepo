@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Playfair_Display } from 'next/font/google';
-import { FileText } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const playfairDisplay = Playfair_Display({ 
@@ -162,10 +162,10 @@ export function MissionStatementNewHome() {
               href="/policies/governance-bylaws.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 px-6 py-3 bg-brand-dark-blue text-white rounded-lg hover:bg-brand-dark-blue/90 transition-colors duration-300 shadow-md hover:shadow-lg"
+              className="inline-flex items-center gap-2 text-brand-dark-blue hover:text-brand-teal font-semibold text-base transition-colors duration-200 underline underline-offset-4 group"
             >
-              <FileText className="h-5 w-5" aria-hidden="true" />
-              <span className="font-semibold">View Governance Bylaws</span>
+              View Governance Bylaws
+              <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </Link>
           </div>
         </div>

@@ -2,31 +2,23 @@ import { MembershipFAQ } from '@/types';
 
 export const membershipFAQ: MembershipFAQ[] = [
   {
-    question: 'How do renewals work?',
-    answer: 'Memberships automatically renew at the end of each billing period (monthly or annual). You\'ll receive email notifications 30 days before renewal. You can update your plan, payment method, or cancel anytime through your dashboard. Annual memberships include a discount equivalent to two months free.',
+    question: 'Who is eligible to join AIP?',
+    answer: 'AIP membership is open to independently practicing, board-certified physicians and their practices operating in the St. Louis metropolitan area. Physicians employed exclusively by hospital systems or corporate healthcare groups are not eligible. Nurse practitioners and advanced practice providers may join in a supporting capacity as defined in the membership guidelines.',
   },
   {
-    question: 'When will payments be enabled?',
-    answer: 'Payment processing will be enabled in Phase 2 of our platform development. Currently, membership enrollment is free during our beta period. We\'ll notify all members when payment processing becomes available and provide a smooth transition process.',
+    question: 'How does AIP help with payer contract negotiations?',
+    answer: 'One of AIP\'s core benefits is collective contracting leverage. As a member, your practice gains access to group negotiating power that is typically only available to large health systems — helping you secure better reimbursement rates with commercial payers while maintaining your independence. Details on current contracting initiatives are available in the member portal after joining.',
   },
   {
-    question: 'Can I update my profile anytime?',
-    answer: 'Yes, you can update your profile at any time through the doctor dashboard. Changes to locations, specialties, insurance acceptance, and other details are typically reflected within 24-48 hours. Significant changes may require re-verification to ensure accuracy.',
+    question: 'What is the governance structure of AIP, and do members have a voice?',
+    answer: 'AIP is governed by a Board of Directors elected from the membership, with standing committees covering clinical affairs, finance, membership, and communications. All active members in good standing are eligible to vote in board elections and serve on committees. The organization operates under formal bylaws, which are publicly available on the website.',
   },
   {
-    question: 'How do referrals work?',
-    answer: 'The referral network allows you to send and receive patient referrals with other Alliance members. You can search for specialists by specialty and location, then send secure referral requests. Referral management tools will be available in Phase 2, including tracking and communication features.',
+    question: 'How long does the application and approval process take?',
+    answer: 'The typical application review takes 5–10 business days. After submitting your practice application, the AIP membership team will review your credentials and contact you to schedule a brief onboarding call. Once approved, your practice profile goes live in the directory and you gain immediate access to the member portal.',
   },
   {
-    question: 'What if I have multiple locations?',
-    answer: 'You can add multiple practice locations to your profile. Basic plan members can list up to 2 locations, while Professional and Premier plans include unlimited locations. Each location can have its own address, phone number, hours, and accepted insurance plans.',
-  },
-  {
-    question: 'How are reviews verified?',
-    answer: 'Patient reviews are verified to ensure authenticity. Reviews marked with a "Verified Visit" badge come from patients who have confirmed appointments. Review moderation and verification tools will be enhanced in Phase 3, including the ability for doctors to respond to reviews.',
-  },
-  {
-    question: 'Can I change my membership plan?',
-    answer: 'Yes, you can upgrade or downgrade your plan at any time through your dashboard. Upgrades take effect immediately, while downgrades take effect at the end of your current billing period. Prorated credits or charges may apply depending on the timing of the change.',
+    question: 'Does joining AIP require me to change how I run my practice?',
+    answer: 'No. AIP is designed to strengthen your independence, not constrain it. Membership does not require you to change your clinical protocols, billing systems, or staffing. You retain full autonomy over how you practice medicine — AIP provides the network, tools, and collective resources to help you do it more effectively.',
   },
 ];

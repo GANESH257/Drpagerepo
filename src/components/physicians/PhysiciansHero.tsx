@@ -64,7 +64,7 @@ export function PhysiciansHero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/for_dr.png"
+          src="/physicians_hero_new.png"
           alt="Physicians"
           fill
           className="object-cover"
@@ -72,11 +72,8 @@ export function PhysiciansHero() {
         />
       </div>
 
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/60 via-brand-dark-blue/50 to-brand-dark-blue/60 z-10" />
-
       <div className="container mx-auto px-4 md:px-6 relative z-20">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center rounded-2xl bg-gray-900/50 backdrop-blur-sm py-8 md:py-10 px-6 md:px-8">
           {/* Header – same text design as AboutHeroSection (dark variant) */}
           <div
             className="mb-8 md:mb-10"

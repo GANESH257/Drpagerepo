@@ -5,27 +5,23 @@ export interface HomeFAQ {
 
 export const homeFAQ: HomeFAQ[] = [
   {
-    question: 'How do I find a doctor?',
-    answer: 'Use our directory to search by specialty, location, or name. Filter by insurance plan to find doctors who accept your coverage. Each profile includes credentials, locations, accepted insurance, and patient reviews to help you make an informed decision.',
+    question: 'Where is AIP based, and what geographic area does it serve?',
+    answer: 'AIP is headquartered in St. Louis, Missouri, and currently serves the greater St. Louis metropolitan area. The network includes independent practices across the city and surrounding counties. Expansion to additional Missouri markets is part of the organization\'s long-term strategic plan.',
   },
   {
-    question: 'How do referrals work?',
-    answer: 'Physicians in our network can refer patients to specialists within the network. The referral system streamlines coordination and ensures patients connect with the right specialists. This feature is currently in development and will be available in Phase 2.',
+    question: 'Is AIP a nonprofit or a for-profit organization?',
+    answer: 'AIP is structured as a physician-led membership organization. It operates with a formal governance structure — including a Board of Directors and standing committees — and is guided by bylaws that prioritize the interests of its physician members and the patients they serve over commercial gain.',
   },
   {
-    question: 'How do booking and connection requests work?',
-    answer: 'Patients can request appointments through doctor profiles. Physicians can receive and manage these requests through their dashboard. The system facilitates coordination between patients and providers, with real-time updates on request status. (Phase 2)',
+    question: 'How does AIP differ from a hospital network or an insurance plan?',
+    answer: 'AIP is neither a hospital network nor an insurance plan. It is an independent physician alliance — a voluntary membership organization that connects independently practicing doctors with each other, with patients, and with shared resources. Patients are not required to enroll in anything, and physicians retain full clinical and business independence.',
   },
   {
-    question: 'Are physician profiles verified?',
-    answer: 'Yes, all physicians in our network undergo verification of credentials, board certifications, and practice information. Verified profiles display a badge, giving patients confidence in their choice of provider.',
+    question: 'How does AIP ensure the quality and integrity of its member physicians?',
+    answer: 'All AIP member physicians are verified as board-certified and independently practicing before their profiles are published in the directory. The membership team reviews applications, and the Board of Directors — composed of practicing physicians — oversees membership standards. Members who do not maintain good standing are subject to review under the organization\'s bylaws.',
   },
   {
-    question: 'How do members update their profile?',
-    answer: 'Physician members can update their profile, locations, accepted insurance, and practice information through the doctor dashboard. Changes are typically reflected within 24-48 hours after verification.',
-  },
-  {
-    question: 'What is your privacy policy?',
-    answer: 'We take privacy seriously. All information submitted through our platform is handled according to HIPAA guidelines. We do not share personal information with third parties without consent. Patient data is protected, and physician information is used solely for directory purposes. See our Privacy Policy page for full details.',
+    question: 'How can community organizations or employers partner with AIP?',
+    answer: 'AIP welcomes partnerships with employers, community health organizations, and other stakeholders who share a commitment to accessible, high-quality independent care. Interested organizations can reach out through the Contact page to discuss referral arrangements, employee health initiatives, or community education programs.',
   },
 ];

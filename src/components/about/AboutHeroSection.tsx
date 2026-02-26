@@ -50,10 +50,10 @@ export function AboutHeroSection() {
 
   return (
     <section ref={sectionRef} className="pt-32 md:pt-40 pb-12 md:pb-16 relative overflow-hidden">
-      {/* Background image – same as Mission */}
+      {/* Background image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/network-bg2.jpeg"
+          src="/about_hero_new.png"
           alt=""
           fill
           className="object-cover"
@@ -61,8 +61,6 @@ export function AboutHeroSection() {
           sizes="100vw"
         />
       </div>
-      {/* Dark blue overlay – same as Mission */}
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark-blue/60 via-brand-dark-blue/55 to-brand-dark-blue/65 z-10" />
 
       <div className="container mx-auto px-4 md:px-6 relative z-20">
         <div className="max-w-7xl mx-auto">
@@ -92,11 +90,11 @@ export function AboutHeroSection() {
           {/* Founding story – same glass card as Mission statement */}
           <div className="max-w-5xl mx-auto">
             <div
-              className="p-8 md:p-10 lg:p-12 bg-black/50 backdrop-blur-md rounded-2xl border border-white/30 shadow-[0_25px_50px_rgba(0,0,0,0.4)]"
+              className="p-8 md:p-10 lg:p-12 bg-black/50 backdrop-blur-md rounded-2xl border border-white/30 shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
               style={animationStyle(200)}
             >
               <p className="text-lg md:text-xl lg:text-2xl text-white font-normal leading-relaxed text-center tracking-normal relative">
-                <span className="absolute -left-4 md:-left-6 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/40 font-serif leading-none" aria-hidden="true">&ldquo;</span>
+                <span className="absolute -left-8 md:-left-10 -top-2 md:-top-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/40 font-serif leading-none" aria-hidden="true">&ldquo;</span>
                 <span className="relative z-10">{HERO_TEXT}</span>
                 <span className="absolute -right-4 md:-right-6 -bottom-2 md:-bottom-4 text-6xl md:text-7xl lg:text-8xl text-brand-teal/40 font-serif leading-none" aria-hidden="true">&rdquo;</span>
               </p>

@@ -225,7 +225,7 @@ export function BenefitsJumbledGrid() {
                       'group relative overflow-hidden h-full transition-all duration-500 ease-out data-scroll-exclude',
                       'hover:-translate-y-2 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.01]',
                       isStandardGlass &&
-                        'bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-1 shadow-2xl shadow-black/15 hover:bg-white/75',
+                        'bg-white backdrop-blur-xl border border-gray-200/80 -translate-y-1 shadow-2xl shadow-black/15 hover:bg-white/95',
                       isDarkCard && !hasImageBackground && 'bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-dark-blue/90 border border-white/20 hover:border-brand-teal/60',
                       hasImageBackground && 'border border-white/20',
                       'py-4 px-5 md:py-5 md:px-8'
@@ -370,7 +370,7 @@ export function BenefitsJumbledGrid() {
                     className={cn(
                       'group relative overflow-hidden h-full transition-all duration-500 ease-out data-scroll-exclude',
                       'hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02]',
-                      isStandardGlass && 'bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:bg-white/75',
+                      isStandardGlass && 'bg-white backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:bg-white/95',
                       isDarkCard && !hasImageBackground && 'bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-dark-blue/90 border border-white/20 hover:border-brand-teal/60',
                       hasImageBackground && 'border border-white/20',
                       benefit.size === 'large' ? 'p-8' : 'p-6'
@@ -461,7 +461,7 @@ export function BenefitsJumbledGrid() {
                     className={cn(
                       'group relative overflow-hidden h-full p-6 transition-all duration-500 ease-out data-scroll-exclude',
                       'hover:-translate-y-5 hover:shadow-[0_28px_60px_-12px_rgba(15,95,168,0.25),0_0_0_1px_rgba(15,95,168,0.08)] hover:border-brand-dark-blue/60 hover:scale-[1.02]',
-                      isStandardGlass && 'bg-white/50 backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:bg-white/75',
+                      isStandardGlass && 'bg-white backdrop-blur-xl border border-gray-200/80 -translate-y-3 shadow-2xl shadow-black/15 hover:bg-white/95',
                       isDarkCard && !hasImageBackground && 'bg-gradient-to-br from-brand-dark-blue via-brand-dark-blue/95 to-brand-dark-blue/90 border border-white/20 hover:border-brand-teal/60',
                       hasImageBackground && 'border border-white/20'
                     )}

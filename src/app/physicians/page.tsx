@@ -42,7 +42,7 @@ export default function PhysiciansPage() {
       <MissionStatementNewHome />
       <ImpactStats />
       <JoinSteps />
-      <GenericCTASection />
+      <GenericCTASection hideRightPanel />
       <MemberBenefitsSection />
       <WhoShouldJoin />
       <DepartmentsMarquee />
@@ -50,9 +50,9 @@ export default function PhysiciansPage() {
       {/* MemberStories and PracticeResources hidden until content is ready */}
       <FAQSection
         faqData={membershipFAQ}
-        title="Membership Questions"
-        description="Find answers to common questions about membership, plans, and benefits."
-        pillLabel="Membership"
+        title="Frequently Asked Questions"
+        description="Find answers about eligibility, governance, the application process, and what joining AIP means for your practice."
+        pillLabel="For Physicians"
       />
     </>
   );

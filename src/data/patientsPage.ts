@@ -103,32 +103,24 @@ export const patientReviews: PatientReview[] = [
 
 export const patientFAQ: PatientFAQ[] = [
   {
-    question: 'How do I find the right specialist?',
-    answer: 'Use our search tool to filter by specialty, location, and insurance. Each doctor profile includes credentials, patient reviews, accepted insurance plans, and practice information to help you make an informed decision.',
+    question: 'Is there a cost to patients to use this directory?',
+    answer: 'No. The AIP directory is completely free for patients. There is no fee to search for physicians, view profiles, or submit a connection request. Membership fees apply only to physicians who join the network, not to patients seeking care.',
   },
   {
-    question: 'Can I filter by insurance?',
-    answer: 'Yes, you can filter doctors by insurance plan. Use the insurance filter in the search bar or on the doctor directory page to find physicians who accept your specific insurance plan.',
+    question: 'Are the physicians in this network board-certified?',
+    answer: 'Yes. All physicians listed in the AIP directory are independently practicing, board-certified specialists. Each profile displays the physician\'s credentials, certifications, and years of experience so you can make an informed decision before reaching out.',
   },
   {
-    question: 'How do booking requests work?',
-    answer: 'Patients can request appointments through doctor profiles. Physicians receive and manage these requests through their dashboard. The system facilitates coordination between patients and providers with real-time updates on request status. (This feature is currently in development and will be available in Phase 2.)',
+    question: 'What does "independent physician" mean for my care?',
+    answer: 'An independent physician owns and operates their own practice rather than working for a hospital system or corporate group. This means your doctor answers to you — not to a hospital board or insurance company — which often results in longer appointments, more personalized attention, and decisions made in your best interest.',
   },
   {
-    question: 'Are reviews verified?',
-    answer: 'Yes, reviews marked with a "Verified Visit" badge are from patients who have confirmed appointments with the physician. This helps ensure authentic feedback from real patients.',
+    question: 'Can I use this directory if I don\'t have insurance?',
+    answer: 'Yes. Many AIP member physicians offer self-pay options and transparent pricing for uninsured or underinsured patients. You can contact any practice directly through their profile to ask about cash-pay rates and payment plans before scheduling.',
   },
   {
-    question: 'How do I contact a clinic?',
-    answer: 'Each doctor profile includes contact information including phone numbers and office locations. You can also use the contact form on our contact page for general inquiries.',
-  },
-  {
-    question: 'Do doctors offer telehealth?',
-    answer: 'Many doctors in our network offer telehealth appointments. Check individual doctor profiles for telehealth availability and scheduling options. (Telehealth availability varies by physician and specialty.)',
-  },
-  {
-    question: 'What makes independent physicians different?',
-    answer: 'Independent physicians typically offer more personalized care, shorter wait times, and often more transparent pricing. They answer to their patients rather than hospital boards, allowing for more flexible and patient-focused care decisions.',
+    question: 'How do I know if a physician is currently accepting new patients?',
+    answer: 'Each physician profile indicates whether the practice is currently accepting new patients. If the profile does not specify, you can send a connection request or contact the practice directly using the contact information listed on their profile page.',
   },
 ];
 

@@ -38,13 +38,13 @@ const benefitCards: Array<{
   {
     ...patientBenefits[1],
     number: '02',
-    image: 'https://images.unsplash.com/photo-1504813184591-01572f98c85f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    image: '/doctor-wear-coat-showing-stethoscope-and-clock-2026-01-08-23-59-41-utc.png',
     imageAlt: 'Physician spending time with patient',
   },
   {
     ...patientBenefits[2],
     number: '03',
-    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+    image: '/save-money-on-health-insurance-drug-cost-and-medi-2026-01-08-22-01-27-utc.png',
     imageAlt: 'Affordable healthcare',
   },
 ];
@@ -186,12 +186,8 @@ export function BenefitsJumbledGrid() {
   return (
     <section
       ref={sectionRef}
-      className="relative py-20 md:py-28 overflow-hidden"
-      style={{
-        background: 'linear-gradient(180deg, #f8fafc 0%, #f0f9ff 50%, #ecfeff 100%)',
-      }}
+      className="relative py-20 md:py-28 overflow-hidden bg-white"
     >
-      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand-teal via-brand-dark-blue to-brand-teal shadow-sm" />
       <div
         className="absolute -top-24 -right-24 w-96 h-96 rounded-full opacity-30 pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(29, 212, 196, 0.25) 0%, transparent 70%)' }}

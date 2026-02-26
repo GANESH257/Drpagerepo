@@ -167,11 +167,11 @@ export function Header() {
           {/* Logo + org name + St. Louis */}
           <Link href={homeLink} className="flex items-center gap-2 sm:gap-3 flex-shrink-0 mr-4 lg:mr-6">
             <Image
-              src="/logodrnew.png"
+              src="/aip_logo_icon_only.png"
               alt=""
               width={200}
               height={200}
-              className="h-12 md:h-16 lg:h-20 w-auto object-contain"
+              className="h-28 md:h-32 lg:h-36 w-auto object-contain mt-8 md:mt-10"
               priority
             />
             <span className="hidden sm:flex flex-col items-center leading-tight">

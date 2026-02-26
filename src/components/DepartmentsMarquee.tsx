@@ -97,7 +97,7 @@ export function DepartmentsMarquee() {
   return (
     <section
       ref={sectionRef}
-      className="py-6 md:py-8 skin-paper relative overflow-hidden"
+      className="py-4 md:py-5 bg-white relative overflow-hidden"
       aria-label="Medical departments and specialties"
       style={{
         opacity: isVisible ? 1 : 0,
@@ -120,9 +120,9 @@ export function DepartmentsMarquee() {
                 className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-500 ease-out hover:scale-110 data-scroll-exclude"
                 aria-label={`Browse ${dept.name} specialists`}
               >
-                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
+                <div className="relative w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 relative z-10" aria-label={`${dept.name} icon`} />
+                  <dept.IconComponent className="w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 relative z-10" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}
@@ -138,9 +138,9 @@ export function DepartmentsMarquee() {
                 className="flex-shrink-0 flex flex-col items-center justify-center group transition-all duration-500 ease-out hover:scale-110 data-scroll-exclude"
                 aria-label={`Browse ${dept.name} specialists`}
               >
-                <div className="relative w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
+                <div className="relative w-14 h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center rounded-full shadow-2xl overflow-hidden bg-gradient-to-br from-brand-dark-blue to-brand-teal text-white transition-all duration-500 ease-out group-hover:scale-125 group-hover:shadow-[0_0_30px_rgba(15,95,168,0.4)] mb-2">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" aria-hidden />
-                  <dept.IconComponent className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 relative z-10" aria-label={`${dept.name} icon`} />
+                  <dept.IconComponent className="w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 relative z-10" aria-label={`${dept.name} icon`} />
                 </div>
                 <span className="text-xs md:text-sm font-medium text-brand-dark-blue group-hover:text-brand-teal transition-colors duration-300 text-center max-w-[100px] md:max-w-[120px]">
                   {dept.name}

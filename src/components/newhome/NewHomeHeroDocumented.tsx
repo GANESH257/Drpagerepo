@@ -3,9 +3,16 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Playfair_Display } from 'next/font/google';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronRight, ChevronLeft } from 'lucide-react';
 import { homeStats } from '@/data/homeStats';
+
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  display: 'swap',
+});
 
 interface NewHomeHeroDocumentedProps {
   subheadline?: string;
@@ -269,7 +276,7 @@ export function NewHomeHeroDocumented({ subheadline, videoSource = '/bg.mp4', da
       <div className="absolute inset-0 z-20 flex justify-between pointer-events-none [&>*]:pointer-events-auto">
         {/* Left bar — FOR PATIENTS (runs left to right like FOR PHYSICIANS: bar then content) */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-14 md:w-16 overflow-hidden transition-[width] duration-500 ease-out hover:w-1/2 group hidden md:block"
+          className="absolute left-0 top-0 bottom-0 w-20 md:w-24 overflow-hidden transition-[width] duration-500 ease-out hover:w-1/2 group hidden md:block"
         >
           <Link
             href="/patients"
@@ -286,17 +293,30 @@ export function NewHomeHeroDocumented({ subheadline, videoSource = '/bg.mp4', da
                 sizes="50vw"
               />
             </div>
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 z-[1] bg-gradient-to-br from-[#10B981]/80 via-[#10B981]/70 to-[#059669]/85 backdrop-blur-sm" />
+            {/* Gradient overlay — same colors as header "Find a Practice" button: dark blue to teal */}
+            <div className="absolute inset-0 z-[1] bg-gradient-to-br from-brand-teal/85 via-brand-dark-blue/75 to-brand-dark-blue/85 backdrop-blur-sm" />
             {/* Bar on left (inner edge), then content — same order as FOR PHYSICIANS */}
-            <div className="relative z-10 w-14 md:w-16 flex-shrink-0 flex items-center justify-center py-8 border-r border-white/10">
-              <span className="text-white font-bold text-sm uppercase tracking-[0.35em] [writing-mode:vertical-rl] rotate-180">
+            <div className="relative z-10 w-20 md:w-24 flex-shrink-0 flex flex-col items-center justify-center py-8 border-r border-white/10 gap-2">
+              <motion.div
+                className="flex items-center text-white"
+                aria-hidden
+                animate={prefersReducedMotion ? {} : { x: [0, 5, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <ChevronRight className="h-6 w-6" strokeWidth={3.5} />
+                <ChevronRight className="h-6 w-6 -ml-1.5" strokeWidth={3.5} />
+              </motion.div>
+              <span className="text-white font-black text-base md:text-lg uppercase tracking-[0.35em] [writing-mode:vertical-rl] rotate-180">
                 For Patients
               </span>
             </div>
             <div className="relative z-10 flex flex-col items-center justify-center text-center px-10 lg:px-16 min-w-[320px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150 flex-1">
-              <h3 className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-3">Find care</h3>
-              <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">Find your provider</h4>
+              <span className={`inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-white/20 ${playfairDisplay.className}`}>
+                Find Care
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
+                Find Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-300">Provider</span>
+              </h2>
               <p className="text-white/90 text-base md:text-lg max-w-sm mb-8 leading-relaxed">
                 Experience excellence. Personal care.
               </p>
@@ -309,7 +329,7 @@ export function NewHomeHeroDocumented({ subheadline, videoSource = '/bg.mp4', da
 
         {/* Right bar — FOR PHYSICIANS (expands to center only, symmetric with left) */}
         <div
-          className="absolute right-0 top-0 bottom-0 w-14 md:w-16 overflow-hidden transition-[width] duration-500 ease-out hover:w-1/2 group hidden md:block"
+          className="absolute right-0 top-0 bottom-0 w-20 md:w-24 overflow-hidden transition-[width] duration-500 ease-out hover:w-1/2 group hidden md:block"
         >
           <Link
             href="/physicians"
@@ -328,14 +348,27 @@ export function NewHomeHeroDocumented({ subheadline, videoSource = '/bg.mp4', da
             </div>
             {/* Gradient overlay */}
             <div className="absolute inset-0 z-[1] bg-gradient-to-br from-brand-dark-blue/80 via-brand-dark-blue/70 to-brand-dark-blue/85 backdrop-blur-sm" />
-            <div className="relative z-10 w-14 md:w-16 flex-shrink-0 flex items-center justify-center py-8 border-r border-white/10">
-              <span className="text-white font-bold text-sm uppercase tracking-[0.35em] [writing-mode:vertical-rl] rotate-180">
+            <div className="relative z-10 w-20 md:w-24 flex-shrink-0 flex flex-col items-center justify-center py-8 border-r border-white/10 gap-2">
+              <motion.div
+                className="flex items-center text-white"
+                aria-hidden
+                animate={prefersReducedMotion ? {} : { x: [0, -5, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut', delay: 0.9 }}
+              >
+                <ChevronLeft className="h-6 w-6" strokeWidth={3.5} />
+                <ChevronLeft className="h-6 w-6 -ml-1.5" strokeWidth={3.5} />
+              </motion.div>
+              <span className="text-white font-black text-base md:text-lg uppercase tracking-[0.35em] [writing-mode:vertical-rl] rotate-180">
                 For Physicians
               </span>
             </div>
             <div className="relative z-10 flex flex-col items-center justify-center text-center px-10 lg:px-16 min-w-[320px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-150 ml-auto">
-              <h3 className="text-white/80 text-xs font-semibold uppercase tracking-widest mb-3">Join the network</h3>
-              <h4 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">Empower your practice</h4>
+              <span className={`inline-block px-4 py-1.5 bg-white/20 text-white font-black text-base md:text-lg uppercase tracking-[0.2em] rounded-full mb-4 border border-white/20 ${playfairDisplay.className}`}>
+                Join the Network
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white leading-[1.1] tracking-tight">
+                Empower Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-teal to-emerald-300">Practice</span>
+              </h2>
               <p className="text-white/90 text-base md:text-lg max-w-sm mb-8 leading-relaxed">
                 Connect with peers. Lead with autonomy.
               </p>

@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export function GenericCTASection() {
+interface GenericCTASectionProps {
+  /** When true, only show the left (Join) CTA — e.g. on physicians page where the patient CTA is not needed */
+  hideRightPanel?: boolean;
+}
+
+export function GenericCTASection({ hideRightPanel = false }: GenericCTASectionProps = {}) {
   const [isVisible, setIsVisible] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -60,9 +65,9 @@ export function GenericCTASection() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden py-8 md:py-10"
+      className="relative overflow-hidden bg-white py-8 md:py-10"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+      <div className={`grid overflow-hidden ${hideRightPanel ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
         {/* Left Section – slides in from left, glass on hover */}
         <div
           className="group relative py-8 md:py-10 px-4 md:px-6 lg:px-8 flex items-center justify-center min-h-[280px] md:min-h-[300px] overflow-hidden"
@@ -91,7 +96,8 @@ export function GenericCTASection() {
           </div>
         </div>
 
-        {/* Right Section – slides in from right, glass on hover */}
+        {/* Right Section – patient CTA; hidden on physicians page */}
+        {!hideRightPanel && (
         <div
           className="group relative py-8 md:py-10 px-4 md:px-6 lg:px-8 flex items-center justify-center min-h-[280px] md:min-h-[300px] overflow-hidden"
           style={rightPanelStyle()}
@@ -118,6 +124,7 @@ export function GenericCTASection() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </section>
   );
